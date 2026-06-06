@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Government Watchdog | Private Alpine Walkthrough</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="app.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  </head>
+  <body x-data="timelineApp()" :class="{ 'drawer-open': activeSource }">
+    <a class="skip-link" href="#timeline">Skip to timeline</a>
+
+    <header class="site-header">
+      <nav class="topbar" aria-label="Primary">
+        <div>
+          <p class="product-label">Private walkthrough</p>
+          <h1>Government Watchdog</h1>
+        </div>
+        <div class="nav-actions" aria-label="Stage status">
+          <span class="stage-pill">Stage 0/1 active</span>
+          <span class="stage-pill muted">Alpine only</span>
+        </div>
+      </nav>
+
+      <section class="intro-panel" aria-labelledby="intro-title">
+        <div>
+          <p class="scope-note">Prototype fixture mode - not public reporting</p>
+          <h2 id="intro-title">Timeline-first Alpine civic source walkthrough</h2>
+          <p>
+            This private scaffold demonstrates the planned timeline, filters,
+            source drawer, and caution states for Town of Alpine. Cards below
+            are UI fixtures and must not be treated as verified civic facts.
+          </p>
+        </div>
+        <div class="integrity-box" aria-label="Verification boundary">
+          <strong>No unsupported claims</strong>
+          <span>Every card carries a status label and source-trail action. Expansion outside Alpine remains locked.</span>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="filter-band" aria-labelledby="filters-title">
+        <div class="section-heading">
+          <p>Default area</p>
+          <h2 id="filters-title">Wyoming -> Lincoln County -> Town of Alpine</h2>
+        </div>
+
+        <div class="filters-grid">
+          <label>
+            State
+            <select x-model="filters.state" @change="syncScope('state')">
+              <template x-for="state in states" :key="state.value">
+                <option :value="state.value" x-text="state.label" :disabled="state.locked"></option>
+              </template>
+            </select>
+          </label>
+          <label>
+            County
+            <select x-model="filters.county" @change="syncScope('county')">
+              <template x-for="county in counties" :key="county.value">
+                <option :value="county.value" x-text="county.label" :disabled="county.locked"></option>
+              </template>
+            </select>
+          </label>
+          <label>
+            Town
+            <select x-model="filters.town" @change="syncScope('town')">
+              <template x-for="town in towns" :key="town.value">
+                <option :value="town.value" x-text="town.label" :disabled="town.locked"></option>
+              </template>
+            </select>
+          </label>
+          <div class="scope-lock">
+            <span aria-hidden="true">LOCK</span>
+            <p><strong>Other jurisdictions are planned only.</strong> This walkthrough prevents non-Alpine selections from implying live coverage.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="side-rail" aria-labelledby="pages-title">
+          <div class="section-heading compact">
+            <p>Walkthrough</p>
+            <h2 id="pages-title">Private pages</h2>
+          </div>
+          <button type="button" :class="{ active: activePage === 'timeline' }" @click="activePage = 'timeline'">
+            <span aria-hidden="true">TIME</span>
+            Timeline
+          </button>
+          <button type="button" :class="{ active: activePage === 'topics' }" @click="activePage = 'topics'">
+            <span aria-hidden="true">TOPIC</span>
+            Topics
+          </button>
+          <button type="button" :class="{ active: activePage === 'meetings' }" @click="activePage = 'meetings'">
+            <span aria-hidden="true">MEET</span>
+            Meetings
+          </button>
+          <button type="button" :class="{ active: activePage === 'newsletter' }" @click="activePage = 'newsletter'">
+            <span aria-hidden="true">MAIL</span>
+            Newsletter
+          </button>
+        </aside>
+
+        <section id="timeline" class="timeline-panel" x-show="activePage === 'timeline'" x-cloak>
+          <div class="section-heading">
+            <p>Newest first</p>
+            <h2>Alpine timeline scaffold</h2>
+          </div>
+          <div class="fixture-banner" role="note">
+            FIXTURE MODE - These cards test UI states only. They are not verified reports and are not public content.
+          </div>
+
+          <div class="timeline-list">
+            <template x-for="card in filteredCards()" :key="card.id">
+              <article class="timeline-card" :class="card.status">
+                <div class="card-icon" x-text="card.icon" aria-hidden="true"></div>
+                <div class="card-body">
+                  <div class="card-meta">
+                    <span x-text="card.dateLabel"></span>
+                    <span x-text="card.typeLabel"></span>
+                    <span class="status-badge" :class="card.status" x-text="statusText(card.status)"></span>
+                  </div>
+                  <h3 x-text="card.title"></h3>
+                  <p x-text="card.summary"></p>
+
+                  <div class="gated-block" x-show="card.gated">
+                    <strong x-text="card.gateTitle"></strong>
+                    <span x-text="card.gateText"></span>
+                  </div>
+
+                  <div class="card-tags">
+                    <template x-for="tag in card.tags" :key="tag">
+                      <span x-text="tag"></span>
+                    </template>
+                  </div>
+
+                  <div class="card-actions">
+                    <button type="button" @click="openSource(card)">View source trail</button>
+                    <button type="button" class="ghost" @click="focusTopic(card.tags[0])">Filter topic</button>
+                  </div>
+                </div>
+              </article>
+            </template>
+          </div>
+        </section>
+
+        <section class="timeline-panel" x-show="activePage === 'topics'" x-cloak>
+          <div class="section-heading">
+            <p>Stage-gated</p>
+            <h2>Topic pages preview</h2>
+          </div>
+          <div class="placeholder-grid">
+            <template x-for="topic in topics" :key="topic">
+              <button type="button" class="topic-tile" @click="focusTopic(topic)">
+                <span x-text="topic"></span>
+                <small>Shows matching Alpine fixture cards only</small>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <section class="timeline-panel" x-show="activePage === 'meetings'" x-cloak>
+          <div class="section-heading">
+            <p>Stage-gated</p>
+            <h2>Meeting page preview</h2>
+          </div>
+          <div class="locked-section">
+            <strong>Meeting detail pages are scaffolded, not populated.</strong>
+            <p>Transcript timestamps and speaker attribution stay locked until reviewed backend records exist.</p>
+          </div>
+        </section>
+
+        <section class="timeline-panel" x-show="activePage === 'newsletter'" x-cloak>
+          <div class="section-heading">
+            <p>Stage-gated</p>
+            <h2>Newsletter archive preview</h2>
+          </div>
+          <div class="locked-section">
+            <strong>Newsletter publication requires review.</strong>
+            <p>Archive layout is reserved for sourced, approved issues after VerificationSafetyReviewer and CEO gates.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="drawer-backdrop" x-show="activeSource" x-transition.opacity @click="closeSource()" x-cloak></div>
+    <aside class="source-drawer" x-show="activeSource" x-transition x-cloak aria-live="polite" aria-label="Source trail drawer">
+      <div class="drawer-header">
+        <div>
+          <p>Source trail</p>
+          <h2 x-text="activeSource?.title"></h2>
+        </div>
+        <button type="button" aria-label="Close source drawer" @click="closeSource()">Close</button>
+      </div>
+      <dl>
+        <div>
+          <dt>Source type</dt>
+          <dd x-text="activeSource?.source.type"></dd>
+        </div>
+        <div>
+          <dt>Published by</dt>
+          <dd x-text="activeSource?.source.publisher"></dd>
+        </div>
+        <div>
+          <dt>Date</dt>
+          <dd x-text="activeSource?.dateLabel"></dd>
+        </div>
+        <div>
+          <dt>Original</dt>
+          <dd><a :href="activeSource?.source.originalUrl" target="_blank" rel="noreferrer">View original placeholder</a></dd>
+        </div>
+        <div>
+          <dt>Archive</dt>
+          <dd x-text="activeSource?.source.archiveUrl || 'Archive not available'"></dd>
+        </div>
+        <div>
+          <dt>Captured date</dt>
+          <dd x-text="activeSource?.source.capturedDate"></dd>
+        </div>
+        <div>
+          <dt>Verification status</dt>
+          <dd x-text="statusText(activeSource?.status)"></dd>
+        </div>
+        <div>
+          <dt>Local source note</dt>
+          <dd x-text="activeSource?.source.localNote"></dd>
+        </div>
+      </dl>
+    </aside>
+  </body>
+</html>

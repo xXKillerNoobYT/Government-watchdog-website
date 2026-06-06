@@ -45,3 +45,17 @@ Important setup note:
 ## Privacy / launch status
 
 This repository is private for now.
+
+## Local private walkthrough
+
+The current Stage 0/1 website scaffold is static and can be previewed without a
+build step:
+
+```bash
+python3 -m http.server 4173
+```
+
+Then open `http://127.0.0.1:4173/`.
+
+The walkthrough uses prototype fixture cards only. They are labeled in the UI
+and must not be treated as verified civic reporting.
