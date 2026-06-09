@@ -45,3 +45,58 @@ Important setup note:
 ## Privacy / launch status
 
 This repository is private for now.
+
+---
+
+## Local development (Stage 1 · Slice 4 · A skeleton — GOV-99)
+
+Reviewer-internal/local only. **No public exposure**, no deploy, no accounts —
+Alpine-only (GOV-94 owner conditions). The current skeleton is intentionally
+**neutral, with no visual-style commitments**; Isaac's design direction refines
+visuals in a later slice.
+
+```bash
+npm install            # first time
+cp .env.example .env   # optional; defaults to fixture mode
+npm run dev            # vite dev server at http://127.0.0.1:5173
+npm run typecheck      # tsc --noEmit
+npm test               # vitest (web-safe, adapter, state, render)
+npm run build          # tsc + vite production build
+npm run preview        # serve the production build locally
+```
+
+Force a state for review/screenshots: `#/?state=loading|empty|error`.
+
+### Stack
+
+Vite + TypeScript, framework-agnostic DOM rendering (a heavy UI framework would
+be a visual/architectural commitment Isaac may want to weigh in on later).
+
+### What this skeleton provides
+
+| Piece | File |
+|---|---|
+| Web-safe types mirroring the read-API allowlist (statement/evidence, agenda-thread, topic-tree, label layer) | `src/types/read-api.ts` |
+| Typed data-access client: read-API → labeled-fixture fallback | `src/data/client.ts` |
+| Frontend raw-path transport sweep (defense-in-depth) | `src/data/web-safe.ts` |
+| Loading / empty / error state primitives (BEH-STATE) | `src/state/async-state.ts`, `src/ui/state-view.ts` |
+| Labeled fixture (`FIXTURE MODE — Not real data`, historical/sample only) | `src/fixtures/alpine-sample.json` |
+| Neutral DOM renderer + minimal styling | `src/ui/render.ts` |
+| Hash-router shell | `src/router.ts` |
+
+### Data contract & two hard invariants
+
+The client reads **only** the reviewer-internal read-API (backend
+[GOV-98](https://github.com/xXKillerNoobYT/Government-watchdog), spec
+`Docs/stage1-slice4-prereq0-read-api-concept-map.md`) or the labeled fixture.
+
+1. **No raw-path / private fields exist in the type surface.** Types mirror the
+   backend allowlist only; `assertWebSafe` re-sweeps every payload (live or
+   fixture) and fails loud on a vault/absolute path or forbidden key.
+2. **The frontend never recomputes trust.** `ui_status` / `verification_status`
+   / `correction_status` / `produced_by` are produced fail-closed by the backend
+   and consumed verbatim. Any need to recompute publication state on the client
+   is a pass-up trigger → escalate to CTO/CEO/Isaac.
+
+`test/read-api-sample.json` is a real `read_api.build_response(...)` capture used
+by the adapter test.

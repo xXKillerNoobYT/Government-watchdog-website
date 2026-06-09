@@ -1,0 +1,174 @@
+{
+  "access": "reviewer_internal",
+  "agenda_thread": {
+    "lifecycle_edges": [
+      {
+        "edge_id": "agenda_item_supersedes:alpine:2026-05-08:item-7->alpine:2026-04-10:item-3",
+        "edge_type": "agenda_item_supersedes",
+        "from_node_id": "alpine:2026-05-08:item-7",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2026-04-10:item-3",
+        "to_node_type": "agenda_item"
+      }
+    ],
+    "members": [
+      {
+        "agenda_item_id": "alpine:2026-04-10:item-3",
+        "item_order": 3,
+        "meeting_id": 1,
+        "title": "Fireworks ban — first reading"
+      },
+      {
+        "agenda_item_id": "alpine:2026-05-08:item-7",
+        "item_order": 7,
+        "meeting_id": 2,
+        "title": "Fireworks ban — adoption"
+      }
+    ],
+    "thread": {
+      "agenda_thread_id": "alpine:thread:fireworks-ban",
+      "canonicalHumanLabel": "fireworks ban",
+      "first_seen_date": null,
+      "jurisdiction_id": "alpine",
+      "last_seen_date": null,
+      "sourceAliases": [],
+      "status": "open",
+      "title": "Fireworks ban"
+    }
+  },
+  "records": [
+    {
+      "agenda_item_id": "alpine:2026-05-08:item-7",
+      "confidence": "medium",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "available",
+          "archive_url": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "stmt-eligible",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "page",
+          "original_url": "https://alpinewy.gov/packet.pdf",
+          "page": 3,
+          "paragraph": null,
+          "relation": "substantiates",
+          "scan_date": "2026-05-09",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_packet",
+          "verification_status": "human_verified"
+        }
+      ],
+      "is_verbatim": 1,
+      "layer": "known_then",
+      "produced_by": "human",
+      "publication_state": "publishable",
+      "source_changed": 0,
+      "statement_id": "stmt-eligible",
+      "statement_text": "The council adopted the fireworks ban.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "human_verified"
+    }
+  ],
+  "scope": "alpine",
+  "topic_tree": {
+    "breadcrumb": [
+      {
+        "canonicalHumanLabel": "general safety",
+        "jurisdiction_id": "alpine",
+        "name": "General safety",
+        "sourceAliases": [
+          {
+            "aliasType": "government_term",
+            "firstSeenDate": "2026-05-08",
+            "firstSeenMeetingId": 2,
+            "sourceRef": {
+              "locator": {
+                "page": 3
+              },
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "sourceId": "alpine_packet"
+            },
+            "term": "public safety"
+          }
+        ],
+        "topic_id": "topic:safety"
+      }
+    ],
+    "root": {
+      "canonicalHumanLabel": "general safety",
+      "jurisdiction_id": "alpine",
+      "name": "General safety",
+      "sourceAliases": [
+        {
+          "aliasType": "government_term",
+          "firstSeenDate": "2026-05-08",
+          "firstSeenMeetingId": 2,
+          "sourceRef": {
+            "locator": {
+              "page": 3
+            },
+            "originalUrl": "https://alpinewy.gov/packet.pdf",
+            "sourceId": "alpine_packet"
+          },
+          "term": "public safety"
+        }
+      ],
+      "topic_id": "topic:safety"
+    },
+    "tree": {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [],
+              "topic": {
+                "canonicalHumanLabel": "fireworks",
+                "jurisdiction_id": "alpine",
+                "name": "Fireworks",
+                "sourceAliases": [],
+                "topic_id": "topic:fireworks"
+              }
+            }
+          ],
+          "topic": {
+            "canonicalHumanLabel": "fire prevention",
+            "jurisdiction_id": "alpine",
+            "name": "Fire prevention",
+            "sourceAliases": [],
+            "topic_id": "topic:fire"
+          }
+        }
+      ],
+      "topic": {
+        "canonicalHumanLabel": "general safety",
+        "jurisdiction_id": "alpine",
+        "name": "General safety",
+        "sourceAliases": [
+          {
+            "aliasType": "government_term",
+            "firstSeenDate": "2026-05-08",
+            "firstSeenMeetingId": 2,
+            "sourceRef": {
+              "locator": {
+                "page": 3
+              },
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "sourceId": "alpine_packet"
+            },
+            "term": "public safety"
+          }
+        ],
+        "topic_id": "topic:safety"
+      }
+    }
+  }
+}

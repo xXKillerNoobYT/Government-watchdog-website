@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.vite/
+*.local
+.env
+.env.*.local
+.DS_Store
+npm-debug.log*
+# reviewer-internal verification artifacts are kept out of the repo by default
+# (WORKFLOW_GOVERNANCE data-publication boundary); screenshots are attached to
+# the Paperclip issue, not committed.
+/verification-artifacts/
+# Playwright MCP scratch (snapshots/console logs) — not source
+.playwright-mcp/

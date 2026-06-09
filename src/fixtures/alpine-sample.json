@@ -1,0 +1,170 @@
+{
+  "scope": "alpine",
+  "access": "reviewer_internal",
+  "records": [
+    {
+      "statement_id": "sample-stmt-1",
+      "statement_text": "The council adopted a seasonal fireworks ordinance for the July holiday period.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "high",
+      "agenda_item_id": "alpine:2019-06-11:item-5",
+      "ui_status": "source-backed",
+      "verification_status": "human_verified",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_packet_2019_06",
+          "relation": "substantiates",
+          "locator_kind": "page",
+          "page": 5,
+          "original_url": "https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_status": "available",
+          "scan_date": "2019-06-12",
+          "confidence": "high",
+          "verification_status": "human_verified",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-1",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-2",
+      "statement_text": "Minutes record the ordinance taking effect ahead of the holiday weekend.",
+      "layer": "known_then",
+      "is_verbatim": 1,
+      "confidence": "medium",
+      "agenda_item_id": "alpine:2019-06-25:item-2",
+      "ui_status": "archived-source-backed",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_06",
+          "relation": "substantiates",
+          "locator_kind": "section",
+          "section": "Item 2 — Ordinances",
+          "original_url": "https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-06-26",
+          "confidence": "medium",
+          "verification_status": "reviewed_source_linked",
+          "correction_status": "none",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-2",
+          "from_node_type": "statement"
+        }
+      ]
+    }
+  ],
+  "agenda_thread": {
+    "thread": {
+      "agenda_thread_id": "alpine:thread:fireworks-ordinance",
+      "title": "Fireworks ordinance",
+      "jurisdiction_id": "alpine",
+      "status": "decided",
+      "first_seen_date": "2019-06-11",
+      "last_seen_date": "2019-06-25",
+      "canonicalHumanLabel": "fireworks rules",
+      "sourceAliases": []
+    },
+    "members": [
+      {
+        "agenda_item_id": "alpine:2019-06-11:item-5",
+        "item_order": 5,
+        "meeting_id": 101,
+        "title": "Fireworks ordinance — first reading"
+      },
+      {
+        "agenda_item_id": "alpine:2019-06-25:item-2",
+        "item_order": 2,
+        "meeting_id": 102,
+        "title": "Fireworks ordinance — adoption"
+      }
+    ],
+    "lifecycle_edges": [
+      {
+        "edge_id": "agenda_item_supersedes:alpine:2019-06-25:item-2->alpine:2019-06-11:item-5",
+        "edge_type": "agenda_item_supersedes",
+        "from_node_id": "alpine:2019-06-25:item-2",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-11:item-5",
+        "to_node_type": "agenda_item"
+      }
+    ]
+  },
+  "topic_tree": {
+    "root": {
+      "topic_id": "topic:safety",
+      "name": "General safety",
+      "jurisdiction_id": "alpine",
+      "canonicalHumanLabel": "general safety",
+      "sourceAliases": [
+        {
+          "term": "public safety",
+          "aliasType": "government_term",
+          "sourceRef": {
+            "sourceId": "sample_packet_2019_06",
+            "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+            "locator": { "page": 5 }
+          },
+          "firstSeenMeetingId": 101,
+          "firstSeenDate": "2019-06-11"
+        }
+      ]
+    },
+    "breadcrumb": [
+      {
+        "topic_id": "topic:safety",
+        "name": "General safety",
+        "jurisdiction_id": "alpine",
+        "canonicalHumanLabel": "general safety",
+        "sourceAliases": []
+      }
+    ],
+    "tree": {
+      "topic": {
+        "topic_id": "topic:safety",
+        "name": "General safety",
+        "jurisdiction_id": "alpine",
+        "canonicalHumanLabel": "general safety",
+        "sourceAliases": []
+      },
+      "children": [
+        {
+          "topic": {
+            "topic_id": "topic:fire",
+            "name": "Fire prevention",
+            "jurisdiction_id": "alpine",
+            "canonicalHumanLabel": "fire prevention",
+            "sourceAliases": []
+          },
+          "children": [
+            {
+              "topic": {
+                "topic_id": "topic:fireworks",
+                "name": "Fireworks",
+                "jurisdiction_id": "alpine",
+                "canonicalHumanLabel": "fireworks",
+                "sourceAliases": []
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
