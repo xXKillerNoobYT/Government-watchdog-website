@@ -53,3 +53,52 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
     expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
   });
 });
+
+describe('GOV-100 — statement card + drawer + typed related-links', () => {
+  beforeEach(() => render(root, resolved(FIXTURE, 'fixture', isEmptyResponse)));
+
+  it('shows exactly one status badge per card', () => {
+    const cards = root.querySelectorAll('[data-test="record-card"]');
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      expect(card.querySelectorAll('[data-test="trust-badge"]').length).toBe(1);
+    }
+  });
+
+  it('renders the locked/visible AI label and separates AI analysis from facts (BEH-HANDOFF-4)', () => {
+    const ai = root.querySelector('[data-test="ai-analysis"]');
+    expect(ai).not.toBeNull();
+    expect(ai!.textContent).toContain('not independently verified');
+    // The AI card carries the locked label; a human-fact card does not.
+    expect(root.querySelector('[data-test="ai-label"]')?.textContent).toContain('AI — not independently verified');
+    expect(root.querySelector('[data-test="statement-fact"]')).not.toBeNull();
+  });
+
+  it('renders a typed Supersedes link from the backend edge type (never inferred)', () => {
+    const types = [...root.querySelectorAll('[data-test="related-type"]')].map((n) => n.textContent);
+    expect(types).toContain('Supersedes');
+    expect(types).toContain('Amends');
+    expect(types).toContain('Revisits');
+    expect(types).not.toContain('related');
+  });
+
+  it('drawer renders labeled 1.06 §6 fields, incl. the safe source registry id', () => {
+    expect(root.querySelector('[data-test="drawer-field-to_source_id"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="drawer-field-verification_status"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="drawer-field-source_type"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="drawer-link-original_url"]')).not.toBeNull();
+  });
+
+  it('shows the visible "Archive not available" row for a broken archive', () => {
+    const archives = [...root.querySelectorAll('[data-test="drawer-field-archive_url"]')];
+    expect(archives.some((n) => n.textContent?.includes('Archive not available'))).toBe(true);
+  });
+
+  it('never paints a reviewer note or raw/local path into the DOM', () => {
+    const text = root.textContent ?? '';
+    expect(text).not.toMatch(/\/Users\/|Obsidian Vault|transcript_path|\.sha256/);
+    // No reviewer-note field label leaks in.
+    expect(root.querySelector('[data-test="drawer-field-reviewer_note"]')).toBeNull();
+    expect(root.querySelector('[data-test="drawer-field-note"]')).toBeNull();
+  });
+});

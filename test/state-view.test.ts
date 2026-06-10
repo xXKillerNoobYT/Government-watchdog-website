@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stateView, trustLabel, isAiProduced, FIXTURE_BANNER_TEXT } from '../src/ui/state-view';
+import { stateView, trustLabel, isAiProduced, readyHeaderMessage, summarizeRecords, FIXTURE_BANNER_TEXT } from '../src/ui/state-view';
 import { idle, loading, failed, resolved } from '../src/state/async-state';
 import { isEmptyResponse, FIXTURE } from '../src/data/client';
 import type { ReadApiResponse, StatementRecord } from '../src/types/read-api';
@@ -28,6 +28,40 @@ describe('stateView (BEH-STATE primitives)', () => {
     const v = stateView(resolved(FIXTURE, 'fixture', isEmptyResponse));
     expect(v.kind).toBe('ready');
     expect(v.message).toMatch(/record/);
+  });
+
+  // GOV-100 done-bar criterion (UXProductDesigner): the ready header must not
+  // apply a blanket trust word over a set containing any unverified/AI row.
+  it('does NOT call a mixed set "reviewed" — counts by backend trust label', () => {
+    const mixed: StatementRecord[] = [
+      { statement_id: '1', ui_status: 'source-backed', produced_by: 'human', evidence: [] },
+      { statement_id: '2', ui_status: 'archived-source-backed', produced_by: 'human', evidence: [] },
+      { statement_id: '3', ui_status: 'unverified', produced_by: 'ai', evidence: [] },
+    ];
+    const msg = readyHeaderMessage(mixed);
+    expect(msg).not.toMatch(/\breviewed\b/i); // no blanket trust word
+    expect(msg).toContain('3 records');
+    expect(msg).toContain('1 Source-backed');
+    expect(msg).toContain('1 Unverified');
+    expect(msg).toContain('1 AI-produced'); // AI surfaced explicitly
+  });
+
+  it('summarizeRecords counts verbatim trust labels in first-seen order', () => {
+    const recs: StatementRecord[] = [
+      { statement_id: '1', ui_status: 'source-backed', evidence: [] },
+      { statement_id: '2', ui_status: 'disputed', evidence: [] },
+      { statement_id: '3', ui_status: 'source-backed', evidence: [] },
+    ];
+    expect(summarizeRecords(recs)).toEqual([
+      { label: 'Source-backed', count: 2 },
+      { label: 'Disputed', count: 1 },
+    ]);
+  });
+
+  it('the actual fixture header never reads as a blanket "reviewed" set', () => {
+    const v = stateView(resolved(FIXTURE, 'fixture', isEmptyResponse));
+    expect(v.message).not.toMatch(/\breviewed\b/i);
+    expect(v.message).toContain('AI-produced');
   });
 
   it('shows the fixture banner only in fixture mode', () => {

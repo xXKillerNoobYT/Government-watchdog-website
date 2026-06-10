@@ -44,15 +44,56 @@ export function stateView(state: AsyncState<ReadApiResponse>, notice?: string): 
         ...base,
       };
     case 'ready': {
-      const n = state.data?.records?.length ?? 0;
       return {
         kind: 'ready',
         heading: 'Alpine timeline (reviewer-internal)',
-        message: `${n} reviewed record${n === 1 ? '' : 's'}.`,
+        message: readyHeaderMessage(state.data?.records ?? []),
         ...base,
       };
     }
   }
+}
+
+/**
+ * Ready-state header copy (GOV-100 done-bar criterion, from UXProductDesigner).
+ *
+ * The old copy said "{n} reviewed records" — a blanket trust word over the whole
+ * set, which contradicts a mixed set containing any unverified / AI / pending /
+ * disputed row (BEH-LABEL). This counts by the ACTUAL backend trust label each
+ * record already carries (verbatim `trustLabel`, no recompute) and surfaces an
+ * explicit AI-produced count, so no trust word is ever applied to records that
+ * did not earn it. Pass-up boundary respected: only grouping/counting fields the
+ * read-API already sent — never deriving publication state on the client.
+ */
+export function readyHeaderMessage(records: StatementRecord[]): string {
+  const n = records.length;
+  if (n === 0) return 'No records in this view.';
+  const groups = summarizeRecords(records);
+  const breakdown = groups.map((g) => `${g.count} ${g.label}`).join(' · ');
+  const aiCount = records.filter(isAiProduced).length;
+  const aiSuffix = aiCount > 0 ? ` · ${aiCount} AI-produced` : '';
+  return `${n} record${n === 1 ? '' : 's'} · ${breakdown}${aiSuffix}`;
+}
+
+export interface TrustGroup {
+  label: string;
+  count: number;
+}
+
+/**
+ * Count records by their verbatim backend trust label, preserving first-seen
+ * order. Pure counting of `ui_status` (via {@link trustLabel}) — no derivation,
+ * no upgrade, no invented publication state.
+ */
+export function summarizeRecords(records: StatementRecord[]): TrustGroup[] {
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  for (const r of records) {
+    const label = trustLabel(r);
+    if (!counts.has(label)) order.push(label);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return order.map((label) => ({ label, count: counts.get(label)! }));
 }
 
 /** Verbatim, human-readable label for a record's backend trust state. */

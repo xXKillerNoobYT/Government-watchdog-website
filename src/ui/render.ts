@@ -6,8 +6,9 @@
  */
 
 import type { AsyncState } from '../state/async-state';
-import type { ReadApiResponse, StatementRecord, EvidenceLink } from '../types/read-api';
+import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember } from '../types/read-api';
 import { stateView, trustLabel, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
+import { drawerFields, relatedLinksFor, verbatimLabel } from './statement-presenter';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -20,47 +21,88 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function evidenceDrawer(evidence: EvidenceLink[]): HTMLElement {
-  const items = evidence.map((e) => {
-    const parts: (Node | string)[] = [];
-    if (e.original_url) parts.push(el('a', { href: e.original_url, target: '_blank', rel: 'noopener', 'data-test': 'source-link' }, ['View original']));
-    if (e.archive_url) parts.push(el('a', { href: e.archive_url, target: '_blank', rel: 'noopener', 'data-test': 'archive-link' }, ['View archive']));
-    else parts.push(el('span', { class: 'gw-muted' }, ['Archive not available']));
-    const locator = [e.page ? `p.${e.page}` : '', e.section ?? '', e.timestamp_human ?? ''].filter(Boolean).join(' · ');
-    return el('li', {}, [el('span', { class: 'gw-muted' }, [`${e.relation ?? 'source'}${locator ? ` — ${locator}` : ''} `]), ...interleave(parts)]);
+/** One source's evidence row, rendered as a labeled field list (1.06 §6). */
+function evidenceEntry(e: EvidenceLink): HTMLElement {
+  const rows = drawerFields(e).map((f) => {
+    const value =
+      f.kind === 'link' && f.href
+        ? el('a', { href: f.href, target: '_blank', rel: 'noopener', 'data-test': `drawer-link-${f.key}` }, [f.value])
+        : el('span', { 'data-test': `drawer-value-${f.key}` }, [f.value]);
+    return el('div', { class: 'gw-field', 'data-test': `drawer-field-${f.key}` }, [
+      el('dt', {}, [f.label]),
+      el('dd', {}, [value]),
+    ]);
   });
+  return el('dl', { class: 'gw-source', 'data-test': 'source-entry' }, rows);
+}
+
+function evidenceDrawer(evidence: EvidenceLink[]): HTMLElement {
   return el('details', { class: 'gw-drawer', 'data-test': 'source-drawer' }, [
     el('summary', {}, [`Sources (${evidence.length})`]),
-    el('ul', {}, items),
+    el('div', { class: 'gw-source-list' }, evidence.map(evidenceEntry)),
   ]);
 }
 
-function interleave(nodes: (Node | string)[]): (Node | string)[] {
-  const out: (Node | string)[] = [];
-  nodes.forEach((n, i) => {
-    if (i > 0) out.push(' · ');
-    out.push(n);
-  });
-  return out;
+/** Typed related-links for a card — explicit Supersedes/Amends/Revisits labels. */
+function relatedLinks(
+  r: StatementRecord,
+  edges: ConceptEdge[] | undefined,
+  members: AgendaItemMember[] | undefined,
+): HTMLElement | null {
+  const links = relatedLinksFor(r, edges, members);
+  if (!links.length) return null;
+  const items = links.map((l) =>
+    el('li', { class: 'gw-related', 'data-test': 'related-link' }, [
+      el('span', { class: 'gw-related-type', 'data-test': 'related-type' }, [l.label]),
+      ` ${l.direction === 'in' ? '←' : '→'} `,
+      el('span', { class: 'gw-related-target' }, [l.targetTitle]),
+    ]),
+  );
+  return el('ul', { class: 'gw-related-list', 'data-test': 'related-links' }, items);
 }
 
-function recordCard(r: StatementRecord): HTMLElement {
-  const badges = [el('span', { class: 'gw-badge', 'data-test': 'trust-badge' }, [trustLabel(r)])];
-  if (isAiProduced(r)) {
-    // Standing gate: locked/visible AI label — never hidden behind interaction.
+function recordCard(
+  r: StatementRecord,
+  edges?: ConceptEdge[],
+  members?: AgendaItemMember[],
+): HTMLElement {
+  // Exactly one status badge per card (acceptance criterion). The locked AI
+  // label is a separate, clearly-labeled element — not a second status badge.
+  const badges: HTMLElement[] = [el('span', { class: 'gw-badge', 'data-test': 'trust-badge' }, [trustLabel(r)])];
+  const ai = isAiProduced(r);
+  if (ai) {
     badges.push(el('span', { class: 'gw-badge gw-badge-ai', 'data-test': 'ai-label' }, [AI_LABEL_TEXT]));
   }
-  return el('article', { class: 'gw-card', 'data-test': 'record-card' }, [
+
+  // Facts rendered separately from AI analysis (BEH-HANDOFF-4): AI-origin text
+  // sits in its own labeled region so it never reads as a verified fact.
+  const body = ai
+    ? el('div', { class: 'gw-analysis', 'data-test': 'ai-analysis' }, [
+        el('p', { class: 'gw-analysis-caption gw-muted' }, ['AI analysis — not independently verified']),
+        el('p', { class: 'gw-statement' }, [r.statement_text ?? '(no text)']),
+      ])
+    : el('div', { class: 'gw-fact', 'data-test': 'statement-fact' }, [
+        el('p', { class: 'gw-statement' }, [r.statement_text ?? '(no text)']),
+      ]);
+
+  const children: HTMLElement[] = [
     el('div', { class: 'gw-badges' }, badges),
-    el('p', { class: 'gw-statement' }, [r.statement_text ?? '(no text)']),
-    evidenceDrawer(r.evidence ?? []),
-  ]);
+    body,
+    el('p', { class: 'gw-provenance gw-muted', 'data-test': 'provenance' }, [verbatimLabel(r)]),
+  ];
+  const related = relatedLinks(r, edges, members);
+  if (related) children.push(related);
+  children.push(evidenceDrawer(r.evidence ?? []));
+
+  return el('article', { class: 'gw-card', 'data-test': 'record-card' }, children);
 }
 
 function readyView(data: ReadApiResponse): HTMLElement {
   const children: HTMLElement[] = [];
   const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
   if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
+  const edges = data.agenda_thread?.lifecycle_edges;
+  const members = data.agenda_thread?.members;
   if (data.agenda_thread) {
     const th = data.agenda_thread.thread;
     children.push(
@@ -71,7 +113,7 @@ function readyView(data: ReadApiResponse): HTMLElement {
     );
   }
   const records = data.records ?? [];
-  children.push(el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, records.map(recordCard)));
+  children.push(el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, records.map((r) => recordCard(r, edges, members))));
   return el('div', {}, children);
 }
 
@@ -90,7 +132,19 @@ const STYLE = `
 .gw-badge{font-size:.75rem;font-weight:700;background:#e8f0e8;color:#1e4620;border:1px solid #1e4620;border-radius:999px;padding:.1rem .5rem}
 .gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
 .gw-statement{margin:.3rem 0}
-.gw-drawer summary{cursor:pointer;font-size:.85rem;color:#1a4d8f}
+.gw-analysis{border-left:3px solid #d9a400;background:#fffaf0;padding:.3rem .6rem;border-radius:4px;margin:.3rem 0}
+.gw-analysis-caption{font-size:.72rem;font-weight:600;margin:.1rem 0;text-transform:uppercase;letter-spacing:.02em}
+.gw-provenance{font-size:.75rem;margin:.2rem 0}
+.gw-related-list{list-style:none;padding:0;margin:.3rem 0;display:flex;flex-direction:column;gap:.2rem}
+.gw-related{font-size:.8rem}
+.gw-related-type{font-weight:700;background:#eef2f8;color:#1a4d8f;border:1px solid #1a4d8f;border-radius:4px;padding:.05rem .35rem}
+.gw-drawer summary{cursor:pointer;font-size:.9rem;color:#1a4d8f;padding:.55rem .2rem;min-height:1.5rem;display:flex;align-items:center}
+.gw-source-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem}
+.gw-source{border-top:1px solid #eee;padding-top:.4rem;margin:0;display:grid;grid-template-columns:auto;gap:.15rem}
+.gw-field{display:grid;grid-template-columns:9rem 1fr;gap:.5rem;font-size:.8rem}
+.gw-field dt{color:#666;margin:0}
+.gw-field dd{margin:0}
+@media (max-width:420px){.gw-field{grid-template-columns:1fr}.gw-field dt{font-weight:600}}
 .gw-thread h2{font-size:1rem;margin:.4rem 0 .1rem}
 `;
 
