@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render } from '../src/ui/render';
+import { render, STYLE, BADGE_MIN_FONT_PX, DRAWER_TAP_MIN_PX } from '../src/ui/render';
 import { loading, failed, resolved } from '../src/state/async-state';
 import { FIXTURE, isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse } from '../src/types/read-api';
@@ -100,5 +100,20 @@ describe('GOV-100 — statement card + drawer + typed related-links', () => {
     // No reviewer-note field label leaks in.
     expect(root.querySelector('[data-test="drawer-field-reviewer_note"]')).toBeNull();
     expect(root.querySelector('[data-test="drawer-field-note"]')).toBeNull();
+  });
+});
+
+// UXProductDesigner formalized legibility/touch floors (GOV-100). The exact
+// computed-px is verified in a real browser at 390px; this guards the CSS floor
+// in CI (no browser) so it can never silently regress below the threshold.
+describe('GOV-100 — legibility / touch-target floors honoured by the stylesheet', () => {
+  it('badge font and drawer tap target meet the formalized minimums', () => {
+    expect(BADGE_MIN_FONT_PX).toBeGreaterThanOrEqual(13);
+    expect(DRAWER_TAP_MIN_PX).toBeGreaterThanOrEqual(44);
+  });
+
+  it('sizes badges ≥13px and the drawer summary ≥44px in the stylesheet', () => {
+    expect(STYLE).toContain(`.gw-badge{font-size:${BADGE_MIN_FONT_PX}px`);
+    expect(STYLE).toContain(`min-height:${DRAWER_TAP_MIN_PX}px`);
   });
 });

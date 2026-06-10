@@ -117,7 +117,19 @@ function readyView(data: ReadApiResponse): HTMLElement {
   return el('div', {}, children);
 }
 
-const STYLE = `
+/**
+ * Reviewer-internal legibility / touch floors, formalized by UXProductDesigner
+ * on GOV-100 (not visual-style commitments — Isaac's later pass may restyle
+ * ABOVE these). Stated in px so they can never scale below the floor with root
+ * font changes, and exported so a unit test can assert the CSS honours them.
+ *  - Badge text ≥ 13px computed at the 390px mobile floor (mobile legibility).
+ *  - Drawer summary tap target ≥ 44×44px (WCAG 2.5.5 Target Size).
+ */
+export const BADGE_MIN_FONT_PX = 13;
+export const DRAWER_TAP_MIN_PX = 44;
+
+/** Exported for the legibility/touch-floor regression test (source of truth). */
+export const STYLE = `
 .gw-root{font-family:system-ui,sans-serif;line-height:1.5;color:#1a1a1a;max-width:48rem;margin:0 auto;padding:1rem}
 .gw-fixture-banner{background:#fff3cd;border:1px solid #d9a400;color:#5c4500;padding:.6rem .8rem;border-radius:6px;font-weight:600;margin-bottom:.75rem}
 .gw-fixture-banner small{display:block;font-weight:400}
@@ -129,7 +141,7 @@ const STYLE = `
 .gw-breadcrumb{font-size:.85rem;color:#555;margin:.5rem 0}
 .gw-card{border:1px solid #ddd;border-radius:8px;padding:.8rem;margin:.6rem 0}
 .gw-badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.4rem}
-.gw-badge{font-size:.75rem;font-weight:700;background:#e8f0e8;color:#1e4620;border:1px solid #1e4620;border-radius:999px;padding:.1rem .5rem}
+.gw-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;background:#e8f0e8;color:#1e4620;border:1px solid #1e4620;border-radius:999px;padding:.15rem .55rem;white-space:nowrap}
 .gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
 .gw-statement{margin:.3rem 0}
 .gw-analysis{border-left:3px solid #d9a400;background:#fffaf0;padding:.3rem .6rem;border-radius:4px;margin:.3rem 0}
@@ -138,7 +150,7 @@ const STYLE = `
 .gw-related-list{list-style:none;padding:0;margin:.3rem 0;display:flex;flex-direction:column;gap:.2rem}
 .gw-related{font-size:.8rem}
 .gw-related-type{font-weight:700;background:#eef2f8;color:#1a4d8f;border:1px solid #1a4d8f;border-radius:4px;padding:.05rem .35rem}
-.gw-drawer summary{cursor:pointer;font-size:.9rem;color:#1a4d8f;padding:.55rem .2rem;min-height:1.5rem;display:flex;align-items:center}
+.gw-drawer summary{cursor:pointer;font-size:.9rem;color:#1a4d8f;padding:.5rem .2rem;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;display:flex;align-items:center}
 .gw-source-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem}
 .gw-source{border-top:1px solid #eee;padding-top:.4rem;margin:0;display:grid;grid-template-columns:auto;gap:.15rem}
 .gw-field{display:grid;grid-template-columns:9rem 1fr;gap:.5rem;font-size:.8rem}
