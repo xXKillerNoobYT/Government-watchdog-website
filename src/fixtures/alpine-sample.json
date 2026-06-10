@@ -67,6 +67,39 @@
           "from_node_type": "statement"
         }
       ]
+    },
+    {
+      "statement_id": "sample-stmt-3",
+      "statement_text": "AI extraction summarized the ordinance as a seasonal ban on consumer fireworks; this wording has not been independently reviewed.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "agenda_item_id": "alpine:2019-06-11:item-5",
+      "ui_status": "unverified",
+      "verification_status": "machine_extracted_unreviewed",
+      "correction_status": "none",
+      "produced_by": "ai",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_packet_2019_06",
+          "relation": "derived_from",
+          "locator_kind": "page",
+          "page": 5,
+          "original_url": "https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_status": "available",
+          "scan_date": "2019-06-12",
+          "confidence": "low",
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-3",
+          "from_node_type": "statement"
+        }
+      ]
     }
   ],
   "agenda_thread": {
