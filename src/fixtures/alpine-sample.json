@@ -317,7 +317,19 @@
             "name": "Fire prevention",
             "jurisdiction_id": "alpine",
             "canonicalHumanLabel": "fire prevention",
-            "sourceAliases": []
+            "sourceAliases": [
+              {
+                "term": "fire code enforcement",
+                "aliasType": "government_term",
+                "sourceRef": {
+                  "sourceId": "sample_packet_2019_06",
+                  "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+                  "locator": { "page": 4 }
+                },
+                "firstSeenMeetingId": 101,
+                "firstSeenDate": "2019-06-11"
+              }
+            ]
           },
           "children": [
             {
@@ -326,7 +338,19 @@
                 "name": "Fireworks",
                 "jurisdiction_id": "alpine",
                 "canonicalHumanLabel": "fireworks",
-                "sourceAliases": []
+                "sourceAliases": [
+                  {
+                    "term": "consumer pyrotechnics",
+                    "aliasType": "government_term",
+                    "sourceRef": {
+                      "sourceId": "sample_packet_2019_06",
+                      "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+                      "locator": { "page": 5 }
+                    },
+                    "firstSeenMeetingId": 101,
+                    "firstSeenDate": "2019-06-11"
+                  }
+                ]
               },
               "children": []
             }
