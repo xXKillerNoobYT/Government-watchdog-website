@@ -11,8 +11,10 @@
  *  1. **No raw-path / private fields exist in the type surface.** The backend
  *     strips them at two layers (allowlist + `assert_no_raw_paths`). Mirroring
  *     only the allowlist here means a raw locator can never even be *named* by
- *     frontend code. The forbidden set is listed in `RAW_PATH_FORBIDDEN_KEYS`
- *     (src/data/web-safe.ts) and asserted by tests. Never add any of:
+ *     frontend code. The raw-path/private-locator denylist (the leak-bearing
+ *     SUBSET of the backend `WEB_UNSAFE_FIELDS`, not a 1:1 mirror) lives in
+ *     `RAW_PATH_FORBIDDEN_KEYS` (src/data/web-safe.ts) and is asserted by tests.
+ *     Never add any of:
  *       transcript_path, deep_link, raw_local_path, raw_sha256, segment_id,
  *       local_ref / localRef, owner_agent, created_by, notes, note,
  *       review_state, local_note_path.

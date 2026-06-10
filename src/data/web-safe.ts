@@ -9,7 +9,16 @@
  * raw-path stripping verified at transport — we also fail loud on the client.
  */
 
-/** Field names that must NEVER appear in any web-safe payload (keys or nested). */
+/**
+ * Raw-path / private-locator field names that must NEVER appear in any web-safe
+ * payload (keys or nested). This is the raw-path/private-locator SUBSET of the
+ * backend `WEB_UNSAFE_FIELDS` (GOV-98) — deliberately NOT a 1:1 mirror. The
+ * backend's purely operational reviewer-state fields (e.g. `raw_preservation_status`,
+ * `robots_policy`, `registered_utc`) are not raw-path locators and are kept off the
+ * wire by the backend's fail-closed allowlist (`to_web_safe`), not by this denylist.
+ * Adding them here would be a category error; this list stays scoped to leak-bearing
+ * locators. (Per GOV-108 SecurityPrivacy consult.)
+ */
 export const RAW_PATH_FORBIDDEN_KEYS = [
   'transcript_path',
   'deep_link',
