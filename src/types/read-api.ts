@@ -118,6 +118,14 @@ export interface EvidenceLink {
   to_source_id?: string | null;
   relation?: string | null;
   locator_kind?: string | null;
+  // Public source-registry metadata (1.06 §6 drawer fields 1–4 + 13). All
+  // web-safe and optional — the backend joins them when available; the drawer
+  // renders only those present. NONE of these is a raw/local path.
+  source_type?: string | null;
+  published_by?: string | null;
+  jurisdiction?: string | null;
+  source_date?: string | null;
+  related_concepts?: string[] | null;
   timestamp_human?: string | null;
   timestamp_seconds?: number | null;
   page?: number | null;

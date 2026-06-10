@@ -100,6 +100,119 @@
           "from_node_type": "statement"
         }
       ]
+    },
+    {
+      "statement_id": "sample-stmt-4",
+      "statement_text": "A later correction clarified the ordinance applies only to commercial-grade fireworks, not consumer sparklers.",
+      "layer": "corrected_later",
+      "is_verbatim": 0,
+      "confidence": "high",
+      "updates_statement_id": "sample-stmt-1",
+      "agenda_item_id": "alpine:2019-07-09:item-7",
+      "ui_status": "corrected",
+      "verification_status": "human_verified",
+      "correction_status": "corrected",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_07",
+          "relation": "substantiates",
+          "locator_kind": "section",
+          "source_type": "Meeting minutes",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-07-09",
+          "section": "Item 7 — Corrections",
+          "paragraph": "2",
+          "original_url": "https://records.example/alpine/2019-07-09-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-07-09-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-07-10",
+          "confidence": "high",
+          "verification_status": "human_verified",
+          "correction_status": "corrected",
+          "is_verbatim": 0,
+          "layer": "corrected_later",
+          "related_concepts": ["fireworks rules", "public safety"],
+          "from_node_id": "sample-stmt-4",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-5",
+      "statement_text": "A resident asserted the ordinance was adopted without the required second reading; staff dispute this account.",
+      "layer": "known_then",
+      "is_verbatim": 1,
+      "confidence": "medium",
+      "agenda_item_id": "alpine:2019-06-25:item-2",
+      "ui_status": "disputed",
+      "verification_status": "disputed",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_06",
+          "relation": "disputes",
+          "locator_kind": "section",
+          "source_type": "Meeting minutes",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-06-25",
+          "section": "Item 2 — Public comment",
+          "original_url": "https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-06-26",
+          "confidence": "medium",
+          "verification_status": "disputed",
+          "correction_status": "none",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-5",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-6",
+      "statement_text": "Draft agenda notes reference a follow-up fireworks safety review pending the next meeting.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "agenda_item_id": "alpine:2019-07-09:item-7",
+      "ui_status": "pending-review",
+      "verification_status": "source_recorded",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_draft_agenda_2019_07",
+          "relation": "mentions",
+          "locator_kind": "page",
+          "source_type": "Draft agenda",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-07-09",
+          "page": 1,
+          "original_url": "https://records.example/alpine/2019-07-09-draft-agenda.pdf",
+          "archive_status": "unavailable",
+          "scan_date": "2019-07-08",
+          "confidence": "low",
+          "verification_status": "source_recorded",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-6",
+          "from_node_type": "statement"
+        }
+      ]
     }
   ],
   "agenda_thread": {
@@ -125,6 +238,12 @@
         "item_order": 2,
         "meeting_id": 102,
         "title": "Fireworks ordinance — adoption"
+      },
+      {
+        "agenda_item_id": "alpine:2019-07-09:item-7",
+        "item_order": 7,
+        "meeting_id": 103,
+        "title": "Fireworks ordinance — correction"
       }
     ],
     "lifecycle_edges": [
@@ -132,6 +251,22 @@
         "edge_id": "agenda_item_supersedes:alpine:2019-06-25:item-2->alpine:2019-06-11:item-5",
         "edge_type": "agenda_item_supersedes",
         "from_node_id": "alpine:2019-06-25:item-2",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-11:item-5",
+        "to_node_type": "agenda_item"
+      },
+      {
+        "edge_id": "agenda_item_amends:alpine:2019-07-09:item-7->alpine:2019-06-25:item-2",
+        "edge_type": "agenda_item_amends",
+        "from_node_id": "alpine:2019-07-09:item-7",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-25:item-2",
+        "to_node_type": "agenda_item"
+      },
+      {
+        "edge_id": "agenda_item_revisits:alpine:2019-07-09:item-7->alpine:2019-06-11:item-5",
+        "edge_type": "agenda_item_revisits",
+        "from_node_id": "alpine:2019-07-09:item-7",
         "from_node_type": "agenda_item",
         "to_node_id": "alpine:2019-06-11:item-5",
         "to_node_type": "agenda_item"
