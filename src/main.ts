@@ -15,7 +15,7 @@
  */
 
 import { createRouter } from './router';
-import { loadReadModel, isEmptyResponse } from './data/client';
+import { loadReadModel, isEmptyResponse, FIXTURE } from './data/client';
 import { render } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { idle, loading, failed, resolved } from './state/async-state';
@@ -31,6 +31,23 @@ function el(tag: string, attrs: Record<string, string> = {}, text?: string): HTM
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
   if (text) node.textContent = text;
   return node;
+}
+
+/**
+ * Screenshot-only override for the `complete` completeness state (GOV-101
+ * evidence: one `complete`, one `gaps`). The labeled fixture ships the honest
+ * `gaps` state for this sample; `?demo=complete` substitutes a backend-equivalent
+ * `complete` assessment so the indicator's complete rendering can be captured.
+ * This is demo scaffolding (like `?state=`), NOT a frontend recompute of
+ * completeness — the value is supplied as data and rendered verbatim.
+ */
+function completeDemoBody(): ReadApiResponse {
+  const base = FIXTURE;
+  if (!base.agenda_thread) return base;
+  return {
+    ...base,
+    agenda_thread: { ...base.agenda_thread, completeness: { state: 'complete' } },
+  };
 }
 
 /** Default screenshot scenario so `/topics` shows everything with no query. */
@@ -62,9 +79,15 @@ function forcedState(forced: string | null): AsyncState<ReadApiResponse> | null 
   return null;
 }
 
+// Timeline route: ?state= overrides loading/empty/error; ?demo=complete shows
+// the backend-equivalent `complete` completeness state for screenshots.
 async function renderTimeline(query: URLSearchParams): Promise<void> {
   const forced = forcedState(query.get('state'));
   if (forced) return render(root!, forced);
+  if (query.get('demo') === 'complete') {
+    render(root!, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
+    return;
+  }
   render(root!, idle<ReadApiResponse>());
   const { state, notice } = await loadReadModel();
   render(root!, state, notice);

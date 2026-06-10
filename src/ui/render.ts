@@ -6,9 +6,10 @@
  */
 
 import type { AsyncState } from '../state/async-state';
-import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember } from '../types/read-api';
+import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
 import { stateView, trustLabel, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
 import { drawerFields, relatedLinksFor, verbatimLabel } from './statement-presenter';
+import { buildTimeline, assembleThread, completenessView, NO_LINK_TEXT, type AssembledThread, type CompletenessView } from './timeline';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -97,23 +98,88 @@ function recordCard(
   return el('article', { class: 'gw-card', 'data-test': 'record-card' }, children);
 }
 
+/** The completeness indicator — fail-closed; an incomplete thread never reads complete. */
+function completenessIndicator(view: CompletenessView): HTMLElement {
+  const children: (Node | string)[] = [
+    el('span', { class: `gw-completeness-badge gw-completeness-${view.state}`, 'data-test': 'completeness-badge' }, [view.summary]),
+  ];
+  if (view.state === 'gaps' && view.gaps.length) {
+    children.push(
+      el(
+        'ul',
+        { class: 'gw-gap-list', 'data-test': 'completeness-gaps' },
+        view.gaps.map((g) =>
+          el('li', { class: 'gw-gap', 'data-test': `gap-${g.kind}` }, [
+            el('span', { class: 'gw-gap-kind' }, [g.label]),
+            ...(g.detail ? [` — `, el('span', { class: 'gw-muted' }, [g.detail])] : []),
+          ]),
+        ),
+      ),
+    );
+  }
+  return el('div', { class: 'gw-completeness', 'data-test': 'completeness', 'data-state': view.state }, children);
+}
+
+/**
+ * The assembled cross-meeting thread surface (BEH-AGENDA): per-meeting instances
+ * in known-then order, each keeping its own title + typed forward links, with the
+ * explicit "no linked prior/next item recorded" line when an edge is absent, plus
+ * the fail-closed completeness indicator.
+ */
+function assembledThreadSurface(threadResponse: AgendaThreadResponse): HTMLElement {
+  const assembled: AssembledThread = assembleThread(threadResponse);
+  const th = assembled.thread;
+  const completeness = completenessView(threadResponse.completeness);
+
+  const instances = assembled.instances.map((inst) =>
+    el('li', { class: 'gw-thread-instance', 'data-test': 'thread-instance' }, [
+      el('div', { class: 'gw-instance-head' }, [
+        ...(inst.meetingDate ? [el('span', { class: 'gw-instance-date gw-muted', 'data-test': 'instance-date' }, [inst.meetingDate])] : []),
+        el('span', { class: 'gw-instance-title' }, [inst.title]),
+      ]),
+      inst.hasNoLinks
+        ? el('p', { class: 'gw-no-link gw-muted', 'data-test': 'no-link' }, [NO_LINK_TEXT])
+        : el(
+            'ul',
+            { class: 'gw-related-list', 'data-test': 'instance-links' },
+            inst.links.map((l) =>
+              el('li', { class: 'gw-related', 'data-test': 'instance-link' }, [
+                el('span', { class: 'gw-related-type', 'data-test': 'related-type' }, [l.label]),
+                ` ${l.direction === 'in' ? '←' : '→'} `,
+                el('span', { class: 'gw-related-target' }, [l.targetTitle]),
+              ]),
+            ),
+          ),
+    ]),
+  );
+
+  return el('section', { class: 'gw-thread', 'data-test': 'agenda-thread' }, [
+    el('h2', {}, [th.canonicalHumanLabel ?? th.title ?? th.agenda_thread_id]),
+    completenessIndicator(completeness),
+    el('p', { class: 'gw-muted', 'data-test': 'thread-count' }, [`${assembled.instances.length} meeting instance(s) in this thread`]),
+    el('ol', { class: 'gw-thread-list', 'data-test': 'thread-instances' }, instances),
+  ]);
+}
+
 function readyView(data: ReadApiResponse): HTMLElement {
   const children: HTMLElement[] = [];
   const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
   if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
   const edges = data.agenda_thread?.lifecycle_edges;
   const members = data.agenda_thread?.members;
-  if (data.agenda_thread) {
-    const th = data.agenda_thread.thread;
-    children.push(
-      el('section', { class: 'gw-thread', 'data-test': 'agenda-thread' }, [
-        el('h2', {}, [th.canonicalHumanLabel ?? th.title ?? th.agenda_thread_id]),
-        el('p', { class: 'gw-muted' }, [`${data.agenda_thread.members.length} linked agenda item(s)`]),
-      ]),
-    );
-  }
-  const records = data.records ?? [];
-  children.push(el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, records.map((r) => recordCard(r, edges, members))));
+  if (data.agenda_thread) children.push(assembledThreadSurface(data.agenda_thread));
+
+  // Chronological, Alpine-scope-locked timeline. Non-Alpine records are dropped
+  // and logged here (BEH-FILTER-2) — never silently shown under an Alpine view.
+  const timeline = buildTimeline(data);
+  for (const w of timeline.warnings) console.warn(w);
+  children.push(
+    el(
+      'section',
+      { class: 'gw-timeline', 'data-test': 'timeline' },
+      timeline.ordered.map(({ record }) => recordCard(record, edges, members)),
+    ),
+  );
   return el('div', {}, children);
 }
 
@@ -157,7 +223,21 @@ export const STYLE = `
 .gw-field dt{color:#666;margin:0}
 .gw-field dd{margin:0}
 @media (max-width:420px){.gw-field{grid-template-columns:1fr}.gw-field dt{font-weight:600}}
-.gw-thread h2{font-size:1rem;margin:.4rem 0 .1rem}
+.gw-thread{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
+.gw-thread h2{font-size:1rem;margin:.2rem 0 .35rem}
+.gw-completeness{margin:.2rem 0 .5rem}
+.gw-completeness-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;border-radius:999px;padding:.15rem .55rem;white-space:nowrap;border:1px solid}
+.gw-completeness-complete{background:#e8f0e8;color:#1e4620;border-color:#1e4620}
+.gw-completeness-gaps{background:#fdecea;color:#7b241c;border-color:#c0392b}
+.gw-completeness-unknown{background:#eef0f2;color:#444;border-color:#999}
+.gw-gap-list{list-style:disc;margin:.35rem 0 0;padding-left:1.2rem;font-size:.8rem}
+.gw-gap-kind{font-weight:600}
+.gw-thread-list{list-style:none;margin:.3rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem}
+.gw-thread-instance{border-left:3px solid #1a4d8f;background:#fff;border-radius:0 4px 4px 0;padding:.35rem .6rem}
+.gw-instance-head{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.gw-instance-date{font-size:.75rem;font-variant-numeric:tabular-nums}
+.gw-instance-title{font-weight:600;font-size:.9rem}
+.gw-no-link{font-size:.78rem;font-style:italic;margin:.2rem 0 0}
 `;
 
 let styleInjected = false;

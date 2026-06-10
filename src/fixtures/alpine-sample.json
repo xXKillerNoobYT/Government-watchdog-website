@@ -271,7 +271,24 @@
         "to_node_id": "alpine:2019-06-11:item-5",
         "to_node_type": "agenda_item"
       }
-    ]
+    ],
+    "completeness": {
+      "state": "gaps",
+      "gaps": [
+        {
+          "kind": "unreviewed_instance",
+          "agenda_item_id": "alpine:2019-07-09:item-7",
+          "meeting_id": 103,
+          "detail": "correction instance carries a pending-review draft agenda"
+        },
+        {
+          "kind": "missing_minutes_transcript",
+          "agenda_item_id": "alpine:2019-07-09:item-7",
+          "meeting_id": 103,
+          "detail": "no minutes or transcript recorded for the 2019-07-09 meeting"
+        }
+      ]
+    }
   },
   "topic_tree": {
     "root": {

@@ -43,7 +43,10 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
   it('renders the timeline + trust badges + source drawer from the fixture', () => {
     render(root, resolved(FIXTURE, 'fixture', isEmptyResponse));
     expect(root.querySelectorAll('[data-test="record-card"]').length).toBe(FIXTURE.records!.length);
-    expect(root.querySelector('[data-test="trust-badge"]')?.textContent).toContain('Source-backed');
+    // Cards are ordered newest-first (GOV-101), so assert the verbatim backend
+    // labels render across the set rather than depending on payload position.
+    const badges = [...root.querySelectorAll('[data-test="trust-badge"]')].map((b) => b.textContent);
+    expect(badges).toContain('Source-backed');
     expect(root.querySelector('[data-test="source-drawer"]')).not.toBeNull();
     expect(root.querySelector('[data-test="breadcrumb"]')?.textContent).toContain('general safety');
   });
