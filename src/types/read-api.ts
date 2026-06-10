@@ -214,12 +214,50 @@ export interface ConceptEdge {
   to_node_type?: string;
 }
 
+// --- Thread completeness (GOV-101, Slice 4·C — BEH-COMPLETE-1..3) -----------
+
+/**
+ * The four backend-named gap kinds. A gap is a thing the backend can SEE is
+ * missing for a thread — never an inference the frontend makes. The frontend
+ * renders these verbatim; it never invents a kind not on this list.
+ */
+export type CompletenessGapKind =
+  | 'missing_meeting_instance'
+  | 'missing_agenda_packet'
+  | 'missing_minutes_transcript'
+  | 'unreviewed_instance';
+
+/** One backend-asserted gap in a thread (no raw path — safe ids/notes only). */
+export interface CompletenessGap {
+  kind: CompletenessGapKind;
+  /** Web-safe id of the affected member, when the backend names one. */
+  agenda_item_id?: string | null;
+  meeting_id?: number | string | null;
+  /** Short backend note (NEVER a raw/local path — web-safe only). */
+  detail?: string | null;
+}
+
+/**
+ * Backend-computed completeness for a thread (BEH-COMPLETE). Consumed VERBATIM —
+ * the frontend never derives `complete`. Three states: `complete` (backend
+ * asserts nothing is missing), `gaps` (backend lists what is missing), or
+ * `unknown` (backend has not assessed it). When this field is ABSENT from the
+ * payload the frontend treats it as `unknown` — it never fills the silence with
+ * `complete` (pass-up trigger if you ever feel you must recompute this).
+ */
+export interface ThreadCompleteness {
+  state: 'complete' | 'gaps' | 'unknown';
+  gaps?: CompletenessGap[];
+}
+
 /** `agenda_thread(...)`: node + chronological members + typed lifecycle edges. */
 export interface AgendaThreadResponse {
   thread: AgendaThreadNode;
   members: AgendaItemMember[];
   /** Typed Supersedes / Amends / Revisits among members — never an untyped "related". */
   lifecycle_edges: ConceptEdge[];
+  /** Backend-asserted completeness. Absent → treated as `unknown`, never `complete`. */
+  completeness?: ThreadCompleteness | null;
 }
 
 /** A node in the `topic_rollup` tree (child → parent rollup, served top-down). */
