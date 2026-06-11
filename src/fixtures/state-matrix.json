@@ -1,0 +1,149 @@
+{
+  "scope": "alpine",
+  "access": "reviewer_internal",
+  "records": [
+    {
+      "statement_id": "stmt-pending",
+      "statement_text": "Staff proposed moving the August meeting one week earlier.",
+      "agenda_item_id": "alpine:2026-05-08:item-2",
+      "layer": "presented_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "ui_status": "pending-review",
+      "verification_status": "machine_extracted_unreviewed",
+      "correction_status": "none",
+      "produced_by": "automation",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "alpine_draft_minutes",
+          "relation": "substantiates",
+          "source_type": "Draft meeting minutes",
+          "published_by": "Town of Alpine",
+          "jurisdiction": "alpine",
+          "source_date": "2026-05-08",
+          "original_url": "https://alpinewy.gov/minutes/2026-05-08-draft.pdf",
+          "archive_status": "not_available",
+          "scan_date": "2026-05-09",
+          "page": 2,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "presented_then"
+        }
+      ]
+    },
+    {
+      "statement_id": "stmt-disputed",
+      "statement_text": "The vote on the short-term-rental cap passed 3 to 2.",
+      "agenda_item_id": "alpine:2026-04-10:item-5",
+      "layer": "known_then",
+      "is_verbatim": 1,
+      "confidence": "medium",
+      "ui_status": "disputed",
+      "verification_status": "disputed",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "alpine_minutes_apr",
+          "relation": "substantiates",
+          "source_type": "Approved meeting minutes",
+          "published_by": "Town of Alpine",
+          "jurisdiction": "alpine",
+          "source_date": "2026-04-10",
+          "original_url": "https://alpinewy.gov/minutes/2026-04-10.pdf",
+          "archive_url": "https://web.archive.org/web/2026/https://alpinewy.gov/minutes/2026-04-10.pdf",
+          "archive_status": "available",
+          "scan_date": "2026-04-12",
+          "page": 4,
+          "verification_status": "reviewed_source_linked",
+          "is_verbatim": 1,
+          "layer": "known_then"
+        },
+        {
+          "to_source_id": "alpine_news_apr",
+          "relation": "contradicts",
+          "source_type": "Local news report",
+          "published_by": "Star Valley Independent",
+          "jurisdiction": "alpine",
+          "source_date": "2026-04-11",
+          "original_url": "https://svinews.example/2026/04/str-cap-vote",
+          "archive_status": "not_available",
+          "scan_date": "2026-04-12",
+          "verification_status": "source_recorded",
+          "is_verbatim": 0,
+          "layer": "presented_then"
+        }
+      ]
+    },
+    {
+      "statement_id": "stmt-corrected",
+      "statement_text": "The corrected record: the rental-cap vote passed 4 to 1.",
+      "agenda_item_id": "alpine:2026-04-10:item-5",
+      "layer": "corrected_later",
+      "is_verbatim": 1,
+      "confidence": "high",
+      "ui_status": "corrected",
+      "verification_status": "human_verified",
+      "correction_status": "corrected",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "updates_statement_id": "stmt-disputed",
+      "evidence": [
+        {
+          "to_source_id": "alpine_minutes_apr_final",
+          "relation": "substantiates",
+          "source_type": "Corrected meeting minutes",
+          "published_by": "Town of Alpine",
+          "jurisdiction": "alpine",
+          "source_date": "2026-05-08",
+          "original_url": "https://alpinewy.gov/minutes/2026-04-10-corrected.pdf",
+          "archive_url": "https://web.archive.org/web/2026/https://alpinewy.gov/minutes/2026-04-10-corrected.pdf",
+          "archive_status": "available",
+          "scan_date": "2026-05-09",
+          "page": 4,
+          "verification_status": "human_verified",
+          "correction_status": "corrected",
+          "is_verbatim": 1,
+          "layer": "corrected_later"
+        }
+      ]
+    },
+    {
+      "statement_id": "stmt-do-not-publish",
+      "statement_text": "Reviewer-internal draft note attached to an unresolved agenda item.",
+      "agenda_item_id": "alpine:2026-05-08:item-9",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "ui_status": "do-not-publish",
+      "verification_status": "do_not_publish",
+      "correction_status": "none",
+      "produced_by": "automation",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "alpine_packet_may",
+          "relation": "mentions",
+          "source_type": "Agenda packet",
+          "published_by": "Town of Alpine",
+          "jurisdiction": "alpine",
+          "source_date": "2026-05-08",
+          "original_url": "https://alpinewy.gov/packet-2026-05-08.pdf",
+          "archive_status": "not_available",
+          "scan_date": "2026-05-09",
+          "page": 9,
+          "verification_status": "do_not_publish",
+          "is_verbatim": 0,
+          "layer": "known_then"
+        }
+      ]
+    }
+  ]
+}

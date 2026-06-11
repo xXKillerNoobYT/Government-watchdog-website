@@ -25,5 +25,8 @@ jobs:
       - name: Unit tests (vitest)
         run: npm test
 
+      - name: Integration smoke — 5 assertions (raw-path / label / link / rollup / cycle)
+        run: npm run test:smoke
+
       - name: Production build
         run: npm run build

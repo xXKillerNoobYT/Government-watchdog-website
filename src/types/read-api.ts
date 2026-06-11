@@ -41,6 +41,26 @@ export type UiStatus =
   | 'archived-source-backed'
   | 'source-backed';
 
+/**
+ * The full 10-state trust vocabulary as a runtime array, in display order
+ * (most-trusted → least / hardest-stop last). The compile-time `satisfies`
+ * guard makes the array exhaustive: if a `UiStatus` member is ever added to the
+ * type and omitted here, this fails to type-check — so the trust legend
+ * (legend.ts) can never silently drop a status it must explain.
+ */
+export const ALL_UI_STATUSES = [
+  'source-backed',
+  'archived-source-backed',
+  'corrected',
+  'pending-review',
+  'unverified',
+  'needs-clarification',
+  'source-changed',
+  'source-missing',
+  'disputed',
+  'do-not-publish',
+] as const satisfies readonly UiStatus[];
+
 /** The three uiStatus values the backend permits to publish (eligibility gate). */
 export const PUBLICATION_ELIGIBLE_UI_STATUSES = [
   'source-backed',

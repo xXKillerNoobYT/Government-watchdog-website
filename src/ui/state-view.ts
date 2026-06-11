@@ -8,7 +8,7 @@
  */
 
 import type { AsyncState } from '../state/async-state';
-import type { ReadApiResponse, StatementRecord } from '../types/read-api';
+import type { ReadApiResponse, StatementRecord, UiStatus } from '../types/read-api';
 
 export interface StateView {
   kind: 'loading' | 'empty' | 'error' | 'ready';
@@ -96,25 +96,79 @@ export function summarizeRecords(records: StatementRecord[]): TrustGroup[] {
   return order.map((label) => ({ label, count: counts.get(label)! }));
 }
 
-/** Verbatim, human-readable label for a record's backend trust state. */
-export function trustLabel(record: StatementRecord): string {
-  const ui = record.ui_status ?? 'unverified';
-  switch (ui) {
+/**
+ * Visual tone for a trust state — drives the badge colour ONLY, never a trust
+ * decision. The backend's `ui_status` is the source of truth; this is a pure
+ * presentation mapping kept here so render.ts and the legend agree on colour.
+ *  - `ok`      backend says it is source-backed/eligible,
+ *  - `caution` provisional/unreviewed (not yet trustable, not yet a hard stop),
+ *  - `stop`    a hard "do not treat as fact" state (disputed / do-not-publish / source problems),
+ *  - `neutral` corrected (kept neutral — a correction is informative, not alarming).
+ */
+export type TrustTone = 'ok' | 'caution' | 'stop' | 'neutral';
+
+export function statusTone(status: UiStatus): TrustTone {
+  switch (status) {
+    case 'source-backed':
+    case 'archived-source-backed':
+      return 'ok';
+    case 'corrected':
+      return 'neutral';
+    case 'pending-review':
+    case 'unverified':
+    case 'needs-clarification':
+      return 'caution';
+    case 'source-changed':
+    case 'source-missing':
+    case 'disputed':
+    case 'do-not-publish':
+      return 'stop';
+    default:
+      return 'caution';
+  }
+}
+
+/**
+ * Verbatim, human-readable label for a single backend `ui_status` value. Covers
+ * all 10 states of the trust vocabulary (uiStatus-map.v1) so no served status
+ * ever falls through to its raw kebab-case wire form on a card or in the legend.
+ * Pure mapping — never a trust derivation.
+ */
+export function uiStatusLabel(status: UiStatus): string {
+  switch (status) {
     case 'source-backed':
       return 'Source-backed';
     case 'archived-source-backed':
       return 'Source-backed (archived)';
     case 'corrected':
       return 'Corrected';
-    case 'disputed':
-      return 'Disputed';
-    case 'unverified':
-      return 'Unverified';
     case 'pending-review':
       return 'Pending review';
+    case 'unverified':
+      return 'Unverified';
+    case 'needs-clarification':
+      return 'Needs clarification';
+    case 'source-changed':
+      return 'Source changed';
+    case 'source-missing':
+      return 'Source missing';
+    case 'disputed':
+      return 'Disputed';
+    case 'do-not-publish':
+      return 'Do not publish';
     default:
-      return ui;
+      return status;
   }
+}
+
+/** Verbatim, human-readable label for a record's backend trust state. */
+export function trustLabel(record: StatementRecord): string {
+  return uiStatusLabel(record.ui_status ?? 'unverified');
+}
+
+/** The tone for a record's badge (colour only — defaults to `caution`). */
+export function recordTone(record: StatementRecord): TrustTone {
+  return statusTone(record.ui_status ?? 'unverified');
 }
 
 /**

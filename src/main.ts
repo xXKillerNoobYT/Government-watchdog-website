@@ -16,12 +16,22 @@
 
 import { createRouter } from './router';
 import { loadReadModel, isEmptyResponse, FIXTURE } from './data/client';
+import { assertWebSafe } from './data/web-safe';
 import { render } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
 import type { ReadApiResponse } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
+import stateMatrixData from './fixtures/state-matrix.json';
+
+/**
+ * State-matrix sample (GOV-104): one labeled card per record-level trust state
+ * (pending-review / disputed / corrected / do-not-publish) so the legend + each
+ * status badge can be captured in one screenshot. Swept for raw paths at load,
+ * exactly like the main fixture — demo scaffolding, never a trust recompute.
+ */
+const STATE_MATRIX: ReadApiResponse = assertWebSafe(stateMatrixData as ReadApiResponse);
 
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
@@ -84,6 +94,10 @@ function forcedState(forced: string | null): AsyncState<ReadApiResponse> | null 
 async function renderTimeline(query: URLSearchParams): Promise<void> {
   const forced = forcedState(query.get('state'));
   if (forced) return render(root!, forced);
+  if (query.get('demo') === 'matrix') {
+    render(root!, resolved(STATE_MATRIX, 'fixture', isEmptyResponse), 'State-matrix sample — one card per trust state, not real data.');
+    return;
+  }
   if (query.get('demo') === 'complete') {
     render(root!, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
     return;
