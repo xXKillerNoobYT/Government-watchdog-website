@@ -76,6 +76,26 @@ function isFilesystemPath(value: string): boolean {
 }
 
 /**
+ * Transport-level (raw-bytes) leak scan. Operates on the response body TEXT —
+ * the bytes on the wire, before any parse — so it catches a raw locator even if
+ * it hides in a field the structural walk does not name. Returns the list of
+ * offending markers/keys found (empty array = clean). This mirrors the backend's
+ * `assert_no_raw_paths` transport sweep on the client side (standing gate:
+ * server-side raw-path stripping verified AT TRANSPORT) and is what the GOV-104
+ * integration smoke asserts as "zero raw/absolute paths in the response body".
+ */
+export function findRawPathLeaksInText(text: string): string[] {
+  const hits: string[] = [];
+  for (const key of RAW_PATH_FORBIDDEN_KEYS) {
+    if (text.includes(`"${key}"`)) hits.push(`forbidden raw field key "${key}"`);
+  }
+  for (const marker of RAW_PATH_MARKERS) {
+    if (text.includes(marker)) hits.push(`raw marker "${marker}"`);
+  }
+  return hits;
+}
+
+/**
  * Walk every string (keys + values, nested) in `body`. Throw {@link RawPathLeak}
  * if any is an absolute/filesystem path or carries a raw marker, or if any
  * object key is in {@link RAW_PATH_FORBIDDEN_KEYS}. Public URLs are allowed.

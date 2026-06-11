@@ -7,7 +7,8 @@
 
 import type { AsyncState } from '../state/async-state';
 import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
-import { stateView, trustLabel, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
+import { stateView, trustLabel, recordTone, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
+import { trustLegend, LEGEND_TITLE } from './legend';
 import { drawerFields, relatedLinksFor, verbatimLabel } from './statement-presenter';
 import { buildTimeline, assembleThread, completenessView, NO_LINK_TEXT, type AssembledThread, type CompletenessView } from './timeline';
 
@@ -69,7 +70,11 @@ function recordCard(
 ): HTMLElement {
   // Exactly one status badge per card (acceptance criterion). The locked AI
   // label is a separate, clearly-labeled element — not a second status badge.
-  const badges: HTMLElement[] = [el('span', { class: 'gw-badge', 'data-test': 'trust-badge' }, [trustLabel(r)])];
+  // The tone class is colour ONLY (from the backend ui_status, never recomputed).
+  const tone = recordTone(r);
+  const badges: HTMLElement[] = [
+    el('span', { class: `gw-badge gw-tone-${tone}`, 'data-test': 'trust-badge', 'data-tone': tone }, [trustLabel(r)]),
+  ];
   const ai = isAiProduced(r);
   if (ai) {
     badges.push(el('span', { class: 'gw-badge gw-badge-ai', 'data-test': 'ai-label' }, [AI_LABEL_TEXT]));
@@ -161,8 +166,28 @@ function assembledThreadSurface(threadResponse: AgendaThreadResponse): HTMLEleme
   ]);
 }
 
+/**
+ * The trust / AI legend — a tap-reachable `<details>` (NOT hover-only; native
+ * disclosure opens on tap/click/Enter, satisfying the UX standing gate). Every
+ * trust label, the locked AI label, and the fixture banner are explained once.
+ * The 44px summary min-height reuses the drawer tap-target floor.
+ */
+function legendDisclosure(): HTMLElement {
+  const entries = trustLegend();
+  const rows = entries.map((e) =>
+    el('li', { class: 'gw-legend-row', 'data-test': `legend-${e.key}` }, [
+      el('span', { class: `gw-badge gw-tone-${e.tone}`, 'data-test': 'legend-label', 'data-tone': e.tone }, [e.label]),
+      el('span', { class: 'gw-legend-meaning' }, [e.meaning]),
+    ]),
+  );
+  return el('details', { class: 'gw-legend', 'data-test': 'trust-legend' }, [
+    el('summary', { 'data-test': 'trust-legend-summary' }, [LEGEND_TITLE]),
+    el('ul', { class: 'gw-legend-list' }, rows),
+  ]);
+}
+
 function readyView(data: ReadApiResponse): HTMLElement {
-  const children: HTMLElement[] = [];
+  const children: HTMLElement[] = [legendDisclosure()];
   const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
   if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
   const edges = data.agenda_thread?.lifecycle_edges;
@@ -207,8 +232,19 @@ export const STYLE = `
 .gw-breadcrumb{font-size:.85rem;color:#555;margin:.5rem 0}
 .gw-card{border:1px solid #ddd;border-radius:8px;padding:.8rem;margin:.6rem 0}
 .gw-badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.4rem}
-.gw-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;background:#e8f0e8;color:#1e4620;border:1px solid #1e4620;border-radius:999px;padding:.15rem .55rem;white-space:nowrap}
+.gw-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;background:#eef0f2;color:#333;border:1px solid #999;border-radius:999px;padding:.15rem .55rem;white-space:nowrap}
+/* Trust tones — colour only; the backend ui_status decides which, never the UI. */
+.gw-tone-ok{background:#e8f0e8;color:#1e4620;border-color:#1e4620}
+.gw-tone-caution{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
+.gw-tone-stop{background:#fdecea;color:#7b241c;border-color:#c0392b}
+.gw-tone-neutral{background:#eef2f8;color:#1a4d8f;border-color:#1a4d8f}
 .gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
+.gw-legend{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;margin:.4rem 0 .8rem;padding:0 .6rem}
+.gw-legend summary{cursor:pointer;font-size:.9rem;font-weight:600;color:#1a4d8f;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;display:flex;align-items:center}
+.gw-legend-list{list-style:none;margin:0 0 .6rem;padding:0;display:flex;flex-direction:column;gap:.4rem}
+.gw-legend-row{display:grid;grid-template-columns:11rem 1fr;gap:.5rem;align-items:start;font-size:.82rem}
+.gw-legend-meaning{color:#444}
+@media (max-width:420px){.gw-legend-row{grid-template-columns:1fr;gap:.15rem}}
 .gw-statement{margin:.3rem 0}
 .gw-analysis{border-left:3px solid #d9a400;background:#fffaf0;padding:.3rem .6rem;border-radius:4px;margin:.3rem 0}
 .gw-analysis-caption{font-size:.72rem;font-weight:600;margin:.1rem 0;text-transform:uppercase;letter-spacing:.02em}
