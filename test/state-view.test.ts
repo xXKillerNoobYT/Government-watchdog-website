@@ -85,6 +85,6 @@ describe('trust + AI labels (never recomputed / never hidden)', () => {
   });
 
   it('exposes the exact fixture banner text', () => {
-    expect(FIXTURE_BANNER_TEXT).toBe('FIXTURE MODE — Not real data');
+    expect(FIXTURE_BANNER_TEXT).toBe('OFFLINE SAMPLE — not a live read');
   });
 });

@@ -16,7 +16,9 @@ import type {
   AgendaThreadResponse,
   ThreadCompleteness,
 } from '../src/types/read-api';
-import fixture from '../src/fixtures/alpine-sample.json';
+// GOV-129: graph-logic coverage runs on the labeled SYNTHETIC concept-graph demo
+// (the real reviewed corpus has 0 topics/0 threads, so it cannot exercise this).
+import fixture from '../src/fixtures/concept-graph-demo.json';
 
 const FIXTURE = fixture as ReadApiResponse;
 

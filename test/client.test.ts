@@ -2,11 +2,18 @@ import { describe, it, expect, vi } from 'vitest';
 import { loadReadModel, readConfig, isEmptyResponse, FIXTURE } from '../src/data/client';
 import { assertWebSafe, RAW_PATH_FORBIDDEN_KEYS } from '../src/data/web-safe';
 import type { ReadApiResponse } from '../src/types/read-api';
-// Real backend output, captured from `read_api.build_response(...)` at origin/main
-// (GOV-98 merge ea4e065). This is the contract the adapter must read.
+// REAL reviewed backend output, captured from `read_api.reviewer_internal_records(...)`
+// at backend origin/main 235bba6 (GOV-146 Option-A owner-authorized 6-row promotion
+// seed). This is the contract the adapter must read — 6 real reviewed Alpine records,
+// all source-backed / reviewed_source_linked, no concept-graph (none exists over the
+// real corpus yet). The synthetic concept-graph demo covers thread/tree logic.
 import realSample from './read-api-sample.json';
+// Labeled SYNTHETIC graph demo — exercises the agenda_thread / topic_tree shapes the
+// real reviewed corpus cannot produce yet.
+import graphDemo from '../src/fixtures/concept-graph-demo.json';
 
 const sample = realSample as unknown as ReadApiResponse;
+const demo = graphDemo as unknown as ReadApiResponse;
 
 function mockFetch(body: unknown, ok = true, status = 200): typeof fetch {
   return vi.fn(async () => ({
@@ -30,7 +37,7 @@ describe('readConfig', () => {
 });
 
 describe('loadReadModel — adapter reads the read-API sample', () => {
-  it('parses the REAL captured read-API sample into typed shapes (live mode)', async () => {
+  it('parses the REAL reviewed read-API sample into typed shapes (live mode)', async () => {
     const { state } = await loadReadModel({
       config: { useFixtures: false, readApiUrl: 'http://127.0.0.1:8787/read' },
       fetchImpl: mockFetch(sample),
@@ -38,12 +45,31 @@ describe('loadReadModel — adapter reads the read-API sample', () => {
     expect(state.status).toBe('ready');
     expect(state.mode).toBe('live');
     const data = state.data!;
-    // Eligibility/labels travel: served record carries verbatim labels.
-    expect(data.records?.[0]?.statement_id).toBe('stmt-eligible');
-    expect(data.records?.[0]?.ui_status).toBe('source-backed');
-    expect(data.records?.[0]?.evidence.length).toBeGreaterThan(0);
-    // thread/tree shapes present.
-    expect(data.agenda_thread?.members.length).toBe(2);
+    // Exactly the 6 owner-authorized reviewed rows (GOV-146 Option-A seed) — no more.
+    expect(data.records?.length).toBe(6);
+    // Eligibility/labels travel: every served record carries verbatim trust labels,
+    // and ONLY eligible reviewed rows are served (all source-backed / reviewed).
+    for (const r of data.records!) {
+      expect(r.ui_status).toBe('source-backed');
+      expect(r.verification_status).toBe('reviewed_source_linked');
+      expect(r.publication_state).toBe('not_publishable'); // reviewer-internal, never published
+      expect(r.evidence.length).toBeGreaterThan(0); // no orphan served
+    }
+    // First real row is the Oct-9-2024 special-meeting statement.
+    expect(data.records?.[0]?.statement_id).toBe('alpine_local_corpus:ai:00000064:0021');
+    // The real reviewed corpus has NO concept graph yet — these surfaces are honestly
+    // empty (fail-closed: the frontend never invents a thread/tree that isn't served).
+    expect(data.agenda_thread ?? null).toBeNull();
+    expect(data.topic_tree ?? null).toBeNull();
+  });
+
+  it('parses the synthetic concept-graph demo (thread/tree shapes the real corpus lacks)', async () => {
+    const { state } = await loadReadModel({
+      config: { useFixtures: false, readApiUrl: 'http://127.0.0.1:8787/read' },
+      fetchImpl: mockFetch(demo),
+    });
+    const data = state.data!;
+    expect(data.agenda_thread?.members.length).toBe(3);
     expect(data.agenda_thread?.lifecycle_edges[0]?.edge_type).toBe('agenda_item_supersedes');
     expect(data.topic_tree?.root.canonicalHumanLabel).toBe('general safety');
     const gov = data.topic_tree?.root.sourceAliases.find((a) => a.aliasType === 'government_term');
@@ -51,7 +77,7 @@ describe('loadReadModel — adapter reads the read-API sample', () => {
     expect(gov?.sourceRef.sourceId).toBeTruthy();
   });
 
-  it('the captured sample is web-safe (no raw paths / forbidden keys)', () => {
+  it('the real reviewed sample is web-safe (no raw paths / forbidden keys)', () => {
     expect(() => assertWebSafe(sample)).not.toThrow();
     const blob = JSON.stringify(sample);
     for (const key of RAW_PATH_FORBIDDEN_KEYS) {

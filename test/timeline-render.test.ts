@@ -2,8 +2,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '../src/ui/render';
 import { resolved } from '../src/state/async-state';
-import { FIXTURE, isEmptyResponse } from '../src/data/client';
+import { isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse, StatementRecord } from '../src/types/read-api';
+// Thread / completeness / typed-link / chronology rendering runs on the labeled
+// SYNTHETIC concept-graph demo — the real reviewed corpus has 0 threads and its
+// records carry no agenda_item_id, so it cannot exercise these surfaces yet.
+import demoData from '../src/fixtures/concept-graph-demo.json';
+
+const FIXTURE = demoData as unknown as ReadApiResponse;
 
 let root: HTMLElement;
 beforeEach(() => {

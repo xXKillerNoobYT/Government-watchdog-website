@@ -14,7 +14,9 @@ import {
   TOPIC_ROLLUP,
 } from '../src/ui/topic-tree';
 import type { TopicNode, ConceptEdge, TopicTreeResponse } from '../src/types/read-api';
-import fixture from '../src/fixtures/alpine-sample.json';
+// GOV-129: graph-logic coverage runs on the labeled SYNTHETIC concept-graph demo
+// (the real reviewed corpus has 0 topics/0 threads, so it cannot exercise this).
+import fixture from '../src/fixtures/concept-graph-demo.json';
 
 // general safety ← fire prevention ← fireworks  (child rolls up to parent)
 const SAFETY: TopicNode = { topic_id: 'topic:safety', name: 'General safety', canonicalHumanLabel: 'general safety', sourceAliases: [] };
