@@ -1,0 +1,346 @@
+{
+  "_provenance": {
+    "kind": "real_capture",
+    "captured_from": "scripts/read_api.py reviewer-internal serve @ backend xXKillerNoobYT/Government-watchdog dfd8771 (GOV-149 #35, 'reviewer-internal concept graph (topic layer) over the REAL Alpine corpus')",
+    "reproduce": "python3 scripts/read_api.py --db Database/gov_watchdog.db --topic-root topic:alpine:jurisdiction --reviewer-internal --no-records  # run in the GOV-149 backend worktree against its seeded operational vault DB (gov149_concept_graph_seed.py --apply; DB is git-ignored/ephemeral, the seed script is the durable deliverable)",
+    "reviewer": "reviewer:isaac",
+    "transport": "web-safe at the backend transport boundary (publication.to_web_safe allowlist + read_api.assert_no_raw_paths) and re-swept by the frontend assertWebSafe at load",
+    "summary": "REAL GOV-149 reviewer-internal concept graph over the Alpine corpus: real topic_tree (root 'Town of Alpine' + 3 civic topics, 3 topic_rollup edges, 3 char-span government-term aliases) and the 6 real reviewer-internal (owner-publish-pending) statement records. NOT public \u2014 reviewer_internal access only; nothing here is owner-published.",
+    "agenda_thread": "ABSENT BY DESIGN. The real corpus supports 0 agenda threads (the 6 AI rows carry no agenda-item membership and no updates chain) \u2014 GOV-149 Gate-1 accepted this honest-EMPTY deviation; no thread is fabricated from title similarity. The agenda-thread + completeness surfaces keep the clearly-labeled SYNTHETIC concept-graph-demo.json fixture until real agenda structure exists (owner: BackendCrawlerEngineer, see GOV-155/GOV-158).",
+    "source_records_key": "backend serves these under 'reviewer_internal_records'; mapped to 'records' here to match the frontend ReadApiResponse contract (same convention as alpine-sample.json, GOV-129).",
+    "issue": "GOV-150"
+  },
+  "scope": "alpine",
+  "access": "reviewer_internal",
+  "records": [
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:00000064:0021",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:00000064:0021",
+      "statement_text": "A Town Council special meeting was convened on October 9, 2024 at approximately 7:01 p.m.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    },
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:01617859:0008",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:01617859:0008",
+      "statement_text": "Per the annexation report summary, the Town of Alpine's mill levy is 5 mills.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    },
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:01661553:0010",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:01661553:0010",
+      "statement_text": "The Town of Alpine water system was shut down on May 21, 2026 due to a water main break.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    },
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:01664750:0013",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:01664750:0013",
+      "statement_text": "The Town Council scheduled a Budget Work Session for Thursday, June 11, 2026 at 2:00 PM.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    },
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:01819080:0017",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:01819080:0017",
+      "statement_text": "Bacteriological testing confirmed the water met all safe drinking-water standards before the advisory was lifted.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    },
+    {
+      "agenda_item_id": null,
+      "confidence": "high",
+      "correction_status": "none",
+      "evidence": [
+        {
+          "agenda_item_id": null,
+          "archive_status": "not_checked",
+          "archive_url": null,
+          "confidence": "high",
+          "correction_status": "none",
+          "final_url": null,
+          "from_node_id": "alpine_local_corpus:ai:01821771:0027",
+          "from_node_type": "statement",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "page": null,
+          "paragraph": null,
+          "relation": "references",
+          "scan_date": "2026-06-12",
+          "section": null,
+          "timestamp_human": null,
+          "timestamp_seconds": null,
+          "to_source_id": "alpine_local_corpus",
+          "verification_status": "machine_extracted_unreviewed"
+        }
+      ],
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "statement_id": "alpine_local_corpus:ai:01821771:0027",
+      "statement_text": "The council reported it took no action during its executive session before reconvening the regular session.",
+      "ui_status": "source-backed",
+      "updates_statement_id": null,
+      "verification_status": "reviewed_source_linked"
+    }
+  ],
+  "topic_tree": {
+    "breadcrumb": [
+      {
+        "canonicalHumanLabel": "Town of Alpine",
+        "jurisdiction_id": "alpine",
+        "name": "Town of Alpine",
+        "sourceAliases": [],
+        "topic_id": "topic:alpine:jurisdiction"
+      }
+    ],
+    "root": {
+      "canonicalHumanLabel": "Town of Alpine",
+      "jurisdiction_id": "alpine",
+      "name": "Town of Alpine",
+      "sourceAliases": [],
+      "topic_id": "topic:alpine:jurisdiction"
+    },
+    "tree": {
+      "children": [
+        {
+          "children": [],
+          "topic": {
+            "canonicalHumanLabel": "Town budget and taxes",
+            "jurisdiction_id": "alpine",
+            "name": "Town budget & taxes",
+            "sourceAliases": [
+              {
+                "aliasType": "government_term",
+                "sourceRef": {
+                  "locator": {
+                    "charEnd": 1617907,
+                    "charStart": 1617859
+                  },
+                  "sourceId": "alpine_local_corpus"
+                },
+                "term": "Town Budget and Taxes"
+              }
+            ],
+            "topic_id": "topic:alpine:budget-taxes"
+          }
+        },
+        {
+          "children": [],
+          "topic": {
+            "canonicalHumanLabel": "Town Council governance",
+            "jurisdiction_id": "alpine",
+            "name": "Town Council governance",
+            "sourceAliases": [
+              {
+                "aliasType": "government_term",
+                "sourceRef": {
+                  "locator": {
+                    "charEnd": 132,
+                    "charStart": 64
+                  },
+                  "sourceId": "alpine_local_corpus"
+                },
+                "term": "Town Council Governance"
+              }
+            ],
+            "topic_id": "topic:alpine:council-governance"
+          }
+        },
+        {
+          "children": [],
+          "topic": {
+            "canonicalHumanLabel": "Town water system",
+            "jurisdiction_id": "alpine",
+            "name": "Town water system",
+            "sourceAliases": [
+              {
+                "aliasType": "government_term",
+                "sourceRef": {
+                  "locator": {
+                    "charEnd": 1661642,
+                    "charStart": 1661553
+                  },
+                  "sourceId": "alpine_local_corpus"
+                },
+                "term": "Town Water System"
+              }
+            ],
+            "topic_id": "topic:alpine:water-system"
+          }
+        }
+      ],
+      "topic": {
+        "canonicalHumanLabel": "Town of Alpine",
+        "jurisdiction_id": "alpine",
+        "name": "Town of Alpine",
+        "sourceAliases": [],
+        "topic_id": "topic:alpine:jurisdiction"
+      }
+    }
+  }
+}

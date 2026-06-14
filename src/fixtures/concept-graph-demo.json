@@ -1,8 +1,9 @@
 {
   "_provenance": {
     "kind": "synthetic_demo",
-    "summary": "SYNTHETIC, NOT REAL DATA. Demonstrates concept-graph + agenda-thread + completeness + multi-trust-state UI logic the real reviewed corpus cannot exercise yet (0 topics / 0 threads, only source-backed). Used by the topic-tree / agenda-thread / completeness / render unit tests and the ?demo=graph screenshot scenario. Replace with a real capture once the backend builds a reviewer-internal-eligible concept graph over the real Alpine corpus.",
-    "issue": "GOV-129"
+    "summary": "SYNTHETIC, NOT REAL DATA. Retained alongside the REAL capture (concept-graph-real.json, GOV-150) to exercise the shapes the real corpus CANNOT: deep topic nesting (the real tree is depth-2 — root + leaf civic topics), cross-meeting agenda threads + typed lifecycle edges, thread completeness gaps, and the full multi-trust-state matrix. The real Alpine corpus supports 0 agenda threads (GOV-149 Gate-1 accepted honest-EMPTY), so these surfaces stay on this labeled synthetic until real agenda structure exists. Used by the topic-tree / agenda-thread / completeness / render unit tests, the ?demo=graph-synthetic nesting+move scenario, and the ?demo=complete completeness scenario.",
+    "real_capture": "src/fixtures/concept-graph-real.json renders /topics + ?demo=graph from GOV-149's real read_api serve.",
+    "issue": "GOV-150 (was GOV-129)"
   },
   "scope": "alpine",
   "access": "reviewer_internal",

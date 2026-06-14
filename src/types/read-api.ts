@@ -98,6 +98,14 @@ export interface SourceRefLocator {
   page?: number | string;
   section?: string;
   paragraph?: string;
+  /**
+   * Char-span offsets into the source text (GOV-149 migration 0017). Integer
+   * offsets only — projected web-safe by the backend `read_api._safe_alias`
+   * positionally like `page`; carries no raw/vault path. Present on aliases
+   * grounded in untimed AI extractions (the GOV-137 `char_span` locator kind).
+   */
+  charStart?: number;
+  charEnd?: number;
 }
 
 /**
