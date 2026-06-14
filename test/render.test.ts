@@ -4,6 +4,13 @@ import { render, STYLE, BADGE_MIN_FONT_PX, DRAWER_TAP_MIN_PX } from '../src/ui/r
 import { loading, failed, resolved } from '../src/state/async-state';
 import { FIXTURE, isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse } from '../src/types/read-api';
+// FIXTURE is now the REAL reviewed snapshot (6 source-backed records, no concept
+// graph). Rich card features — typed related-links, source-registry drawer fields,
+// breadcrumb, mixed AI/human cards — only exist in the labeled SYNTHETIC demo,
+// which the real corpus cannot produce yet (GOV-129 follow-up).
+import demoData from '../src/fixtures/concept-graph-demo.json';
+
+const DEMO = demoData as unknown as ReadApiResponse;
 
 let root: HTMLElement;
 beforeEach(() => {
@@ -37,17 +44,29 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
   it('always shows the FIXTURE MODE banner in fixture mode', () => {
     render(root, loading<ReadApiResponse>('fixture'));
     const banner = root.querySelector('[data-test="fixture-banner"]');
-    expect(banner?.textContent).toContain('FIXTURE MODE — Not real data');
+    expect(banner?.textContent).toContain('OFFLINE SAMPLE — not a live read');
   });
 
-  it('renders the timeline + trust badges + source drawer from the fixture', () => {
+  it('renders the REAL reviewed records (cards + source-backed badges + source drawer)', () => {
     render(root, resolved(FIXTURE, 'fixture', isEmptyResponse));
+    // Exactly the 6 owner-authorized reviewed rows, each with a trust badge + drawer.
     expect(root.querySelectorAll('[data-test="record-card"]').length).toBe(FIXTURE.records!.length);
-    // Cards are ordered newest-first (GOV-101), so assert the verbatim backend
-    // labels render across the set rather than depending on payload position.
+    expect(FIXTURE.records!.length).toBe(6);
     const badges = [...root.querySelectorAll('[data-test="trust-badge"]')].map((b) => b.textContent);
-    expect(badges).toContain('Source-backed');
+    // Every real reviewed row is source-backed (the eligible-only serve emits no other).
+    expect(badges.every((b) => b === 'Source-backed')).toBe(true);
     expect(root.querySelector('[data-test="source-drawer"]')).not.toBeNull();
+    // Real rows are AI-produced + reviewed → the locked AI label is always present.
+    expect(root.querySelector('[data-test="ai-label"]')?.textContent).toContain('AI — not independently verified');
+    // No real concept graph yet → no breadcrumb / agenda-thread surface (honest empty).
+    expect(root.querySelector('[data-test="breadcrumb"]')).toBeNull();
+    expect(root.querySelector('[data-test="agenda-thread"]')).toBeNull();
+    // Transport floor holds on the real payload: no raw/vault path reaches the DOM.
+    expect(root.textContent ?? '').not.toMatch(/\/Users\/|Obsidian Vault|transcript_path|\.sha256/);
+  });
+
+  it('renders the breadcrumb from a served topic tree (synthetic demo)', () => {
+    render(root, resolved(DEMO, 'fixture', isEmptyResponse));
     expect(root.querySelector('[data-test="breadcrumb"]')?.textContent).toContain('general safety');
   });
 
@@ -57,8 +76,8 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
   });
 });
 
-describe('GOV-100 — statement card + drawer + typed related-links', () => {
-  beforeEach(() => render(root, resolved(FIXTURE, 'fixture', isEmptyResponse)));
+describe('GOV-100 — statement card + drawer + typed related-links (synthetic demo)', () => {
+  beforeEach(() => render(root, resolved(DEMO, 'fixture', isEmptyResponse)));
 
   it('shows exactly one status badge per card', () => {
     const cards = root.querySelectorAll('[data-test="record-card"]');

@@ -298,7 +298,7 @@ export function render(
     root.append(
       el('div', { class: 'gw-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, [
         FIXTURE_BANNER_TEXT,
-        el('small', {}, ['Reviewer-internal sample for layout review — not a verified civic record.']),
+        el('small', {}, ['Reviewer-internal offline snapshot — not a live read. See the notice for provenance; AI-produced rows keep their own per-record label.']),
         ...(view.notice ? [el('div', { class: 'gw-notice' }, [view.notice])] : []),
       ]),
     );

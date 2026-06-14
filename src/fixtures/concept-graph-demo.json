@@ -1,0 +1,393 @@
+{
+  "_provenance": {
+    "kind": "synthetic_demo",
+    "summary": "SYNTHETIC, NOT REAL DATA. Demonstrates concept-graph + agenda-thread + completeness + multi-trust-state UI logic the real reviewed corpus cannot exercise yet (0 topics / 0 threads, only source-backed). Used by the topic-tree / agenda-thread / completeness / render unit tests and the ?demo=graph screenshot scenario. Replace with a real capture once the backend builds a reviewer-internal-eligible concept graph over the real Alpine corpus.",
+    "issue": "GOV-129"
+  },
+  "scope": "alpine",
+  "access": "reviewer_internal",
+  "records": [
+    {
+      "statement_id": "sample-stmt-1",
+      "statement_text": "The council adopted a seasonal fireworks ordinance for the July holiday period.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "high",
+      "agenda_item_id": "alpine:2019-06-11:item-5",
+      "ui_status": "source-backed",
+      "verification_status": "human_verified",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_packet_2019_06",
+          "relation": "substantiates",
+          "locator_kind": "page",
+          "page": 5,
+          "original_url": "https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_status": "available",
+          "scan_date": "2019-06-12",
+          "confidence": "high",
+          "verification_status": "human_verified",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-1",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-2",
+      "statement_text": "Minutes record the ordinance taking effect ahead of the holiday weekend.",
+      "layer": "known_then",
+      "is_verbatim": 1,
+      "confidence": "medium",
+      "agenda_item_id": "alpine:2019-06-25:item-2",
+      "ui_status": "archived-source-backed",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_06",
+          "relation": "substantiates",
+          "locator_kind": "section",
+          "section": "Item 2 — Ordinances",
+          "original_url": "https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-06-26",
+          "confidence": "medium",
+          "verification_status": "reviewed_source_linked",
+          "correction_status": "none",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-2",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-3",
+      "statement_text": "AI extraction summarized the ordinance as a seasonal ban on consumer fireworks; this wording has not been independently reviewed.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "agenda_item_id": "alpine:2019-06-11:item-5",
+      "ui_status": "unverified",
+      "verification_status": "machine_extracted_unreviewed",
+      "correction_status": "none",
+      "produced_by": "ai",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_packet_2019_06",
+          "relation": "derived_from",
+          "locator_kind": "page",
+          "page": 5,
+          "original_url": "https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-11-packet.pdf",
+          "archive_status": "available",
+          "scan_date": "2019-06-12",
+          "confidence": "low",
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-3",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-4",
+      "statement_text": "A later correction clarified the ordinance applies only to commercial-grade fireworks, not consumer sparklers.",
+      "layer": "corrected_later",
+      "is_verbatim": 0,
+      "confidence": "high",
+      "updates_statement_id": "sample-stmt-1",
+      "agenda_item_id": "alpine:2019-07-09:item-7",
+      "ui_status": "corrected",
+      "verification_status": "human_verified",
+      "correction_status": "corrected",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_07",
+          "relation": "substantiates",
+          "locator_kind": "section",
+          "source_type": "Meeting minutes",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-07-09",
+          "section": "Item 7 — Corrections",
+          "paragraph": "2",
+          "original_url": "https://records.example/alpine/2019-07-09-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-07-09-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-07-10",
+          "confidence": "high",
+          "verification_status": "human_verified",
+          "correction_status": "corrected",
+          "is_verbatim": 0,
+          "layer": "corrected_later",
+          "related_concepts": [
+            "fireworks rules",
+            "public safety"
+          ],
+          "from_node_id": "sample-stmt-4",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-5",
+      "statement_text": "A resident asserted the ordinance was adopted without the required second reading; staff dispute this account.",
+      "layer": "known_then",
+      "is_verbatim": 1,
+      "confidence": "medium",
+      "agenda_item_id": "alpine:2019-06-25:item-2",
+      "ui_status": "disputed",
+      "verification_status": "disputed",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_minutes_2019_06",
+          "relation": "disputes",
+          "locator_kind": "section",
+          "source_type": "Meeting minutes",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-06-25",
+          "section": "Item 2 — Public comment",
+          "original_url": "https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_url": "https://web.archive.org/web/2019/https://records.example/alpine/2019-06-25-minutes.html",
+          "archive_status": "available",
+          "scan_date": "2019-06-26",
+          "confidence": "medium",
+          "verification_status": "disputed",
+          "correction_status": "none",
+          "is_verbatim": 1,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-5",
+          "from_node_type": "statement"
+        }
+      ]
+    },
+    {
+      "statement_id": "sample-stmt-6",
+      "statement_text": "Draft agenda notes reference a follow-up fireworks safety review pending the next meeting.",
+      "layer": "known_then",
+      "is_verbatim": 0,
+      "confidence": "low",
+      "agenda_item_id": "alpine:2019-07-09:item-7",
+      "ui_status": "pending-review",
+      "verification_status": "source_recorded",
+      "correction_status": "none",
+      "produced_by": "human",
+      "source_changed": 0,
+      "publication_state": "not_publishable",
+      "evidence": [
+        {
+          "to_source_id": "sample_draft_agenda_2019_07",
+          "relation": "mentions",
+          "locator_kind": "page",
+          "source_type": "Draft agenda",
+          "published_by": "Town of Alpine Clerk",
+          "jurisdiction": "Alpine, WY",
+          "source_date": "2019-07-09",
+          "page": 1,
+          "original_url": "https://records.example/alpine/2019-07-09-draft-agenda.pdf",
+          "archive_status": "unavailable",
+          "scan_date": "2019-07-08",
+          "confidence": "low",
+          "verification_status": "source_recorded",
+          "correction_status": "none",
+          "is_verbatim": 0,
+          "layer": "known_then",
+          "from_node_id": "sample-stmt-6",
+          "from_node_type": "statement"
+        }
+      ]
+    }
+  ],
+  "agenda_thread": {
+    "thread": {
+      "agenda_thread_id": "alpine:thread:fireworks-ordinance",
+      "title": "Fireworks ordinance",
+      "jurisdiction_id": "alpine",
+      "status": "decided",
+      "first_seen_date": "2019-06-11",
+      "last_seen_date": "2019-06-25",
+      "canonicalHumanLabel": "fireworks rules",
+      "sourceAliases": []
+    },
+    "members": [
+      {
+        "agenda_item_id": "alpine:2019-06-11:item-5",
+        "item_order": 5,
+        "meeting_id": 101,
+        "title": "Fireworks ordinance — first reading"
+      },
+      {
+        "agenda_item_id": "alpine:2019-06-25:item-2",
+        "item_order": 2,
+        "meeting_id": 102,
+        "title": "Fireworks ordinance — adoption"
+      },
+      {
+        "agenda_item_id": "alpine:2019-07-09:item-7",
+        "item_order": 7,
+        "meeting_id": 103,
+        "title": "Fireworks ordinance — correction"
+      }
+    ],
+    "lifecycle_edges": [
+      {
+        "edge_id": "agenda_item_supersedes:alpine:2019-06-25:item-2->alpine:2019-06-11:item-5",
+        "edge_type": "agenda_item_supersedes",
+        "from_node_id": "alpine:2019-06-25:item-2",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-11:item-5",
+        "to_node_type": "agenda_item"
+      },
+      {
+        "edge_id": "agenda_item_amends:alpine:2019-07-09:item-7->alpine:2019-06-25:item-2",
+        "edge_type": "agenda_item_amends",
+        "from_node_id": "alpine:2019-07-09:item-7",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-25:item-2",
+        "to_node_type": "agenda_item"
+      },
+      {
+        "edge_id": "agenda_item_revisits:alpine:2019-07-09:item-7->alpine:2019-06-11:item-5",
+        "edge_type": "agenda_item_revisits",
+        "from_node_id": "alpine:2019-07-09:item-7",
+        "from_node_type": "agenda_item",
+        "to_node_id": "alpine:2019-06-11:item-5",
+        "to_node_type": "agenda_item"
+      }
+    ],
+    "completeness": {
+      "state": "gaps",
+      "gaps": [
+        {
+          "kind": "unreviewed_instance",
+          "agenda_item_id": "alpine:2019-07-09:item-7",
+          "meeting_id": 103,
+          "detail": "correction instance carries a pending-review draft agenda"
+        },
+        {
+          "kind": "missing_minutes_transcript",
+          "agenda_item_id": "alpine:2019-07-09:item-7",
+          "meeting_id": 103,
+          "detail": "no minutes or transcript recorded for the 2019-07-09 meeting"
+        }
+      ]
+    }
+  },
+  "topic_tree": {
+    "root": {
+      "topic_id": "topic:safety",
+      "name": "General safety",
+      "jurisdiction_id": "alpine",
+      "canonicalHumanLabel": "general safety",
+      "sourceAliases": [
+        {
+          "term": "public safety",
+          "aliasType": "government_term",
+          "sourceRef": {
+            "sourceId": "sample_packet_2019_06",
+            "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+            "locator": {
+              "page": 5
+            }
+          },
+          "firstSeenMeetingId": 101,
+          "firstSeenDate": "2019-06-11"
+        }
+      ]
+    },
+    "breadcrumb": [
+      {
+        "topic_id": "topic:safety",
+        "name": "General safety",
+        "jurisdiction_id": "alpine",
+        "canonicalHumanLabel": "general safety",
+        "sourceAliases": []
+      }
+    ],
+    "tree": {
+      "topic": {
+        "topic_id": "topic:safety",
+        "name": "General safety",
+        "jurisdiction_id": "alpine",
+        "canonicalHumanLabel": "general safety",
+        "sourceAliases": []
+      },
+      "children": [
+        {
+          "topic": {
+            "topic_id": "topic:fire",
+            "name": "Fire prevention",
+            "jurisdiction_id": "alpine",
+            "canonicalHumanLabel": "fire prevention",
+            "sourceAliases": [
+              {
+                "term": "fire code enforcement",
+                "aliasType": "government_term",
+                "sourceRef": {
+                  "sourceId": "sample_packet_2019_06",
+                  "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+                  "locator": {
+                    "page": 4
+                  }
+                },
+                "firstSeenMeetingId": 101,
+                "firstSeenDate": "2019-06-11"
+              }
+            ]
+          },
+          "children": [
+            {
+              "topic": {
+                "topic_id": "topic:fireworks",
+                "name": "Fireworks",
+                "jurisdiction_id": "alpine",
+                "canonicalHumanLabel": "fireworks",
+                "sourceAliases": [
+                  {
+                    "term": "consumer pyrotechnics",
+                    "aliasType": "government_term",
+                    "sourceRef": {
+                      "sourceId": "sample_packet_2019_06",
+                      "originalUrl": "https://records.example/alpine/2019-06-11-packet.pdf",
+                      "locator": {
+                        "page": 5
+                      }
+                    },
+                    "firstSeenMeetingId": 101,
+                    "firstSeenDate": "2019-06-11"
+                  }
+                ]
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

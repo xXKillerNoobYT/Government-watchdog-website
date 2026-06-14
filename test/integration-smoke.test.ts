@@ -23,10 +23,18 @@ import { render } from '../src/ui/render';
 import { assembleThread } from '../src/ui/timeline';
 import { graphFromResponse, flattenTopicTree, buildRollupGraph, rollupFilter, TOPIC_ROLLUP } from '../src/ui/topic-tree';
 import type { ReadApiResponse, ConceptEdge } from '../src/types/read-api';
-// The REAL captured backend output (read_api.build_response at GOV-98 merge).
+// The REAL reviewed backend output (read_api.reviewer_internal_records at backend
+// origin/main 235bba6, GOV-146 Option-A seed): 6 real reviewed Alpine records,
+// source-backed, no concept graph. Drives the records-level invariants (a)+(b).
 import sampleData from './read-api-sample.json';
+// Labeled SYNTHETIC concept-graph demo: drives the agenda-thread + topic-rollup +
+// cycle invariants (c)+(d)+(e) that the real reviewed corpus cannot exercise yet
+// (0 topics / 0 threads). When the backend builds a reviewer-internal concept graph
+// over the real corpus, these flip to the real capture (GOV-129 follow-up).
+import graphDemoData from '../src/fixtures/concept-graph-demo.json';
 
 const sample = sampleData as unknown as ReadApiResponse;
+const demo = graphDemoData as unknown as ReadApiResponse;
 // Transport-level body text: the serialized response exactly as it crosses the
 // wire (keys + values). Scanning this catches a raw locator in ANY field.
 const SAMPLE_TEXT = JSON.stringify(sampleData);
@@ -78,7 +86,7 @@ describe('GOV-104 integration smoke — 5 assertions against the real read-API s
   });
 
   it('(c) no fabricated cross-meeting link — links come only from typed backend edges', () => {
-    const thread = sample.agenda_thread!;
+    const thread = demo.agenda_thread!;
     const memberIds = new Set(thread.members.map((m) => m.agenda_item_id));
     const assembled = assembleThread(thread);
 
@@ -95,7 +103,7 @@ describe('GOV-104 integration smoke — 5 assertions against the real read-API s
   });
 
   it('(d) the rollup filter returns descendants (parent → whole subtree)', () => {
-    const { graph, cyclic } = graphFromResponse(sample.topic_tree!);
+    const { graph, cyclic } = graphFromResponse(demo.topic_tree!);
     expect(cyclic).toBe(false);
     // safety → fire → fireworks (from the captured tree).
     const underSafety = rollupFilter(graph, 'topic:safety');
@@ -107,7 +115,7 @@ describe('GOV-104 integration smoke — 5 assertions against the real read-API s
   });
 
   it('(e) a cyclic rollup graph is rejected (degraded, not rendered as a tree)', () => {
-    const { nodes, edges } = flattenTopicTree(sample.topic_tree!.tree);
+    const { nodes, edges } = flattenTopicTree(demo.topic_tree!.tree);
     // Inject a back-edge (a top ancestor rolling up to its own descendant).
     const backEdge: ConceptEdge = {
       edge_id: 'cycle',

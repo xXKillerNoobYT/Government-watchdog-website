@@ -72,7 +72,7 @@ export function trustLegend(): LegendEntry[] {
     {
       key: 'fixture',
       label: FIXTURE_BANNER_TEXT,
-      meaning: 'The screen is showing a labeled sample for layout review, not a real civic record.',
+      meaning: 'The screen is showing an offline captured sample, not a live read from the read-API — the on-screen notice says whether it is a real reviewed snapshot or a synthetic demo.',
       tone: 'caution',
       meta: true,
     },

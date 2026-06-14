@@ -14,13 +14,21 @@ export interface StateView {
   kind: 'loading' | 'empty' | 'error' | 'ready';
   heading: string;
   message: string;
-  /** Show the "FIXTURE MODE — Not real data" banner above the surface. */
+  /** Show the offline-sample banner above the surface (any non-live `mode`). */
   showFixtureBanner: boolean;
-  /** Extra line under the banner (e.g. live-read fallback reason). */
+  /** Extra line under the banner — carries provenance (real captured snapshot
+   *  vs. synthetic demo) and any live-read fallback reason. */
   notice?: string;
 }
 
-export const FIXTURE_BANNER_TEXT = 'FIXTURE MODE — Not real data';
+/**
+ * Offline-sample banner. The honest distinction is *live vs. not-live*, NOT
+ * *real vs. fake*: in fixture mode the surface may carry a REAL reviewed
+ * captured snapshot (GOV-129) OR a synthetic demo (state-matrix / concept-graph).
+ * The banner states only what is always true off the live path — "not a live
+ * read" — and the per-content {@link StateView.notice} carries which it is.
+ */
+export const FIXTURE_BANNER_TEXT = 'OFFLINE SAMPLE — not a live read';
 
 export function stateView(state: AsyncState<ReadApiResponse>, notice?: string): StateView {
   const showFixtureBanner = state.mode === 'fixture';

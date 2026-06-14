@@ -15,7 +15,7 @@
  */
 
 import { createRouter } from './router';
-import { loadReadModel, isEmptyResponse, FIXTURE } from './data/client';
+import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
@@ -24,6 +24,7 @@ import type { AsyncState } from './state/async-state';
 import type { ReadApiResponse } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
+import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
 
 /**
  * State-matrix sample (GOV-104): one labeled card per record-level trust state
@@ -32,6 +33,19 @@ import stateMatrixData from './fixtures/state-matrix.json';
  * exactly like the main fixture — demo scaffolding, never a trust recompute.
  */
 const STATE_MATRIX: ReadApiResponse = assertWebSafe(stateMatrixData as ReadApiResponse);
+
+/**
+ * Concept-graph demo (GOV-129): a clearly-labeled SYNTHETIC sample carrying the
+ * agenda-thread + topic-tree + completeness shapes. The real reviewed read_api
+ * serves 0 topics / 0 threads today (only promoted statements exist), so the
+ * `/topics` tree and the `?demo=complete` completeness state are demonstrated
+ * from this sample under a visible "not real data" notice — NEVER presented as
+ * real. Flips to a real capture once the backend builds a reviewer-internal
+ * concept graph over the real Alpine corpus (GOV-129 follow-up).
+ */
+const GRAPH_DEMO: ReadApiResponse = assertWebSafe(conceptGraphDemoData as ReadApiResponse);
+const GRAPH_DEMO_NOTICE =
+  'Concept-graph sample (topic tree / agenda thread) — not real data; no real concept graph exists yet.';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
@@ -52,7 +66,10 @@ function el(tag: string, attrs: Record<string, string> = {}, text?: string): HTM
  * completeness — the value is supplied as data and rendered verbatim.
  */
 function completeDemoBody(): ReadApiResponse {
-  const base = FIXTURE;
+  // Completeness lives on the agenda thread, which only exists in the synthetic
+  // concept-graph demo (the real reviewed corpus has none). Render from the
+  // labeled demo, never from the real FIXTURE.
+  const base = GRAPH_DEMO;
   if (!base.agenda_thread) return base;
   return {
     ...base,
@@ -107,10 +124,16 @@ async function renderTimeline(query: URLSearchParams): Promise<void> {
   render(root!, state, notice);
 }
 
-/** Topic page: civic topic tree above the reused B card+drawer timeline. */
+/** Topic page: civic topic tree above the reused B card+drawer timeline.
+ *  Default: real reviewed data (no concept graph yet → honest "no topic tree").
+ *  `?demo=graph`: render the labeled SYNTHETIC concept-graph sample so the tree
+ *  surface can be reviewed/screenshotted until the real graph exists. */
 async function renderTopics(query: URLSearchParams): Promise<void> {
   render(root!, idle<ReadApiResponse>());
-  const { state, notice } = await loadReadModel();
+  const { state, notice } =
+    query.get('demo') === 'graph'
+      ? { state: resolved(GRAPH_DEMO, 'fixture', isEmptyResponse), notice: GRAPH_DEMO_NOTICE }
+      : await loadReadModel();
   root!.replaceChildren();
 
   const treeBox = el('div', { class: 'tt-wrap', 'data-test': 'topics-page' });

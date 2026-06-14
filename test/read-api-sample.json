@@ -1,174 +1,250 @@
 {
-  "access": "reviewer_internal",
-  "agenda_thread": {
-    "lifecycle_edges": [
-      {
-        "edge_id": "agenda_item_supersedes:alpine:2026-05-08:item-7->alpine:2026-04-10:item-3",
-        "edge_type": "agenda_item_supersedes",
-        "from_node_id": "alpine:2026-05-08:item-7",
-        "from_node_type": "agenda_item",
-        "to_node_id": "alpine:2026-04-10:item-3",
-        "to_node_type": "agenda_item"
-      }
-    ],
-    "members": [
-      {
-        "agenda_item_id": "alpine:2026-04-10:item-3",
-        "item_order": 3,
-        "meeting_id": 1,
-        "title": "Fireworks ban — first reading"
-      },
-      {
-        "agenda_item_id": "alpine:2026-05-08:item-7",
-        "item_order": 7,
-        "meeting_id": 2,
-        "title": "Fireworks ban — adoption"
-      }
-    ],
-    "thread": {
-      "agenda_thread_id": "alpine:thread:fireworks-ban",
-      "canonicalHumanLabel": "fireworks ban",
-      "first_seen_date": null,
-      "jurisdiction_id": "alpine",
-      "last_seen_date": null,
-      "sourceAliases": [],
-      "status": "open",
-      "title": "Fireworks ban"
-    }
+  "_provenance": {
+    "kind": "real_reviewed_snapshot",
+    "captured_from": "read_api.reviewer_internal_records @ backend origin/main 235bba6 (GOV-146 Option-A owner-authorized 6-row promotion seed)",
+    "reviewer": "reviewer:isaac",
+    "transport": "web-safe swept at the backend transport boundary and re-swept by the frontend assertWebSafe at load",
+    "summary": "Real reviewed Alpine records (verification_status=reviewed_source_linked, not_publishable, reviewer-internal). No concept graph (topic_tree/agenda_thread) over the real corpus yet; those surfaces show their honest empty-state. See GOV-129 PR + follow-up.",
+    "issue": "GOV-129"
   },
+  "scope": "alpine",
+  "access": "reviewer_internal",
   "records": [
     {
-      "agenda_item_id": "alpine:2026-05-08:item-7",
-      "confidence": "medium",
+      "statement_id": "alpine_local_corpus:ai:00000064:0021",
+      "agenda_item_id": null,
+      "statement_text": "A Town Council special meeting was convened on October 9, 2024 at approximately 7:01 p.m.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
       "correction_status": "none",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "ui_status": "source-backed",
+      "confidence": "high",
+      "updates_statement_id": null,
       "evidence": [
         {
-          "agenda_item_id": null,
-          "archive_status": "available",
-          "archive_url": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
-          "confidence": "high",
-          "correction_status": "none",
-          "final_url": null,
-          "from_node_id": "stmt-eligible",
+          "from_node_id": "alpine_local_corpus:ai:00000064:0021",
           "from_node_type": "statement",
-          "is_verbatim": 1,
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
           "layer": "known_then",
-          "locator_kind": "page",
-          "original_url": "https://alpinewy.gov/packet.pdf",
-          "page": 3,
-          "paragraph": null,
-          "relation": "substantiates",
-          "scan_date": "2026-05-09",
-          "section": null,
-          "timestamp_human": null,
+          "locator_kind": "char_span",
           "timestamp_seconds": null,
-          "to_source_id": "alpine_packet",
-          "verification_status": "human_verified"
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
         }
-      ],
-      "is_verbatim": 1,
-      "layer": "known_then",
-      "produced_by": "human",
-      "publication_state": "publishable",
+      ]
+    },
+    {
+      "statement_id": "alpine_local_corpus:ai:01617859:0008",
+      "agenda_item_id": null,
+      "statement_text": "Per the annexation report summary, the Town of Alpine's mill levy is 5 mills.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "publication_state": "not_publishable",
       "source_changed": 0,
-      "statement_id": "stmt-eligible",
-      "statement_text": "The council adopted the fireworks ban.",
       "ui_status": "source-backed",
+      "confidence": "high",
       "updates_statement_id": null,
-      "verification_status": "human_verified"
+      "evidence": [
+        {
+          "from_node_id": "alpine_local_corpus:ai:01617859:0008",
+          "from_node_type": "statement",
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "timestamp_seconds": null,
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "statement_id": "alpine_local_corpus:ai:01661553:0010",
+      "agenda_item_id": null,
+      "statement_text": "The Town of Alpine water system was shut down on May 21, 2026 due to a water main break.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "ui_status": "source-backed",
+      "confidence": "high",
+      "updates_statement_id": null,
+      "evidence": [
+        {
+          "from_node_id": "alpine_local_corpus:ai:01661553:0010",
+          "from_node_type": "statement",
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "timestamp_seconds": null,
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "statement_id": "alpine_local_corpus:ai:01664750:0013",
+      "agenda_item_id": null,
+      "statement_text": "The Town Council scheduled a Budget Work Session for Thursday, June 11, 2026 at 2:00 PM.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "ui_status": "source-backed",
+      "confidence": "high",
+      "updates_statement_id": null,
+      "evidence": [
+        {
+          "from_node_id": "alpine_local_corpus:ai:01664750:0013",
+          "from_node_type": "statement",
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "timestamp_seconds": null,
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "statement_id": "alpine_local_corpus:ai:01819080:0017",
+      "agenda_item_id": null,
+      "statement_text": "Bacteriological testing confirmed the water met all safe drinking-water standards before the advisory was lifted.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "ui_status": "source-backed",
+      "confidence": "high",
+      "updates_statement_id": null,
+      "evidence": [
+        {
+          "from_node_id": "alpine_local_corpus:ai:01819080:0017",
+          "from_node_type": "statement",
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "timestamp_seconds": null,
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "statement_id": "alpine_local_corpus:ai:01821771:0027",
+      "agenda_item_id": null,
+      "statement_text": "The council reported it took no action during its executive session before reconvening the regular session.",
+      "is_verbatim": 0,
+      "layer": "ai_thought_then",
+      "produced_by": "ai",
+      "verification_status": "reviewed_source_linked",
+      "correction_status": "none",
+      "publication_state": "not_publishable",
+      "source_changed": 0,
+      "ui_status": "source-backed",
+      "confidence": "high",
+      "updates_statement_id": null,
+      "evidence": [
+        {
+          "from_node_id": "alpine_local_corpus:ai:01821771:0027",
+          "from_node_type": "statement",
+          "to_source_id": "alpine_local_corpus",
+          "relation": "references",
+          "layer": "known_then",
+          "locator_kind": "char_span",
+          "timestamp_seconds": null,
+          "timestamp_human": null,
+          "page": null,
+          "section": null,
+          "paragraph": null,
+          "final_url": null,
+          "archive_url": null,
+          "archive_status": "not_checked",
+          "scan_date": "2026-06-12",
+          "agenda_item_id": null,
+          "is_verbatim": 1,
+          "verification_status": "machine_extracted_unreviewed",
+          "correction_status": "none",
+          "confidence": "high"
+        }
+      ]
     }
   ],
-  "scope": "alpine",
-  "topic_tree": {
-    "breadcrumb": [
-      {
-        "canonicalHumanLabel": "general safety",
-        "jurisdiction_id": "alpine",
-        "name": "General safety",
-        "sourceAliases": [
-          {
-            "aliasType": "government_term",
-            "firstSeenDate": "2026-05-08",
-            "firstSeenMeetingId": 2,
-            "sourceRef": {
-              "locator": {
-                "page": 3
-              },
-              "originalUrl": "https://alpinewy.gov/packet.pdf",
-              "sourceId": "alpine_packet"
-            },
-            "term": "public safety"
-          }
-        ],
-        "topic_id": "topic:safety"
-      }
-    ],
-    "root": {
-      "canonicalHumanLabel": "general safety",
-      "jurisdiction_id": "alpine",
-      "name": "General safety",
-      "sourceAliases": [
-        {
-          "aliasType": "government_term",
-          "firstSeenDate": "2026-05-08",
-          "firstSeenMeetingId": 2,
-          "sourceRef": {
-            "locator": {
-              "page": 3
-            },
-            "originalUrl": "https://alpinewy.gov/packet.pdf",
-            "sourceId": "alpine_packet"
-          },
-          "term": "public safety"
-        }
-      ],
-      "topic_id": "topic:safety"
-    },
-    "tree": {
-      "children": [
-        {
-          "children": [
-            {
-              "children": [],
-              "topic": {
-                "canonicalHumanLabel": "fireworks",
-                "jurisdiction_id": "alpine",
-                "name": "Fireworks",
-                "sourceAliases": [],
-                "topic_id": "topic:fireworks"
-              }
-            }
-          ],
-          "topic": {
-            "canonicalHumanLabel": "fire prevention",
-            "jurisdiction_id": "alpine",
-            "name": "Fire prevention",
-            "sourceAliases": [],
-            "topic_id": "topic:fire"
-          }
-        }
-      ],
-      "topic": {
-        "canonicalHumanLabel": "general safety",
-        "jurisdiction_id": "alpine",
-        "name": "General safety",
-        "sourceAliases": [
-          {
-            "aliasType": "government_term",
-            "firstSeenDate": "2026-05-08",
-            "firstSeenMeetingId": 2,
-            "sourceRef": {
-              "locator": {
-                "page": 3
-              },
-              "originalUrl": "https://alpinewy.gov/packet.pdf",
-              "sourceId": "alpine_packet"
-            },
-            "term": "public safety"
-          }
-        ],
-        "topic_id": "topic:safety"
-      }
-    }
-  }
+  "agenda_thread": null,
+  "topic_tree": null
 }

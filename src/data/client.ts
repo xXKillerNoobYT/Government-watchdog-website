@@ -64,7 +64,8 @@ async function fetchReadApi(url: string, fetchImpl: typeof fetch): Promise<ReadA
   return assertWebSafe(body);
 }
 
-const FIXTURE_NOTICE = 'Showing a labeled sample — not real data.';
+const FIXTURE_NOTICE =
+  'Showing a captured snapshot of real reviewed records (read_api reviewer-internal serve) — not a live read.';
 
 /**
  * Load the read model. Fixture mode (or no API URL) → labeled fixture. Live
