@@ -25,6 +25,7 @@ import type { ReadApiResponse } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
 import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
+import conceptGraphRealData from './fixtures/concept-graph-real.json';
 
 /**
  * State-matrix sample (GOV-104): one labeled card per record-level trust state
@@ -35,17 +36,36 @@ import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
 const STATE_MATRIX: ReadApiResponse = assertWebSafe(stateMatrixData as ReadApiResponse);
 
 /**
- * Concept-graph demo (GOV-129): a clearly-labeled SYNTHETIC sample carrying the
- * agenda-thread + topic-tree + completeness shapes. The real reviewed read_api
- * serves 0 topics / 0 threads today (only promoted statements exist), so the
- * `/topics` tree and the `?demo=complete` completeness state are demonstrated
- * from this sample under a visible "not real data" notice — NEVER presented as
- * real. Flips to a real capture once the backend builds a reviewer-internal
- * concept graph over the real Alpine corpus (GOV-129 follow-up).
+ * REAL concept-graph capture (GOV-150): a byte-faithful capture of GOV-149's
+ * reviewer-internal `read_api` serve over the REAL Alpine corpus — real
+ * `topic_tree` (root "Town of Alpine" + 3 civic topics, 3 `topic_rollup` edges,
+ * 3 char-span government-term aliases) plus the 6 real reviewer-internal
+ * statement records. Reproduce command + provenance are in the file's
+ * `_provenance` block. Reviewer-internal only; nothing here is owner-published.
+ *
+ * It carries NO `agenda_thread`: the real corpus supports 0 threads (GOV-149
+ * Gate-1 accepted this honest-EMPTY deviation — no thread is fabricated from
+ * title similarity). The agenda-thread + completeness surfaces therefore keep
+ * the SYNTHETIC {@link GRAPH_DEMO} below until real agenda structure exists.
+ */
+const GRAPH_REAL: ReadApiResponse = assertWebSafe(conceptGraphRealData as ReadApiResponse);
+const GRAPH_REAL_NOTICE =
+  'Real reviewer-internal concept-graph capture (GOV-149 read_api serve over the Alpine corpus) — reviewer-internal, not owner-published.';
+/** Real tree focuses the jurisdiction root so the full civic-topic rollup shows. */
+const REAL_DEFAULT_FOCUS = 'topic:alpine:jurisdiction';
+
+/**
+ * Concept-graph SYNTHETIC demo (GOV-129): a clearly-labeled sample carrying the
+ * agenda-thread + completeness + deep-nesting shapes the REAL flat capture
+ * cannot exercise (the real tree is depth-2: root + leaf civic topics, 0
+ * threads). Used ONLY by `?demo=graph-synthetic` (nesting + audited move) and
+ * `?demo=complete` (thread completeness), always under a visible "not real
+ * data" notice — NEVER presented as real. The real `/topics` tree comes from
+ * {@link GRAPH_REAL}.
  */
 const GRAPH_DEMO: ReadApiResponse = assertWebSafe(conceptGraphDemoData as ReadApiResponse);
 const GRAPH_DEMO_NOTICE =
-  'Concept-graph sample (topic tree / agenda thread) — not real data; no real concept graph exists yet.';
+  'SYNTHETIC concept-graph sample (deep nesting / agenda thread / completeness) — not real data; the real corpus has no agenda threads yet.';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
@@ -95,6 +115,15 @@ function parseMove(query: URLSearchParams): MoveRequest | undefined {
   return { topicId, toParentTopicId, movedBy: 'reviewer:demo', movedAtUtc: '2026-06-09T00:00:00Z' };
 }
 
+/** Move only when explicitly requested (the real flat tree has no demo move). */
+function parseOptionalMove(query: URLSearchParams): MoveRequest | undefined {
+  const raw = query.get('move');
+  if (!raw) return undefined;
+  const [topicId, toParentTopicId] = raw.split(':');
+  if (!topicId || !toParentTopicId) return undefined;
+  return { topicId, toParentTopicId, movedBy: 'reviewer:demo', movedAtUtc: '2026-06-09T00:00:00Z' };
+}
+
 /** Force a state for review/screenshots: ?state=loading|empty|error. */
 function forcedState(forced: string | null): AsyncState<ReadApiResponse> | null {
   if (forced === 'loading') return loading<ReadApiResponse>('fixture');
@@ -124,26 +153,23 @@ async function renderTimeline(query: URLSearchParams): Promise<void> {
   render(root!, state, notice);
 }
 
-/** Topic page: civic topic tree above the reused B card+drawer timeline.
- *  Default: real reviewed data (no concept graph yet → honest "no topic tree").
- *  `?demo=graph`: render the labeled SYNTHETIC concept-graph sample so the tree
- *  surface can be reviewed/screenshotted until the real graph exists. */
-async function renderTopics(query: URLSearchParams): Promise<void> {
-  render(root!, idle<ReadApiResponse>());
-  const { state, notice } =
-    query.get('demo') === 'graph'
-      ? { state: resolved(GRAPH_DEMO, 'fixture', isEmptyResponse), notice: GRAPH_DEMO_NOTICE }
-      : await loadReadModel();
+/** Render the topics surface: civic topic tree above the reused B card+drawer
+ *  timeline. `treeOverride` lets the default view show the REAL tree above a
+ *  live/fixture timeline that itself carries no tree. */
+function renderTopicsSurface(
+  state: AsyncState<ReadApiResponse>,
+  notice: string | undefined,
+  focusTopicId: string,
+  move: MoveRequest | undefined,
+  treeOverride?: ReadApiResponse['topic_tree'],
+): void {
   root!.replaceChildren();
 
   const treeBox = el('div', { class: 'tt-wrap', 'data-test': 'topics-page' });
   root!.append(treeBox);
-  const topicTree = state.status === 'ready' ? state.data?.topic_tree : null;
+  const topicTree = treeOverride ?? (state.status === 'ready' ? state.data?.topic_tree : null);
   if (topicTree) {
-    renderTopicTreeView(treeBox, topicTree, {
-      focusTopicId: query.get('topic') ?? DEFAULT_FOCUS,
-      move: parseMove(query),
-    });
+    renderTopicTreeView(treeBox, topicTree, { focusTopicId, move });
   } else {
     treeBox.append(el('p', { class: 'gw-muted' }, 'No topic tree in this view.'));
   }
@@ -152,6 +178,43 @@ async function renderTopics(query: URLSearchParams): Promise<void> {
   const timelineBox = el('div', { 'data-test': 'topics-timeline' });
   root!.append(timelineBox);
   render(timelineBox, state, notice);
+}
+
+/** Topic page: civic topic tree above the reused B card+drawer timeline.
+ *  - Default `/topics`: REAL reviewed timeline (loadReadModel) with the REAL
+ *    GOV-149 topic tree above it — the real concept graph now exists (GOV-150).
+ *  - `?demo=graph`: the REAL concept-graph capture (tree + its 6 real records).
+ *  - `?demo=graph-synthetic`: the clearly-labeled SYNTHETIC sample so the
+ *    deep-nesting + audited-move surfaces the flat real tree cannot exercise
+ *    can still be reviewed/screenshotted. (Agenda-thread completeness uses the
+ *    same synthetic data via the timeline's `?demo=complete`.) */
+async function renderTopics(query: URLSearchParams): Promise<void> {
+  render(root!, idle<ReadApiResponse>());
+  const demo = query.get('demo');
+
+  if (demo === 'graph-synthetic') {
+    renderTopicsSurface(
+      resolved(GRAPH_DEMO, 'fixture', isEmptyResponse),
+      GRAPH_DEMO_NOTICE,
+      query.get('topic') ?? DEFAULT_FOCUS,
+      parseMove(query),
+    );
+    return;
+  }
+
+  // Default + ?demo=graph: REAL GOV-149 concept-graph capture.
+  const { state, notice } =
+    demo === 'graph'
+      ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
+      : await loadReadModel();
+  renderTopicsSurface(
+    state,
+    notice,
+    query.get('topic') ?? REAL_DEFAULT_FOCUS,
+    parseOptionalMove(query),
+    // Default timeline carries no tree → show the REAL tree above it.
+    GRAPH_REAL.topic_tree,
+  );
 }
 
 /** Body / meeting page: the same B card+drawer list under a context heading. */
