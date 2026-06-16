@@ -165,6 +165,118 @@ export function buildTimeline(response: ReadApiResponse): Timeline {
   return { ordered: orderedTimeline(kept), dropped, warnings };
 }
 
+// --- Side time-bar navigator (GOV-153 enhancement #1) ------------------------
+//
+// A year → month → active-day index over the *already ordered* records, for the
+// three coordinated side bars Isaac asked for. Two rules carry over from the
+// chronology above so this never invents navigation that the data can't support:
+//   - It only indexes records that HAVE a web-safe ordering date. Dateless
+//     records are not navigable (we will not fabricate a date to place them on a
+//     bar) — they still render in the timeline, just below the dated run.
+//   - The day bar lists ONLY days that actually carry ≥1 record ("snap to days
+//     that had something happening", Isaac 1.3). Empty days are never emitted, so
+//     navigation inherently snaps to active days — there is no separate
+//     "nearest active day" search to drift out of sync with the data.
+
+/** The stable DOM anchor id for the first record of a given ISO day. */
+export function dayAnchorId(isoDate: string): string {
+  return `gw-day-${isoDate}`;
+}
+
+/** Month names for the month-bar labels (display only — parsed from the ISO key). */
+const MONTH_LABELS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+
+export interface TimeNavDay {
+  /** Full ISO date `YYYY-MM-DD` — the scroll target key. */
+  date: string;
+  /** Day-of-month label, e.g. `5`. */
+  label: string;
+  /** Records on this active day. */
+  count: number;
+  /** Anchor id of the first record of this day. */
+  anchorId: string;
+}
+
+export interface TimeNavMonth {
+  /** Two-digit ISO month `01`–`12`. */
+  month: string;
+  /** Short month label, e.g. `Mar`. */
+  label: string;
+  /** Active days in this month, newest-first. */
+  days: TimeNavDay[];
+  count: number;
+}
+
+export interface TimeNavYear {
+  year: string;
+  /** Months that carry records, newest-first. */
+  months: TimeNavMonth[];
+  count: number;
+}
+
+export interface TimeNavigator {
+  /** Years that carry dated records, newest-first (matches timeline order). */
+  years: TimeNavYear[];
+  /** Records with no derivable date — counted, never placed on a bar. */
+  undatedCount: number;
+}
+
+/**
+ * Build the year/month/day navigator from ordered records. Preserves the
+ * newest-first order of {@link orderedTimeline} at every level, and emits only
+ * year/month/day buckets that actually contain records. The first record seen
+ * for each day (in timeline order) owns that day's scroll anchor.
+ */
+export function buildTimeNavigator(ordered: OrderedRecord[]): TimeNavigator {
+  const years: TimeNavYear[] = [];
+  let undatedCount = 0;
+
+  // Index structures to keep insertion order (newest-first) while grouping.
+  const yearByKey = new Map<string, TimeNavYear>();
+  const monthByKey = new Map<string, TimeNavMonth>();
+  const dayByKey = new Map<string, TimeNavDay>();
+
+  for (const { timelineDate } of ordered) {
+    if (!timelineDate) {
+      undatedCount += 1;
+      continue;
+    }
+    const [year, month, day] = timelineDate.split('-');
+    const yKey = year;
+    const mKey = `${year}-${month}`;
+    const dKey = timelineDate;
+
+    let y = yearByKey.get(yKey);
+    if (!y) {
+      y = { year, months: [], count: 0 };
+      yearByKey.set(yKey, y);
+      years.push(y);
+    }
+    y.count += 1;
+
+    let m = monthByKey.get(mKey);
+    if (!m) {
+      const monthIdx = Number(month) - 1;
+      m = { month, label: MONTH_LABELS[monthIdx] ?? month, days: [], count: 0 };
+      monthByKey.set(mKey, m);
+      y.months.push(m);
+    }
+    m.count += 1;
+
+    let d = dayByKey.get(dKey);
+    if (!d) {
+      d = { date: timelineDate, label: String(Number(day)), count: 0, anchorId: dayAnchorId(timelineDate) };
+      dayByKey.set(dKey, d);
+      m.days.push(d);
+    }
+    d.count += 1;
+  }
+
+  return { years, undatedCount };
+}
+
 // --- Agenda cross-meeting thread assembly (BEH-AGENDA-1..5) ------------------
 
 export interface AssembledLink {
