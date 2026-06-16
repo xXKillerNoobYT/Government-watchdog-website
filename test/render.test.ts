@@ -49,17 +49,17 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
 
   it('renders the REAL reviewed records (cards + source-backed badges + source drawer)', () => {
     render(root, resolved(FIXTURE, 'fixture', isEmptyResponse));
-    // Exactly the 6 owner-authorized reviewed rows, each with a trust badge + drawer.
+    // All 84 promoted reviewer-internal records (5 batches), each with a trust badge + drawer.
     expect(root.querySelectorAll('[data-test="record-card"]').length).toBe(FIXTURE.records!.length);
-    expect(FIXTURE.records!.length).toBe(6);
+    expect(FIXTURE.records!.length).toBe(84);
     const badges = [...root.querySelectorAll('[data-test="trust-badge"]')].map((b) => b.textContent);
     // Every real reviewed row is source-backed (the eligible-only serve emits no other).
     expect(badges.every((b) => b === 'Source-backed')).toBe(true);
     expect(root.querySelector('[data-test="source-drawer"]')).not.toBeNull();
     // Real rows are AI-produced + reviewed → the locked AI label is always present.
     expect(root.querySelector('[data-test="ai-label"]')?.textContent).toContain('AI — not independently verified');
-    // No real concept graph yet → no breadcrumb / agenda-thread surface (honest empty).
-    expect(root.querySelector('[data-test="breadcrumb"]')).toBeNull();
+    // Real topic_tree (GOV-149/150) provides a breadcrumb; agenda_thread is null (honest empty).
+    expect(root.querySelector('[data-test="breadcrumb"]')?.textContent).toContain('Town of Alpine');
     expect(root.querySelector('[data-test="agenda-thread"]')).toBeNull();
     // Transport floor holds on the real payload: no raw/vault path reaches the DOM.
     expect(root.textContent ?? '').not.toMatch(/\/Users\/|Obsidian Vault|transcript_path|\.sha256/);
