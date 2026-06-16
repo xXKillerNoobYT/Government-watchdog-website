@@ -1,0 +1,99 @@
+name: Post-Merge Worktree Cleanup (Dry-Run)
+
+# GOV-215: event-driven trigger for the post-merge cleanup script.
+# Fires after every push to the default branch (which is the moment a PR merges
+# on GitHub). The cleanup script lives in the Backend repo and auto-discovers
+# both checkouts via KNOWN_REPO_ROOTS, so this Website workflow simply invokes
+# the script at its absolute path on the shared self-hosted Mac runner.
+#
+# Why dry-run only:
+#   The CTO_WORKFLOWS hard stop forbids `--apply` automation without a
+#   CEO-approved plan. The cadence-driven Paperclip routine 804d7f7c is the
+#   gated lane that performs `--apply` after the AutomationOpsEngineer
+#   reviews dry-run output.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: post-merge-cleanup
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    name: Dry-run merged-branch / worktree sweep (cross-repo via Backend script)
+    runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
+    steps:
+      - name: Checkout (keep this repo's state current on the runner)
+        uses: actions/checkout@v4
+
+      - name: Resolve script path
+        id: script
+        run: |
+          # Cleanup script lives in the Backend repo. Both checkouts live on
+          # the same self-hosted Mac runner host.
+          script="/Users/IA/Code/Government-watchdog/scripts/cleanup_merged_worktrees.py"
+          if [ ! -f "$script" ]; then
+            echo "::error::Cleanup script not found at $script"
+            exit 1
+          fi
+          echo "path=$script" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Paperclip API URL
+        id: api
+        run: |
+          echo "url=${PAPERCLIP_API_URL:-http://127.0.0.1:3100}" >> "$GITHUB_OUTPUT"
+
+      - name: Run cleanup script (dry-run, JSON)
+        id: sweep
+        run: |
+          set -o pipefail
+          mkdir -p Logs
+          ts="$(date -u +%Y%m%dT%H%M%SZ)"
+          out="Logs/post-merge-cleanup-${ts}.json"
+          python3 "${{ steps.script.outputs.path }}" \
+              --api-url "${{ steps.api.outputs.url }}" \
+              --json | tee "$out"
+          echo "artifact=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Summarise to GitHub step summary
+        if: always()
+        run: |
+          {
+            echo "## Post-Merge Cleanup — Dry-Run (cross-repo)"
+            echo ""
+            echo "Trigger: \`${{ github.event_name }}\` on \`${{ github.ref }}\`"
+            echo "Script:  \`${{ steps.script.outputs.path }}\`"
+            echo "Mode:    dry-run (no removals — \`--apply\` is gated on the Paperclip daily routine 804d7f7c)"
+            echo ""
+            if [ -f "${{ steps.sweep.outputs.artifact }}" ]; then
+              echo "### Candidates"
+              python3 - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path(os.environ.get("ARTIFACT", ""))
+          if not p.exists():
+              print("(no artifact)"); raise SystemExit(0)
+          d = json.loads(p.read_text())
+          print(f"- candidates: {d.get('total_candidates', 0)}")
+          print(f"- would remove branches: {d.get('would_remove_branches', 0)}")
+          print(f"- would remove worktrees: {d.get('would_remove_worktrees', 0)}")
+          print(f"- preserved: {d.get('preserved_count', 0)}")
+          print(f"- failed: {d.get('failed_count', 0)}")
+          PY
+            else
+              echo "(no JSON artifact produced — see job log)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          ARTIFACT: ${{ steps.sweep.outputs.artifact }}
+
+      - name: Upload dry-run JSON artifact
+        if: always() && steps.sweep.outputs.artifact != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-merge-cleanup-dry-run
+          path: ${{ steps.sweep.outputs.artifact }}
+          if-no-files-found: warn
+          retention-days: 14
