@@ -10,7 +10,16 @@ import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, Agend
 import { stateView, trustLabel, recordTone, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
 import { trustLegend, LEGEND_TITLE } from './legend';
 import { drawerFields, relatedLinksFor, verbatimLabel } from './statement-presenter';
-import { buildTimeline, assembleThread, completenessView, NO_LINK_TEXT, type AssembledThread, type CompletenessView } from './timeline';
+import {
+  buildTimeline,
+  buildTimeNavigator,
+  assembleThread,
+  completenessView,
+  NO_LINK_TEXT,
+  type AssembledThread,
+  type CompletenessView,
+  type TimeNavigator,
+} from './timeline';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -63,10 +72,16 @@ function relatedLinks(
   return el('ul', { class: 'gw-related-list', 'data-test': 'related-links' }, items);
 }
 
+interface RecordCardOpts {
+  /** Anchor id when this card is the first record of its day (time-bar target). */
+  anchorId?: string;
+}
+
 function recordCard(
   r: StatementRecord,
   edges?: ConceptEdge[],
   members?: AgendaItemMember[],
+  opts: RecordCardOpts = {},
 ): HTMLElement {
   // Exactly one status badge per card (acceptance criterion). The locked AI
   // label is a separate, clearly-labeled element — not a second status badge.
@@ -91,16 +106,45 @@ function recordCard(
         el('p', { class: 'gw-statement' }, [r.statement_text ?? '(no text)']),
       ]);
 
-  const children: HTMLElement[] = [
-    el('div', { class: 'gw-badges' }, badges),
+  // GOV-153 enhancement #2 — progressive disclosure. The record INFO (statement /
+  // AI analysis, provenance, related links, sources) is blurred by default and
+  // revealed only on explicit click. The trust badge + locked AI label are NOT
+  // inside the blurred region: they stay sharp and legible at all times, so an
+  // AI-produced row can never read as a verified fact while details are hidden
+  // (BACKEND_FRONTEND_EVIDENCE_WORKFLOW label integrity — see GOV-153 note #2).
+  const infoChildren: HTMLElement[] = [
     body,
     el('p', { class: 'gw-provenance gw-muted', 'data-test': 'provenance' }, [verbatimLabel(r)]),
   ];
   const related = relatedLinks(r, edges, members);
-  if (related) children.push(related);
-  children.push(evidenceDrawer(r.evidence ?? []));
+  if (related) infoChildren.push(related);
+  infoChildren.push(evidenceDrawer(r.evidence ?? []));
 
-  return el('article', { class: 'gw-card', 'data-test': 'record-card' }, children);
+  const info = el('div', { class: 'gw-card-info', 'data-test': 'card-info', 'aria-hidden': 'true' }, infoChildren);
+
+  const reveal = el(
+    'button',
+    { type: 'button', class: 'gw-reveal-btn', 'data-test': 'reveal-btn', 'aria-expanded': 'false' },
+    ['Reveal details'],
+  );
+
+  const attrs: Record<string, string> = { class: 'gw-card', 'data-test': 'record-card' };
+  if (opts.anchorId) attrs.id = opts.anchorId;
+
+  const card = el('article', attrs, [
+    el('div', { class: 'gw-badges' }, badges),
+    reveal,
+    info,
+  ]);
+
+  reveal.addEventListener('click', () => {
+    const revealed = card.classList.toggle('gw-revealed');
+    reveal.setAttribute('aria-expanded', String(revealed));
+    info.setAttribute('aria-hidden', String(!revealed));
+    reveal.textContent = revealed ? 'Hide details' : 'Reveal details';
+  });
+
+  return card;
 }
 
 /** The completeness indicator — fail-closed; an incomplete thread never reads complete. */
@@ -186,6 +230,95 @@ function legendDisclosure(): HTMLElement {
   ]);
 }
 
+/**
+ * GOV-153 enhancement #1 — the side time-bar: three coordinated bars (year →
+ * month → day) for fast chronological navigation. Selecting a year repopulates
+ * the month bar; selecting a month repopulates the day bar; selecting a day
+ * scrolls to that day's first record. The day bar lists ONLY active days (the
+ * navigator never emits an empty day), so clicking inherently snaps to "days
+ * that had something happening" (Isaac 1.3). Returns null when there is no dated
+ * record to navigate. Buttons are real <button>s ≥44px tall (tap-reachable,
+ * keyboard-focusable) per the UX standing gate.
+ */
+function timeNavigatorAside(nav: TimeNavigator): HTMLElement | null {
+  if (!nav.years.length) return null;
+
+  const yearList = el('ul', { class: 'gw-tn-list', 'data-test': 'tn-years' });
+  const monthList = el('ul', { class: 'gw-tn-list', 'data-test': 'tn-months' });
+  const dayList = el('ul', { class: 'gw-tn-list', 'data-test': 'tn-days' });
+
+  let selectedYear = nav.years[0];
+  let selectedMonth = selectedYear.months[0];
+
+  const scrollToAnchor = (id: string): void => {
+    const target = document.getElementById(id);
+    // scrollIntoView is absent in some non-browser DOMs (e.g. jsdom) — guard it
+    // so the navigator stays functional (selection still updates) regardless.
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const navButton = (
+    label: string,
+    count: number,
+    test: string,
+    active: boolean,
+    onClick: () => void,
+  ): HTMLElement => {
+    const btn = el(
+      'button',
+      { type: 'button', class: `gw-tn-btn${active ? ' gw-tn-active' : ''}`, 'data-test': test, 'aria-pressed': String(active) },
+      [el('span', { class: 'gw-tn-label' }, [label]), el('span', { class: 'gw-tn-count' }, [String(count)])],
+    );
+    btn.addEventListener('click', onClick);
+    return el('li', {}, [btn]);
+  };
+
+  const renderDays = (): void => {
+    dayList.replaceChildren(
+      ...selectedMonth.days.map((d) =>
+        navButton(d.label, d.count, 'tn-day', false, () => scrollToAnchor(d.anchorId)),
+      ),
+    );
+  };
+  const renderMonths = (): void => {
+    monthList.replaceChildren(
+      ...selectedYear.months.map((m) =>
+        navButton(m.label, m.count, 'tn-month', m === selectedMonth, () => {
+          selectedMonth = m;
+          renderMonths();
+          renderDays();
+          scrollToAnchor(m.days[0].anchorId);
+        }),
+      ),
+    );
+  };
+  const renderYears = (): void => {
+    yearList.replaceChildren(
+      ...nav.years.map((y) =>
+        navButton(y.year, y.count, 'tn-year', y === selectedYear, () => {
+          selectedYear = y;
+          selectedMonth = y.months[0];
+          renderYears();
+          renderMonths();
+          renderDays();
+          scrollToAnchor(selectedMonth.days[0].anchorId);
+        }),
+      ),
+    );
+  };
+  renderYears();
+  renderMonths();
+  renderDays();
+
+  return el('aside', { class: 'gw-timenav', 'data-test': 'time-navigator', role: 'navigation', 'aria-label': 'Timeline date navigator' }, [
+    el('div', { class: 'gw-tn-col' }, [el('h3', { class: 'gw-tn-head' }, ['Year']), yearList]),
+    el('div', { class: 'gw-tn-col' }, [el('h3', { class: 'gw-tn-head' }, ['Month']), monthList]),
+    el('div', { class: 'gw-tn-col' }, [el('h3', { class: 'gw-tn-head' }, ['Day']), dayList]),
+  ]);
+}
+
 function readyView(data: ReadApiResponse): HTMLElement {
   const children: HTMLElement[] = [legendDisclosure()];
   const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
@@ -198,12 +331,25 @@ function readyView(data: ReadApiResponse): HTMLElement {
   // and logged here (BEH-FILTER-2) — never silently shown under an Alpine view.
   const timeline = buildTimeline(data);
   for (const w of timeline.warnings) console.warn(w);
+
+  // The first card of each day owns that day's scroll anchor, so the side
+  // time-bar can jump straight to it (GOV-153 #1). Track days already anchored.
+  const anchoredDays = new Set<string>();
+  const cards = timeline.ordered.map(({ record, timelineDate }) => {
+    let anchorId: string | undefined;
+    if (timelineDate && !anchoredDays.has(timelineDate)) {
+      anchoredDays.add(timelineDate);
+      anchorId = `gw-day-${timelineDate}`;
+    }
+    return recordCard(record, edges, members, { anchorId });
+  });
+  const timelineSection = el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, cards);
+
+  const navigator = timeNavigatorAside(buildTimeNavigator(timeline.ordered));
   children.push(
-    el(
-      'section',
-      { class: 'gw-timeline', 'data-test': 'timeline' },
-      timeline.ordered.map(({ record }) => recordCard(record, edges, members)),
-    ),
+    navigator
+      ? el('div', { class: 'gw-timeline-layout' }, [navigator, timelineSection])
+      : timelineSection,
   );
   return el('div', {}, children);
 }
@@ -274,6 +420,29 @@ export const STYLE = `
 .gw-instance-date{font-size:.75rem;font-variant-numeric:tabular-nums}
 .gw-instance-title{font-weight:600;font-size:.9rem}
 .gw-no-link{font-size:.78rem;font-style:italic;margin:.2rem 0 0}
+/* GOV-153 #1 — side time-bar layout. Navigator sits beside the timeline on wide
+   viewports and stacks above it on the mobile floor. */
+.gw-timeline-layout{display:flex;gap:1rem;align-items:flex-start}
+.gw-timeline-layout .gw-timeline{flex:1 1 auto;min-width:0}
+.gw-timenav{flex:0 0 auto;display:flex;gap:.4rem;position:sticky;top:.5rem;background:#f7f9fc;border:1px solid #d7dee8;border-radius:8px;padding:.5rem}
+.gw-tn-col{display:flex;flex-direction:column;min-width:3.2rem}
+.gw-tn-head{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#5a6b82;margin:.1rem 0 .3rem;text-align:center}
+.gw-tn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem;max-height:60vh;overflow-y:auto}
+.gw-tn-btn{display:flex;align-items:center;justify-content:space-between;gap:.3rem;width:100%;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;cursor:pointer;font-size:${BADGE_MIN_FONT_PX}px;font-weight:600;background:#fff;color:#1a4d8f;border:1px solid #c2cedd;border-radius:6px;padding:.2rem .45rem}
+.gw-tn-btn:hover{background:#eef2f8}
+.gw-tn-btn:focus-visible{outline:2px solid #1a4d8f;outline-offset:1px}
+.gw-tn-active{background:#1a4d8f;color:#fff;border-color:#1a4d8f}
+.gw-tn-count{font-size:.65rem;font-weight:700;background:rgba(0,0,0,.08);color:inherit;border-radius:999px;padding:0 .35rem;min-width:1.1rem;text-align:center}
+.gw-tn-active .gw-tn-count{background:rgba(255,255,255,.25)}
+@media (max-width:640px){.gw-timeline-layout{flex-direction:column}.gw-timenav{position:static;width:100%;justify-content:space-between}.gw-tn-col{flex:1}.gw-tn-list{flex-direction:row;flex-wrap:wrap;max-height:none}}
+/* GOV-153 #2 — click-to-reveal blur. The record INFO is blurred + inert until
+   revealed; the trust/AI badges live OUTSIDE this region and are never blurred,
+   so an AI row can't read as fact while hidden. */
+.gw-reveal-btn{display:inline-flex;align-items:center;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;cursor:pointer;font-size:.82rem;font-weight:600;color:#1a4d8f;background:#eef2f8;border:1px solid #1a4d8f;border-radius:6px;padding:.2rem .7rem;margin:.1rem 0 .4rem}
+.gw-reveal-btn:focus-visible{outline:2px solid #1a4d8f;outline-offset:1px}
+.gw-card-info{filter:blur(6px);user-select:none;pointer-events:none;transition:filter .15s ease}
+.gw-card.gw-revealed .gw-card-info{filter:none;user-select:auto;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.gw-card-info{transition:none}}
 `;
 
 let styleInjected = false;
