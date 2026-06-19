@@ -80,6 +80,32 @@ export type VerificationStatus =
 export type ProducedBy = 'automation' | 'ai' | 'human';
 export type PublicationState = 'not_publishable' | 'publishable';
 
+/**
+ * Read-time confidence label (GOV-283), derived fail-closed by the backend from
+ * the source transcript class (`transcript_class.CONFIDENCE_LABEL_BY_CLASS`).
+ * Mirrored here as the 5-value SSOT vocabulary, NOT re-derived: the frontend
+ * consumes it VERBATIM exactly like `ui_status` (pass-up trigger if you ever
+ * feel you must recompute it). The open `string & {}` tail keeps an unforeseen
+ * future label from being silently dropped — it still renders, just title-cased.
+ *
+ * The backend attaches this as an API-envelope key AFTER `to_web_safe`, so the
+ * raw `transcript_class` it is derived from never crosses the web-safe boundary.
+ */
+export type ConfidenceLabel =
+  | 'source_anchored_timed'
+  | 'auto_caption_timed'
+  | 'auto_caption_untimed'
+  | 'minutes_summary'
+  | 'derived_summary'
+  | (string & {});
+
+/**
+ * The lowest-confidence label the backend fails closed to (the
+ * `auto_caption_untimed` mapping). Recorded here so a test can pin that the
+ * frontend never displays a *higher* confidence than the backend sent.
+ */
+export const CONSERVATIVE_CONFIDENCE_LABEL = 'auto_caption_untimed' satisfies ConfidenceLabel;
+
 /** Provenance of an event in the concept graph (1.07 layering). Open string —
  *  observed value `known_then`; backend may add `presented_then`, etc. */
 export type Layer = 'known_then' | 'presented_then' | 'corrected_later' | (string & {});
@@ -187,6 +213,19 @@ export interface StatementRecord {
   agenda_item_id?: string | null;
   // Labels that travel — consumed verbatim, NEVER recomputed on the client.
   ui_status?: UiStatus | null;
+  /**
+   * Read-time confidence label (GOV-283) — backend API-envelope key, fail-closed,
+   * consumed verbatim. Absent only on a pre-GOV-283 captured fixture; the live
+   * backend always sends it. Never derived/upgraded on the client.
+   */
+  confidence_label?: ConfidenceLabel | null;
+  /**
+   * Read-time SAFE speaker label (GOV-290) — backend API-envelope key, fail-closed
+   * and provably name-free unless the attribution cleared the write+read naming
+   * gate (then it is the approved "Name, Role"). Rendered VERBATIM — the frontend
+   * never resolves, infers, or upgrades a speaker (pass-up trigger if tempted).
+   */
+  speaker_label?: string | null;
   verification_status?: VerificationStatus | null;
   correction_status?: string | null;
   produced_by?: ProducedBy | null;

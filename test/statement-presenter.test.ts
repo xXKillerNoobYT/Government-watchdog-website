@@ -7,9 +7,13 @@ import {
   correctionStatusLabel,
   locatorText,
   verbatimLabel,
+  confidenceLabel,
+  speakerLabel,
+  locatorKindLabel,
 } from '../src/ui/statement-presenter';
 import { RAW_PATH_FORBIDDEN_KEYS } from '../src/data/web-safe';
-import type { StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember } from '../src/types/read-api';
+import type { StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, ConfidenceLabel } from '../src/types/read-api';
+import { CONSERVATIVE_CONFIDENCE_LABEL } from '../src/types/read-api';
 
 describe('edgeTypeLabel (typed links — never untyped "related", BEH-AGENDA-2)', () => {
   it('maps the lifecycle edge types to explicit labels', () => {
@@ -133,5 +137,81 @@ describe('verbatim status labels (verbatim, never recomputed)', () => {
   it('labels AI provenance distinctly from human facts', () => {
     expect(verbatimLabel({ statement_id: 's', produced_by: 'ai', is_verbatim: 0, evidence: [] })).toBe('AI — paraphrased');
     expect(verbatimLabel({ statement_id: 's', produced_by: 'human', is_verbatim: 1, evidence: [] })).toBe('Verbatim quote');
+  });
+});
+
+describe('confidenceLabel (GOV-283 — verbatim mapping, never recomputed)', () => {
+  const rec = (confidence_label?: ConfidenceLabel | null): StatementRecord => ({
+    statement_id: 's',
+    confidence_label,
+    evidence: [],
+  });
+
+  it('maps every SSOT confidence-label value to human copy', () => {
+    expect(confidenceLabel(rec('source_anchored_timed'))).toBe('Source-anchored (timed transcript)');
+    expect(confidenceLabel(rec('auto_caption_timed'))).toBe('Auto-caption (timed)');
+    expect(confidenceLabel(rec('auto_caption_untimed'))).toBe('Auto-caption (untimed)');
+    expect(confidenceLabel(rec('minutes_summary'))).toBe('Minutes summary');
+    expect(confidenceLabel(rec('derived_summary'))).toBe('Derived summary');
+  });
+
+  it('maps the backend fail-closed conservative default', () => {
+    // Pins that the conservative value the backend collapses to is renderable —
+    // the frontend never shows a higher confidence than was sent.
+    expect(confidenceLabel(rec(CONSERVATIVE_CONFIDENCE_LABEL))).toBe('Auto-caption (untimed)');
+  });
+
+  it('renders an unforeseen future value rather than dropping it', () => {
+    expect(confidenceLabel(rec('official_signed_record' as ConfidenceLabel))).toBe('Official signed record');
+  });
+
+  it('returns undefined when absent/blank — never invents a confidence', () => {
+    expect(confidenceLabel(rec(undefined))).toBeUndefined();
+    expect(confidenceLabel(rec(null))).toBeUndefined();
+    expect(confidenceLabel(rec('' as ConfidenceLabel))).toBeUndefined();
+  });
+});
+
+describe('speakerLabel (GOV-290 — verbatim pass-through, never derived)', () => {
+  const rec = (speaker_label?: string | null): StatementRecord => ({
+    statement_id: 's',
+    speaker_label,
+    evidence: [],
+  });
+
+  it('surfaces the safe generic / community / approved-name labels verbatim', () => {
+    expect(speakerLabel(rec('Meeting Attendee'))).toBe('Meeting Attendee');
+    expect(speakerLabel(rec('Community Member'))).toBe('Community Member');
+    expect(speakerLabel(rec('Jane Doe, Mayor'))).toBe('Jane Doe, Mayor');
+  });
+
+  it('returns undefined when absent/blank — never resolves or infers a speaker', () => {
+    expect(speakerLabel(rec(undefined))).toBeUndefined();
+    expect(speakerLabel(rec(null))).toBeUndefined();
+    expect(speakerLabel(rec('   '))).toBeUndefined();
+  });
+});
+
+describe('locatorKindLabel + drawer citation pointer (GOV-293 exact-source trail)', () => {
+  it('names the exact-source pointer kind', () => {
+    expect(locatorKindLabel('char_span')).toBe('Character span (exact source text)');
+    expect(locatorKindLabel('timestamp')).toBe('Transcript timestamp');
+    expect(locatorKindLabel('page')).toBe('Page');
+    expect(locatorKindLabel(undefined)).toBeUndefined();
+    expect(locatorKindLabel('')).toBeUndefined();
+  });
+
+  it('emits a "Citation pointer" drawer field right after the locator when present', () => {
+    const e: EvidenceLink = { to_source_id: 's', locator_kind: 'char_span', page: 3 };
+    const fields = drawerFields(e);
+    const keys = fields.map((f) => f.key);
+    expect(keys).toContain('locator_kind');
+    // ordered immediately after the composed locator (field 9 → 9b)
+    expect(keys.indexOf('locator_kind')).toBe(keys.indexOf('locator') + 1);
+    expect(fields.find((f) => f.key === 'locator_kind')?.value).toBe('Character span (exact source text)');
+  });
+
+  it('omits the citation pointer when the row carries no locator_kind', () => {
+    expect(drawerFields({ to_source_id: 's' }).map((f) => f.key)).not.toContain('locator_kind');
   });
 });
