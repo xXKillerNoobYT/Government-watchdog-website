@@ -17,7 +17,27 @@
       "T24 '170 US Highway 89'"
     ],
     "raw_path_sweep": "CLEAN \u2014 zero raw-marker hits in the serialized body",
-    "access": "reviewer_internal \u2014 vault-only, not owner-published"
+    "access": "reviewer_internal \u2014 vault-only, not owner-published",
+    "completeness_gaps_capture": {
+      "description": "Real web-safe completeness-gap cards (GOV-298) \u2014 what is missing across the Alpine corpus",
+      "capture_date": "2026-06-19",
+      "capture_method": "structure_real_corpus.py over the real Alpine corpus (deterministic, no AI/network) -> read_api.py --completeness-gaps --no-records",
+      "backend_origin_main_head": "a47fb7d4c3d6cda380c44970d9fbb3950d0ddbd7",
+      "total_gaps": 224,
+      "by_gap_type": {
+        "missing_timestamps": 32,
+        "missing_transcript": 11,
+        "no_primary_source": 92,
+        "pdf_text_unextracted": 89
+      },
+      "raw_path_sweep": "CLEAN \u2014 zero raw-marker / forbidden-key hits in the gap-card body",
+      "internal_columns_absent": [
+        "source_id",
+        "detected_run_id",
+        "detected_utc"
+      ],
+      "countability_guarantee": "gap rows are NEVER hidden \u2014 the ~90 no_primary_source meetings stay countable (GOV-125/GOV-298)"
+    }
   },
   "scope": "alpine",
   "access": "reviewer_internal",
@@ -3394,5 +3414,2023 @@
         "topic_id": "topic:alpine:jurisdiction"
       }
     }
-  }
+  },
+  "completeness_gaps": [
+    {
+      "detail": "transcript document id=1 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:1",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "1",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=61 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:10",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "10",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=62 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:11",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "11",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=63 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:12",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "12",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=70 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:13",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "13",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=74 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:14",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "14",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=78 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:15",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "15",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=79 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:16",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "16",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=80 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:17",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "17",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=85 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:18",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "18",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=87 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:19",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "19",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=7 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:2",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=93 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:20",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "20",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=97 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:21",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "21",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=99 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:22",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "22",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=101 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:23",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "23",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=103 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:24",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "24",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=105 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:25",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "25",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=107 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:26",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "26",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=110 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:27",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "27",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=117 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:28",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "28",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=129 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:29",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "29",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=10 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:3",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "3",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=130 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:30",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "30",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=132 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:31",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "31",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=137 (doc_type=transcript_text) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:32",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "32",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=11 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:4",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "4",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=16 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:5",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "5",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=29 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:6",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "6",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=34 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:7",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "7",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=35 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:8",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "8",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "transcript document id=57 (doc_type=transcript) has no parseable MM:SS locators; timestamps left absent (never fabricated)",
+      "gap_id": "missing_timestamps:transcript:9",
+      "gap_type": "missing_timestamps",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "9",
+      "subject_node_type": "transcript"
+    },
+    {
+      "detail": "meeting folder 2025-12-16 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2025-12-16",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-12-16",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-01-06 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-01-06",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-01-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-10 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-03-10",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-23 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-03-23",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-23",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-24 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-03-24",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-24",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-17 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-04-17",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-17",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-05-01 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-05-01",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-05-01",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-05-04 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-05-04",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-05-04",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-06-03 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-06-03",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-06-03",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-06-05 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-06-05",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-06-05",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-06-09 has a primary source but no transcript document to structure",
+      "gap_id": "missing_transcript:meeting:2026-06-09",
+      "gap_type": "missing_transcript",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-06-09",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2023-04-26 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2023-04-26",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2023-04-26",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-02-06 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-02-06",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-02-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-02-13 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-02-13",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-02-13",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-05-14 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-05-14",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-05-14",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-06-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-06-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-06-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-06-25 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-06-25",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-06-25",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-08-21 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-08-21",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-08-21",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-09-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-09-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-09-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-09-17 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-09-17",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-09-17",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-09-18 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-09-18",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-09-18",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-10-01 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-10-01",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-10-01",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-10-03 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-10-03",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-10-03",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-10-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-10-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-10-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-10-24 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-10-24",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-10-24",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-11-06 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-11-06",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-11-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-11-12 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-11-12",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-11-12",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2024-11-19 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2024-11-19",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2024-11-19",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-01-07 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-01-07",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-01-07",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-01-21 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-01-21",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-01-21",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-01-29 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-01-29",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-01-29",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-02-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-02-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-02-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-03-18 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-03-18",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-03-18",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-03-25 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-03-25",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-03-25",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-04-08 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-04-08",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-04-08",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-04-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-04-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-04-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-04-30 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-04-30",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-04-30",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-05-06 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-05-06",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-05-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-05-13 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-05-13",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-05-13",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-05-14 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-05-14",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-05-14",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-05-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-05-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-05-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-05-20 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-05-20",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-05-20",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-03 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-03",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-03",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-06 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-06",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-10 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-10",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-17 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-17",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-17",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-24 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-24",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-24",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-06-26 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-06-26",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-06-26",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-07-05 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-07-05",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-07-05",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-07-08 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-07-08",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-07-08",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-07-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-07-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-07-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-07-23 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-07-23",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-07-23",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-08-05 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-08-05",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-08-05",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-08-13 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-08-13",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-08-13",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-09-03 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-09-03",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-09-03",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-09-10 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-09-10",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-09-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-09-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-09-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-09-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-09-16 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-09-16",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-09-16",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-10-07 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-10-07",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-10-07",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-10-22 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-10-22",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-10-22",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-10-23 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-10-23",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-10-23",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-10-30 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-10-30",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-10-30",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-11-04 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-11-04",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-11-04",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-11-05 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-11-05",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-11-05",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-11-18 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-11-18",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-11-18",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-12-02 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-12-02",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-12-02",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-12-10 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-12-10",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-12-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2025-12-12 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2025-12-12",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2025-12-12",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-01-26 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-01-26",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-01-26",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-01-30 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-01-30",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-01-30",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-08 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-08",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-08",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-10 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-10",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-18 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-18",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-18",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-19 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-19",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-19",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-20 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-20",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-20",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-25 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-25",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-25",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-26 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-26",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-26",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-02-28 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-02-28",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-02-28",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-04 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-04",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-04",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-06 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-06",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-06",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-14 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-14",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-14",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-16 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-16",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-16",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-18 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-18",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-18",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-19 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-19",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-19",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-20 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-20",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-20",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-21 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-21",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-21",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-28 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-28",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-28",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-29 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-29",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-29",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-30 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-30",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-30",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-03-31 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-03-31",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-03-31",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-03 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-03",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-03",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-09 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-09",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-09",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-10 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-10",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-10",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-11 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-11",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-11",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-13 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-13",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-13",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-04-30 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-04-30",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-04-30",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-05-08 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-05-08",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-05-08",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-05-13 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-05-13",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-05-13",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-05-16 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-05-16",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-05-16",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-06-14 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-06-14",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-06-14",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "meeting folder 2026-06-15 has only derived (.md) material; no source-of-record primary document",
+      "gap_id": "no_primary_source:meeting:2026-06-15",
+      "gap_type": "no_primary_source",
+      "resolved_status": "open",
+      "severity": "warn",
+      "subject_id": "2026-06-15",
+      "subject_node_type": "meeting"
+    },
+    {
+      "detail": "document id=100 (2026-05-26) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:100",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "100",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=102 (2026-05-26) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:102",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "102",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=104 (2026-05-27) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:104",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "104",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=106 (2026-05-28) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:106",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "106",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=108 (2026-05-28) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:108",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "108",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=109 (2026-06-01) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:109",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "109",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=111 (2026-06-02) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:111",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "111",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=113 (2026-06-02) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:113",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "113",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=115 (2026-06-02) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:115",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "115",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=116 (2026-06-02) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:116",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "116",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=119 (2026-06-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:119",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "119",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=12 (2026-03-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:12",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "12",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=120 (2026-06-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:120",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "120",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=122 (2026-06-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:122",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "122",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=123 (2026-06-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:123",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "123",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=124 (2026-06-09) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:124",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "124",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=126 (2026-06-09) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:126",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "126",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=128 (2026-06-11) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:128",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "128",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=13 (2026-03-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:13",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "13",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=131 (2026-06-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:131",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "131",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=133 (2026-06-23) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:133",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "133",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=135 (2026-06-23) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:135",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "135",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=136 (2026-06-23) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:136",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "136",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=138 (2026-03-24) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:138",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "138",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=14 (2026-03-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:14",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "14",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=15 (2026-03-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:15",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "15",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=17 (2026-03-10) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:17",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "17",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=18 (2026-03-10) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:18",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "18",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=19 (2026-03-10) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:19",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "19",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=2 (2025-12-16) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:2",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "2",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=20 (2026-03-10) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:20",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "20",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=21 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:21",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "21",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=22 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:22",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "22",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=23 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:23",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "23",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=24 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:24",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "24",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=25 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:25",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "25",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=26 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:26",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "26",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=27 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:27",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "27",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=28 (2026-03-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:28",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "28",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=3 (2025-12-16) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:3",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "3",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=30 (2026-03-23) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:30",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "30",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=31 (2026-03-24) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:31",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "31",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=32 (2026-03-25) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:32",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "32",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=33 (2026-03-25) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:33",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "33",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=36 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:36",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "36",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=37 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:37",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "37",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=38 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:38",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "38",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=39 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:39",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "39",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=4 (2025-12-16) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:4",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "4",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=40 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:40",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "40",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=41 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:41",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "41",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=42 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:42",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "42",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=43 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:43",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "43",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=44 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:44",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "44",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=45 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:45",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "45",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=46 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:46",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "46",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=47 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:47",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "47",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=48 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:48",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "48",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=49 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:49",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "49",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=5 (2026-01-06) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:5",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "5",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=50 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:50",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "50",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=51 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:51",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "51",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=52 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:52",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "52",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=53 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:53",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "53",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=54 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:54",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "54",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=55 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:55",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "55",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=56 (2026-04-17) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:56",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "56",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=58 (2026-04-21) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:58",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "58",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=59 (2026-04-21) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:59",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "59",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=6 (2026-01-20) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:6",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "6",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=60 (2026-04-21) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:60",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "60",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=64 (2026-05-01) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:64",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "64",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=65 (2026-05-04) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:65",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "65",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=67 (2026-05-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:67",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "67",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=69 (2026-05-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:69",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "69",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=71 (2026-05-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:71",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "71",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=72 (2026-05-05) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:72",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "72",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=75 (2026-05-07) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:75",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "75",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=77 (2026-05-07) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:77",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "77",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=8 (2026-02-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:8",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "8",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=81 (2026-05-12) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:81",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "81",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=83 (2026-05-12) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:83",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "83",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=86 (2026-05-14) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:86",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "86",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=88 (2026-05-19) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:88",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "88",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=9 (2026-02-03) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:9",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "9",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=90 (2026-05-19) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:90",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "90",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=92 (2026-05-19) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:92",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "92",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=94 (2026-05-19) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:94",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "94",
+      "subject_node_type": "document"
+    },
+    {
+      "detail": "document id=98 (2026-05-21) is a PDF; no deterministic text extractor in scope \u2014 text left unextracted",
+      "gap_id": "pdf_text_unextracted:document:98",
+      "gap_type": "pdf_text_unextracted",
+      "resolved_status": "open",
+      "severity": "info",
+      "subject_id": "98",
+      "subject_node_type": "document"
+    }
+  ]
 }

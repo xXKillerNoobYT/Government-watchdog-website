@@ -30,7 +30,10 @@ import type {
   ThreadCompleteness,
   CompletenessGap,
   CompletenessGapKind,
+  CompletenessGapCard,
+  GapType,
 } from '../types/read-api';
+import { NO_PRIMARY_SOURCE_GAP } from '../types/read-api';
 import { edgeTypeLabel } from './statement-presenter';
 
 // --- Alpine scope lock (BEH-FILTER-1/2) -------------------------------------
@@ -416,4 +419,93 @@ export function completenessView(completeness: ThreadCompleteness | null | undef
     return { state: 'complete', summary: COMPLETE_TEXT, gaps: [] };
   }
   return { state: 'unknown', summary: UNKNOWN_TEXT, gaps: [] };
+}
+
+// --- Top-level completeness-gap cards (GOV-298 / GOV-301) --------------------
+//
+// A render-ready projection of the top-level `completeness_gaps` cards — the ~90
+// `no_primary_source` Alpine meetings plus other backend-asserted gap kinds.
+// Three rules carry over from the rest of this module:
+//   1. Nothing is recomputed. `gap_type` / `severity` / `resolved_status` are
+//      shown VERBATIM — the frontend never re-classifies a gap, upgrades a
+//      severity, or marks one resolved.
+//   2. A gap row is NEVER hidden. Counting the gaps is the entire point of the
+//      surface (the ~90 must stay countable), so EVERY served row is counted;
+//      the only filtering done here is presentational grouping, never suppression.
+//   3. Alpine scope is honoured at the top level. A non-Alpine response yields no
+//      gap surface at all (mirrors `partitionAlpine`'s wholesale drop), so another
+//      jurisdiction's gaps can never appear under the Alpine view.
+
+/** Human label for a gap type (display only — `gap_type` itself is verbatim). */
+const GAP_TYPE_LABEL: Record<string, string> = {
+  missing_transcript: 'missing transcript',
+  missing_timestamps: 'missing timestamps',
+  partial_agenda: 'partial agenda',
+  unresolved_thread: 'unresolved thread',
+  no_primary_source: 'no primary source',
+  pdf_text_unextracted: 'PDF text not extracted',
+  untimed_segment: 'untimed segment',
+  speaker_unattributable: 'speaker unattributable',
+  unknown: 'unknown (off-SSOT)',
+};
+
+export function gapTypeLabel(gapType: GapType): string {
+  return GAP_TYPE_LABEL[gapType] ?? String(gapType).replace(/_/g, ' ');
+}
+
+/** One gap type's count + its served rows (for the per-meeting detail list). */
+export interface GapTypeGroup {
+  gapType: GapType;
+  label: string;
+  count: number;
+  /** The gap cards of this type, in backend-served order (never filtered down). */
+  cards: CompletenessGapCard[];
+}
+
+export interface GapSummaryView {
+  /** Total gap rows served, all kinds — never reduced (countability invariant). */
+  total: number;
+  /** Count of `no_primary_source` rows — the headline of this slice (GOV-301). */
+  noPrimarySourceCount: number;
+  /** Subject ids of the `no_primary_source` meetings, in served order. */
+  noPrimarySource: CompletenessGapCard[];
+  /** Per-type groups, ordered by descending count, then gap_type for stability. */
+  groups: GapTypeGroup[];
+}
+
+/**
+ * Project the top-level `completeness_gaps` cards into a render-ready summary, or
+ * `null` when there is nothing to show — no gaps served, or a non-Alpine response
+ * (scope guard). Pure: same payload → same view. Counts every served row; the
+ * grouping is presentational only and never drops a gap (the ~90
+ * `no_primary_source` meetings stay countable).
+ */
+export function buildGapSummary(response: ReadApiResponse): GapSummaryView | null {
+  if (response.scope !== ALPINE_SCOPE) return null;
+  const cards = response.completeness_gaps ?? [];
+  if (cards.length === 0) return null;
+
+  const byType = new Map<string, CompletenessGapCard[]>();
+  for (const card of cards) {
+    const list = byType.get(card.gap_type) ?? [];
+    list.push(card);
+    byType.set(card.gap_type, list);
+  }
+
+  const groups: GapTypeGroup[] = [...byType.entries()]
+    .map(([gapType, groupCards]) => ({
+      gapType,
+      label: gapTypeLabel(gapType),
+      count: groupCards.length,
+      cards: groupCards,
+    }))
+    .sort((a, b) => (b.count !== a.count ? b.count - a.count : a.gapType < b.gapType ? -1 : 1));
+
+  const noPrimarySource = byType.get(NO_PRIMARY_SOURCE_GAP) ?? [];
+  return {
+    total: cards.length,
+    noPrimarySourceCount: noPrimarySource.length,
+    noPrimarySource,
+    groups,
+  };
 }

@@ -341,6 +341,73 @@ export interface TopicTreeResponse {
   tree: TopicTreeNode;
 }
 
+// --- Completeness-gap cards (GOV-298, Stage 2 top-level read surface) --------
+//
+// DISTINCT from the thread-scoped `CompletenessGap` / `ThreadCompleteness` above
+// (BEH-COMPLETE — the `agenda_thread.completeness` field). These are the
+// read-time, web-safe gap CARDS the backend projects from the first-class
+// `completeness_gaps` table (migration 0015, GOV-125) onto the top-level
+// `completeness_gaps` response key (`read_api.completeness_gap_cards`, GOV-298).
+// The ~90 `no_primary_source` Alpine meetings live here.
+//
+// Mirrored, NEVER re-derived: `gap_type` / `severity` / `resolved_status` are the
+// SSOT vocabularies the backend fails closed against (`completeness.GAP_TYPES` /
+// `SEVERITIES` / `RESOLVED_STATUSES`). The frontend consumes them VERBATIM and
+// never re-classifies a gap, upgrades a severity, or marks one resolved (pass-up
+// trigger if you ever feel you must). The internal-provenance columns
+// (`source_id` / `detected_run_id` / `detected_utc`) are NEVER SELECTed by the
+// backend projection, so they cannot be named on this type by construction.
+
+/**
+ * SSOT gap-type vocabulary (`completeness.GAP_TYPES`). `unknown` is the backend's
+ * fail-closed placeholder for an off-SSOT row (drift past the 0015 CHECK) — the
+ * row is still served, just clearly flagged. The open `string & {}` tail keeps an
+ * unforeseen future kind rendering (title-cased) instead of being silently dropped.
+ */
+export type GapType =
+  | 'missing_transcript'
+  | 'missing_timestamps'
+  | 'partial_agenda'
+  | 'unresolved_thread'
+  | 'no_primary_source'
+  | 'pdf_text_unextracted'
+  | 'untimed_segment'
+  | 'speaker_unattributable'
+  | 'unknown'
+  | (string & {});
+
+/** The gap type this slice surfaces as its headline count (GOV-301). */
+export const NO_PRIMARY_SOURCE_GAP = 'no_primary_source' satisfies GapType;
+
+/** SSOT severity (`completeness.SEVERITIES`); backend fails closed to `warn`. */
+export type GapSeverity = 'info' | 'warn' | 'blocking' | (string & {});
+
+/** SSOT resolution status (`completeness.RESOLVED_STATUSES`); fail-closed `open`. */
+export type GapResolvedStatus =
+  | 'open'
+  | 'acknowledged'
+  | 'resolved'
+  | 'wontfix'
+  | (string & {});
+
+/**
+ * One web-safe completeness-gap card (`read_api.GAP_CARD_FIELDS`). `detail` is
+ * present ONLY when it cleared the backend's read-time raw-path + structured-PII
+ * guards — its ABSENCE means "omitted for safety", never "no gap": the row is
+ * always served so the ~90 `no_primary_source` meetings stay countable.
+ */
+export interface CompletenessGapCard {
+  gap_id: string;
+  /** Stable web-safe node id of the subject (e.g. a meeting date `2023-04-26`). */
+  subject_id: string;
+  subject_node_type: string;
+  gap_type: GapType;
+  severity: GapSeverity;
+  resolved_status: GapResolvedStatus;
+  /** Web-safe note — present only when it cleared the backend leak guards. */
+  detail?: string | null;
+}
+
 // --- Top-level response -----------------------------------------------------
 
 export type AccessState = 'reviewer_internal' | (string & {});
@@ -353,4 +420,11 @@ export interface ReadApiResponse {
   records?: StatementRecord[];
   agenda_thread?: AgendaThreadResponse | null;
   topic_tree?: TopicTreeResponse | null;
+  /**
+   * Web-safe completeness-gap cards (GOV-298) — the ~90 `no_primary_source`
+   * Alpine meetings plus other backend-asserted gap kinds. Opt-in on the backend
+   * (`include_completeness_gaps`); absent when not requested. Consumed verbatim;
+   * gap rows are NEVER hidden (countability is the entire point of the surface).
+   */
+  completeness_gaps?: CompletenessGapCard[];
 }

@@ -13,11 +13,13 @@ import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerL
 import {
   buildTimeline,
   buildTimeNavigator,
+  buildGapSummary,
   assembleThread,
   completenessView,
   NO_LINK_TEXT,
   type AssembledThread,
   type CompletenessView,
+  type GapSummaryView,
   type TimeNavigator,
 } from './timeline';
 
@@ -199,6 +201,86 @@ function completenessIndicator(view: CompletenessView): HTMLElement {
   return el('div', { class: 'gw-completeness', 'data-test': 'completeness', 'data-state': view.state }, children);
 }
 
+/** Severity → tone class (colour only — the backend `severity` decides, never the UI). */
+function severityTone(severity: string): 'caution' | 'stop' | 'neutral' {
+  if (severity === 'blocking') return 'stop';
+  if (severity === 'warn') return 'caution';
+  return 'neutral'; // info / anything else
+}
+
+/**
+ * The completeness-gap card (GOV-298 / GOV-301): surfaces what is MISSING on the
+ * reviewer-internal Alpine timeline — the ~90 `no_primary_source` meetings plus
+ * other backend-asserted gap kinds. For a watchdog product, showing gaps is as
+ * important as showing presence. Every served gap is counted (never hidden); the
+ * per-meeting `no_primary_source` list is a tap-reachable disclosure. All fields
+ * are rendered VERBATIM from the web-safe backend projection — no gap is invented,
+ * re-classified, or marked resolved on the client.
+ */
+function gapCardSection(view: GapSummaryView): HTMLElement {
+  // Headline: the ~90 no_primary_source meetings, the focus of this slice.
+  const headline = el('p', { class: 'gw-gapcard-headline', 'data-test': 'gap-headline' }, [
+    el('strong', { 'data-test': 'gap-no-primary-source-count' }, [String(view.noPrimarySourceCount)]),
+    ' Alpine meeting(s) still lack a primary source',
+  ]);
+
+  // Total across all kinds — keeps every other gap kind countable too.
+  const total = el('p', { class: 'gw-muted', 'data-test': 'gap-total' }, [
+    `${view.total} completeness gap(s) recorded across all kinds (reviewer-internal)`,
+  ]);
+
+  // Per-type breakdown — every gap kind the backend served, with its count.
+  const breakdown = el(
+    'ul',
+    { class: 'gw-gap-type-list', 'data-test': 'gap-type-breakdown' },
+    view.groups.map((g) =>
+      el('li', { class: 'gw-gap-type', 'data-test': `gap-type-${g.gapType}` }, [
+        el('span', { class: 'gw-gap-kind' }, [g.label]),
+        el('span', { class: 'gw-gap-count', 'data-test': `gap-count-${g.gapType}` }, [String(g.count)]),
+      ]),
+    ),
+  );
+
+  const children: (Node | string)[] = [
+    el('h2', {}, ['Completeness gaps']),
+    headline,
+    total,
+    breakdown,
+  ];
+
+  // The per-meeting no_primary_source list, behind a tap-reachable disclosure
+  // (≥44px summary, reusing the drawer tap floor). Collapsed by default so the
+  // long list does not dominate, but every meeting is present and countable.
+  if (view.noPrimarySource.length) {
+    const meetings = el(
+      'ul',
+      { class: 'gw-gap-meeting-list', 'data-test': 'gap-meetings' },
+      view.noPrimarySource.map((c) =>
+        el('li', { class: 'gw-gap-meeting', 'data-test': 'gap-meeting', 'data-subject': c.subject_id }, [
+          el('span', { class: 'gw-gap-subject', 'data-test': 'gap-subject' }, [c.subject_id]),
+          el(
+            'span',
+            { class: `gw-badge gw-tone-${severityTone(c.severity)}`, 'data-test': 'gap-severity', 'data-severity': c.severity },
+            [c.severity],
+          ),
+          el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'gap-status' }, [c.resolved_status]),
+          ...(c.detail ? [el('span', { class: 'gw-gap-detail gw-muted', 'data-test': 'gap-detail' }, [c.detail])] : []),
+        ]),
+      ),
+    );
+    children.push(
+      el('details', { class: 'gw-drawer gw-gap-drawer', 'data-test': 'gap-meeting-drawer' }, [
+        el('summary', { 'data-test': 'gap-meeting-summary' }, [
+          `Meetings lacking a primary source (${view.noPrimarySourceCount})`,
+        ]),
+        meetings,
+      ]),
+    );
+  }
+
+  return el('section', { class: 'gw-gapcard', 'data-test': 'completeness-gap-card', 'data-no-primary-source-count': String(view.noPrimarySourceCount), 'data-total-gaps': String(view.total) }, children);
+}
+
 /**
  * The assembled cross-meeting thread surface (BEH-AGENDA): per-meeting instances
  * in known-then order, each keeping its own title + typed forward links, with the
@@ -353,6 +435,12 @@ function readyView(data: ReadApiResponse): HTMLElement {
   const children: HTMLElement[] = [legendDisclosure()];
   const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
   if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
+
+  // Completeness-gap card (GOV-298 / GOV-301) — what is MISSING, surfaced before
+  // the present records. Null when no gaps were served / response is non-Alpine.
+  const gapSummary = buildGapSummary(data);
+  if (gapSummary) children.push(gapCardSection(gapSummary));
+
   const edges = data.agenda_thread?.lifecycle_edges;
   const members = data.agenda_thread?.members;
   if (data.agenda_thread) children.push(assembledThreadSurface(data.agenda_thread));
@@ -441,6 +529,21 @@ export const STYLE = `
 .gw-field dt{color:#666;margin:0}
 .gw-field dd{margin:0}
 @media (max-width:420px){.gw-field{grid-template-columns:1fr}.gw-field dt{font-weight:600}}
+/* GOV-301 — completeness-gap card. Surfaces what is MISSING (the ~90
+   no_primary_source meetings). Caution-toned frame so it reads as a gap/status
+   surface, distinct from a record card. */
+.gw-gapcard{border:1px solid #d9a400;background:#fffaf0;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
+.gw-gapcard h2{font-size:1rem;margin:.2rem 0 .35rem}
+.gw-gapcard-headline{margin:.2rem 0;font-size:.95rem}
+.gw-gapcard-headline strong{font-size:1.15rem;color:#7a5b00}
+.gw-gap-type-list{list-style:none;margin:.4rem 0 .2rem;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
+.gw-gap-type{display:inline-flex;align-items:center;gap:.4rem;background:#fff;border:1px solid #e0c98a;border-radius:6px;padding:.15rem .5rem;font-size:.8rem}
+.gw-gap-count{font-size:.7rem;font-weight:700;background:#7a5b00;color:#fff;border-radius:999px;padding:0 .4rem;min-width:1.2rem;text-align:center}
+.gw-gap-drawer summary{font-weight:600}
+.gw-gap-meeting-list{list-style:none;margin:.4rem 0 0;padding:0;display:flex;flex-direction:column;gap:.3rem}
+.gw-gap-meeting{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;border-top:1px solid #f0e2c0;padding-top:.3rem;font-size:.8rem}
+.gw-gap-subject{font-weight:700;font-variant-numeric:tabular-nums}
+.gw-gap-detail{flex:1 1 12rem;min-width:0}
 .gw-thread{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
 .gw-thread h2{font-size:1rem;margin:.2rem 0 .35rem}
 .gw-completeness{margin:.2rem 0 .5rem}
