@@ -36,12 +36,15 @@ export function readConfig(env: EnvLike = import.meta.env as unknown as EnvLike)
  */
 export const FIXTURE: ReadApiResponse = assertWebSafe(fixtureData as ReadApiResponse);
 
-/** BEH-STATE-2: a response with no records, thread, or tree is "empty". */
+/** BEH-STATE-2: a response with no records, thread, tree, or gaps is "empty".
+ *  Completeness-gap cards (GOV-298) count: a gaps-only response is a real,
+ *  renderable surface (what is missing matters as much as what is present). */
 export function isEmptyResponse(r: ReadApiResponse): boolean {
   const records = r.records?.length ?? 0;
   const hasThread = r.agenda_thread ? 1 : 0;
   const hasTree = r.topic_tree ? 1 : 0;
-  return records + hasThread + hasTree === 0;
+  const gaps = r.completeness_gaps?.length ?? 0;
+  return records + hasThread + hasTree + gaps === 0;
 }
 
 export interface LoadResult {
