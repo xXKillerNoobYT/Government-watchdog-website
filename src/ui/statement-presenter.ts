@@ -20,6 +20,7 @@ import type {
   ConceptEdgeType,
   AgendaItemMember,
   VerificationStatus,
+  ConfidenceLabel,
 } from '../types/read-api';
 
 // --- Typed related-links (BEH-AGENDA-2) ------------------------------------
@@ -118,6 +119,82 @@ export function correctionStatusLabel(status: string | null | undefined): string
   return status.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 }
 
+// --- Confidence label (GOV-283) — verbatim mapping, never recomputed ---------
+
+/**
+ * Human-readable copy for a backend `confidence_label` (GOV-283). PURE mapping
+ * of the 5-value SSOT vocabulary — the frontend never derives or upgrades the
+ * confidence (the backend already fails it closed from the source transcript
+ * class). Returns `undefined` when the label is ABSENT (a pre-GOV-283 captured
+ * fixture); it must never invent one, and never display a higher confidence than
+ * the backend sent. An unforeseen future value still renders (title-cased) rather
+ * than being dropped — so a new backend class can never silently vanish.
+ */
+export function confidenceLabel(record: StatementRecord): string | undefined {
+  const value = record.confidence_label;
+  if (value == null || value === '') return undefined;
+  switch (value as ConfidenceLabel) {
+    case 'source_anchored_timed':
+      return 'Source-anchored (timed transcript)';
+    case 'auto_caption_timed':
+      return 'Auto-caption (timed)';
+    case 'auto_caption_untimed':
+      return 'Auto-caption (untimed)';
+    case 'minutes_summary':
+      return 'Minutes summary';
+    case 'derived_summary':
+      return 'Derived summary';
+    default:
+      return String(value).replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+  }
+}
+
+// --- Safe speaker label (GOV-290) — verbatim pass-through, never derived -----
+
+/**
+ * The SAFE speaker label for a statement (GOV-290), returned VERBATIM. The
+ * backend has already fail-closed this to a provably name-free generic
+ * ("Meeting Attendee" / "Community Member") unless the attribution cleared the
+ * write+read naming gate (then it is the approved "Name, Role"). The frontend
+ * NEVER resolves a person, infers a name, or upgrades attribution — it only
+ * surfaces what the backend deemed safe. Returns `undefined` when absent/blank
+ * (a pre-GOV-290 fixture), so a card simply omits the speaker line rather than
+ * inventing one.
+ */
+export function speakerLabel(record: StatementRecord): string | undefined {
+  const value = record.speaker_label;
+  if (value == null || String(value).trim() === '') return undefined;
+  return String(value);
+}
+
+// --- Exact-source citation pointer kind (the "where it came from" trail) ------
+
+/**
+ * Human copy for an evidence row's `locator_kind` — the KIND of exact-source
+ * pointer the backend recorded (e.g. a char-span anchor into the preserved
+ * source text, a transcript timestamp, or a page). This is the citation-pointer
+ * descriptor for the drawer; the actual char offsets are reviewer-internal and
+ * never cross the web-safe boundary on evidence rows, so the kind is what we
+ * surface. Returns `undefined` when absent.
+ */
+export function locatorKindLabel(kind: string | null | undefined): string | undefined {
+  if (kind == null || kind === '') return undefined;
+  switch (kind) {
+    case 'char_span':
+      return 'Character span (exact source text)';
+    case 'timestamp':
+      return 'Transcript timestamp';
+    case 'page':
+      return 'Page';
+    case 'section':
+      return 'Section';
+    case 'paragraph':
+      return 'Paragraph';
+    default:
+      return kind.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+  }
+}
+
 /** Compose the public-citable locator (NO raw/vault path — allowlisted parts only). */
 export function locatorText(e: EvidenceLink): string | undefined {
   const parts = [
@@ -168,6 +245,9 @@ export function drawerFields(e: EvidenceLink): DrawerField[] {
   text('scan_date', 'Captured', e.scan_date);                    // 7
   text('to_source_id', 'Source registry ID', e.to_source_id);    // 8
   text('locator', 'Locator', locatorText(e));                    // 9
+  // 9b — exact-source pointer KIND (GOV-293): the "where it came from" trail
+  // descriptor (e.g. char-span anchor). Web-safe; the raw offsets never travel.
+  text('locator_kind', 'Citation pointer', locatorKindLabel(e.locator_kind)); // 9b
   text('verification_status', 'Verification', verificationStatusLabel(e.verification_status)); // 10
   text('correction_status', 'Correction', correctionStatusLabel(e.correction_status));         // 11
   // 12 — reviewer note: intentionally never rendered (stripped at transport).

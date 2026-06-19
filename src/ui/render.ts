@@ -9,7 +9,7 @@ import type { AsyncState } from '../state/async-state';
 import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
 import { stateView, trustLabel, recordTone, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
 import { trustLegend, LEGEND_TITLE } from './legend';
-import { drawerFields, relatedLinksFor, verbatimLabel } from './statement-presenter';
+import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerLabel } from './statement-presenter';
 import {
   buildTimeline,
   buildTimeNavigator,
@@ -95,6 +95,33 @@ function recordCard(
     badges.push(el('span', { class: 'gw-badge gw-badge-ai', 'data-test': 'ai-label' }, [AI_LABEL_TEXT]));
   }
 
+  // GOV-293 — the at-a-glance attribution + confidence trail. Both sit OUTSIDE
+  // the blurred info region (sharp at all times) and are rendered VERBATIM from
+  // the backend's fail-closed envelope keys: the safe speaker_label ("who said
+  // it") and the confidence_label (derived from the source transcript class).
+  // Neither is a trust verdict — they are distinct from the trust badge — and
+  // neither is ever recomputed on the client. Each row appears only when the
+  // backend sent the field (omitted, never invented, on a pre-GOV-283/290 fixture).
+  const speaker = speakerLabel(r);
+  const confidence = confidenceLabel(r);
+  const metaChildren: HTMLElement[] = [];
+  if (speaker) {
+    metaChildren.push(
+      el('span', { class: 'gw-speaker', 'data-test': 'speaker-label' }, [
+        el('span', { class: 'gw-meta-key' }, ['Speaker: ']),
+        speaker,
+      ]),
+    );
+  }
+  if (confidence) {
+    metaChildren.push(
+      el('span', { class: 'gw-confidence', 'data-test': 'confidence-label', title: 'Confidence derived from the source transcript class' }, [
+        el('span', { class: 'gw-meta-key' }, ['Confidence: ']),
+        confidence,
+      ]),
+    );
+  }
+
   // Facts rendered separately from AI analysis (BEH-HANDOFF-4): AI-origin text
   // sits in its own labeled region so it never reads as a verified fact.
   const body = ai
@@ -131,11 +158,14 @@ function recordCard(
   const attrs: Record<string, string> = { class: 'gw-card', 'data-test': 'record-card' };
   if (opts.anchorId) attrs.id = opts.anchorId;
 
-  const card = el('article', attrs, [
-    el('div', { class: 'gw-badges' }, badges),
-    reveal,
-    info,
-  ]);
+  // The sharp meta row (speaker + confidence) only renders when present.
+  const cardChildren: HTMLElement[] = [el('div', { class: 'gw-badges' }, badges)];
+  if (metaChildren.length) {
+    cardChildren.push(el('div', { class: 'gw-meta', 'data-test': 'card-meta' }, metaChildren));
+  }
+  cardChildren.push(reveal, info);
+
+  const card = el('article', attrs, cardChildren);
 
   reveal.addEventListener('click', () => {
     const revealed = card.classList.toggle('gw-revealed');
@@ -385,6 +415,12 @@ export const STYLE = `
 .gw-tone-stop{background:#fdecea;color:#7b241c;border-color:#c0392b}
 .gw-tone-neutral{background:#eef2f8;color:#1a4d8f;border-color:#1a4d8f}
 .gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
+/* GOV-293 — sharp at-a-glance attribution + confidence trail (never blurred).
+   Distinct from the trust badge: these are metadata, not a trust verdict. */
+.gw-meta{display:flex;gap:.4rem .9rem;flex-wrap:wrap;margin:.1rem 0 .4rem;font-size:${BADGE_MIN_FONT_PX}px;line-height:1.35}
+.gw-speaker{color:#1a1a1a}
+.gw-confidence{color:#1a4d8f;background:#eef2f8;border:1px solid #c2cedd;border-radius:999px;padding:.05rem .5rem;white-space:nowrap}
+.gw-meta-key{color:#666;font-weight:600}
 .gw-legend{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;margin:.4rem 0 .8rem;padding:0 .6rem}
 .gw-legend summary{cursor:pointer;font-size:.9rem;font-weight:600;color:#1a4d8f;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;display:flex;align-items:center}
 .gw-legend-list{list-style:none;margin:0 0 .6rem;padding:0;display:flex;flex-direction:column;gap:.4rem}

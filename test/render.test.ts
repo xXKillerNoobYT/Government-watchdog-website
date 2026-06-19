@@ -9,8 +9,10 @@ import type { ReadApiResponse } from '../src/types/read-api';
 // breadcrumb, mixed AI/human cards — only exist in the labeled SYNTHETIC demo,
 // which the real corpus cannot produce yet (GOV-129 follow-up).
 import demoData from '../src/fixtures/concept-graph-demo.json';
+import stateMatrixData from '../src/fixtures/state-matrix.json';
 
 const DEMO = demoData as unknown as ReadApiResponse;
+const MATRIX = stateMatrixData as unknown as ReadApiResponse;
 
 let root: HTMLElement;
 beforeEach(() => {
@@ -122,6 +124,59 @@ describe('GOV-100 — statement card + drawer + typed related-links (synthetic d
     // No reviewer-note field label leaks in.
     expect(root.querySelector('[data-test="drawer-field-reviewer_note"]')).toBeNull();
     expect(root.querySelector('[data-test="drawer-field-note"]')).toBeNull();
+  });
+});
+
+describe('GOV-293 — confidence_label + safe speaker_label + exact-source citation', () => {
+  beforeEach(() => render(root, resolved(MATRIX, 'fixture', isEmptyResponse)));
+
+  it('renders the safe speaker_label and confidence_label verbatim on each card', () => {
+    const speakers = [...root.querySelectorAll('[data-test="speaker-label"]')].map((n) => n.textContent);
+    expect(speakers.length).toBe(MATRIX.records!.length);
+    // The safe vocabulary surfaces verbatim — generic, community, and the one
+    // approved "Name, Role" — and nothing else is invented.
+    expect(speakers.some((s) => s?.includes('Meeting Attendee'))).toBe(true);
+    expect(speakers.some((s) => s?.includes('Community Member'))).toBe(true);
+    expect(speakers.some((s) => s?.includes('Jane Doe, Mayor'))).toBe(true);
+
+    const confidences = [...root.querySelectorAll('[data-test="confidence-label"]')].map((n) => n.textContent);
+    expect(confidences.some((c) => c?.includes('Source-anchored (timed transcript)'))).toBe(true);
+    expect(confidences.some((c) => c?.includes('Auto-caption (untimed)'))).toBe(true);
+    expect(confidences.some((c) => c?.includes('Derived summary'))).toBe(true);
+  });
+
+  it('keeps speaker + confidence OUTSIDE the blurred info region (sharp at all times)', () => {
+    // Safety-critical: an AI/low-confidence row must read as such at a glance, so
+    // the attribution + confidence trail must never sit behind the reveal blur.
+    for (const card of root.querySelectorAll('[data-test="record-card"]')) {
+      const info = card.querySelector('[data-test="card-info"]')!;
+      expect(info.querySelector('[data-test="speaker-label"]')).toBeNull();
+      expect(info.querySelector('[data-test="confidence-label"]')).toBeNull();
+    }
+    // And they ARE present on the card (in the sharp region).
+    expect(root.querySelector('[data-test="card-meta"] [data-test="speaker-label"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="card-meta"] [data-test="confidence-label"]')).not.toBeNull();
+  });
+
+  it('surfaces the exact-source citation pointer (char_span) in the drawer', () => {
+    const pointers = [...root.querySelectorAll('[data-test="drawer-field-locator_kind"]')].map((n) => n.textContent);
+    expect(pointers.some((p) => p?.includes('Character span (exact source text)'))).toBe(true);
+    expect(pointers.some((p) => p?.includes('Transcript timestamp'))).toBe(true);
+  });
+
+  it('does NOT fabricate speaker/confidence when the backend did not send them (real pre-GOV-283/290 fixture)', () => {
+    // The real 84-record capture predates the two envelope keys; the card must
+    // omit the rows rather than invent a label.
+    render(root, resolved(FIXTURE, 'fixture', isEmptyResponse));
+    expect(FIXTURE.records!.some((r) => r.confidence_label != null)).toBe(false);
+    expect(root.querySelector('[data-test="speaker-label"]')).toBeNull();
+    expect(root.querySelector('[data-test="confidence-label"]')).toBeNull();
+    // …but the real evidence DOES carry locator_kind char_span → pointer renders.
+    expect(root.querySelector('[data-test="drawer-field-locator_kind"]')?.textContent).toContain('Character span');
+  });
+
+  it('never leaks a raw/local path through the new fields', () => {
+    expect(root.textContent ?? '').not.toMatch(/\/Users\/|Obsidian Vault|transcript_path|\.sha256/);
   });
 });
 
