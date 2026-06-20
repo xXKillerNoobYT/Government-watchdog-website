@@ -286,6 +286,9 @@ export function drawerFields(e: EvidenceLink): DrawerField[] {
     if (value != null && String(value).trim() !== '') fields.push({ key, label, value: String(value), kind: 'text' });
   };
 
+  // 0 — relation (GOV-347 §2.2): how this evidence relates to the card (e.g.
+  // "primary source" / "supports" / "references"). Rendered verbatim; present-only.
+  text('relation', 'Relation', e.relation);                      // 0
   text('source_type', 'Source type', e.source_type);            // 1
   text('published_by', 'Published by', e.published_by);          // 2
   text('jurisdiction', 'Jurisdiction', e.jurisdiction);          // 3
