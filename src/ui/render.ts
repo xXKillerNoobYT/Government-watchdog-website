@@ -7,7 +7,7 @@
 
 import type { AsyncState } from '../state/async-state';
 import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
-import { stateView, trustLabel, recordTone, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
+import { stateView, trustLabel, recordTone, isAiProduced, readyHeaderMessage, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
 import { trustLegend, LEGEND_TITLE } from './legend';
 import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerLabel, provenanceBadge } from './statement-presenter';
 import {
@@ -22,6 +22,7 @@ import {
   type GapSummaryView,
   type TimeNavigator,
 } from './timeline';
+import { buildCardFeedModel, type CardFeed, type CardHeadView } from './card-feed';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -84,6 +85,31 @@ interface RecordCardOpts {
    * the client never synthesizes one there.
    */
   reviewerInternal?: boolean;
+  /**
+   * GOV-354 card-feed head (type glyph + date + optional title). When present a
+   * sharp `<header>` is rendered ABOVE the badges row (outside the reveal blur),
+   * surfacing the GOV-347 `type` emoji + hover, `title`, and `date`. Absent for
+   * the legacy record timeline — those cards render unchanged.
+   */
+  head?: CardHeadView;
+}
+
+/** The sharp card-feed head: type emoji + hover, title (present-only), date. */
+function cardHead(head: CardHeadView): HTMLElement {
+  const children: (Node | string)[] = [
+    el(
+      'span',
+      { class: 'gw-card-type', 'data-test': 'card-type', 'data-type': head.type, title: head.glyph.label },
+      [el('span', { class: 'gw-card-emoji', 'aria-hidden': 'true' }, [head.glyph.emoji]), ` ${head.glyph.label}`],
+    ),
+  ];
+  if (head.title) {
+    children.push(el('span', { class: 'gw-card-title', 'data-test': 'card-title' }, [head.title]));
+  }
+  if (head.date) {
+    children.push(el('time', { class: 'gw-card-date', 'data-test': 'card-date', datetime: head.date }, [head.date]));
+  }
+  return el('header', { class: 'gw-card-head', 'data-test': 'card-head' }, children);
 }
 
 function recordCard(
@@ -197,7 +223,11 @@ function recordCard(
   if (opts.anchorId) attrs.id = opts.anchorId;
 
   // The sharp meta row (speaker + confidence) only renders when present.
-  const cardChildren: HTMLElement[] = [el('div', { class: 'gw-badges' }, badges)];
+  // GOV-354 — the card-feed head (type glyph + title + date) sits ABOVE the
+  // badges, sharp at all times (outside the reveal blur), when supplied.
+  const cardChildren: HTMLElement[] = [];
+  if (opts.head) cardChildren.push(cardHead(opts.head));
+  cardChildren.push(el('div', { class: 'gw-badges' }, badges));
   if (metaChildren.length) {
     cardChildren.push(el('div', { class: 'gw-meta', 'data-test': 'card-meta' }, metaChildren));
   }
@@ -467,29 +497,23 @@ function timeNavigatorAside(nav: TimeNavigator): HTMLElement | null {
   ]);
 }
 
-function readyView(data: ReadApiResponse): HTMLElement {
-  const children: HTMLElement[] = [legendDisclosure()];
-  const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
-  if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
+interface TimelineLayoutOpts {
+  reviewerInternal: boolean;
+  edges?: ConceptEdge[];
+  members?: AgendaItemMember[];
+  /** Per-record card-feed head (GOV-354), keyed by `statement_id`. */
+  headFor?: (statementId: string) => CardHeadView | undefined;
+}
 
-  // Completeness-gap card (GOV-298 / GOV-301) — what is MISSING, surfaced before
-  // the present records. Null when no gaps were served / response is non-Alpine.
-  const gapSummary = buildGapSummary(data);
-  if (gapSummary) children.push(gapCardSection(gapSummary));
-
-  const edges = data.agenda_thread?.lifecycle_edges;
-  const members = data.agenda_thread?.members;
-  if (data.agenda_thread) children.push(assembledThreadSurface(data.agenda_thread));
-
-  // Chronological, Alpine-scope-locked timeline. Non-Alpine records are dropped
-  // and logged here (BEH-FILTER-2) — never silently shown under an Alpine view.
+/**
+ * The chronological, Alpine-scope-locked timeline section (+ side time-bar).
+ * Shared by the legacy record timeline (no heads) and the GOV-354 card-feed
+ * timeline (per-card heads). Non-Alpine records are dropped and logged here
+ * (BEH-FILTER-2) — never silently shown under an Alpine view.
+ */
+function timelineLayout(data: ReadApiResponse, opts: TimelineLayoutOpts): HTMLElement {
   const timeline = buildTimeline(data);
   for (const w of timeline.warnings) console.warn(w);
-
-  // Reviewer-internal lane gate (GOV-314): the provenance badge renders only when
-  // the response is on the reviewer-internal lane. The backend emits
-  // `provenance_status` solely there; the public lane shows no provenance badge.
-  const reviewerInternal = data.access === 'reviewer_internal';
 
   // The first card of each day owns that day's scroll anchor, so the side
   // time-bar can jump straight to it (GOV-153 #1). Track days already anchored.
@@ -500,17 +524,122 @@ function readyView(data: ReadApiResponse): HTMLElement {
       anchoredDays.add(timelineDate);
       anchorId = `gw-day-${timelineDate}`;
     }
-    return recordCard(record, edges, members, { anchorId, reviewerInternal });
+    const head = opts.headFor?.(record.statement_id);
+    return recordCard(record, opts.edges, opts.members, {
+      anchorId,
+      reviewerInternal: opts.reviewerInternal,
+      ...(head ? { head } : {}),
+    });
   });
   const timelineSection = el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, cards);
 
   const navigator = timeNavigatorAside(buildTimeNavigator(timeline.ordered));
+  return navigator
+    ? el('div', { class: 'gw-timeline-layout' }, [navigator, timelineSection])
+    : timelineSection;
+}
+
+function readyView(data: ReadApiResponse): HTMLElement {
+  const children: HTMLElement[] = [legendDisclosure()];
+  const crumb = data.topic_tree?.breadcrumb?.map((t) => t.canonicalHumanLabel ?? t.name ?? t.topic_id).join(' › ');
+  if (crumb) children.push(el('nav', { class: 'gw-breadcrumb', 'data-test': 'breadcrumb' }, [crumb]));
+
+  // Completeness-gap card (GOV-298 / GOV-301) — what is MISSING, surfaced before
+  // the present records. Null when no gaps were served / response is non-Alpine.
+  const gapSummary = buildGapSummary(data);
+  if (gapSummary) children.push(gapCardSection(gapSummary));
+
+  if (data.agenda_thread) children.push(assembledThreadSurface(data.agenda_thread));
+
+  // Reviewer-internal lane gate (GOV-314): the provenance badge renders only when
+  // the response is on the reviewer-internal lane. The backend emits
+  // `provenance_status` solely there; the public lane shows no provenance badge.
   children.push(
-    navigator
-      ? el('div', { class: 'gw-timeline-layout' }, [navigator, timelineSection])
-      : timelineSection,
+    timelineLayout(data, {
+      reviewerInternal: data.access === 'reviewer_internal',
+      edges: data.agenda_thread?.lifecycle_edges,
+      members: data.agenda_thread?.members,
+    }),
   );
   return el('div', {}, children);
+}
+
+/**
+ * GOV-354 — render the GOV-347 card-feed on the reviewer-internal Alpine timeline.
+ *
+ * A thin consume-the-envelope surface over the EXISTING timeline: the card-feed
+ * adapter (`buildCardFeedModel`) partitions `{scope, access, cards[]}` into the
+ * existing-shape `records` (→ `recordCard` with a per-card head) + `completeness_gaps`
+ * (→ the GOV-301 gap card), and renders them through the same components.
+ *
+ * The reviewer-internal invariant (§5) is the SOLE gate and is enforced in the
+ * adapter: on a non-reviewer-internal lane the model carries ZERO records and ZERO
+ * gaps and reads NONE of the reviewer-internal-only fields, so the public lane DOM
+ * is provably empty of cards and of `reviewed_summary`/`speaker_label`/
+ * `provenance_status` — not merely hidden by CSS.
+ */
+export function renderCardFeed(root: HTMLElement, feed: CardFeed, notice?: string): void {
+  ensureStyle();
+  const { response, heads, dropped } = buildCardFeedModel(feed);
+  for (const d of dropped) console.warn(`[card-feed] dropped ${d.handle}: ${d.reason}`);
+
+  const reviewerInternal = response.access === 'reviewer_internal';
+  root.className = 'gw-root';
+  root.replaceChildren();
+
+  // Always-on offline-snapshot banner — the feed is a committed fixture, never a
+  // live read (GOV-353 §1.4).
+  root.append(
+    el('div', { class: 'gw-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, [
+      FIXTURE_BANNER_TEXT,
+      el('small', {}, ['Reviewer-internal offline snapshot — not a live read. AI-produced rows keep their own per-record label.']),
+      ...(notice ? [el('div', { class: 'gw-notice' }, [notice])] : []),
+    ]),
+  );
+
+  // §5.1 — public lane renders ZERO cards. The adapter already returned an empty
+  // model; surface an explicit reviewer-internal-only notice (no card content).
+  if (!reviewerInternal) {
+    root.append(
+      el(
+        'section',
+        { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-reviewer-gated', role: 'status' },
+        [
+          el('h1', {}, ['Reviewer-internal only']),
+          el('p', {}, ['The Alpine card feed is gated to the reviewer-internal lane. The public lane renders no cards.']),
+        ],
+      ),
+    );
+    return;
+  }
+
+  const recordCount = response.records?.length ?? 0;
+  const children: HTMLElement[] = [
+    el('h1', { class: 'gw-h1' }, ['Alpine card feed (reviewer-internal)']),
+    el('p', { class: 'gw-muted' }, [readyHeaderMessage(response.records ?? [])]),
+    legendDisclosure(),
+  ];
+
+  const gapSummary = buildGapSummary(response);
+  if (gapSummary) children.push(gapCardSection(gapSummary));
+
+  if (recordCount > 0) {
+    children.push(
+      timelineLayout(response, {
+        reviewerInternal,
+        headFor: (id) => heads.get(id),
+      }),
+    );
+  } else if (!gapSummary) {
+    children.push(
+      el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-empty', role: 'status' }, [
+        el('h1', {}, ['Nothing to show yet']),
+        el('p', {}, ['No reviewed Alpine cards in this feed.']),
+      ]),
+    );
+  }
+
+  root.append(el('div', {}, children));
 }
 
 /**
@@ -536,6 +665,13 @@ export const STYLE = `
 .gw-muted{color:#666}
 .gw-breadcrumb{font-size:.85rem;color:#555;margin:.5rem 0}
 .gw-card{border:1px solid #ddd;border-radius:8px;padding:.8rem;margin:.6rem 0}
+/* GOV-354 — card-feed head: type glyph + title + date, sharp (outside the reveal
+   blur). Icon + text together (never colour alone), mirroring the badge rule. */
+.gw-card-head{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap;margin-bottom:.35rem}
+.gw-card-type{font-size:${BADGE_MIN_FONT_PX}px;font-weight:700;color:#1a4d8f;background:#eef2f8;border:1px solid #c2cedd;border-radius:999px;padding:.1rem .5rem;white-space:nowrap}
+.gw-card-emoji{font-size:1.05em;line-height:1}
+.gw-card-title{font-weight:700;font-size:.95rem;color:#1a1a1a;flex:1 1 12rem;min-width:0}
+.gw-card-date{font-size:.78rem;color:#666;font-variant-numeric:tabular-nums;margin-left:auto}
 .gw-badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.4rem}
 .gw-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;background:#eef0f2;color:#333;border:1px solid #999;border-radius:999px;padding:.15rem .55rem;white-space:nowrap}
 /* Trust tones — colour only; the backend ui_status decides which, never the UI. */

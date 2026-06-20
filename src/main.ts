@@ -17,8 +17,9 @@
 import { createRouter } from './router';
 import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
-import { render } from './ui/render';
+import { render, renderCardFeed } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
+import type { CardFeed } from './ui/card-feed';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
 import type { ReadApiResponse } from './types/read-api';
@@ -26,6 +27,7 @@ import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
 import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
 import conceptGraphRealData from './fixtures/concept-graph-real.json';
+import cardFeedData from './fixtures/alpine-card-feed.json';
 
 /**
  * State-matrix sample (GOV-104): one labeled card per record-level trust state
@@ -66,6 +68,16 @@ const REAL_DEFAULT_FOCUS = 'topic:alpine:jurisdiction';
 const GRAPH_DEMO: ReadApiResponse = assertWebSafe(conceptGraphDemoData as ReadApiResponse);
 const GRAPH_DEMO_NOTICE =
   'SYNTHETIC concept-graph sample (deep nesting / agenda thread / completeness) — not real data; the real corpus has no agenda threads yet.';
+
+/**
+ * GOV-354 — the GOV-347 card feed for the reviewer-internal Alpine timeline.
+ * Verbatim capture of `scripts/stage3_card_feed.py` at backend `origin/main` HEAD
+ * `6d65bd3` over the real reviewed Alpine corpus (see the file `_provenance`).
+ * Swept for raw paths at module load exactly like the other fixtures.
+ */
+const CARD_FEED: CardFeed = assertWebSafe(cardFeedData as unknown as CardFeed);
+const CARD_FEED_NOTICE =
+  'Verbatim GOV-347 card-feed capture (reviewer-internal, backend HEAD 6d65bd3) — not a live read.';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
@@ -309,8 +321,26 @@ async function renderContextPage(kind: 'body' | 'meeting', query: URLSearchParam
   render(timelineBox, state, notice);
 }
 
+/**
+ * GOV-354 card-feed route: render the GOV-347 envelope on the reviewer-internal
+ * Alpine timeline. `?state=` forces loading/empty/error for screenshots;
+ * `?access=public` forces the public lane (0 cards) so the no-public-leak
+ * invariant (§5) can be captured/verified.
+ */
+function renderCardFeedRoute(query: URLSearchParams): void {
+  const forced = forcedState(query.get('state'));
+  if (forced) {
+    render(root!, forced);
+    return;
+  }
+  const access = query.get('access');
+  const feed = access ? { ...CARD_FEED, access } : CARD_FEED;
+  renderCardFeed(root!, feed, CARD_FEED_NOTICE);
+}
+
 const router = createRouter(({ query }) => void renderTimeline(query));
 router.register('/', ({ query }) => void renderTimeline(query));
+router.register('/cards', ({ query }) => renderCardFeedRoute(query));
 router.register('/topics', ({ query }) => void renderTopics(query));
 router.register('/body', ({ query }) => void renderContextPage('body', query));
 router.register('/meeting', ({ query }) => void renderContextPage('meeting', query));
