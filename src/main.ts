@@ -97,6 +97,79 @@ function completeDemoBody(): ReadApiResponse {
   };
 }
 
+/**
+ * Screenshot-only sample for the GOV-314 provenance / audit-passed badge. The
+ * REAL fixture predates GOV-311 so every record fails closed to "unverified" —
+ * this labeled sample carries one `grounded` and one `unverified` record so BOTH
+ * badge states can be captured in one frame. Like `?demo=matrix`, it is demo
+ * scaffolding rendered VERBATIM (the `provenance_status` values are supplied as
+ * data, NOT recomputed on the client) and is always shown under a "not real
+ * data" notice. Reviewer-internal access so the lane gate emits the badge.
+ */
+function provenanceDemoBody(): ReadApiResponse {
+  return assertWebSafe({
+    scope: 'alpine',
+    access: 'reviewer_internal',
+    records: [
+      {
+        statement_id: 'demo-prov-grounded',
+        statement_text:
+          'SAMPLE record — the full canonical provenance chain audited clean: grounded, raw-preserved, AI run OK.',
+        ui_status: 'source-backed',
+        verification_status: 'reviewed_source_linked',
+        correction_status: 'none',
+        produced_by: 'human',
+        is_verbatim: 1,
+        publication_state: 'publishable',
+        provenance_status: 'grounded',
+        confidence_label: 'source_anchored_timed',
+        speaker_label: 'Jane Doe, Mayor',
+        evidence: [
+          {
+            to_source_id: 'sample_minutes_2024_03',
+            source_type: 'Meeting minutes',
+            published_by: 'Town of Alpine Clerk',
+            jurisdiction: 'Alpine, WY',
+            source_date: '2024-03-12',
+            original_url: 'https://records.example/alpine/2024-03-12.html',
+            archive_url: 'https://web.archive.org/web/2024/https://records.example/alpine/2024-03-12.html',
+            scan_date: '2024-03-13',
+            verification_status: 'human_verified',
+            correction_status: 'none',
+          },
+        ],
+      },
+      {
+        statement_id: 'demo-prov-unverified',
+        statement_text:
+          'SAMPLE record — at least one provenance leg did not pass, so it is shown fail-closed as unverified.',
+        ui_status: 'pending-review',
+        verification_status: 'machine_extracted_unreviewed',
+        correction_status: 'none',
+        produced_by: 'ai',
+        is_verbatim: 0,
+        publication_state: 'publishable',
+        provenance_status: 'unverified',
+        confidence_label: 'auto_caption_untimed',
+        speaker_label: 'Meeting Attendee',
+        evidence: [
+          {
+            to_source_id: 'sample_auto_caption_2024_02',
+            source_type: 'Auto-caption transcript',
+            published_by: 'Town of Alpine (YouTube auto-caption)',
+            jurisdiction: 'Alpine, WY',
+            source_date: '2024-02-06',
+            verification_status: 'machine_extracted_unreviewed',
+            correction_status: 'none',
+          },
+        ],
+      },
+    ],
+  } as ReadApiResponse);
+}
+const PROVENANCE_DEMO_NOTICE =
+  'SAMPLE — not real data. Demonstrates the GOV-314 provenance / audit-passed badge (reviewer-internal): one grounded record, one fail-closed unverified record.';
+
 /** Default screenshot scenario so `/topics` shows everything with no query. */
 const DEFAULT_FOCUS = 'topic:fire';
 const DEFAULT_MOVE: MoveRequest = {
@@ -146,6 +219,10 @@ async function renderTimeline(query: URLSearchParams): Promise<void> {
   }
   if (query.get('demo') === 'complete') {
     render(root!, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
+    return;
+  }
+  if (query.get('demo') === 'provenance') {
+    render(root!, resolved(provenanceDemoBody(), 'fixture', isEmptyResponse), PROVENANCE_DEMO_NOTICE);
     return;
   }
   render(root!, idle<ReadApiResponse>());

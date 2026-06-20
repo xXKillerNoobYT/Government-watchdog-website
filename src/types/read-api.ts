@@ -106,6 +106,25 @@ export type ConfidenceLabel =
  */
 export const CONSERVATIVE_CONFIDENCE_LABEL = 'auto_caption_untimed' satisfies ConfidenceLabel;
 
+/**
+ * Read-time per-record provenance / audit-passed trust indicator (GOV-311),
+ * the serving-lane projection of the GOV-306 whole-DB traceability auditor. The
+ * backend recomputes it fail-closed from the canonical columns (full grounding
+ * chain ∧ raw-preserved predecessor ∧ AI-run ok) and attaches it as an envelope
+ * key ONLY on the reviewer-internal lane (never publicly). The vocabulary is a
+ * FROZEN 2-value SSOT — deliberately CLOSED (no `string & {}` tail): any value
+ * that is not exactly `grounded` is treated as `unverified` (fail-closed). The
+ * frontend consumes it VERBATIM and NEVER recomputes grounding (pass-up trigger
+ * if you ever feel you must — escalate to CTO/CEO/Isaac).
+ */
+export type ProvenanceStatus = 'grounded' | 'unverified';
+
+/** The audit-passed (affirmative) SSOT value — the ONLY value that reads grounded. */
+export const PROVENANCE_GROUNDED = 'grounded' satisfies ProvenanceStatus;
+
+/** The fail-closed default: any missing/unknown/non-grounded value collapses here. */
+export const PROVENANCE_UNVERIFIED = 'unverified' satisfies ProvenanceStatus;
+
 /** Provenance of an event in the concept graph (1.07 layering). Open string —
  *  observed value `known_then`; backend may add `presented_then`, etc. */
 export type Layer = 'known_then' | 'presented_then' | 'corrected_later' | (string & {});
@@ -226,6 +245,15 @@ export interface StatementRecord {
    * never resolves, infers, or upgrades a speaker (pass-up trigger if tempted).
    */
   speaker_label?: string | null;
+  /**
+   * Read-time provenance / audit-passed trust indicator (GOV-311) — backend
+   * API-envelope key, present ONLY on the reviewer-internal lane (the backend
+   * never emits it publicly). Consumed VERBATIM and fail-closed: only the exact
+   * value `grounded` reads as audit-passed; ANY other value — including absent,
+   * null, or an unknown string — collapses to `unverified`. NEVER recomputed,
+   * re-derived, or synthesized on the client.
+   */
+  provenance_status?: ProvenanceStatus | null;
   verification_status?: VerificationStatus | null;
   correction_status?: string | null;
   produced_by?: ProducedBy | null;

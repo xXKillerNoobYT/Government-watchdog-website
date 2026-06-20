@@ -6,8 +6,23 @@ import { ALL_UI_STATUSES } from '../src/types/read-api';
 describe('trustLegend — explains every label exactly once', () => {
   const legend = trustLegend();
 
-  it('has one entry per UiStatus, plus the AI label and the fixture banner', () => {
-    expect(legend.length).toBe(ALL_UI_STATUSES.length + 2);
+  it('has one entry per UiStatus, plus the AI label, fixture banner, and 2 provenance states', () => {
+    // +2 meta (ai, fixture) +2 provenance states (grounded, unverified) — GOV-314.
+    expect(legend.length).toBe(ALL_UI_STATUSES.length + 4);
+  });
+
+  it('explains both GOV-314 provenance states with icon-bearing labels (a11y: not colour-only)', () => {
+    const grounded = legend.find((e) => e.key === 'provenance-grounded')!;
+    const unverified = legend.find((e) => e.key === 'provenance-unverified')!;
+    expect(grounded.meta).toBe(true);
+    expect(grounded.tone).toBe('ok');
+    expect(grounded.label).toContain('Audit-passed');
+    expect(grounded.label).toContain('✓');
+    expect(grounded.meaning.trim().length).toBeGreaterThan(0);
+    expect(unverified.meta).toBe(true);
+    expect(unverified.tone).toBe('caution');
+    expect(unverified.label).toContain('Unverified');
+    expect(unverified.label).toContain('⚠');
   });
 
   it('covers every backend UiStatus value (exhaustive)', () => {
