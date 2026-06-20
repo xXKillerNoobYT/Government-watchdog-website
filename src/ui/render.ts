@@ -9,7 +9,7 @@ import type { AsyncState } from '../state/async-state';
 import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
 import { stateView, trustLabel, recordTone, isAiProduced, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
 import { trustLegend, LEGEND_TITLE } from './legend';
-import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerLabel } from './statement-presenter';
+import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerLabel, provenanceBadge } from './statement-presenter';
 import {
   buildTimeline,
   buildTimeNavigator,
@@ -77,6 +77,13 @@ function relatedLinks(
 interface RecordCardOpts {
   /** Anchor id when this card is the first record of its day (time-bar target). */
   anchorId?: string;
+  /**
+   * Reviewer-internal lane flag (GOV-314). The provenance / audit-passed badge
+   * is rendered ONLY when this is true — the backend emits `provenance_status`
+   * solely on the reviewer-internal lane, so the public lane shows no badge and
+   * the client never synthesizes one there.
+   */
+  reviewerInternal?: boolean;
 }
 
 function recordCard(
@@ -95,6 +102,35 @@ function recordCard(
   const ai = isAiProduced(r);
   if (ai) {
     badges.push(el('span', { class: 'gw-badge gw-badge-ai', 'data-test': 'ai-label' }, [AI_LABEL_TEXT]));
+  }
+
+  // GOV-314 — the provenance / audit-passed trust badge. Reviewer-internal lane
+  // ONLY (the backend never emits `provenance_status` publicly; we never
+  // synthesize it there). It sits in the sharp badges row (never blurred), is
+  // distinguished by icon + text (not colour alone), and carries an aria-label +
+  // title so a screen reader / hover gets the meaning. The state is consumed
+  // VERBATIM from the backend — fail-closed to "Unverified provenance" for any
+  // non-grounded/absent value. It is DISTINCT from the ui_status trust badge:
+  // that one is about publication/correction state; this one is about whether the
+  // canonical provenance chain audited clean.
+  if (opts.reviewerInternal) {
+    const prov = provenanceBadge(r);
+    badges.push(
+      el(
+        'span',
+        {
+          class: `gw-badge gw-prov gw-prov-${prov.state} gw-tone-${prov.tone}`,
+          'data-test': 'provenance-badge',
+          'data-provenance': prov.state,
+          title: prov.description,
+          'aria-label': `Provenance: ${prov.label}`,
+        },
+        [
+          el('span', { class: 'gw-prov-icon', 'aria-hidden': 'true' }, [prov.icon]),
+          ` ${prov.label}`,
+        ],
+      ),
+    );
   }
 
   // GOV-293 — the at-a-glance attribution + confidence trail. Both sit OUTSIDE
@@ -450,6 +486,11 @@ function readyView(data: ReadApiResponse): HTMLElement {
   const timeline = buildTimeline(data);
   for (const w of timeline.warnings) console.warn(w);
 
+  // Reviewer-internal lane gate (GOV-314): the provenance badge renders only when
+  // the response is on the reviewer-internal lane. The backend emits
+  // `provenance_status` solely there; the public lane shows no provenance badge.
+  const reviewerInternal = data.access === 'reviewer_internal';
+
   // The first card of each day owns that day's scroll anchor, so the side
   // time-bar can jump straight to it (GOV-153 #1). Track days already anchored.
   const anchoredDays = new Set<string>();
@@ -459,7 +500,7 @@ function readyView(data: ReadApiResponse): HTMLElement {
       anchoredDays.add(timelineDate);
       anchorId = `gw-day-${timelineDate}`;
     }
-    return recordCard(record, edges, members, { anchorId });
+    return recordCard(record, edges, members, { anchorId, reviewerInternal });
   });
   const timelineSection = el('section', { class: 'gw-timeline', 'data-test': 'timeline' }, cards);
 
@@ -503,6 +544,12 @@ export const STYLE = `
 .gw-tone-stop{background:#fdecea;color:#7b241c;border-color:#c0392b}
 .gw-tone-neutral{background:#eef2f8;color:#1a4d8f;border-color:#1a4d8f}
 .gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
+/* GOV-314 — provenance / audit-passed trust badge (reviewer-internal lane only).
+   Distinguished by icon + text (not colour alone) and an inset ring so it reads
+   as a provenance verdict, distinct from the ui_status trust badge. Reuses the
+   ok/caution tones; the leading glyph (✓ / ⚠) carries the state without colour. */
+.gw-prov{display:inline-flex;align-items:center;gap:.15rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+.gw-prov-icon{font-weight:800;font-size:1.05em;line-height:1}
 /* GOV-293 — sharp at-a-glance attribution + confidence trail (never blurred).
    Distinct from the trust badge: these are metadata, not a trust verdict. */
 .gw-meta{display:flex;gap:.4rem .9rem;flex-wrap:wrap;margin:.1rem 0 .4rem;font-size:${BADGE_MIN_FONT_PX}px;line-height:1.35}

@@ -76,5 +76,22 @@ export function trustLegend(): LegendEntry[] {
       tone: 'caution',
       meta: true,
     },
+    // GOV-314 — the two provenance / audit-passed states (reviewer-internal lane
+    // only). Explains the per-record badge the backend `provenance_status` drives;
+    // the frontend never recomputes grounding, it surfaces the backend verdict.
+    {
+      key: 'provenance-grounded',
+      label: '✓ Audit-passed',
+      meaning: 'Provenance audit passed for this record — the full canonical chain is grounded, raw-preserved, and (if AI-produced) the producing run is OK. A reviewer-internal trust indicator, not a public claim.',
+      tone: 'ok',
+      meta: true,
+    },
+    {
+      key: 'provenance-unverified',
+      label: '⚠ Unverified provenance',
+      meaning: 'Provenance is not fully grounded — at least one canonical leg did not pass, or no verdict was sent. Shown fail-closed; never read as audit-passed.',
+      tone: 'caution',
+      meta: true,
+    },
   ];
 }

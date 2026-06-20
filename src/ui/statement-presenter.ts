@@ -21,7 +21,9 @@ import type {
   AgendaItemMember,
   VerificationStatus,
   ConfidenceLabel,
+  ProvenanceStatus,
 } from '../types/read-api';
+import { PROVENANCE_GROUNDED } from '../types/read-api';
 
 // --- Typed related-links (BEH-AGENDA-2) ------------------------------------
 
@@ -165,6 +167,56 @@ export function speakerLabel(record: StatementRecord): string | undefined {
   const value = record.speaker_label;
   if (value == null || String(value).trim() === '') return undefined;
   return String(value);
+}
+
+// --- Provenance / audit-passed trust badge (GOV-314 surface of GOV-311) -------
+
+/** A renderable provenance badge — distinguished by icon + text, not colour alone. */
+export interface ProvenanceBadgeView {
+  /** The fail-closed SSOT state — exactly one of the two frozen values. */
+  state: ProvenanceStatus;
+  /** Short affirmative/cautionary copy (e.g. "Audit-passed"). */
+  label: string;
+  /** Non-colour glyph so the state is distinguishable without colour (a11y). */
+  icon: string;
+  /** Colour tone class suffix only — never the sole signal. */
+  tone: 'ok' | 'caution';
+  /** Plain-English meaning for the title/aria text (reviewer-facing). */
+  description: string;
+}
+
+/**
+ * The provenance / audit-passed trust badge for a statement (GOV-314), the
+ * frontend surface of the backend `provenance_status` envelope key (GOV-311).
+ *
+ * ALWAYS returns a badge (never `undefined`) — the lane gate (reviewer-internal
+ * only) lives in the renderer, so by the time we are here the record is on the
+ * reviewer-internal lane and MUST show a per-record trust state. The mapping is
+ * fail-closed and CLOSED: only the exact SSOT value `grounded` reads as
+ * audit-passed; ANY other value — absent, null, '', or an unforeseen string —
+ * collapses to the cautionary `unverified` state. The client NEVER recomputes,
+ * re-derives, or upgrades grounding (it has no canonical columns to do so, by
+ * type construction) — it surfaces the backend's verdict verbatim.
+ */
+export function provenanceBadge(record: StatementRecord): ProvenanceBadgeView {
+  const grounded = record.provenance_status === PROVENANCE_GROUNDED;
+  return grounded
+    ? {
+        state: 'grounded',
+        label: 'Audit-passed',
+        icon: '✓',
+        tone: 'ok',
+        description:
+          'Provenance audit passed — the full canonical chain is grounded, raw-preserved, and (if AI-produced) the producing run is OK. Reviewer-internal trust indicator; not a public claim.',
+      }
+    : {
+        state: 'unverified',
+        label: 'Unverified provenance',
+        icon: '⚠',
+        tone: 'caution',
+        description:
+          'Provenance not fully grounded — at least one canonical leg (grounding chain, raw preservation, or AI run) did not pass, or the backend sent no verdict. Treated as unverified (fail-closed).',
+      };
 }
 
 // --- Exact-source citation pointer kind (the "where it came from" trail) ------
