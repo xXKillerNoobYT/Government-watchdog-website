@@ -129,3 +129,62 @@ export function assertWebSafe<T>(body: T): T {
   visit(body);
   return body;
 }
+
+/**
+ * App-relative reviewer-internal route prefix. The ONLY non-web, leading-`/`
+ * strings the 4.05 digest object carries are item `links.*` route references
+ * (`/alpine/timeline?card=...`, `/alpine/sources/...`). These are frontend ROUTE
+ * references, not filesystem paths — so they are exempt from the absolute-path
+ * rule, but NOT from the raw-marker scan or the `..` path-traversal check. This
+ * mirrors the backend's `stage4_newsletter_feed._assert_local_safe` exemption
+ * EXACTLY (same `/alpine/` prefix, same `..` rejection), so the two transport
+ * guards single-source one leak vocabulary and cannot drift.
+ */
+const APP_ROUTE_PREFIX = '/alpine/';
+
+/**
+ * Route-aware web-safe sweep for the newsletter digest object (GOV-462). Same
+ * leak vocabulary as {@link assertWebSafe} — forbidden raw keys, raw markers,
+ * absolute/Windows filesystem paths — with ONE difference: a genuine
+ * `/alpine/...` in-app route value is allowed (after a `..` traversal check),
+ * because the digest item `links` carry reviewer-internal routes by design (§3).
+ * Everything else stays as strict as `assertWebSafe`; `localSourcePath` is always
+ * null, so a non-null value carrying a path still fails loud. Returns `body`
+ * unchanged on success so it can wrap a response inline.
+ */
+export function assertDigestWebSafe<T>(body: T): T {
+  const checkString = (value: string): void => {
+    if (looksLikeUrl(value)) return; // public http(s) URL — exempt
+    for (const marker of RAW_PATH_MARKERS) {
+      if (value.includes(marker)) {
+        throw new RawPathLeak(`raw marker ${JSON.stringify(marker)} in digest body: ${JSON.stringify(value)}`);
+      }
+    }
+    if (value.startsWith(APP_ROUTE_PREFIX)) {
+      if (value.includes('..')) {
+        throw new RawPathLeak(`path traversal in reviewer-internal route: ${JSON.stringify(value)}`);
+      }
+      return; // a clean /alpine/ route is exempt from the filesystem-path rule
+    }
+    if (isFilesystemPath(value)) {
+      throw new RawPathLeak(`absolute/filesystem path in digest body: ${JSON.stringify(value)}`);
+    }
+  };
+  const visit = (value: unknown): void => {
+    if (typeof value === 'string') {
+      checkString(value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+    } else if (value && typeof value === 'object') {
+      for (const [key, child] of Object.entries(value)) {
+        if ((RAW_PATH_FORBIDDEN_KEYS as readonly string[]).includes(key)) {
+          throw new RawPathLeak(`forbidden raw field key in digest body: ${JSON.stringify(key)}`);
+        }
+        checkString(key);
+        visit(child);
+      }
+    }
+  };
+  visit(body);
+  return body;
+}

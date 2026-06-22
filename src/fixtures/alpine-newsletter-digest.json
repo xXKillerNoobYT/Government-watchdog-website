@@ -1,0 +1,515 @@
+{
+  "_provenance": {
+    "kind": "real_assembler_capture",
+    "captured_from": "scripts/stage4_newsletter_digest_assembler.py::assemble_digests @ backend origin/main cf61ea5 (GOV-457 / PR #79)",
+    "seed": "Exact reviewer-internal Alpine seed from tests/test_stage4_newsletter_digest_assembler.py::_seed (5 human + 1 AI + 1 corrected promoted statements over source alpine_packet; one no_primary_source completeness gap). Deterministic \u2014 fixed dates, no clock/network/AI.",
+    "reproducible_fingerprint": "f3d7f09a7acf5deed6a14bc8702eb8558b7c22e7ff52f59c8fc0b15cb6d9be2d",
+    "reviewer": "reviewer:isaac",
+    "transport": "Web-safe by construction at the assembler boundary (read_api route-aware local-safe sweep); re-swept by the frontend assertDigestWebSafe on load. localSourcePath always null; planted raw locators stripped upstream.",
+    "scope_note": "Town of Alpine only, reviewer-internal, gated-beta. Not a live read \u2014 no live digest endpoint is wired this slice (4.06). Not owner-published.",
+    "issue": "GOV-462 (impl) / GOV-461 (contract)"
+  },
+  "scope": "alpine",
+  "access": "reviewer_internal",
+  "digests": [
+    {
+      "coveragePeriod": {
+        "endDate": "2026-05-03",
+        "startDate": "2026-04-27"
+      },
+      "items": [
+        {
+          "cardIds": [
+            "c1_f578063df4e22cc4759d3bf870771adadcc4d665"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-03",
+            "startDate": "2026-04-27"
+          },
+          "id": "alpine-newsletter-item-001",
+          "itemType": "timeline_chunk",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "unverified",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_f578063df4e22cc4759d3bf870771adadcc4d665",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-18",
+          "recordDate": "2026-05-01",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 1,
+              "scanDate": "2026-05-01",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "unverified",
+          "summary": "Reviewed Alpine civic claim stmt-1.",
+          "topicIds": []
+        },
+        {
+          "cardIds": [
+            "c1_798f88731d1d8b24324ac930a31f3c044832a966"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-03",
+            "startDate": "2026-04-27"
+          },
+          "id": "alpine-newsletter-item-002",
+          "itemType": "timeline_chunk",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "unverified",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_798f88731d1d8b24324ac930a31f3c044832a966",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-18",
+          "recordDate": "2026-05-02",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 2,
+              "scanDate": "2026-05-02",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "unverified",
+          "summary": "Reviewed Alpine civic claim stmt-2.",
+          "topicIds": []
+        },
+        {
+          "cardIds": [
+            "c1_87df523abe1c6bb2b04739a9c0f29fcd69a5e53e"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-03",
+            "startDate": "2026-04-27"
+          },
+          "id": "alpine-newsletter-item-003",
+          "itemType": "timeline_chunk",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "unverified",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_87df523abe1c6bb2b04739a9c0f29fcd69a5e53e",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-18",
+          "recordDate": "2026-05-03",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 3,
+              "scanDate": "2026-05-03",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "unverified",
+          "summary": "Reviewed Alpine civic claim stmt-3.",
+          "topicIds": []
+        }
+      ],
+      "newsletterId": "alpine-historical-2026-18",
+      "sections": {
+        "conflicts": [],
+        "corrections": [],
+        "keyDocuments": [
+          "alpine_packet"
+        ],
+        "keyMeetings": [],
+        "laterOutcomes": [],
+        "processedRecords": {
+          "count": 3,
+          "itemIds": [
+            "alpine-newsletter-item-001",
+            "alpine-newsletter-item-002",
+            "alpine-newsletter-item-003"
+          ]
+        },
+        "sourceSetProgress": {
+          "chronologicalRange": {
+            "newest": "2026-05-03",
+            "oldest": "2026-05-01"
+          },
+          "completionFraming": "visible browser-reviewable progress; NOT full-history-complete",
+          "knownGaps": [
+            "no_primary_source (warn)"
+          ],
+          "orderingPreserved": "oldest_to_newest",
+          "sourceCategoriesReviewed": [
+            "agenda_packet"
+          ]
+        },
+        "sourceTrail": [
+          {
+            "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+            "authorityLevel": "official",
+            "localSourcePath": null,
+            "originalUrl": "https://alpinewy.gov/packet.pdf",
+            "page": 1,
+            "scanDate": "2026-05-01",
+            "section": null,
+            "sourceId": "alpine_packet",
+            "sourceType": "agenda_packet",
+            "timestampSeconds": null,
+            "verificationStatus": "human_verified"
+          }
+        ],
+        "timelineChunks": [
+          "alpine-newsletter-item-001",
+          "alpine-newsletter-item-002",
+          "alpine-newsletter-item-003"
+        ],
+        "topics": [],
+        "unverifiedItems": [
+          "alpine-newsletter-item-001",
+          "alpine-newsletter-item-002",
+          "alpine-newsletter-item-003"
+        ]
+      }
+    },
+    {
+      "coveragePeriod": {
+        "endDate": "2026-05-10",
+        "startDate": "2026-05-04"
+      },
+      "items": [
+        {
+          "cardIds": [
+            "c1_acd9d22773512f046138b78763671969428766e7"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-10",
+            "startDate": "2026-05-04"
+          },
+          "id": "alpine-newsletter-item-004",
+          "itemType": "timeline_chunk",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "unverified",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_acd9d22773512f046138b78763671969428766e7",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-19",
+          "recordDate": "2026-05-04",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 4,
+              "scanDate": "2026-05-04",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "unverified",
+          "summary": "Reviewed Alpine civic claim stmt-4.",
+          "topicIds": []
+        },
+        {
+          "cardIds": [
+            "c1_f4d8af2421766c79e8f1a506cab7426e09114016"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-10",
+            "startDate": "2026-05-04"
+          },
+          "id": "alpine-newsletter-item-005",
+          "itemType": "timeline_chunk",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "unverified",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_f4d8af2421766c79e8f1a506cab7426e09114016",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-19",
+          "recordDate": "2026-05-05",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 5,
+              "scanDate": "2026-05-05",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "unverified",
+          "summary": "Reviewed Alpine civic claim stmt-5.",
+          "topicIds": []
+        },
+        {
+          "cardIds": [
+            "c1_1276d7eb5e4bf1ba3ee482f781706f70e14e1e4e"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-10",
+            "startDate": "2026-05-04"
+          },
+          "id": "alpine-newsletter-item-006",
+          "itemType": "ai_presented_context",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": true,
+            "claimStatus": "ai_presented",
+            "correctionStatus": "none",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_1276d7eb5e4bf1ba3ee482f781706f70e14e1e4e",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-19",
+          "recordDate": "2026-05-06",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 6,
+              "scanDate": "2026-05-06",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "ai_presented",
+          "summary": "Reviewed Alpine civic claim stmt-ai.",
+          "topicIds": []
+        },
+        {
+          "cardIds": [
+            "c1_c7ec69ba790c945d159ccf13f61da59bd638e8bf"
+          ],
+          "coveragePeriod": {
+            "endDate": "2026-05-10",
+            "startDate": "2026-05-04"
+          },
+          "id": "alpine-newsletter-item-007",
+          "itemType": "correction",
+          "jurisdiction": {
+            "county": "Lincoln County",
+            "state": "WY",
+            "town": "Alpine"
+          },
+          "labels": {
+            "aiPresented": false,
+            "claimStatus": "corrected",
+            "correctionStatus": "corrected",
+            "publicationStatus": "draft",
+            "speakerStatus": "speaker_unidentified"
+          },
+          "links": {
+            "sourceUrl": "/alpine/sources/alpine_packet",
+            "timelineUrl": "/alpine/timeline?card=c1_c7ec69ba790c945d159ccf13f61da59bd638e8bf",
+            "timestampUrl": "https://alpinewy.gov/packet.pdf"
+          },
+          "meetingIds": [],
+          "newsletterId": "alpine-historical-2026-19",
+          "recordDate": "2026-05-07",
+          "sourceIds": [
+            "alpine_packet"
+          ],
+          "sourceTrail": [
+            {
+              "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+              "authorityLevel": "official",
+              "localSourcePath": null,
+              "originalUrl": "https://alpinewy.gov/packet.pdf",
+              "page": 7,
+              "scanDate": "2026-05-07",
+              "section": null,
+              "sourceId": "alpine_packet",
+              "sourceType": "agenda_packet",
+              "timestampSeconds": null,
+              "verificationStatus": "human_verified"
+            }
+          ],
+          "status": "corrected",
+          "summary": "Reviewed Alpine civic claim stmt-corrected.",
+          "topicIds": []
+        }
+      ],
+      "newsletterId": "alpine-historical-2026-19",
+      "sections": {
+        "conflicts": [],
+        "corrections": [
+          "alpine-newsletter-item-007"
+        ],
+        "keyDocuments": [
+          "alpine_packet"
+        ],
+        "keyMeetings": [],
+        "laterOutcomes": [],
+        "processedRecords": {
+          "count": 4,
+          "itemIds": [
+            "alpine-newsletter-item-004",
+            "alpine-newsletter-item-005",
+            "alpine-newsletter-item-006",
+            "alpine-newsletter-item-007"
+          ]
+        },
+        "sourceSetProgress": {
+          "chronologicalRange": {
+            "newest": "2026-05-07",
+            "oldest": "2026-05-04"
+          },
+          "completionFraming": "visible browser-reviewable progress; NOT full-history-complete",
+          "knownGaps": [
+            "no_primary_source (warn)"
+          ],
+          "orderingPreserved": "oldest_to_newest",
+          "sourceCategoriesReviewed": [
+            "agenda_packet"
+          ]
+        },
+        "sourceTrail": [
+          {
+            "archiveUrl": "https://web.archive.org/web/2026/https://alpinewy.gov/packet.pdf",
+            "authorityLevel": "official",
+            "localSourcePath": null,
+            "originalUrl": "https://alpinewy.gov/packet.pdf",
+            "page": 4,
+            "scanDate": "2026-05-04",
+            "section": null,
+            "sourceId": "alpine_packet",
+            "sourceType": "agenda_packet",
+            "timestampSeconds": null,
+            "verificationStatus": "human_verified"
+          }
+        ],
+        "timelineChunks": [
+          "alpine-newsletter-item-004",
+          "alpine-newsletter-item-005"
+        ],
+        "topics": [],
+        "unverifiedItems": [
+          "alpine-newsletter-item-004",
+          "alpine-newsletter-item-005",
+          "alpine-newsletter-item-006",
+          "alpine-newsletter-item-007"
+        ]
+      }
+    }
+  ]
+}
