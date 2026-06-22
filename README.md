@@ -65,21 +65,57 @@ npm run build          # tsc + vite production build
 npm run preview        # serve the production build locally
 ```
 
-Force a state for review/screenshots: `#/?state=loading|empty|error`.
+Force the full-app data state for review/screenshots: `#/app?state=loading|empty|error`
+(see "Preview launch vs full app" below for how to reach the gated app).
 
-### Launch the whole system app (owner walkthrough — GOV-410 / GOV-415)
+## Preview launch vs full app (GOV-419)
 
-`main` is the single canonical, runnable surface — no branch-picking needed.
-After `npm install && npm run dev`, open `http://127.0.0.1:5173` and visit:
+The default entry is a **preview-launch landing**, not the app. The full
+reviewer-internal app (timeline / cards / trust matrix) is revealed only past a
+**gated-beta** entry (implements `GATED_BETA_ACCESS_WORKFLOW`). There is **no real
+auth backend** in this slice — the gate is non-functional UI scaffolding.
+
+**Default route**
 
 | Surface | URL | What it shows |
 |---|---|---|
-| Timeline | `/` | Reviewer-internal Alpine timeline over the real reviewed records, with trust / verification / correction labels and source drawers |
-| Card feed | `/#/cards` | The GOV-347 card-feed capture rendered as cards |
-| Trust matrix | `/#/?demo=matrix` | One labeled card per record-level trust state (demo scaffolding, not real data) |
+| Preview-launch landing | `/` (or `#/`) | Neutral mission teaser + Alpine scope + "beta access is gated" messaging and a request-access affordance. **No civic data** — no timeline, cards, or source drawers pre-gate. |
 
-Every surface carries the **`OFFLINE SAMPLE — not a live read`** banner and keeps
-AI-produced rows under their own per-record label. This is reviewer-internal /
+**Gate states** — force any one for review/screenshots with `?gate=`:
+
+| State | URL | Meaning |
+|---|---|---|
+| Not signed in | `#/?gate=anonymous` (default) | Request-access affordance shown. |
+| Waitlisted / pending | `#/?gate=pending` | Request received, pending reviewer approval. |
+| Denied / needs info | `#/?gate=denied` | Not approved yet — framed as capacity/process only; **says nothing about civic standing**. |
+| Approved | `#/?gate=approved` | Approved; offers "Open the full app". |
+
+**Reviewer bypass (local walkthrough — see the full app behind the gate)**
+
+Isaac can see the full app locally WITHOUT shipping public access:
+
+- Persistent: set `VITE_REVIEWER_BYPASS=true` in `.env`, then every full-app
+  route opens (timeline `#/app`, cards `#/cards`, matrix `#/app?demo=matrix`).
+- Per-URL: append `?reviewer=1` to any full-app route, e.g. **`#/app?reviewer=1`**.
+  It is sticky for the browser session so in-app links keep working.
+
+An explicit `?gate=` override still wins over the bypass, so a gated state can be
+screenshotted even with the bypass on (e.g. `#/app?gate=pending`).
+
+### Launch the whole system app (owner walkthrough — GOV-410 / GOV-415 / GOV-419)
+
+`main` is the single canonical, runnable surface — no branch-picking needed.
+After `npm install && npm run dev`, open `http://127.0.0.1:5173`. The landing
+loads first; to walk the full app, use the reviewer bypass:
+
+| Surface | URL (with bypass) | What it shows |
+|---|---|---|
+| Timeline | `/#/app?reviewer=1` | Reviewer-internal Alpine timeline over the real reviewed records, with trust / verification / correction labels and source drawers |
+| Card feed | `/#/cards?reviewer=1` | The GOV-347 card-feed capture rendered as cards |
+| Trust matrix | `/#/app?demo=matrix&reviewer=1` | One labeled card per record-level trust state (demo scaffolding, not real data) |
+
+Every full-app surface carries the **`OFFLINE SAMPLE — not a live read`** banner and
+keeps AI-produced rows under their own per-record label. This is reviewer-internal /
 fixture-only: **no public exposure, no live read, Alpine-only** (GOV-94 owner
 condition). The frontend never recomputes trust — labels are consumed verbatim
 from the backend read-API (see the two hard invariants below).
