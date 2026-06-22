@@ -27,6 +27,13 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
+import {
+  loadDigestResponse,
+  renderNewsletterArchive,
+  renderNewsletterDetail,
+  renderNewsletterState,
+  type NewsletterStateKind,
+} from './ui/newsletter';
 import type { CardFeed } from './ui/card-feed';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
@@ -36,6 +43,7 @@ import stateMatrixData from './fixtures/state-matrix.json';
 import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
 import conceptGraphRealData from './fixtures/concept-graph-real.json';
 import cardFeedData from './fixtures/alpine-card-feed.json';
+import newsletterDigestData from './fixtures/alpine-newsletter-digest.json';
 
 /**
  * State-matrix sample (GOV-104): one labeled card per record-level trust state
@@ -86,6 +94,19 @@ const GRAPH_DEMO_NOTICE =
 const CARD_FEED: CardFeed = assertWebSafe(cardFeedData as unknown as CardFeed);
 const CARD_FEED_NOTICE =
   'Verbatim GOV-347 card-feed capture (reviewer-internal, backend HEAD 6d65bd3) — not a live read.';
+
+/**
+ * GOV-462 — the Stage 4.05 reviewer-internal Alpine newsletter digest object,
+ * captured verbatim from a real `assemble_digests(...)` run (backend origin/main
+ * PR #79 / cf61ea5; see the fixture `_provenance`). Route-aware web-safe sweep on
+ * load (`loadDigestResponse` → `assertDigestWebSafe`): `localSourcePath` is always
+ * null and `/alpine/` route links are exempt from the absolute-path rule (mirrors
+ * the backend's own `_assert_local_safe`). No live digest endpoint is wired this
+ * slice — fixture mode only.
+ */
+const NEWSLETTER_DIGEST = loadDigestResponse(newsletterDigestData);
+const NEWSLETTER_NOTICE =
+  'Verbatim Stage 4.05 digest capture (reviewer-internal, backend cf61ea5 / PR #79) — not a live read.';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
@@ -347,6 +368,27 @@ function renderCardFeedRoute(query: URLSearchParams): void {
 }
 
 /**
+ * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
+ * digest detail. `?state=loading|empty|error` forces the async states for
+ * screenshots. Both surfaces are full-app civic surfaces → gated identically to
+ * `#/app` via the shared `gated()` wrapper (§5); this handler only runs once an
+ * approved request has been admitted.
+ */
+function renderNewsletterRoute(query: URLSearchParams): void {
+  const forced = query.get('state');
+  if (forced === 'loading' || forced === 'empty' || forced === 'error') {
+    renderNewsletterState(root!, forced as NewsletterStateKind);
+    return;
+  }
+  const id = query.get('id');
+  if (id) {
+    renderNewsletterDetail(root!, NEWSLETTER_DIGEST, id, NEWSLETTER_NOTICE);
+    return;
+  }
+  renderNewsletterArchive(root!, NEWSLETTER_DIGEST, NEWSLETTER_NOTICE);
+}
+
+/**
  * Reviewer / local bypass (GOV-419 acceptance #3) — lets Isaac SEE the full app
  * behind the gate for a local walkthrough WITHOUT shipping public access. Three
  * impure sources, all LOCAL-only (this build is reviewer-internal + noindex):
@@ -407,6 +449,7 @@ const router = createRouter(({ query }) => renderLanding(root!, accessFor(query)
 router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
 router.register('/app', gated(({ query }) => void renderTimeline(query)));
 router.register('/cards', gated(({ query }) => renderCardFeedRoute(query)));
+router.register('/newsletter', gated(({ query }) => renderNewsletterRoute(query)));
 router.register('/topics', gated(({ query }) => void renderTopics(query)));
 router.register('/body', gated(({ query }) => void renderContextPage('body', query)));
 router.register('/meeting', gated(({ query }) => void renderContextPage('meeting', query)));
