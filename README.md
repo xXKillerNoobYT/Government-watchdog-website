@@ -67,6 +67,23 @@ npm run preview        # serve the production build locally
 
 Force a state for review/screenshots: `#/?state=loading|empty|error`.
 
+### Launch the whole system app (owner walkthrough — GOV-410 / GOV-415)
+
+`main` is the single canonical, runnable surface — no branch-picking needed.
+After `npm install && npm run dev`, open `http://127.0.0.1:5173` and visit:
+
+| Surface | URL | What it shows |
+|---|---|---|
+| Timeline | `/` | Reviewer-internal Alpine timeline over the real reviewed records, with trust / verification / correction labels and source drawers |
+| Card feed | `/#/cards` | The GOV-347 card-feed capture rendered as cards |
+| Trust matrix | `/#/?demo=matrix` | One labeled card per record-level trust state (demo scaffolding, not real data) |
+
+Every surface carries the **`OFFLINE SAMPLE — not a live read`** banner and keeps
+AI-produced rows under their own per-record label. This is reviewer-internal /
+fixture-only: **no public exposure, no live read, Alpine-only** (GOV-94 owner
+condition). The frontend never recomputes trust — labels are consumed verbatim
+from the backend read-API (see the two hard invariants below).
+
 ### Stack
 
 Vite + TypeScript, framework-agnostic DOM rendering (a heavy UI framework would
