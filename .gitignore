@@ -16,3 +16,7 @@ npm-debug.log*
 /harness/
 /scripts/gen-style-harness.mjs
 /gov427-*.png
+# GOV-440 throwaway dark-theme screenshot harness + light/dark screenshots
+# (attached to the issue, not committed — same boundary as GOV-427)
+/scripts/gen-dark-screens.mjs
+/docs/evidence/GOV-440/
