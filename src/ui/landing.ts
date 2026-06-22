@@ -14,6 +14,7 @@
 
 import type { AccessState, GatePanel } from '../gate/access';
 import { gatePanelContent, SCAFFOLDING_NOTE } from '../gate/access';
+import { GW_TOKENS } from './tokens';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -131,28 +132,29 @@ export function renderGatedApp(
  * preview surface stands apart. Plain system font, no brand commitment. Each
  * gate state gets a distinct tone (acceptance #4: visibly distinct states).
  */
-export const LANDING_STYLE = `
-.gw-landing-root{font-family:system-ui,sans-serif;line-height:1.55;color:#1a1a1a;max-width:42rem;margin:0 auto;padding:2rem 1rem}
-.gw-landing-kicker{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:700;color:#5a6b82;margin:0 0 .4rem}
-.gw-landing-h1{font-size:1.8rem;margin:0 0 .6rem;line-height:1.2}
-.gw-landing-mission{font-size:1.05rem;margin:.4rem 0}
-.gw-landing-scope{font-size:.95rem;color:#33415c;background:#eef2f8;border:1px solid #c2cedd;border-radius:8px;padding:.5rem .7rem;margin:.8rem 0}
-.gw-landing-gated{font-size:.92rem;color:#5c4500;background:#fff3cd;border:1px solid #d9a400;border-radius:8px;padding:.5rem .7rem;margin:.8rem 0}
-.gw-muted{color:#666}
-.gw-gate-panel,.gw-gated-app{border:1px solid #ddd;border-radius:10px;padding:1rem 1.1rem;margin:1.1rem 0;background:#fff}
-.gw-gate-badge{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:.15rem .6rem;border:1px solid;white-space:nowrap}
-/* Distinct tone per access state (colour + the badge word together). */
-.gw-gate-anonymous{background:#eef2f8;color:#1a4d8f;border-color:#1a4d8f}
-.gw-gate-pending{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
-.gw-gate-denied{background:#fdecea;color:#7b241c;border-color:#c0392b}
-.gw-gate-approved{background:#e8f0e8;color:#1e4620;border-color:#1e4620}
-.gw-gate-title{font-size:1.15rem;margin:.5rem 0 .3rem}
-.gw-gate-message{margin:.3rem 0 .7rem}
-.gw-gate-action{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;cursor:pointer;font-size:.92rem;font-weight:600;color:#fff;background:#1a4d8f;border:1px solid #1a4d8f;border-radius:8px;padding:.3rem 1rem;text-decoration:none}
-.gw-gate-action:focus-visible{outline:2px solid #1a4d8f;outline-offset:2px}
-.gw-gate-action-ghost{color:#1a4d8f;background:#fff}
-.gw-gate-scaffold{font-size:.78rem;margin:.7rem 0 0;border-top:1px dashed #ccc;padding-top:.5rem}
-.gw-reviewer-hint{font-size:.8rem;margin:.8rem 0 0}
+export const LANDING_STYLE = `${GW_TOKENS}
+.gw-landing-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:42rem;margin:0 auto;padding:2rem var(--gw-space-5)}
+.gw-landing-kicker{text-transform:uppercase;letter-spacing:.08em;font-size:var(--gw-text-xs);font-weight:700;color:var(--gw-text-muted);margin:0 0 var(--gw-space-2)}
+.gw-landing-h1{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-3);line-height:var(--gw-leading-tight)}
+.gw-landing-mission{font-size:var(--gw-text-md);margin:var(--gw-space-2) 0}
+.gw-landing-scope{font-size:var(--gw-text-body);color:var(--gw-text-secondary);background:var(--gw-surface-accent-tint);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius);padding:var(--gw-space-3) .7rem;margin:var(--gw-space-4) 0}
+.gw-landing-gated{font-size:.92rem;color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3) .7rem;margin:var(--gw-space-4) 0}
+.gw-muted{color:var(--gw-text-muted)}
+.gw-gate-panel,.gw-gated-app{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-5) 1.1rem;margin:1.1rem 0;background:var(--gw-surface)}
+.gw-gate-badge{display:inline-block;font-size:var(--gw-text-badge);font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem var(--gw-space-3);border:var(--gw-border-w) solid;white-space:nowrap}
+/* Distinct tone per access state (colour + the badge word together); each state
+   keeps its word, so the four states stay distinct without colour (GOV-419 #4). */
+.gw-gate-anonymous{background:var(--gw-surface-accent-tint);color:var(--gw-accent);border-color:var(--gw-accent)}
+.gw-gate-pending{background:var(--gw-caution-bg);color:var(--gw-caution-text);border-color:var(--gw-caution-text)}
+.gw-gate-denied{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
+.gw-gate-approved{background:var(--gw-ok-bg);color:var(--gw-ok-text);border-color:var(--gw-ok-text)}
+.gw-gate-title{font-size:var(--gw-text-lg);margin:var(--gw-space-3) 0 var(--gw-space-1)}
+.gw-gate-message{margin:var(--gw-space-1) 0 .7rem}
+.gw-gate-action{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);box-sizing:border-box;cursor:pointer;font-size:.92rem;font-weight:600;color:var(--gw-accent-text-on);background:var(--gw-accent);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius);padding:var(--gw-space-1) var(--gw-space-5);text-decoration:none}
+.gw-gate-action:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
+.gw-gate-action-ghost{color:var(--gw-accent);background:var(--gw-surface)}
+.gw-gate-scaffold{font-size:.78rem;margin:.7rem 0 0;border-top:var(--gw-border-w) dashed var(--gw-border);padding-top:var(--gw-space-3)}
+.gw-reviewer-hint{font-size:var(--gw-text-sm);margin:var(--gw-space-4) 0 0}
 `;
 
 let styleInjected = false;

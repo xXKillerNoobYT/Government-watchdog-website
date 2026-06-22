@@ -112,8 +112,13 @@ describe('topic-tree view — safety + legibility floors', () => {
     expect(root.textContent ?? '').not.toMatch(/\/Users\/|Obsidian Vault|transcript_path|\.sha256/);
   });
 
+  // GOV-427: chips/aliases now consume the shared design-token layer. The floor
+  // is baked into the token px (tied to the exported constants) and the chip/
+  // alias rules reference it — still a real floor guard (docs §5.1).
   it('honours the badge-font and tap-target floors in the tree stylesheet', () => {
-    expect(TREE_STYLE).toContain(`font-size:${BADGE_MIN_FONT_PX}px`);
-    expect(TREE_STYLE).toContain(`min-height:${DRAWER_TAP_MIN_PX}px`);
+    expect(TREE_STYLE).toContain(`--gw-badge-min:${BADGE_MIN_FONT_PX}px`);
+    expect(TREE_STYLE).toContain(`--gw-tap-min:${DRAWER_TAP_MIN_PX}px`);
+    expect(TREE_STYLE).toContain('.tt-chip{font-size:var(--gw-text-badge)');
+    expect(TREE_STYLE).toContain('min-height:var(--gw-tap-min)');
   });
 });
