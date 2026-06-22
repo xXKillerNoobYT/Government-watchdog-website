@@ -189,8 +189,18 @@ describe('GOV-100 — legibility / touch-target floors honoured by the styleshee
     expect(DRAWER_TAP_MIN_PX).toBeGreaterThanOrEqual(44);
   });
 
-  it('sizes badges ≥13px and the drawer summary ≥44px in the stylesheet', () => {
-    expect(STYLE).toContain(`.gw-badge{font-size:${BADGE_MIN_FONT_PX}px`);
-    expect(STYLE).toContain(`min-height:${DRAWER_TAP_MIN_PX}px`);
+  // GOV-427: badges/taps now consume the design-token layer. The floor still
+  // can't silently regress — it is BAKED INTO the token value (the px is tied to
+  // the exported source-of-truth constant), and the consuming rules reference
+  // that token. Asserting both halves keeps this a real floor guard, per
+  // docs/ui-design-system.md §5.1 (intentional test update, not papering over).
+  it('bakes the ≥13px / ≥44px floors into the tokens and consumes them', () => {
+    // token definitions carry the floor, tied to the exported constants
+    expect(STYLE).toContain(`--gw-badge-min:${BADGE_MIN_FONT_PX}px`);
+    expect(STYLE).toContain(`--gw-tap-min:${DRAWER_TAP_MIN_PX}px`);
+    expect(STYLE).toContain('--gw-text-badge:var(--gw-badge-min)');
+    // badge + tap-target rules consume the floor tokens
+    expect(STYLE).toContain('.gw-badge{font-size:var(--gw-text-badge)');
+    expect(STYLE).toContain('min-height:var(--gw-tap-min)');
   });
 });

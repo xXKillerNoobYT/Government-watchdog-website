@@ -12,3 +12,7 @@ npm-debug.log*
 /verification-artifacts/
 # Playwright MCP scratch (snapshots/console logs) — not source
 .playwright-mcp/
+# GOV-427 throwaway style-harness + before/after screenshots (attached to the issue, not committed)
+/harness/
+/scripts/gen-style-harness.mjs
+/gov427-*.png

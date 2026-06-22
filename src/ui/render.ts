@@ -23,6 +23,7 @@ import {
   type TimeNavigator,
 } from './timeline';
 import { buildCardFeedModel, type CardFeed, type CardHeadView } from './card-feed';
+import { GW_TOKENS } from './tokens';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -643,43 +644,47 @@ export function renderCardFeed(root: HTMLElement, feed: CardFeed, notice?: strin
 }
 
 /**
- * Reviewer-internal legibility / touch floors, formalized by UXProductDesigner
- * on GOV-100 (not visual-style commitments — Isaac's later pass may restyle
- * ABOVE these). Stated in px so they can never scale below the floor with root
- * font changes, and exported so a unit test can assert the CSS honours them.
- *  - Badge text ≥ 13px computed at the 390px mobile floor (mobile legibility).
- *  - Drawer summary tap target ≥ 44×44px (WCAG 2.5.5 Target Size).
+ * Re-exported from the token module so existing `import … from './render'`
+ * call-sites (and the floor regression tests) keep resolving while the token
+ * block (which interpolates these floors) lives in `./tokens` to avoid a
+ * circular import. See `./tokens` for the floor rationale.
  */
-export const BADGE_MIN_FONT_PX = 13;
-export const DRAWER_TAP_MIN_PX = 44;
+export { BADGE_MIN_FONT_PX, DRAWER_TAP_MIN_PX } from './tokens';
 
-/** Exported for the legibility/touch-floor regression test (source of truth). */
-export const STYLE = `
-.gw-root{font-family:system-ui,sans-serif;line-height:1.5;color:#1a1a1a;max-width:48rem;margin:0 auto;padding:1rem}
-.gw-fixture-banner{background:#fff3cd;border:1px solid #d9a400;color:#5c4500;padding:.6rem .8rem;border-radius:6px;font-weight:600;margin-bottom:.75rem}
+/**
+ * Exported for the legibility/touch-floor regression test (source of truth).
+ * GOV-427: consumes the shared `GW_TOKENS` layer (`var(--gw-*)`) — zero raw hex
+ * remains outside the token definitions; the badge font / tap floors flow
+ * through `--gw-text-badge` / `--gw-tap-min`, which bake in BADGE_MIN_FONT_PX /
+ * DRAWER_TAP_MIN_PX.
+ */
+export const STYLE = `${GW_TOKENS}
+.gw-root{font-family:var(--gw-font);line-height:var(--gw-leading);color:var(--gw-text);max-width:48rem;margin:0 auto;padding:var(--gw-space-5)}
+.gw-fixture-banner{background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);color:var(--gw-caution-text-strong);padding:var(--gw-space-3) var(--gw-space-4);border-radius:var(--gw-radius);font-weight:600;margin-bottom:.75rem}
 .gw-fixture-banner small{display:block;font-weight:400}
-.gw-notice{font-size:.85rem;color:#5c4500;margin-top:.25rem}
-.gw-state{padding:1.25rem;border:1px dashed #bbb;border-radius:8px;text-align:center;color:#444}
-.gw-state h1{font-size:1.1rem;margin:.25rem 0}
-.gw-state[data-state="error"]{border-color:#c0392b;color:#7b241c;background:#fdecea}
-.gw-muted{color:#666}
-.gw-breadcrumb{font-size:.85rem;color:#555;margin:.5rem 0}
-.gw-card{border:1px solid #ddd;border-radius:8px;padding:.8rem;margin:.6rem 0}
+.gw-notice{font-size:.85rem;color:var(--gw-caution-text-strong);margin-top:var(--gw-space-1)}
+.gw-state{padding:var(--gw-space-6);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius);text-align:center;color:var(--gw-text-secondary)}
+.gw-state h1{font-size:1.1rem;margin:var(--gw-space-1) 0}
+.gw-state[data-state="error"]{border-color:var(--gw-stop-border);color:var(--gw-stop-text);background:var(--gw-stop-bg)}
+.gw-muted{color:var(--gw-text-muted)}
+.gw-breadcrumb{font-size:.85rem;color:var(--gw-text-muted);margin:var(--gw-space-5) 0}
+.gw-card{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4);margin:var(--gw-space-3) 0}
 /* GOV-354 — card-feed head: type glyph + title + date, sharp (outside the reveal
    blur). Icon + text together (never colour alone), mirroring the badge rule. */
-.gw-card-head{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap;margin-bottom:.35rem}
-.gw-card-type{font-size:${BADGE_MIN_FONT_PX}px;font-weight:700;color:#1a4d8f;background:#eef2f8;border:1px solid #c2cedd;border-radius:999px;padding:.1rem .5rem;white-space:nowrap}
+.gw-card-head{display:flex;gap:var(--gw-space-2);align-items:baseline;flex-wrap:wrap;margin-bottom:.35rem}
+.gw-card-type{font-size:var(--gw-text-badge);font-weight:700;color:var(--gw-accent);background:var(--gw-surface-accent-tint);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-pill);padding:.1rem .5rem;white-space:nowrap}
 .gw-card-emoji{font-size:1.05em;line-height:1}
-.gw-card-title{font-weight:700;font-size:.95rem;color:#1a1a1a;flex:1 1 12rem;min-width:0}
-.gw-card-date{font-size:.78rem;color:#666;font-variant-numeric:tabular-nums;margin-left:auto}
-.gw-badges{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.4rem}
-.gw-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;background:#eef0f2;color:#333;border:1px solid #999;border-radius:999px;padding:.15rem .55rem;white-space:nowrap}
-/* Trust tones — colour only; the backend ui_status decides which, never the UI. */
-.gw-tone-ok{background:#e8f0e8;color:#1e4620;border-color:#1e4620}
-.gw-tone-caution{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
-.gw-tone-stop{background:#fdecea;color:#7b241c;border-color:#c0392b}
-.gw-tone-neutral{background:#eef2f8;color:#1a4d8f;border-color:#1a4d8f}
-.gw-badge-ai{background:#fff3cd;color:#7a5b00;border-color:#7a5b00}
+.gw-card-title{font-weight:700;font-size:var(--gw-text-body);color:var(--gw-text);flex:1 1 12rem;min-width:0}
+.gw-card-date{font-size:.78rem;color:var(--gw-text-muted);font-variant-numeric:tabular-nums;margin-left:auto}
+.gw-badges{display:flex;gap:var(--gw-space-2);flex-wrap:wrap;margin-bottom:var(--gw-space-2)}
+.gw-badge{font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;background:var(--gw-surface-accent-tint);color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-neutral-border);border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:nowrap}
+/* Trust tones — the backend ui_status decides which, never the UI; the glyph +
+   word (set in markup) carry the state, so colour is reinforcement (§3). */
+.gw-tone-ok{background:var(--gw-ok-bg);color:var(--gw-ok-text);border-color:var(--gw-ok-text)}
+.gw-tone-caution{background:var(--gw-caution-bg);color:var(--gw-caution-text);border-color:var(--gw-caution-text)}
+.gw-tone-stop{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
+.gw-tone-neutral{background:var(--gw-surface-accent-tint);color:var(--gw-accent);border-color:var(--gw-accent)}
+.gw-badge-ai{background:var(--gw-caution-bg);color:var(--gw-caution-text);border-color:var(--gw-caution-text)}
 /* GOV-314 — provenance / audit-passed trust badge (reviewer-internal lane only).
    Distinguished by icon + text (not colour alone) and an inset ring so it reads
    as a provenance verdict, distinct from the ui_status trust badge. Reuses the
@@ -688,80 +693,80 @@ export const STYLE = `
 .gw-prov-icon{font-weight:800;font-size:1.05em;line-height:1}
 /* GOV-293 — sharp at-a-glance attribution + confidence trail (never blurred).
    Distinct from the trust badge: these are metadata, not a trust verdict. */
-.gw-meta{display:flex;gap:.4rem .9rem;flex-wrap:wrap;margin:.1rem 0 .4rem;font-size:${BADGE_MIN_FONT_PX}px;line-height:1.35}
-.gw-speaker{color:#1a1a1a}
-.gw-confidence{color:#1a4d8f;background:#eef2f8;border:1px solid #c2cedd;border-radius:999px;padding:.05rem .5rem;white-space:nowrap}
-.gw-meta-key{color:#666;font-weight:600}
-.gw-legend{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;margin:.4rem 0 .8rem;padding:0 .6rem}
-.gw-legend summary{cursor:pointer;font-size:.9rem;font-weight:600;color:#1a4d8f;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;display:flex;align-items:center}
-.gw-legend-list{list-style:none;margin:0 0 .6rem;padding:0;display:flex;flex-direction:column;gap:.4rem}
-.gw-legend-row{display:grid;grid-template-columns:11rem 1fr;gap:.5rem;align-items:start;font-size:.82rem}
-.gw-legend-meaning{color:#444}
+.gw-meta{display:flex;gap:var(--gw-space-2) .9rem;flex-wrap:wrap;margin:.1rem 0 var(--gw-space-2);font-size:var(--gw-text-badge);line-height:1.35}
+.gw-speaker{color:var(--gw-text)}
+.gw-confidence{color:var(--gw-accent);background:var(--gw-surface-accent-tint);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-pill);padding:.05rem .5rem;white-space:nowrap}
+.gw-meta-key{color:var(--gw-text-muted);font-weight:600}
+.gw-legend{border:var(--gw-border-w) solid var(--gw-border);background:var(--gw-surface-subtle);border-radius:var(--gw-radius);margin:var(--gw-space-2) 0 var(--gw-space-4);padding:0 var(--gw-space-3)}
+.gw-legend summary{cursor:pointer;font-size:.9rem;font-weight:600;color:var(--gw-accent);min-height:var(--gw-tap-min);box-sizing:border-box;display:flex;align-items:center}
+.gw-legend-list{list-style:none;margin:0 0 var(--gw-space-3);padding:0;display:flex;flex-direction:column;gap:var(--gw-space-2)}
+.gw-legend-row{display:grid;grid-template-columns:11rem 1fr;gap:var(--gw-space-2);align-items:start;font-size:.82rem}
+.gw-legend-meaning{color:var(--gw-text-secondary)}
 @media (max-width:420px){.gw-legend-row{grid-template-columns:1fr;gap:.15rem}}
-.gw-statement{margin:.3rem 0}
-.gw-analysis{border-left:3px solid #d9a400;background:#fffaf0;padding:.3rem .6rem;border-radius:4px;margin:.3rem 0}
-.gw-analysis-caption{font-size:.72rem;font-weight:600;margin:.1rem 0;text-transform:uppercase;letter-spacing:.02em}
+.gw-statement{margin:var(--gw-space-1) 0}
+.gw-analysis{border-left:3px solid var(--gw-caution-line);background:var(--gw-caution-bg-soft);padding:var(--gw-space-1) var(--gw-space-3);border-radius:var(--gw-radius-sm);margin:var(--gw-space-1) 0}
+.gw-analysis-caption{font-size:var(--gw-text-xs);font-weight:600;margin:.1rem 0;text-transform:uppercase;letter-spacing:.02em}
 .gw-provenance{font-size:.75rem;margin:.2rem 0}
-.gw-related-list{list-style:none;padding:0;margin:.3rem 0;display:flex;flex-direction:column;gap:.2rem}
-.gw-related{font-size:.8rem}
-.gw-related-type{font-weight:700;background:#eef2f8;color:#1a4d8f;border:1px solid #1a4d8f;border-radius:4px;padding:.05rem .35rem}
-.gw-drawer summary{cursor:pointer;font-size:.9rem;color:#1a4d8f;padding:.5rem .2rem;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;display:flex;align-items:center}
-.gw-source-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem}
-.gw-source{border-top:1px solid #eee;padding-top:.4rem;margin:0;display:grid;grid-template-columns:auto;gap:.15rem}
-.gw-field{display:grid;grid-template-columns:9rem 1fr;gap:.5rem;font-size:.8rem}
-.gw-field dt{color:#666;margin:0}
+.gw-related-list{list-style:none;padding:0;margin:var(--gw-space-1) 0;display:flex;flex-direction:column;gap:.2rem}
+.gw-related{font-size:var(--gw-text-sm)}
+.gw-related-type{font-weight:700;background:var(--gw-surface-accent-tint);color:var(--gw-accent);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-sm);padding:.05rem .35rem}
+.gw-drawer summary{cursor:pointer;font-size:.9rem;color:var(--gw-accent);padding:var(--gw-space-3) .2rem;min-height:var(--gw-tap-min);box-sizing:border-box;display:flex;align-items:center}
+.gw-source-list{display:flex;flex-direction:column;gap:var(--gw-space-3);margin-top:var(--gw-space-2)}
+.gw-source{border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:var(--gw-space-2);margin:0;display:grid;grid-template-columns:auto;gap:.15rem}
+.gw-field{display:grid;grid-template-columns:9rem 1fr;gap:var(--gw-space-2);font-size:var(--gw-text-sm)}
+.gw-field dt{color:var(--gw-text-muted);margin:0}
 .gw-field dd{margin:0}
 @media (max-width:420px){.gw-field{grid-template-columns:1fr}.gw-field dt{font-weight:600}}
 /* GOV-301 — completeness-gap card. Surfaces what is MISSING (the ~90
    no_primary_source meetings). Caution-toned frame so it reads as a gap/status
    surface, distinct from a record card. */
-.gw-gapcard{border:1px solid #d9a400;background:#fffaf0;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
+.gw-gapcard{border:var(--gw-border-w) solid var(--gw-caution-line);background:var(--gw-caution-bg-soft);border-radius:var(--gw-radius);padding:.7rem .9rem;margin:var(--gw-space-3) 0}
 .gw-gapcard h2{font-size:1rem;margin:.2rem 0 .35rem}
-.gw-gapcard-headline{margin:.2rem 0;font-size:.95rem}
-.gw-gapcard-headline strong{font-size:1.15rem;color:#7a5b00}
-.gw-gap-type-list{list-style:none;margin:.4rem 0 .2rem;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
-.gw-gap-type{display:inline-flex;align-items:center;gap:.4rem;background:#fff;border:1px solid #e0c98a;border-radius:6px;padding:.15rem .5rem;font-size:.8rem}
-.gw-gap-count{font-size:.7rem;font-weight:700;background:#7a5b00;color:#fff;border-radius:999px;padding:0 .4rem;min-width:1.2rem;text-align:center}
+.gw-gapcard-headline{margin:.2rem 0;font-size:var(--gw-text-body)}
+.gw-gapcard-headline strong{font-size:var(--gw-text-lg);color:var(--gw-caution-text)}
+.gw-gap-type-list{list-style:none;margin:var(--gw-space-2) 0 .2rem;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
+.gw-gap-type{display:inline-flex;align-items:center;gap:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-sm);padding:.15rem .5rem;font-size:var(--gw-text-sm)}
+.gw-gap-count{font-size:var(--gw-text-xs);font-weight:700;background:var(--gw-caution-text);color:var(--gw-accent-text-on);border-radius:var(--gw-radius-pill);padding:0 var(--gw-space-2);min-width:1.2rem;text-align:center}
 .gw-gap-drawer summary{font-weight:600}
-.gw-gap-meeting-list{list-style:none;margin:.4rem 0 0;padding:0;display:flex;flex-direction:column;gap:.3rem}
-.gw-gap-meeting{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;border-top:1px solid #f0e2c0;padding-top:.3rem;font-size:.8rem}
+.gw-gap-meeting-list{list-style:none;margin:var(--gw-space-2) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--gw-space-1)}
+.gw-gap-meeting{display:flex;align-items:center;gap:var(--gw-space-2);flex-wrap:wrap;border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:var(--gw-space-1);font-size:var(--gw-text-sm)}
 .gw-gap-subject{font-weight:700;font-variant-numeric:tabular-nums}
 .gw-gap-detail{flex:1 1 12rem;min-width:0}
-.gw-thread{border:1px solid #d7dee8;background:#f7f9fc;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
+.gw-thread{border:var(--gw-border-w) solid var(--gw-border);background:var(--gw-surface-subtle);border-radius:var(--gw-radius);padding:.7rem .9rem;margin:var(--gw-space-3) 0}
 .gw-thread h2{font-size:1rem;margin:.2rem 0 .35rem}
-.gw-completeness{margin:.2rem 0 .5rem}
-.gw-completeness-badge{font-size:${BADGE_MIN_FONT_PX}px;line-height:1.3;font-weight:700;border-radius:999px;padding:.15rem .55rem;white-space:nowrap;border:1px solid}
-.gw-completeness-complete{background:#e8f0e8;color:#1e4620;border-color:#1e4620}
-.gw-completeness-gaps{background:#fdecea;color:#7b241c;border-color:#c0392b}
-.gw-completeness-unknown{background:#eef0f2;color:#444;border-color:#999}
-.gw-gap-list{list-style:disc;margin:.35rem 0 0;padding-left:1.2rem;font-size:.8rem}
+.gw-completeness{margin:.2rem 0 var(--gw-space-3)}
+.gw-completeness-badge{font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:nowrap;border:var(--gw-border-w) solid}
+.gw-completeness-complete{background:var(--gw-ok-bg);color:var(--gw-ok-text);border-color:var(--gw-ok-text)}
+.gw-completeness-gaps{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
+.gw-completeness-unknown{background:var(--gw-surface-accent-tint);color:var(--gw-text-secondary);border-color:var(--gw-border-strong)}
+.gw-gap-list{list-style:disc;margin:.35rem 0 0;padding-left:1.2rem;font-size:var(--gw-text-sm)}
 .gw-gap-kind{font-weight:600}
-.gw-thread-list{list-style:none;margin:.3rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem}
-.gw-thread-instance{border-left:3px solid #1a4d8f;background:#fff;border-radius:0 4px 4px 0;padding:.35rem .6rem}
-.gw-instance-head{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.gw-thread-list{list-style:none;margin:var(--gw-space-1) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--gw-space-2)}
+.gw-thread-instance{border-left:3px solid var(--gw-accent);background:var(--gw-surface);border-radius:0 var(--gw-radius-sm) var(--gw-radius-sm) 0;padding:.35rem var(--gw-space-3)}
+.gw-instance-head{display:flex;gap:var(--gw-space-2);align-items:baseline;flex-wrap:wrap}
 .gw-instance-date{font-size:.75rem;font-variant-numeric:tabular-nums}
 .gw-instance-title{font-weight:600;font-size:.9rem}
 .gw-no-link{font-size:.78rem;font-style:italic;margin:.2rem 0 0}
 /* GOV-153 #1 — side time-bar layout. Navigator sits beside the timeline on wide
    viewports and stacks above it on the mobile floor. */
-.gw-timeline-layout{display:flex;gap:1rem;align-items:flex-start}
+.gw-timeline-layout{display:flex;gap:var(--gw-space-5);align-items:flex-start}
 .gw-timeline-layout .gw-timeline{flex:1 1 auto;min-width:0}
-.gw-timenav{flex:0 0 auto;display:flex;gap:.4rem;position:sticky;top:.5rem;background:#f7f9fc;border:1px solid #d7dee8;border-radius:8px;padding:.5rem}
+.gw-timenav{flex:0 0 auto;display:flex;gap:var(--gw-space-2);position:sticky;top:.5rem;background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3)}
 .gw-tn-col{display:flex;flex-direction:column;min-width:3.2rem}
-.gw-tn-head{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#5a6b82;margin:.1rem 0 .3rem;text-align:center}
+.gw-tn-head{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gw-text-muted);margin:.1rem 0 var(--gw-space-1);text-align:center}
 .gw-tn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem;max-height:60vh;overflow-y:auto}
-.gw-tn-btn{display:flex;align-items:center;justify-content:space-between;gap:.3rem;width:100%;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;cursor:pointer;font-size:${BADGE_MIN_FONT_PX}px;font-weight:600;background:#fff;color:#1a4d8f;border:1px solid #c2cedd;border-radius:6px;padding:.2rem .45rem}
-.gw-tn-btn:hover{background:#eef2f8}
-.gw-tn-btn:focus-visible{outline:2px solid #1a4d8f;outline-offset:1px}
-.gw-tn-active{background:#1a4d8f;color:#fff;border-color:#1a4d8f}
-.gw-tn-count{font-size:.65rem;font-weight:700;background:rgba(0,0,0,.08);color:inherit;border-radius:999px;padding:0 .35rem;min-width:1.1rem;text-align:center}
+.gw-tn-btn{display:flex;align-items:center;justify-content:space-between;gap:var(--gw-space-1);width:100%;min-height:var(--gw-tap-min);box-sizing:border-box;cursor:pointer;font-size:var(--gw-text-badge);font-weight:600;background:var(--gw-surface);color:var(--gw-accent);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-sm);padding:.2rem .45rem}
+.gw-tn-btn:hover{background:var(--gw-surface-accent-tint)}
+.gw-tn-btn:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px}
+.gw-tn-active{background:var(--gw-accent);color:var(--gw-accent-text-on);border-color:var(--gw-accent)}
+.gw-tn-count{font-size:.65rem;font-weight:700;background:rgba(0,0,0,.08);color:inherit;border-radius:var(--gw-radius-pill);padding:0 .35rem;min-width:1.1rem;text-align:center}
 .gw-tn-active .gw-tn-count{background:rgba(255,255,255,.25)}
 @media (max-width:640px){.gw-timeline-layout{flex-direction:column}.gw-timenav{position:static;width:100%;justify-content:space-between}.gw-tn-col{flex:1}.gw-tn-list{flex-direction:row;flex-wrap:wrap;max-height:none}}
 /* GOV-153 #2 — click-to-reveal blur. The record INFO is blurred + inert until
    revealed; the trust/AI badges live OUTSIDE this region and are never blurred,
    so an AI row can't read as fact while hidden. */
-.gw-reveal-btn{display:inline-flex;align-items:center;min-height:${DRAWER_TAP_MIN_PX}px;box-sizing:border-box;cursor:pointer;font-size:.82rem;font-weight:600;color:#1a4d8f;background:#eef2f8;border:1px solid #1a4d8f;border-radius:6px;padding:.2rem .7rem;margin:.1rem 0 .4rem}
-.gw-reveal-btn:focus-visible{outline:2px solid #1a4d8f;outline-offset:1px}
+.gw-reveal-btn{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);box-sizing:border-box;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--gw-accent);background:var(--gw-surface-accent-tint);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-sm);padding:.2rem .7rem;margin:.1rem 0 var(--gw-space-2)}
+.gw-reveal-btn:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px}
 .gw-card-info{filter:blur(6px);user-select:none;pointer-events:none;transition:filter .15s ease}
 .gw-card.gw-revealed .gw-card-info{filter:none;user-select:auto;pointer-events:auto}
 @media (prefers-reduced-motion:reduce){.gw-card-info{transition:none}}
