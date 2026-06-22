@@ -30,12 +30,13 @@ export const BADGE_MIN_FONT_PX = 13;
 export const DRAWER_TAP_MIN_PX = 44;
 
 /**
- * The `:root` token block. Prepended to each surface's STYLE constant so all
- * three share one identical palette/scale source. Declaring `:root` more than
- * once is harmless — every block sets the same custom properties.
+ * COLOR tokens — LIGHT values (default; §1.1 / §2 of the spec). Declarations only,
+ * no selector wrapper, so the exact same string can be pinned by BOTH the base
+ * `:root` AND the explicit `:root[data-theme="light"]` override (single source —
+ * no drift between default and forced-light). These are the ONLY tokens the dark
+ * theme re-declares (GOV-438 §11.1); the dimensional tokens below are shared.
  */
-export const GW_TOKENS = `
-:root{
+const GW_COLORS_LIGHT = `
   /* color — surfaces */
   --gw-surface:#ffffff;
   --gw-surface-subtle:#f7f9fc;
@@ -63,7 +64,59 @@ export const GW_TOKENS = `
   --gw-stop-text:#7b241c;
   --gw-stop-bg:#fdecea;
   --gw-stop-border:#c0392b;
-  --gw-neutral-border:#767676;
+  --gw-neutral-border:#767676;`;
+
+/**
+ * COLOR tokens — DARK values (GOV-438 §11.1). SAME token NAMES as the light set;
+ * dark VALUES only. Surfaces go to an elevated dark slate (not pure black — avoids
+ * OLED smear/halation), text goes off-white, tone backgrounds invert to dark tints
+ * carrying light tone text, the accent lifts to a light blue, and every
+ * state-bearing border lightens to clear the 3:1 floor on the dark surface. Every
+ * pairing is verified ≥ 4.5:1 (text) / ≥ 3:1 (state UI) in spec §11.2.
+ *
+ * Contains ONLY `--gw-*` *color* properties — NO `--gw-badge-min`/`--gw-tap-min`/
+ * type/spacing/radius/border-width — so the §5 legibility/touch floors and their
+ * regression tests stay valid for free (the floors live on dimensional tokens the
+ * dark block never touches; §11.5). This is grep-verifiable.
+ */
+const GW_COLORS_DARK = `
+  /* dark — surfaces (elevated slate, not #000) */
+  --gw-surface:#15181d;
+  --gw-surface-subtle:#1e232b;
+  --gw-surface-accent-tint:#1b2942;
+  /* dark — text (off-white to cut glare) */
+  --gw-text:#f2f4f7;
+  --gw-text-secondary:#ced5de;
+  --gw-text-muted:#a4adba;
+  /* dark — accent (lifted light blue) */
+  --gw-accent:#8ab4f8;
+  --gw-accent-text-on:#0b1b30;
+  /* dark — borders (decorative vs state-bearing ≥ 3:1 on dark) */
+  --gw-border:#333a44;
+  --gw-border-subtle:#262c34;
+  --gw-border-strong:#8a93a0;
+  /* dark — trust tones (light tone text on dark tint; icon+text carries state) */
+  --gw-ok-text:#8fe6a8;
+  --gw-ok-bg:#14241a;
+  --gw-ok-bg-soft:#172b1d;
+  --gw-caution-text:#f5cf6a;
+  --gw-caution-text-strong:#f8d98a;
+  --gw-caution-bg:#2a2410;
+  --gw-caution-bg-soft:#211d12;
+  --gw-caution-line:#d9a400;
+  --gw-stop-text:#f6a39a;
+  --gw-stop-bg:#2a1512;
+  --gw-stop-border:#e57368;
+  --gw-neutral-border:#8a93a0;`;
+
+/**
+ * DIMENSIONAL tokens — type scale, spacing, radius, border-width, and the px
+ * legibility/touch FLOORS. Theme-agnostic: shared from the base `:root` and NEVER
+ * re-declared by the dark block (§11.1 / §11.5). The badge/tap floors are baked in
+ * here as `${…}px`, tied to the exported constants, so the regression tests still
+ * guard a real floor.
+ */
+const GW_DIMENSIONS = `
   /* type scale (rem, root 16px) */
   --gw-font:system-ui,sans-serif;
   --gw-leading:1.5;
@@ -88,5 +141,35 @@ export const GW_TOKENS = `
   --gw-radius-sm:4px;
   --gw-radius:8px;
   --gw-radius-pill:999px;
-  --gw-border-w:1px;
+  --gw-border-w:1px;`;
+
+/**
+ * The token block. Prepended to each surface's STYLE constant so all three share
+ * one identical palette/scale source. Declaring `:root` more than once is harmless
+ * — every block sets the same custom properties.
+ *
+ * Theme model (GOV-438 §11.4 — `prefers-color-scheme` + explicit override):
+ *  1. Base `:root` carries the LIGHT colors + the shared dimensional tokens — the
+ *     default when no preference is expressed (the safe institutional default).
+ *  2. `@media (prefers-color-scheme: dark)` re-declares ONLY the color tokens with
+ *     dark values — auto-dark for OS-dark users.
+ *  3. `:root[data-theme="dark"]` / `:root[data-theme="light"]` are the explicit
+ *     toggle overrides. An attribute selector (specificity 0,2,0) outranks both the
+ *     base `:root` and the `@media` `:root` (both 0,1,0), so the TOGGLE ALWAYS WINS
+ *     over the OS preference — no `!important`, no JS recompute (theme-toggle.ts
+ *     just sets `data-theme` on the root element).
+ *
+ * The dark selectors reuse `GW_COLORS_DARK` (color-only); dimensional tokens are
+ * NEVER repeated there, so the floors are physically un-overridable by the theme.
+ */
+export const GW_TOKENS = `
+:root{${GW_COLORS_LIGHT}${GW_DIMENSIONS}
+}
+@media (prefers-color-scheme:dark){
+  :root{${GW_COLORS_DARK}
+  }
+}
+:root[data-theme="dark"]{${GW_COLORS_DARK}
+}
+:root[data-theme="light"]{${GW_COLORS_LIGHT}
 }`;

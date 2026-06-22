@@ -248,3 +248,166 @@ A non-technical Alpine resident (or Isaac) opening the internal app after Child 
 Isaac's only direct color remark was *"like the dark color scheme… but needs to be fixed."* This spec **recommends a refined light theme** (rationale: §6 comparables, the already-AA light palette, trust/legibility for an older civic audience, and the fact that tokenizing makes a dark variant a later one-file swap).
 
 **How the owner decision is handled (not silent):** Isaac is a visual owner who decides by looking, not by answering an abstract "light vs dark?" prompt. The parent plan (GOV-425) already designates **Isaac's visual review as the terminal owner gate** before this is "done to spec." Therefore Child B implements the recommended refined-light token layer, and Isaac judges the **real pixels** at that gate — a far better artifact for a designer than a prose question. This is explicitly *not* silent: the recommendation and rationale are stated here, the surface is reviewer-internal only (public stays gated on Isaac via GOV-420), and **the token structure is theme-agnostic** — if Isaac wants dark after seeing it, switching is a one-file value swap (token *names* and per-surface wiring don't change). GOV-426 is therefore closed `done` to unblock Child B (GOV-427); the theme-direction call is preserved for Isaac at the visual-review gate, where it belongs.
+
+---
+
+## 11. Dark theme (GOV-438)
+
+**Owner decision came in.** After seeing the refined-light token layer ship (merged @ `0e7d63f`), Isaac said **"now the dark theme."** §10 anticipated exactly this: tokenizing first made a dark variant *"a later one-file value swap."* That swap is what this section specs. It is **docs/spec only — no production CSS in this issue**; implementation is the blocked child **GOV-440**.
+
+**What does and does not change.** The dark theme reuses **every `--gw-*` token name** and **every per-surface class wiring** from §1–§4 unchanged. A dark theme is a **re-declaration of the *color* tokens' values under a dark selector** — nothing else. Critically, the **dimensional tokens are NOT overridden in the dark block**: `--gw-badge-min`, `--gw-tap-min`, the type scale, spacing scale, radius, and border-width stay shared from the base `:root`. This is what keeps the §5 floors and their regression tests valid for free (the floor tests assert the *token* carries the px floor; dark never touches those tokens — see §11.5).
+
+### 11.1 Dark token value set
+
+Same names as §1.1; dark-mode values only. Surfaces go dark (not pure black — an elevated dark slate avoids halation/smear for older eyes and OLED black-smear), text goes light, tone backgrounds become **dark tints** carrying **light tone text**, the accent lifts to a light blue, and state-bearing borders lighten to clear the 3:1 floor against the dark surface.
+
+| Token | Light (§1.1) | **Dark value** | Role in dark |
+|---|---|---|---|
+| `--gw-surface` | `#ffffff` | `#15181d` | Page / card background (elevated dark slate, not `#000`) |
+| `--gw-surface-subtle` | `#f7f9fc` | `#1e232b` | Panels, legend, timenav, provenance bg (one step up) |
+| `--gw-surface-accent-tint` | `#eef2f8` | `#1b2942` | Accent-tinted chips / neutral badge / rollup highlight |
+| `--gw-text` | `#1a1a1a` | `#f2f4f7` | Body / primary text (off-white, not `#fff`, to cut glare) |
+| `--gw-text-secondary` | `#333333` | `#ced5de` | Secondary text, dense metadata |
+| `--gw-text-muted` | `#5b6470` | `#a4adba` | Muted captions, dates, kickers |
+| `--gw-accent` | `#1a4d8f` | `#8ab4f8` | Links, focus ring, accent chips/borders (lifted for dark) |
+| `--gw-accent-text-on` | `#ffffff` | `#0b1b30` | **Dark** text on the light-blue accent *fill* (button) |
+| `--gw-border` | `#d0d7e0` | `#333a44` | Default **decorative** container/hairline border |
+| `--gw-border-subtle` | `#e7ebf1` | `#262c34` | Faint internal separators |
+| `--gw-border-strong` | `#767676` | `#8a93a0` | **State/UI-bearing** border (≥ 3:1 on dark) |
+| `--gw-ok-text` | `#1e4620` | `#8fe6a8` | ok text + border (light green) |
+| `--gw-ok-bg` | `#e8f0e8` | `#14241a` | ok fill (dark green tint) |
+| `--gw-ok-bg-soft` | `#f3f8f3` | `#172b1d` | ok soft fill (provenance panel) |
+| `--gw-caution-text` | `#7a5b00` | `#f5cf6a` | caution badge text + border (light amber) |
+| `--gw-caution-text-strong` | `#5c4500` | `#f8d98a` | caution banner body text |
+| `--gw-caution-bg` | `#fff3cd` | `#2a2410` | caution fill (dark amber tint) |
+| `--gw-caution-bg-soft` | `#fffaf0` | `#211d12` | caution soft fill (analysis/gap frame) |
+| `--gw-caution-line` | `#d9a400` | `#d9a400` | caution divider/border accent (unchanged — clears 3:1 on dark) |
+| `--gw-stop-text` | `#7b241c` | `#f6a39a` | stop text (light red) |
+| `--gw-stop-bg` | `#fdecea` | `#2a1512` | stop fill (dark red tint) |
+| `--gw-stop-border` | `#c0392b` | `#e57368` | stop border (lifted red) |
+| `--gw-neutral-border` | `#767676` | `#8a93a0` | neutral badge border (≥ 3:1 on dark) |
+
+**Dimensional tokens (NOT re-declared in the dark block):** `--gw-badge-min`, `--gw-tap-min`, `--gw-text-*`, `--gw-space-*`, `--gw-radius*`, `--gw-border-w`, `--gw-font`, `--gw-leading*` — inherited from base `:root` unchanged.
+
+### 11.2 WCAG 2.1 AA contrast table for dark (verified — the riskiest part)
+
+Computed with the same WCAG relative-luminance formula (sRGB) used in §2, against the **dark** surfaces. **Targets:** ≥ 4.5:1 normal body text (1.4.3); ≥ 3:1 large/bold text and UI component / state-bearing boundaries (1.4.3 / 1.4.11). Ratios are reproducible from the script recorded in the GOV-438 thread.
+
+| Foreground | Background | Ratio | Target | Verdict |
+|---|---|---|---|---|
+| `--gw-text` `#f2f4f7` | `--gw-surface` `#15181d` | **16.15** | 4.5 | ✅ body |
+| `--gw-text-secondary` `#ced5de` | `#15181d` | **12.03** | 4.5 | ✅ body |
+| `--gw-text-muted` `#a4adba` | `#15181d` | **7.85** | 4.5 | ✅ body |
+| `--gw-text-secondary` `#ced5de` | `--gw-surface-subtle` `#1e232b` | **10.67** | 4.5 | ✅ body |
+| `--gw-text-muted` `#a4adba` | `#1e232b` | **6.96** | 4.5 | ✅ body |
+| `--gw-accent` `#8ab4f8` (link) | `#15181d` | **8.44** | 4.5 | ✅ body |
+| `--gw-accent` `#8ab4f8` | accent-tint `#1b2942` | **6.91** | 4.5 | ✅ body |
+| `--gw-accent-text-on` `#0b1b30` | `--gw-accent` `#8ab4f8` (button) | **8.21** | 4.5 | ✅ button |
+| ok text `#8fe6a8` | ok bg `#14241a` | **10.83** | 4.5 | ✅ |
+| ok text `#8fe6a8` | ok-bg-soft `#172b1d` | **10.04** | 4.5 | ✅ |
+| caution text `#f5cf6a` | caution bg `#2a2410` | **10.32** | 4.5 | ✅ |
+| caution banner `#f8d98a` | caution bg `#2a2410` | **11.25** | 4.5 | ✅ |
+| caution text `#f5cf6a` | caution-bg-soft `#211d12` | **11.22** | 4.5 | ✅ |
+| stop text `#f6a39a` | stop bg `#2a1512` | **8.75** | 4.5 | ✅ |
+| **Focus ring** `#8ab4f8` | `#15181d` | **8.44** | 3.0 | ✅ UI |
+| ok border `#8fe6a8` | `#15181d` | **11.91** | 3.0 | ✅ UI |
+| caution-line border `#d9a400` | `#15181d` | **7.85** | 3.0 | ✅ UI |
+| stop border `#e57368` | `#15181d` | **5.92** | 3.0 | ✅ UI |
+| accent border `#8ab4f8` | accent-tint `#1b2942` | **6.91** | 3.0 | ✅ UI |
+| `--gw-border-strong` `#8a93a0` | `#15181d` | **5.73** | 3.0 | ✅ UI |
+| **`--gw-neutral-border` `#8a93a0`** | `#15181d` | **5.73** | 3.0 | ✅ UI |
+| `--gw-border` `#333a44` (decorative) | `#15181d` | 1.55 | n/a | ⓘ exempt¹ |
+| `--gw-surface-subtle` `#1e232b` vs `--gw-surface` (elevation) | `#15181d` | 1.13 | n/a | ⓘ exempt² |
+
+¹ **Decorative-border exemption** — identical reasoning to §2 note ¹: `--gw-border` outlines containers whose presence is also conveyed by layout/padding/content; it is not the sole means of identifying the component or its state, so 1.4.11's 3:1 does not apply. Every **state-bearing** border (focus, tone verdict, neutral/strong) uses a token meeting ≥ 3:1.
+² **Elevation exemption** — the subtle surface-to-surface lightness step (1.13:1) is intentionally low (standard dark-mode elevation); panel boundaries are reinforced by `--gw-border` + content, never relied on as the sole state signal.
+
+**Result:** the dark palette is **AA-clean** for all text (every pairing ≥ 6.96:1) and all state-bearing UI (every such border ≥ 5.73:1) — comfortable margins above the 4.5 / 3.0 floors, with no value sitting on the line. Self-consistent with the §11.1 token table.
+
+### 11.3 Trust-tone dark treatments (icon + text, never color alone, color-blind-safe)
+
+Trust meaning stays **backend-driven** (`ui_status` / `provenance_status` / completeness) — the dark theme changes only the *paint*, never the semantics or the `assertWebSafe` contract. The light pastel tone *backgrounds* do not carry to dark, so each tone inverts to a **dark-tinted background + light tone text/glyph**; the **glyph + word** that carry the state without color are **unchanged from §3**.
+
+| State | Dark tone tokens | Glyph + word (carries state w/o color) | Backend driver |
+|---|---|---|---|
+| ok / verified | text `#8fe6a8` on bg `#14241a` | ✓ + status word | `ui_status` |
+| caution / unverified | text `#f5cf6a` on bg `#2a2410` | ⚠ + status word | `ui_status` |
+| stop / disputed-blocked | text `#f6a39a` on bg `#2a1512`, border `#e57368` | ✕ / ⚠ + status word | `ui_status` |
+| neutral / informational | accent `#8ab4f8` on tint `#1b2942`, border `#8a93a0` | • + label word | `ui_status` |
+| AI-presented | caution tokens (`.gw-badge-ai`): `#f5cf6a` on `#2a2410` | "AI" + label text | per-record AI flag |
+| provenance audit (`.gw-prov`) | reuses ok/caution dark tones + inset ring | ✓ / ⚠ glyph | `provenance_status` |
+| completeness: complete | ok dark tokens | word "complete" | completeness summary |
+| completeness: gaps | stop dark tokens | word "gaps" + count | completeness summary |
+| completeness: unknown | border `#8a93a0` + text `#ced5de` | word "unknown" | completeness summary |
+
+**Color-blind safety on dark (re-validated for the new hues).** The four tones remain separable under deuteranopia / protanopia / tritanopia because, exactly as in §3, they differ in **lightness AND word/glyph**, not hue alone:
+- The **text** tones span a wide lightness/hue set — green `#8fe6a8` (L≈0.64), amber `#f5cf6a` (L≈0.65), red `#f6a39a` (L≈0.46), blue `#8ab4f8` (L≈0.46). The red/blue pair shares luminance but is split by the **word + glyph** (`✕/⚠ stop` vs `• neutral`) and by red-vs-blue hue, which is the *most* preserved axis across all three CB types (the deutan/protan confusion axis is red↔green, the tritan axis is blue↔yellow — neither collapses red↔blue).
+- Every tone still leads with its **distinct word** (`verified / unverified / disputed / gaps / unknown / AI`) and, for AI/provenance/verdicts, a **glyph** (✓ ⚠ ✕ •). A grayscale or fully color-blind reviewer reads the state from the word+glyph with zero reliance on the paint. **Hard floor (§5/§11.5): no dark state may rely on color alone; the glyph+word pattern is mandatory.**
+
+### 11.4 Trigger model recommendation
+
+**Recommended: `prefers-color-scheme` honoring + an explicit in-app toggle (override), light remaining the default when no preference is expressed.** Mechanism, fully inside the token layer:
+
+1. Base `:root` keeps the §1 **light** values (default; honors users/OS with no dark preference and is the safe institutional default per §6 comparables).
+2. A `@media (prefers-color-scheme: dark)` block re-declares **only the color tokens** with §11.1 dark values — auto-dark for users whose OS is dark.
+3. An explicit toggle sets `data-theme="dark"` / `data-theme="light"` on the root element; a `:root[data-theme="dark"]` selector carries the same dark color block and a `:root[data-theme="light"]` selector pins light. Because an attribute selector outranks the media query, the **toggle always wins** over the OS preference — reversible, explicit, standard.
+
+**Why this over dark-as-default:** (a) keeps the already-shipped, Isaac-reviewed light theme as the default — zero regression risk to the institutional/older-resident trust posture established in §6; (b) reversible and explicit — Isaac and reviewers flip it live at the visual-review gate; (c) it is the conventional pattern (USWDS/GOV.UK-adjacent products, OS-level expectation). Dark-as-default would override Isaac's just-approved light surface for every reviewer without their consent and read as less institutional for light-preferring users. **Isaac confirms by looking** at the visual-review gate (GOV-425 terminal owner gate) — he toggles real pixels rather than answering an abstract prompt, consistent with §10.
+
+**Focus-ring / blur / banner legibility in dark (verified):**
+- **Focus ring** — `--gw-accent` `#8ab4f8` at **8.44:1** on the dark surface (§11.2); well above the 3:1 UI floor, clearly visible.
+- **Click-to-reveal blur** — `filter:blur` is color-agnostic; the inert blurred `.gw-card-info` region uses surface tokens, and trust/AI badges remain **outside** the blurred region (§4.2 / §5.5) and render in the §11.3 dark tones — legible while content is hidden.
+- **Fixture banner** — dark caution tokens give amber `#f8d98a`/`#f5cf6a` on `#2a2410` at **11.25 / 10.32:1**; banner text + `role=status` unchanged, clearly legible on dark.
+- **`prefers-reduced-motion: reduce`** — still disables the blur transition; the media query is orthogonal to theme and untouched.
+
+### 11.5 Floors preserved (dark must not regress — hard stops)
+
+The dark theme is a **color-value swap only**; every §5 floor holds, and most hold *automatically* because dark never touches the relevant token:
+
+1. **`BADGE_MIN_FONT_PX = 13` / `--gw-badge-min`** — **not** re-declared in the dark block; badge font px is inherited from base `:root`. The existing legibility regression test still guards the real floor unchanged.
+2. **`DRAWER_TAP_MIN_PX = 44` / `--gw-tap-min`** — same: dimensional token, untouched by dark.
+3. **Fixture banner** — text + `role=status` unchanged; dark only repaints it in caution tones (legibility verified §11.4).
+4. **`noindex,nofollow`** — reviewer-internal posture unchanged; **no public-launch scope** (public stays gated on Isaac via GOV-420).
+5. **Click-to-reveal blur** — preserved; trust/AI badges stay outside the blurred inert region (§11.4).
+6. **`prefers-reduced-motion: reduce`** — media query untouched; orthogonal to theme.
+7. **Trust semantics backend-driven + icon+text, never color alone** (§11.3); `assertWebSafe` unaffected (tokens are presentation only — dark adds no markup, no data, no new key).
+8. **Reviewer-internal-only** lane behavior: public lane renders zero cards; unchanged.
+
+Implementation (GOV-440) CI must stay green: `tsc` + full unit/integration suite + build `rc=0`, badge-font / tap-floor regression tests pass, and **no override of the dimensional tokens** in the dark block (grep-verifiable: the dark selector sets only `--gw-*` *color* properties).
+
+### 11.6 Premium success-criteria (template applied)
+
+**Stage:** Stage 3.x reviewer-internal Alpine app · **Scope:** reviewer-internal only, Alpine-first, **no public launch** · **Repo:** `Government-watchdog-website` · **Owner role:** UXProductDesigner (this spec) → FrontendTimelineEngineer (impl GOV-440) · **Reviewer path:** spec (this) → Child impl GOV-440 → VSR + SecurityPrivacy legs → CTO non-author merge → **Isaac visual review (terminal owner gate, toggles real pixels)**.
+
+**Success definition:** §11.1 dark token table + §11.2 dark AA table present and self-consistent; dark is a color-value swap under a dark selector reusing every token name + per-surface wiring; all text ≥ 4.5:1 and state-bearing borders ≥ 3:1 on dark; trust tones stay backend-driven, icon+text, color-blind-safe (§11.3); trigger model recommended with rationale (§11.4); every §5 floor preserved (§11.5); no production CSS changed in *this* issue. **Evidence:** this section, the §11.2 contrast script in the GOV-438 thread, GOV-440 PR + green CI + 3-viewport dark screenshots, Isaac visual sign-off.
+
+**Failure definition:** dark text < 4.5:1 or a state-bearing border < 3:1; a trust state distinguishable by color alone; the dark block overriding a dimensional token (badge/tap/type/spacing/radius) and regressing a floor; banner/blur/noindex/reduced-motion regressed; dark shipped as default without Isaac's look; any public-launch surface introduced. **Stop/escalation:** any floor regression or a contrast miss → re-spec the offending dark *value* (names/structure survive); any scope creep beyond reviewer-internal Alpine → CEO/Isaac.
+
+**Comparable research (dark in civic/transparency + accessibility context):**
+- **Material Design dark theme guidance** (m2.material.io/design/color/dark-theme) — recommends a **desaturated, elevated dark surface (`#121212`-class), not pure black**, and *desaturated* accent/state colors to avoid vibration/halation on dark. Our `#15181d` surface + lifted-but-not-neon tones (`#8ab4f8`, `#8fe6a8`) follow this directly.
+- **GitHub / VS Code dark themes** — mature dark surfaces for dense, status-bearing technical UIs; status colors carry **icons + text**, never hue alone — exactly our glyph+word floor. Lesson: state survives on dark only if reinforced non-chromatically.
+- **WebAIM contrast guidance + USWDS** — same AA thresholds apply regardless of theme; dark-mode failures cluster on muted text and state borders going *too dark*, which is why §11.2 holds muted text to 7.85:1 and every state border ≥ 5.73:1 (margin, not the line).
+- **Pattern note:** public-sector systems default light (§6); offering dark as an **opt-in** (not default) keeps the institutional default while serving low-light/eye-strain reviewers — the §11.4 recommendation.
+
+**Tradeoffs:** *Opt-in dark vs dark-default* — opt-in preserves the just-approved light default and institutional trust posture at zero regression risk; dark-default would override every reviewer's surface unasked (chosen: opt-in, §11.4). *Elevated dark slate vs pure black* — slate avoids OLED smear/halation and reads softer for older eyes; pure black maximizes contrast but increases vibration (chosen: `#15181d`). *Desaturated tones vs vivid* — desaturated light tones keep AA margins and reduce dark-mode vibration while staying CB-separable (chosen: desaturated).
+
+**Plan / verification / auditability:** Concept/data model unchanged — presentation color tokens only; **no concept-map, source-trail, AI/provenance/completeness, or correction-behavior change**; no new public claim. Verification = §11.2 contrast (scripted), §11.5 floors, GOV-440 `tsc`/test/build + dark screenshots, Isaac visual gate. Pass-up triggers = contrast miss, floor regression, theme-default direction → CEO/Isaac.
+
+### 11.7 Implementation acceptance criteria for GOV-440 (impl child checklist)
+
+- [ ] Dark color block declared as (a) `@media (prefers-color-scheme: dark)` and (b) `:root[data-theme="dark"]`, plus a `:root[data-theme="light"]` pin; an explicit toggle sets `data-theme` on root (toggle outranks OS).
+- [ ] Dark block re-declares **only** the §11.1 *color* tokens; **no** override of `--gw-badge-min` / `--gw-tap-min` / type / spacing / radius / border-width (grep-verifiable).
+- [ ] §11.2 contrast table re-verified against final dark values (all text ≥ 4.5, state borders ≥ 3.0).
+- [ ] Trust tones render icon+text in dark; no color-alone state (§11.3).
+- [ ] All §11.5 floors preserved; badge-font + tap-floor regression tests pass; banner/blur/reduced-motion/noindex intact.
+- [ ] `tsc` + full suite + build `rc=0`.
+- [ ] Desktop (1440×900) + tablet (768×1024) + mobile (390×844) **dark** screenshots attached (+ light, to prove the toggle).
+- [ ] Merge gates: VSR + SecurityPrivacy sign-off + CTO non-author squash-merge → then Isaac visual review (terminal owner gate; he toggles real pixels).
+
+### 11.8 What §11 deliberately does NOT do
+
+- Does **not** change any production CSS (spec/docs only — implementation is GOV-440).
+- Does **not** override the dimensional/floor tokens (color values only).
+- Does **not** touch trust semantics, source trail, AI/provenance/completeness labels, or the concept model.
+- Does **not** make dark the default (recommendation is opt-in; final look = Isaac at the visual gate).
+- Does **not** expand scope beyond reviewer-internal Alpine; no public-launch surface (GOV-420, Isaac-gated).

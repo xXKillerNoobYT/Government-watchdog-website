@@ -26,6 +26,7 @@ import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderTopicTreeView } from './ui/topic-tree-view';
+import { mountThemeToggle } from './ui/theme-toggle';
 import type { CardFeed } from './ui/card-feed';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
@@ -409,4 +410,10 @@ router.register('/cards', gated(({ query }) => renderCardFeedRoute(query)));
 router.register('/topics', gated(({ query }) => void renderTopics(query)));
 router.register('/body', gated(({ query }) => void renderContextPage('body', query)));
 router.register('/meeting', gated(({ query }) => void renderContextPage('meeting', query)));
+
+// GOV-440 — apply the stored theme preference and mount the dark/light toggle on
+// <body> (outside #app, so it survives route re-renders). Light stays default;
+// `prefers-color-scheme` auto-darkens; the toggle is the explicit override.
+mountThemeToggle();
+
 router.start();
