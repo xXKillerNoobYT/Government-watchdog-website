@@ -1,7 +1,11 @@
 /**
- * App boot for the reviewer-internal Alpine surfaces.
+ * App boot.
  *
- *  - `/`         timeline skeleton (GOV-99/100): cards, drawers, trust labels.
+ * GOV-419 — the DEFAULT entry is the preview-launch LANDING; the full
+ * reviewer-internal app is revealed only past the gated-beta entry:
+ *  - `/`         preview-launch landing (gate-aware; no civic data pre-gate).
+ *  - `/app`      timeline skeleton (GOV-99/100): cards, drawers, trust labels —
+ *                GATED (reviewer bypass or `?gate=approved` required).
  *  - `/topics`   civic topic tree (GOV-102): rollup filter, derived breadcrumb,
  *                human-label-first nodes + inspectable gov alias, audited move,
  *                cycle-safe degrade — ABOVE the reused B card+drawer timeline.
@@ -15,6 +19,9 @@
  */
 
 import { createRouter } from './router';
+import type { RouteHandler } from './router';
+import { renderLanding, renderGatedApp } from './ui/landing';
+import { resolveAccess } from './gate/access';
 import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
@@ -338,10 +345,68 @@ function renderCardFeedRoute(query: URLSearchParams): void {
   renderCardFeed(root!, feed, CARD_FEED_NOTICE);
 }
 
-const router = createRouter(({ query }) => void renderTimeline(query));
-router.register('/', ({ query }) => void renderTimeline(query));
-router.register('/cards', ({ query }) => renderCardFeedRoute(query));
-router.register('/topics', ({ query }) => void renderTopics(query));
-router.register('/body', ({ query }) => void renderContextPage('body', query));
-router.register('/meeting', ({ query }) => void renderContextPage('meeting', query));
+/**
+ * Reviewer / local bypass (GOV-419 acceptance #3) — lets Isaac SEE the full app
+ * behind the gate for a local walkthrough WITHOUT shipping public access. Three
+ * impure sources, all LOCAL-only (this build is reviewer-internal + noindex):
+ *   - `VITE_REVIEWER_BYPASS=true` in `.env` — the persistent local-walkthrough
+ *     switch (set once, every full-app route opens). Primary path for Isaac.
+ *   - `?reviewer=1` on any route — a per-URL bypass; sticky for the session so
+ *     in-app links (`#/cards`, `#/topics`, …) keep working after entry.
+ *   - the sticky session flag set by a prior `?reviewer=1`.
+ * The pure {@link resolveAccess} stays env/storage-free; this is the only glue
+ * that touches the environment. An explicit `?gate=` override still wins, so any
+ * gate state can be screenshotted even with the bypass on.
+ */
+const BYPASS_KEY = 'gw-reviewer-bypass';
+const ENV_BYPASS = (() => {
+  try {
+    return import.meta.env?.VITE_REVIEWER_BYPASS === 'true';
+  } catch {
+    return false;
+  }
+})();
+function sessionBypass(): boolean {
+  try {
+    return globalThis.sessionStorage?.getItem(BYPASS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function persistBypass(): void {
+  try {
+    globalThis.sessionStorage?.setItem(BYPASS_KEY, '1');
+  } catch {
+    /* storage unavailable (private mode / non-browser) — per-URL bypass still works */
+  }
+}
+function reviewerBypassActive(query: URLSearchParams): boolean {
+  const urlBypass = query.get('reviewer') === '1';
+  if (urlBypass) persistBypass();
+  return ENV_BYPASS || urlBypass || sessionBypass();
+}
+
+/** Resolve the access state for a request from its query + the live bypass. */
+function accessFor(query: URLSearchParams) {
+  return resolveAccess(query.get('gate'), reviewerBypassActive(query));
+}
+
+/**
+ * Wrap a full-app route so it renders ONLY when approved; otherwise the gate
+ * panel shows and zero civic data reaches the DOM (acceptance #2).
+ */
+function gated(handler: RouteHandler): RouteHandler {
+  return ({ path, query }) =>
+    renderGatedApp(root!, accessFor(query), () => handler({ path, query }));
+}
+
+// Preview-launch landing is the DEFAULT entry (and the fallback). The full
+// reviewer-internal app lives at `/app` (+ the other surfaces), each gated.
+const router = createRouter(({ query }) => renderLanding(root!, accessFor(query)));
+router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
+router.register('/app', gated(({ query }) => void renderTimeline(query)));
+router.register('/cards', gated(({ query }) => renderCardFeedRoute(query)));
+router.register('/topics', gated(({ query }) => void renderTopics(query)));
+router.register('/body', gated(({ query }) => void renderContextPage('body', query)));
+router.register('/meeting', gated(({ query }) => void renderContextPage('meeting', query)));
 router.start();
