@@ -113,7 +113,14 @@ function cardHead(head: CardHeadView): HTMLElement {
   return el('header', { class: 'gw-card-head', 'data-test': 'card-head' }, children);
 }
 
-function recordCard(
+/**
+ * Render ONE reviewer-internal record card — the full card with its status
+ * badge(s), locked AI label, sharp meta, and the click-to-reveal blur that hides
+ * the statement/analysis, provenance, related links, and sources drawer until an
+ * explicit tap. Exported (GOV-600) so the Kanban boards can place the SAME card
+ * component inside meeting/lane columns without re-implementing its trust surface.
+ */
+export function recordCard(
   r: StatementRecord,
   edges?: ConceptEdge[],
   members?: AgendaItemMember[],
@@ -284,7 +291,7 @@ function severityTone(severity: string): 'caution' | 'stop' | 'neutral' {
  * are rendered VERBATIM from the web-safe backend projection — no gap is invented,
  * re-classified, or marked resolved on the client.
  */
-function gapCardSection(view: GapSummaryView): HTMLElement {
+export function gapCardSection(view: GapSummaryView): HTMLElement {
   // Headline: the ~90 no_primary_source meetings, the focus of this slice.
   const headline = el('p', { class: 'gw-gapcard-headline', 'data-test': 'gap-headline' }, [
     el('strong', { 'data-test': 'gap-no-primary-source-count' }, [String(view.noPrimarySourceCount)]),
@@ -770,10 +777,53 @@ export const STYLE = `${GW_TOKENS}
 .gw-card-info{filter:blur(6px);user-select:none;pointer-events:none;transition:filter .15s ease}
 .gw-card.gw-revealed .gw-card-info{filter:none;user-select:auto;pointer-events:auto}
 @media (prefers-reduced-motion:reduce){.gw-card-info{transition:none}}
+/* GOV-600 — Kanban board shell. Wider than the 48rem reading column so lanes get
+   room; the board itself owns the deep dark-first --gw-board-bg elevation so the
+   surface reads as one intentional dark plane (not darkened light cards). */
+.gw-root.gw-boards-root{max-width:76rem}
+.gw-boards{width:100%}
+.gw-h1{font-size:1.5rem;line-height:var(--gw-leading-tight);color:var(--gw-text);margin:.2rem 0 var(--gw-space-3)}
+/* View toggle — segmented tablist. Default (Agendas by meeting) is pre-selected. */
+.gw-view-toggle{display:inline-flex;gap:0;background:var(--gw-lane-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:.2rem;margin:var(--gw-space-2) 0 var(--gw-space-4)}
+.gw-view-tab{min-height:var(--gw-tap-min);box-sizing:border-box;cursor:pointer;font:600 var(--gw-text-badge)/1.2 var(--gw-font);color:var(--gw-text-secondary);background:transparent;border:0;border-radius:var(--gw-radius-pill);padding:.35rem 1rem;white-space:nowrap}
+.gw-view-tab:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
+.gw-view-tab[aria-selected="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
+/* Board scroller: vertical lanes, horizontal overflow — the reference pattern. */
+.gw-board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(var(--gw-lane-min),1fr);gap:var(--gw-space-4);overflow-x:auto;padding:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);align-items:start}
+.gw-lane{background:var(--gw-lane-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);display:flex;flex-direction:column;min-width:0}
+.gw-lane-header{background:var(--gw-lane-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius) var(--gw-radius) 0 0;padding:var(--gw-space-3) var(--gw-space-4);position:sticky;top:0}
+.gw-lane-title{display:flex;align-items:center;gap:var(--gw-space-2);flex-wrap:wrap}
+.gw-lane-name{font-weight:700;font-size:var(--gw-text-body);color:var(--gw-text)}
+.gw-lane-count{font-size:var(--gw-text-xs);font-weight:700;background:var(--gw-accent);color:var(--gw-accent-text-on);border-radius:var(--gw-radius-pill);padding:0 var(--gw-space-2);min-width:1.4rem;text-align:center}
+.gw-lane-sub{font-size:var(--gw-text-sm);color:var(--gw-text-muted);margin:.15rem 0 0}
+.gw-lane-body{display:flex;flex-direction:column;gap:var(--gw-space-3);padding:var(--gw-space-3);min-height:2rem}
+/* Cards inside a lane sit on the raised --gw-card-bg (top of the elevation ladder). */
+.gw-board .gw-card{background:var(--gw-card-bg);margin:0}
+.gw-lane-empty{font-size:var(--gw-text-sm);color:var(--gw-text-muted);font-style:italic;padding:var(--gw-space-2)}
+/* Board B — as-of date scrubber. Real <button>s ≥44px (tap + keyboard). */
+.gw-scrubber{display:flex;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;background:var(--gw-lane-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3) var(--gw-space-4);margin:0 0 var(--gw-space-4)}
+.gw-scrub-btn{min-height:var(--gw-tap-min);min-width:var(--gw-tap-min);cursor:pointer;font:700 var(--gw-text-body)/1 var(--gw-font);color:var(--gw-accent);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-sm);padding:.2rem .7rem}
+.gw-scrub-btn:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px}
+.gw-scrub-btn[disabled]{opacity:.4;cursor:not-allowed}
+.gw-scrub-asof{font-weight:700;color:var(--gw-text);font-variant-numeric:tabular-nums}
+.gw-scrub-note{flex:1 1 14rem;font-size:var(--gw-text-sm);color:var(--gw-text-muted);min-width:0}
+/* Board B — thread card face (reuses trust surfaces; adds a status/span header). */
+.gw-thread-card{background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3) var(--gw-space-4)}
+.gw-thread-card h3{font-size:var(--gw-text-body);margin:.1rem 0 var(--gw-space-2)}
+.gw-thread-span{font-size:var(--gw-text-sm);color:var(--gw-text-muted);font-variant-numeric:tabular-nums}
+.gw-thread-edges{list-style:none;margin:var(--gw-space-2) 0 0;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.gw-synthetic-banner{background:var(--gw-surface-accent-tint);border:var(--gw-border-w) dashed var(--gw-accent);color:var(--gw-text-secondary);border-radius:var(--gw-radius);padding:var(--gw-space-2) var(--gw-space-4);margin:0 0 var(--gw-space-4);font-size:var(--gw-text-sm)}
+/* Mobile floor — lanes stack full width, board stops being a horizontal rail. */
+@media (max-width:640px){.gw-board{grid-auto-flow:row;grid-auto-columns:auto;overflow-x:visible}.gw-lane-header{position:static}}
 `;
 
 let styleInjected = false;
-function ensureStyle(): void {
+/**
+ * Inject the shared reviewer-internal stylesheet once. Exported (GOV-600) so the
+ * Kanban board surface can guarantee the `.gw-card` / drawer / badge styles it
+ * reuses are present, using the SAME single stylesheet (no duplicate CSS).
+ */
+export function ensureStyle(): void {
   if (styleInjected) return;
   document.head.append(el('style', {}, [STYLE]));
   styleInjected = true;

@@ -64,7 +64,13 @@ const GW_COLORS_LIGHT = `
   --gw-stop-text:#7b241c;
   --gw-stop-bg:#fdecea;
   --gw-stop-border:#c0392b;
-  --gw-neutral-border:#767676;`;
+  --gw-neutral-border:#767676;
+  /* color — Kanban board chrome (GOV-600 §5): a 3-step elevation ladder
+     board < lane < card. Light values keep the institutional light look. */
+  --gw-board-bg:#e9edf3;
+  --gw-lane-bg:#f2f5f9;
+  --gw-lane-header-bg:#e3e8f0;
+  --gw-card-bg:#ffffff;`;
 
 /**
  * COLOR tokens — DARK values (GOV-438 §11.1). SAME token NAMES as the light set;
@@ -107,7 +113,15 @@ const GW_COLORS_DARK = `
   --gw-stop-text:#f6a39a;
   --gw-stop-bg:#2a1512;
   --gw-stop-border:#e57368;
-  --gw-neutral-border:#8a93a0;`;
+  --gw-neutral-border:#8a93a0;
+  /* dark — Kanban board chrome (GOV-600 §5). The FIX for "light-with-dark-patches":
+     a deliberate dark-first elevation ladder that sits BELOW --gw-surface (#15181d)
+     so board→lane→card reads as ONE intentional dark surface, not darkened light
+     cards floating on a page. Deepest board, raised lane, further-raised card. */
+  --gw-board-bg:#0e1116;
+  --gw-lane-bg:#171b22;
+  --gw-lane-header-bg:#1b212a;
+  --gw-card-bg:#1e232b;`;
 
 /**
  * DIMENSIONAL tokens — type scale, spacing, radius, border-width, and the px
@@ -141,7 +155,12 @@ const GW_DIMENSIONS = `
   --gw-radius-sm:4px;
   --gw-radius:8px;
   --gw-radius-pill:999px;
-  --gw-border-w:1px;`;
+  --gw-border-w:1px;
+  /* GOV-600 — Kanban lane min-width (theme-agnostic dimension; the board scrolls
+     horizontally once lanes exceed the viewport, mirroring the reference pattern).
+     Sized so all five Board-B lifecycle lanes fit the desktop board width without a
+     horizontal scroll hiding the populated lane; lanes still grow via 1fr. */
+  --gw-lane-min:13rem;`;
 
 /**
  * The token block. Prepended to each surface's STYLE constant so all three share

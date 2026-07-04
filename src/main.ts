@@ -25,6 +25,7 @@ import { resolveAccess } from './gate/access';
 import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
+import { renderBoards } from './ui/board';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
 import {
@@ -368,6 +369,30 @@ function renderCardFeedRoute(query: URLSearchParams): void {
 }
 
 /**
+ * GOV-600 (GOV-599 redesign) — the agenda Kanban surface, the NEW primary app
+ * view (`#/app`). Owner-confirmed DEFAULT view is "Agendas by meeting"; the top
+ * toggle switches to "Agenda tracking". Board A groups the real GOV-347 card feed
+ * by meeting date; Board B runs on the clearly-labelled SYNTHETIC agenda-thread
+ * demo (`GRAPH_DEMO.agenda_thread` — the real corpus has 0 threads). `?state=`
+ * forces async states; `?access=public` forces the public lane (0 board content)
+ * so the no-public-leak invariant (§5) stays capturable.
+ */
+function renderBoardsRoute(query: URLSearchParams): void {
+  const forced = forcedState(query.get('state'));
+  if (forced) {
+    render(root!, forced);
+    return;
+  }
+  const access = query.get('access');
+  const feed = access ? { ...CARD_FEED, access } : CARD_FEED;
+  renderBoards(root!, {
+    feed,
+    thread: GRAPH_DEMO.agenda_thread ?? null,
+    notice: CARD_FEED_NOTICE,
+  });
+}
+
+/**
  * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
  * digest detail. `?state=loading|empty|error` forces the async states for
  * screenshots. Both surfaces are full-app civic surfaces → gated identically to
@@ -447,7 +472,13 @@ function gated(handler: RouteHandler): RouteHandler {
 // reviewer-internal app lives at `/app` (+ the other surfaces), each gated.
 const router = createRouter(({ query }) => renderLanding(root!, accessFor(query)));
 router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
-router.register('/app', gated(({ query }) => void renderTimeline(query)));
+// GOV-600 — `#/app` is now the agenda Kanban surface (default: Agendas by
+// meeting), the owner-confirmed primary UX that replaces the long card list. The
+// prior chronological long-list timeline stays reachable at `#/timeline` (and the
+// GOV-354 single-list card feed at `#/cards`) for continuity + regression.
+router.register('/app', gated(({ query }) => renderBoardsRoute(query)));
+router.register('/boards', gated(({ query }) => renderBoardsRoute(query)));
+router.register('/timeline', gated(({ query }) => void renderTimeline(query)));
 router.register('/cards', gated(({ query }) => renderCardFeedRoute(query)));
 router.register('/newsletter', gated(({ query }) => renderNewsletterRoute(query)));
 router.register('/topics', gated(({ query }) => void renderTopics(query)));
