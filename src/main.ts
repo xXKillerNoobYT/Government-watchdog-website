@@ -45,6 +45,9 @@ import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
 import conceptGraphRealData from './fixtures/concept-graph-real.json';
 import cardFeedData from './fixtures/alpine-card-feed.json';
 import newsletterDigestData from './fixtures/alpine-newsletter-digest.json';
+import agendaBoardData from './fixtures/agenda-board-projection.json';
+import agendaBoardSampleData from './fixtures/agenda-board-projection.sample.dev.json';
+import type { AgendaBoard } from './types/agenda-board';
 
 /**
  * State-matrix sample (GOV-104): one labeled card per record-level trust state
@@ -95,6 +98,30 @@ const GRAPH_DEMO_NOTICE =
 const CARD_FEED: CardFeed = assertWebSafe(cardFeedData as unknown as CardFeed);
 const CARD_FEED_NOTICE =
   'Verbatim GOV-347 card-feed capture (reviewer-internal, backend HEAD 6d65bd3) — not a live read.';
+
+/**
+ * GOV-606 (GOV-599 real-data) — the REAL reviewed-Alpine agenda-board projection,
+ * captured VERBATIM from `stage5_agenda_board.agenda_board(conn)` over the reviewed
+ * read-API (GOV-605, backend merge 655afba3 / PR #96) run against the Stage-1
+ * reviewer-internal promotion seed (the 6 real reviewer-internal Alpine rows,
+ * GOV-146/GOV-208). The real corpus has no agenda-anchored reviewed statements yet,
+ * so this is the HONEST empty board: `cardCount:0`, six lanes shown, and 6 reviewed
+ * statements disclosed as not-yet-anchored — never a fabricated card (AC4/AC5).
+ * Raw-path swept on load (defence-in-depth over the backend's own transport sweep).
+ */
+const BOARD_PROJECTION: AgendaBoard = assertWebSafe(agendaBoardData as unknown as AgendaBoard);
+const BOARD_NOTICE =
+  'Verbatim GOV-605 agenda-board projection over the reviewed Alpine corpus (backend merge 655afba3) — not a live read.';
+
+/**
+ * GOV-606 DEV sample — a genuine `agenda_board(conn)` output over the backend's own
+ * test seed (NOT real Alpine data), used only via `#/app?demo=sample` to exercise
+ * the populated-card UX (videoRef / lineage / gap badges / disclosed-empty latents)
+ * the real empty board cannot show. Always rendered under a "DEV SAMPLE" banner.
+ */
+const BOARD_SAMPLE: AgendaBoard = assertWebSafe(agendaBoardSampleData as unknown as AgendaBoard);
+const BOARD_SAMPLE_NOTICE =
+  'DEV SAMPLE — genuine agenda_board() output over the backend test seed, NOT real Alpine data.';
 
 /**
  * GOV-462 — the Stage 4.05 reviewer-internal Alpine newsletter digest object,
@@ -369,13 +396,15 @@ function renderCardFeedRoute(query: URLSearchParams): void {
 }
 
 /**
- * GOV-600 (GOV-599 redesign) — the agenda Kanban surface, the NEW primary app
- * view (`#/app`). Owner-confirmed DEFAULT view is "Agendas by meeting"; the top
- * toggle switches to "Agenda tracking". Board A groups the real GOV-347 card feed
- * by meeting date; Board B runs on the clearly-labelled SYNTHETIC agenda-thread
- * demo (`GRAPH_DEMO.agenda_thread` — the real corpus has 0 threads). `?state=`
- * forces async states; `?access=public` forces the public lane (0 board content)
- * so the no-public-leak invariant (§5) stays capturable.
+ * GOV-606 (GOV-599 real-data) — the agenda Kanban surface, the primary app view
+ * (`#/app`), now wired to the REAL reviewed-Alpine board projection (GOV-605)
+ * instead of fixtures. Owner-confirmed DEFAULT view is "Agendas by meeting"; the
+ * top toggle switches to "Agenda tracking". Both boards render the SAME projection
+ * (Board A groups its cards by meeting; Board B lays them across the six lifecycle
+ * lanes). `?demo=sample` swaps in the clearly-labelled DEV sample projection
+ * (populated cards, not real Alpine data); `?access=public` forces the public lane
+ * (0 board content) so the no-public-leak invariant (§5) stays capturable;
+ * `?state=` forces async states for screenshots.
  */
 function renderBoardsRoute(query: URLSearchParams): void {
   const forced = forcedState(query.get('state'));
@@ -383,12 +412,14 @@ function renderBoardsRoute(query: URLSearchParams): void {
     render(root!, forced);
     return;
   }
-  const access = query.get('access');
-  const feed = access ? { ...CARD_FEED, access } : CARD_FEED;
+  const access = query.get('access') ?? undefined;
+  const sample = query.get('demo') === 'sample';
+  const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
   renderBoards(root!, {
-    feed,
-    thread: GRAPH_DEMO.agenda_thread ?? null,
-    notice: CARD_FEED_NOTICE,
+    board,
+    ...(access ? { access } : {}),
+    notice: sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE,
+    devSample: sample,
   });
 }
 

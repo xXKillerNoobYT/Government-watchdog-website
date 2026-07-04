@@ -1,0 +1,150 @@
+{
+  "access": "reviewer_internal",
+  "cardCount": 2,
+  "disclosures": {
+    "categories": "No explicit topic edge exists; categoryAnchor is the agenda thread the card sits in (GOV-601 \u00a73 \u2014 topic layer is Isaac-scoped, out of scope here).",
+    "decisions": "No vote/decision rows have landed yet; decisions:[] is disclosed-empty, never fabricated. Landing real vote/decision rows is Isaac-scoped (GOV-601 \u00a73).",
+    "emptyState": false,
+    "scope": "Reviewed Alpine records only, reviewer-internal; public launch stays Isaac-gated (GOV-420).",
+    "unanchoredStatementCount": 0
+  },
+  "generatedFrom": "read_api.reviewer_internal_records",
+  "lanes": [
+    {
+      "cardCount": 1,
+      "cards": [
+        {
+          "agendaItemId": "alpine:2026-04-13:item-zoning",
+          "agendaItemTitle": "Zoning Variance",
+          "cardId": "alpine:2026-04-13:item-zoning",
+          "categoryAnchor": {
+            "disclosure": "Agenda thread (no explicit topic edge in the data \u2014 anchored to the agenda item the claim sits in).",
+            "kind": "agenda_thread"
+          },
+          "confidenceBadge": "auto_caption_untimed",
+          "decisions": [],
+          "gapBadges": [
+            "Agenda thread not yet linked \u2014 card anchored to its agenda item only",
+            "Low source confidence",
+            "Video deep-link unavailable \u2014 no timestamped transcript segment for this item"
+          ],
+          "itemOrder": 2,
+          "lane": "upcoming",
+          "laneLabel": "Upcoming",
+          "lineage": [
+            {
+              "ref": "alpine:2026-04-13:item-budget",
+              "relation": "agenda_item_supersedes"
+            }
+          ],
+          "meetingBody": "Town Council",
+          "meetingDate": "2026-04-13",
+          "meetingId": 1,
+          "meetingSourceUrl": "https://www.alpinewy.gov/meetings/2026-04-13",
+          "meetingTitle": "Regular Meeting",
+          "recordCount": 1,
+          "sourceRefs": [
+            {
+              "locator": {
+                "page": 1
+              },
+              "originalUrl": "https://www.alpinewy.gov/minutes/2026-04-13.pdf",
+              "sourceId": "alpine_minutes"
+            }
+          ],
+          "statementIds": [
+            "s-zoning-1"
+          ],
+          "statusBadge": "Unverified"
+        }
+      ],
+      "lane": "upcoming",
+      "laneLabel": "Upcoming"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "active",
+      "laneLabel": "Active"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "pending-decision",
+      "laneLabel": "Pending decision"
+    },
+    {
+      "cardCount": 1,
+      "cards": [
+        {
+          "agendaItemId": "alpine:2026-04-13:item-budget",
+          "agendaItemTitle": "FY27 Budget",
+          "agendaThreadId": "thr-budget",
+          "cardId": "alpine:2026-04-13:item-budget",
+          "categoryAnchor": {
+            "disclosure": "Agenda thread (no explicit topic edge in the data \u2014 anchored to the agenda item the claim sits in).",
+            "kind": "agenda_thread"
+          },
+          "confidenceBadge": "auto_caption_untimed",
+          "decisions": [],
+          "gapBadges": [
+            "Low source confidence"
+          ],
+          "itemOrder": 1,
+          "lane": "decided",
+          "laneLabel": "Decided",
+          "lineage": [
+            {
+              "ref": "s-budget-1",
+              "relation": "updates_statement"
+            }
+          ],
+          "meetingBody": "Town Council",
+          "meetingDate": "2026-04-13",
+          "meetingId": 1,
+          "meetingSourceUrl": "https://www.alpinewy.gov/meetings/2026-04-13",
+          "meetingTitle": "Regular Meeting",
+          "recordCount": 4,
+          "sourceRefs": [
+            {
+              "locator": {
+                "page": 1
+              },
+              "originalUrl": "https://www.alpinewy.gov/minutes/2026-04-13.pdf",
+              "sourceId": "alpine_minutes"
+            }
+          ],
+          "statementIds": [
+            "s-budget-1",
+            "s-budget-2",
+            "s-budget-ai",
+            "s-budget-super"
+          ],
+          "statusBadge": "Unverified",
+          "threadLabel": "Town budget",
+          "threadStatus": "open",
+          "videoRef": {
+            "timestampSeconds": 45,
+            "url": "https://www.youtube.com/watch?v=alpine0413"
+          }
+        }
+      ],
+      "lane": "decided",
+      "laneLabel": "Decided"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "follow-up",
+      "laneLabel": "Follow-up"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "correction",
+      "laneLabel": "Correction"
+    }
+  ],
+  "scope": "alpine",
+  "unanchoredStatementCount": 0
+}

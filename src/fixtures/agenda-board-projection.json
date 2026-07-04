@@ -1,0 +1,52 @@
+{
+  "access": "reviewer_internal",
+  "cardCount": 0,
+  "disclosures": {
+    "categories": "No explicit topic edge exists; categoryAnchor is the agenda thread the card sits in (GOV-601 \u00a73 \u2014 topic layer is Isaac-scoped, out of scope here).",
+    "decisions": "No vote/decision rows have landed yet; decisions:[] is disclosed-empty, never fabricated. Landing real vote/decision rows is Isaac-scoped (GOV-601 \u00a73).",
+    "emptyState": true,
+    "scope": "Reviewed Alpine records only, reviewer-internal; public launch stays Isaac-gated (GOV-420).",
+    "unanchoredStatementCount": 6
+  },
+  "generatedFrom": "read_api.reviewer_internal_records",
+  "lanes": [
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "upcoming",
+      "laneLabel": "Upcoming"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "active",
+      "laneLabel": "Active"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "pending-decision",
+      "laneLabel": "Pending decision"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "decided",
+      "laneLabel": "Decided"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "follow-up",
+      "laneLabel": "Follow-up"
+    },
+    {
+      "cardCount": 0,
+      "cards": [],
+      "lane": "correction",
+      "laneLabel": "Correction"
+    }
+  ],
+  "scope": "alpine",
+  "unanchoredStatementCount": 6
+}

@@ -1,42 +1,49 @@
 /**
- * GOV-600 (GOV-599 Child 1) — the agenda Kanban board surface.
+ * GOV-606 (GOV-599 real-data) — the agenda Kanban board surface, now wired to the
+ * REAL reviewed-Alpine projection (GOV-605, backend PR #96) instead of fixtures.
  *
- * Owner-confirmed UX redesign: replace the long vertical card list with two
- * Kanban boards behind a top toggle. DEFAULT view = "Agendas by meeting"
- * (Board A); the toggle switches to "Agenda tracking" (Board B). Isaac4Alpine's
- * Town Boards are the *layout/interaction reference only* — no content is sourced
- * from that repo.
+ * The board consumes the GOV-605 board-projection payload
+ * (`stage5_agenda_board.agenda_board(conn)`, contract GOV-601 §2) VERBATIM — a
+ * six-lane Kanban of agenda-item cards over `read_api.reviewer_internal_records`.
+ * The website invents no civic claim: every card, badge, lane, gap, and source is
+ * a leaf the backend already emitted web-safe.
  *
- * Hard rules carried from the GOV-353/354 contract + the GOV-599 plan (§8):
- *  - **Reviewer-internal is the SOLE gate.** The whole surface renders through
- *    `buildCardFeedModel`; on a non-reviewer-internal lane the model carries ZERO
- *    cards and NONE of the reviewer-internal-only fields, so the public lane shows
- *    no board content — by construction, not merely hidden.
- *  - **No trust/status is recomputed.** Board A groups already-reviewed cards by
- *    their own `date` (a display ordering, never a trust signal) and reuses the
- *    existing `recordCard` (status badge, locked AI label, click-to-reveal blur,
- *    sources drawer). Board B places a thread using the backend's VERBATIM
- *    terminal `AgendaThreadNode.status`; the intermediate as-of lane is a
- *    structural "known-then" display over recorded meeting instances — never a
- *    frontend-inferred status.
- *  - **Honest labelling.** Board A is grouped by meeting DATE until the backend
- *    emits real `meeting_id` (GOV-599 §7 B1). Board B runs on the clearly-labelled
- *    SYNTHETIC agenda-thread demo (the real corpus has 0 threads) — never shown as
- *    real Alpine data.
+ * The GOV-599 shipped UX is preserved exactly:
+ *  - DEFAULT view = "Agendas by meeting" (Board A); the top toggle order is
+ *    [Agendas by meeting] [Agenda tracking] (Board B); the choice persists.
+ *  - Board A groups the projection's cards by MEETING (newest-first) — a display
+ *    ordering, never a trust signal.
+ *  - Board B lays the projection's cards across the six frozen lifecycle lanes
+ *    (upcoming → correction), exactly as the backend assigned them.
+ *  - The true-dark elevation ladder (board < lane < card) is inherited from the
+ *    shared board-chrome tokens — this module adds no CSS.
+ *
+ * Hard rules (GOV-601 §0 / GOV-605 contract, restated as invariants):
+ *  - **Reviewer-internal is the SOLE gate.** The projection carries
+ *    `access: reviewer_internal`; on any other lane the board renders ZERO card
+ *    content (no card, badge, source, or disclosure leaf) — by construction.
+ *  - **No trust is recomputed.** `statusBadge` / `confidenceBadge` / `lane` /
+ *    `gapBadges` are rendered VERBATIM; the client never upgrades a status,
+ *    invents a lane, or hides a disclosed gap.
+ *  - **Latents are disclosed-empty, never faked.** `decisions:[]` and
+ *    `categoryAnchor` render as disclosed-empty; the board footer surfaces the
+ *    decisions/categories/unanchored disclosures.
+ *  - **Empty-state honesty.** An empty projection renders a well-formed empty
+ *    board (six lanes shown) + the disclosed empty-state — never a fabricated card.
  */
 
 import type {
-  StatementRecord,
-  AgendaThreadResponse,
-  AgendaItemMember,
-  ConceptEdge,
-  ReadApiResponse,
-} from '../types/read-api';
-import type { CardFeed, CardHeadView } from './card-feed';
-import { buildCardFeedModel } from './card-feed';
-import { recordCard, ensureStyle, gapCardSection } from './render';
-import { buildGapSummary } from './timeline';
+  AgendaBoard,
+  AgendaBoardCard,
+  AgendaLane,
+  LineageEdge,
+  SourceRef,
+} from '../types/agenda-board';
+import type { StatementRecord } from '../types/read-api';
+import { ensureStyle } from './render';
+import { confidenceLabel } from './statement-presenter';
 import { FIXTURE_BANNER_TEXT } from './state-view';
+import type { TrustTone } from './state-view';
 
 // --- Small DOM helper (children-array form, mirrors render.ts) -----------------
 
@@ -76,53 +83,206 @@ function persistView(view: BoardView): void {
   }
 }
 
-// --- Shared date helpers -------------------------------------------------------
+// --- Verbatim badge → tone (colour only, never a trust decision) ---------------
+
+const AI_BADGE_LABEL = 'AI — not independently verified';
 
 /**
- * Pull the `YYYY-MM-DD` a card / member sits at from its Alpine-namespaced id
- * (`alpine:2019-06-11:item-5`). ISO date strings sort/compare lexically, so the
- * as-of cursor never needs Date math. Returns null when no date is embedded.
+ * Colour tone for a backend `statusBadge` string. This is PRESENTATION ONLY — the
+ * backend already fail-closed the badge; this never upgrades or re-derives it.
+ * Unknown badges default to `caution` (fail-closed to "not yet trustable").
  */
-function isoDateFrom(id: string | undefined | null): string | null {
-  if (!id) return null;
-  const m = /(\d{4}-\d{2}-\d{2})/.exec(id);
-  return m ? m[1] : null;
+function statusBadgeTone(badge: string): TrustTone {
+  if (badge === 'Verified') return 'ok';
+  if (badge === 'Corrected') return 'neutral';
+  if (badge === 'Source missing') return 'stop';
+  return 'caution'; // Unverified / AI-presented / anything unrecognised
 }
 
-// =============================================================================
-// Board A — Agendas by meeting (present cards grouped by meeting date)
-// =============================================================================
+/** Whether the (verbatim) status badge marks an AI-presented card. */
+function isAiBadge(badge: string): boolean {
+  return badge.startsWith('AI');
+}
+
+// --- Card component (one agenda-item card, shared by both views) ----------------
+
+function sourceRefRow(ref: SourceRef): HTMLElement {
+  const parts: (Node | string)[] = [
+    el('span', { class: 'gw-related-type' }, [ref.sourceId]),
+  ];
+  if (ref.originalUrl) {
+    parts.push(' ');
+    parts.push(
+      el('a', { href: ref.originalUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-original' }, ['View original']),
+    );
+  }
+  if (ref.archiveUrl) {
+    parts.push(' ');
+    parts.push(
+      el('a', { href: ref.archiveUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-archive' }, ['View archive']),
+    );
+  }
+  const loc = ref.locator;
+  if (loc) {
+    const bits: string[] = [];
+    if (loc.page != null) bits.push(`p.${loc.page}`);
+    if (loc.section) bits.push(loc.section);
+    if (loc.timestampHuman) bits.push(`@${loc.timestampHuman}`);
+    if (bits.length) parts.push(el('span', { class: 'gw-muted' }, [` ${bits.join(' · ')}`]));
+  }
+  return el('li', { class: 'gw-related', 'data-test': 'source-ref' }, parts);
+}
+
+function lineageRow(edge: LineageEdge): HTMLElement {
+  // Typed relation label kept verbatim — humanised only cosmetically.
+  const label = edge.relation.replace(/^agenda_item_/, '').replace(/_/g, ' ');
+  return el('li', { class: 'gw-related', 'data-test': 'lineage-edge' }, [
+    el('span', { class: 'gw-related-type' }, [label]),
+    ' → ',
+    el('span', { class: 'gw-related-target' }, [edge.ref]),
+  ]);
+}
+
+function agendaCard(card: AgendaBoardCard): HTMLElement {
+  const children: (Node | string)[] = [];
+
+  // Meeting context line — date · body · title (grouped ordering, never a trust cue).
+  const meetingBits = [card.meetingDate, card.meetingBody, card.meetingTitle].filter(Boolean).join(' · ');
+  if (meetingBits) {
+    children.push(el('p', { class: 'gw-muted', 'data-test': 'card-meeting' }, [meetingBits]));
+  }
+
+  // Agenda item title (the card's subject).
+  children.push(
+    el('h3', { 'data-test': 'card-title' }, [
+      card.agendaItemTitle ?? card.agendaItemId,
+    ]),
+  );
+
+  // Badges: status (verbatim, toned) + AI label when AI-presented + confidence + lane.
+  const badges: HTMLElement[] = [];
+  const tone = statusBadgeTone(card.statusBadge);
+  badges.push(
+    el('span', { class: `gw-badge gw-tone-${tone}`, 'data-test': 'card-status', 'data-tone': tone, title: 'Backend-assigned status (verbatim)' }, [card.statusBadge]),
+  );
+  if (isAiBadge(card.statusBadge)) {
+    badges.push(el('span', { class: 'gw-badge gw-badge-ai', 'data-test': 'card-ai-label' }, [AI_BADGE_LABEL]));
+  }
+  const conf = confidenceLabel({ confidence_label: card.confidenceBadge } as StatementRecord);
+  if (conf) {
+    badges.push(el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'card-confidence', title: 'Source confidence (verbatim)' }, [conf]));
+  }
+  badges.push(
+    el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'card-lane' }, [card.laneLabel]),
+  );
+  children.push(el('div', { class: 'gw-badges' }, badges));
+
+  // Agenda thread linkage (when present).
+  if (card.threadLabel) {
+    children.push(
+      el('p', { class: 'gw-muted', 'data-test': 'card-thread' }, [
+        `Thread: ${card.threadLabel}`,
+        ...(card.threadStatus ? [` (${card.threadStatus})`] : []),
+      ]),
+    );
+  }
+
+  // videoRef — a public deep-link, rendered only when the backend composed one.
+  if (card.videoRef) {
+    const secs = card.videoRef.timestampSeconds;
+    children.push(
+      el('p', { class: 'gw-related', 'data-test': 'card-video' }, [
+        el('a', { href: card.videoRef.url, target: '_blank', rel: 'noopener noreferrer' }, [
+          `Watch from ${secs}s`,
+        ]),
+      ]),
+    );
+  }
+
+  // Typed lineage (verbatim; never an untyped "related").
+  if (card.lineage.length) {
+    children.push(
+      el('ul', { class: 'gw-related-list', 'data-test': 'card-lineage' }, card.lineage.map(lineageRow)),
+    );
+  }
+
+  // Source drawer — the web-safe evidence refs.
+  if (card.sourceRefs.length) {
+    children.push(
+      el('details', { class: 'gw-drawer', 'data-test': 'card-sources' }, [
+        el('summary', {}, [`Sources (${card.sourceRefs.length})`]),
+        el('ul', { class: 'gw-related-list' }, card.sourceRefs.map(sourceRefRow)),
+      ]),
+    );
+  }
+
+  // Disclosed gaps — surfaced visibly, never hidden (unknown codes pass through).
+  if (card.gapBadges.length) {
+    children.push(
+      el('div', { class: 'gw-badges', 'data-test': 'card-gaps' },
+        card.gapBadges.map((g) =>
+          el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'gap-badge' }, [g]),
+        ),
+      ),
+    );
+  }
+
+  // Latent-by-data fields — rendered as disclosed-empty, never faked.
+  children.push(
+    el('p', { class: 'gw-muted', 'data-test': 'card-decisions-empty' }, [
+      card.decisions.length === 0
+        ? 'Decisions: none recorded yet (disclosed-empty — no vote/decision rows landed)'
+        : `Decisions: ${card.decisions.length}`,
+    ]),
+  );
+  children.push(
+    el('p', { class: 'gw-muted', 'data-test': 'card-category-anchor', title: card.categoryAnchor.disclosure }, [
+      `Category anchor: ${card.categoryAnchor.kind} (no topic layer yet)`,
+    ]),
+  );
+
+  // Traceability footer — record count (aggregation size), never a claim.
+  children.push(
+    el('p', { class: 'gw-muted', 'data-test': 'card-record-count' }, [
+      `${card.recordCount} reviewed statement${card.recordCount === 1 ? '' : 's'} under this item`,
+    ]),
+  );
+
+  return el('article', {
+    class: 'gw-card',
+    'data-test': 'agenda-card',
+    'data-agenda-item': card.agendaItemId,
+    'data-lane': String(card.lane),
+  }, children);
+}
+
+// --- Board A — Agendas by meeting (cards grouped by meeting, newest-first) ------
 
 const UNDATED = 'Undated';
 
 interface MeetingGroup {
-  date: string; // ISO date or UNDATED
-  records: StatementRecord[];
-  /** The `meeting`-type card's title, when one anchors this day (§4.1). */
-  meetingTitle?: string;
+  date: string;
+  title?: string;
+  body?: string;
+  cards: AgendaBoardCard[];
 }
 
-function groupByMeetingDate(
-  records: StatementRecord[],
-  heads: Map<string, CardHeadView>,
-): MeetingGroup[] {
+function allCards(board: AgendaBoard): AgendaBoardCard[] {
+  return board.lanes.flatMap((l) => l.cards);
+}
+
+function groupByMeeting(cards: AgendaBoardCard[]): MeetingGroup[] {
   const byDate = new Map<string, MeetingGroup>();
-  for (const r of records) {
-    const head = heads.get(r.statement_id);
-    const date = head?.date ?? isoDateFrom(r.agenda_item_id) ?? UNDATED;
-    let group = byDate.get(date);
-    if (!group) {
-      group = { date, records: [] };
-      byDate.set(date, group);
+  for (const c of cards) {
+    const date = c.meetingDate ?? UNDATED;
+    let g = byDate.get(date);
+    if (!g) {
+      g = { date, cards: [], ...(c.meetingTitle ? { title: c.meetingTitle } : {}), ...(c.meetingBody ? { body: c.meetingBody } : {}) };
+      byDate.set(date, g);
     }
-    group.records.push(r);
-    // A `meeting`-type card anchors the column with its title (never fabricated —
-    // only used when the backend actually shipped a meeting card for that day).
-    if (head?.type === 'meeting' && head.title && !group.meetingTitle) {
-      group.meetingTitle = head.title;
-    }
+    g.cards.push(c);
   }
-  // Newest meeting day first (left→right); the Undated column always trails.
+  // Newest meeting day first; the Undated column always trails.
   return [...byDate.values()].sort((a, b) => {
     if (a.date === UNDATED) return 1;
     if (b.date === UNDATED) return -1;
@@ -130,361 +290,154 @@ function groupByMeetingDate(
   });
 }
 
-function meetingLane(
-  group: MeetingGroup,
-  heads: Map<string, CardHeadView>,
-  reviewerInternal: boolean,
-): HTMLElement {
-  const n = group.records.length;
-  const title = el('div', { class: 'gw-lane-title' }, [
-    el('span', { class: 'gw-lane-name', 'data-test': 'lane-name' }, [
-      group.date === UNDATED ? 'Undated' : group.date,
-    ]),
-    el('span', { class: 'gw-lane-count', 'data-test': 'lane-count' }, [String(n)]),
-  ]);
-  const subText = group.meetingTitle
-    ? `Meeting: ${group.meetingTitle}`
-    : `${n} agenda item${n === 1 ? '' : 's'} at this meeting (grouped by date)`;
+function meetingLane(group: MeetingGroup): HTMLElement {
+  const n = group.cards.length;
   const header = el('div', { class: 'gw-lane-header' }, [
-    title,
-    el('p', { class: 'gw-lane-sub', 'data-test': 'lane-sub' }, [subText]),
+    el('div', { class: 'gw-lane-title' }, [
+      el('span', { class: 'gw-lane-name', 'data-test': 'lane-name' }, [group.date === UNDATED ? 'Undated' : group.date]),
+      el('span', { class: 'gw-lane-count', 'data-test': 'lane-count' }, [String(n)]),
+    ]),
+    el('p', { class: 'gw-lane-sub', 'data-test': 'lane-sub' }, [
+      group.title ? `Meeting: ${group.title}` : `${n} agenda item${n === 1 ? '' : 's'} at this meeting`,
+    ]),
   ]);
-  const body = el(
-    'div',
-    { class: 'gw-lane-body' },
-    group.records.map((r) =>
-      recordCard(r, undefined, undefined, {
-        reviewerInternal,
-        ...(heads.get(r.statement_id) ? { head: heads.get(r.statement_id)! } : {}),
-      }),
-    ),
-  );
-  return el(
-    'section',
-    { class: 'gw-lane', 'data-test': 'meeting-lane', 'data-meeting-date': group.date },
-    [header, body],
-  );
+  const body = el('div', { class: 'gw-lane-body' }, group.cards.map(agendaCard));
+  return el('section', { class: 'gw-lane', 'data-test': 'meeting-lane', 'data-meeting-date': group.date }, [header, body]);
 }
 
-/** Board A: meeting-day lanes + the completeness-gap context card above them. */
-function buildBoardA(
-  response: ReadApiResponse,
-  heads: Map<string, CardHeadView>,
-  reviewerInternal: boolean,
-): HTMLElement {
-  const records = response.records ?? [];
+function buildBoardA(board: AgendaBoard): HTMLElement {
+  const cards = allCards(board);
   const children: HTMLElement[] = [];
 
-  // What is MISSING stays as prominent as what is present (watchdog principle):
-  // reuse the GOV-301 gap card above the board so the ~213 no-primary-source
-  // meetings are not erased by the board re-layout.
-  const gapSummary = buildGapSummary(response);
-  if (gapSummary) children.push(gapCardSection(gapSummary));
-
-  if (!records.length) {
-    if (!gapSummary) {
-      children.push(
-        el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-empty', role: 'status' }, [
-          el('h1', {}, ['Nothing to show yet']),
-          el('p', {}, ['No reviewed Alpine agenda cards in this feed.']),
-        ]),
-      );
-    }
+  if (!cards.length) {
+    children.push(emptyState('No agenda cards yet', emptyStateDetail(board)));
+    children.push(disclosureFooter(board));
     return el('div', { 'data-test': 'board-meeting' }, children);
   }
 
-  const groups = groupByMeetingDate(records, heads);
+  const groups = groupByMeeting(cards);
   children.push(
-    el(
-      'div',
-      { class: 'gw-board', 'data-test': 'board-meeting-lanes', role: 'list', 'aria-label': 'Agendas by meeting' },
-      groups.map((g) => meetingLane(g, heads, reviewerInternal)),
+    el('div', { class: 'gw-board', 'data-test': 'board-meeting-lanes', role: 'list', 'aria-label': 'Agendas by meeting' },
+      groups.map(meetingLane),
     ),
   );
+  children.push(disclosureFooter(board));
   return el('div', { 'data-test': 'board-meeting' }, children);
 }
 
-// =============================================================================
-// Board B — Agenda tracking over time (lifecycle lanes + as-of scrubber)
-// =============================================================================
+// --- Board B — Agenda tracking (the projection's six lifecycle lanes) -----------
 
-interface LaneDef {
-  key: string;
-  name: string;
-}
-
-/** Lifecycle lanes (GOV-599 §4.2). GOV's own status vocab, not Isaac4Alpine's. */
-const TRACKING_LANES: LaneDef[] = [
-  { key: 'upcoming', name: 'Upcoming / Noticed' },
-  { key: 'open', name: 'Open (in progress)' },
-  { key: 'revisited', name: 'Revisited' },
-  { key: 'decided', name: 'Decided' },
-  { key: 'dormant', name: 'Dormant' },
-];
-
-const EDGE_LABEL: Record<string, string> = {
-  agenda_item_supersedes: 'Supersedes',
-  agenda_item_amends: 'Amends',
-  agenda_item_revisits: 'Revisits',
-};
-
-/** A scrubber step: `null` iso = "before the first recorded meeting". */
-interface ScrubStep {
-  iso: string | null;
-  label: string;
-}
-
-function scrubSteps(members: AgendaItemMember[]): ScrubStep[] {
-  const dates = Array.from(
-    new Set(members.map((m) => isoDateFrom(m.agenda_item_id)).filter((d): d is string => !!d)),
-  ).sort(); // ascending ISO
-  return [
-    { iso: null, label: 'before first meeting' },
-    ...dates.map((d) => ({ iso: d, label: d })),
-  ];
-}
-
-/**
- * The lane a thread sits in AS OF a cursor date. Structural + verbatim, never a
- * trust inference (GOV-599 §4.2 / §7 B3):
- *  - no recorded instance yet → Upcoming / Noticed;
- *  - all instances recorded (as-of ≥ last_seen) → the backend's VERBATIM terminal
- *    `status` (decided / dormant / open) — the frontend never assigns this;
- *  - mid-life → Revisited when a `revisits` edge from the latest-seen instance is
- *    active, else Open (in progress). This is a display over known-then instance
- *    structure, not a re-computed status.
- */
-function laneAsOf(
-  thread: AgendaThreadResponse['thread'],
-  members: AgendaItemMember[],
-  edges: ConceptEdge[],
-  asOf: string | null,
-): string {
-  if (!asOf) return 'upcoming';
-  const seen = members
-    .map((m) => ({ m, d: isoDateFrom(m.agenda_item_id) }))
-    .filter((x) => x.d && x.d <= asOf);
-  if (!seen.length) return 'upcoming';
-
-  const last = thread.last_seen_date ?? null;
-  if (last && asOf >= last) {
-    switch (thread.status) {
-      case 'decided':
-        return 'decided';
-      case 'dormant':
-        return 'dormant';
-      default:
-        return 'open'; // any non-terminal backend status renders as Open, verbatim
-    }
-  }
-  const latest = seen[seen.length - 1].m.agenda_item_id;
-  const revisits = edges.some(
-    (e) => e.edge_type === 'agenda_item_revisits' && e.from_node_id === latest,
+function lifecycleLane(lane: AgendaLane): HTMLElement {
+  const header = el('div', { class: 'gw-lane-header' }, [
+    el('div', { class: 'gw-lane-title' }, [
+      el('span', { class: 'gw-lane-name', 'data-test': 'lane-name' }, [lane.laneLabel]),
+      el('span', { class: 'gw-lane-count', 'data-test': 'lane-count' }, [String(lane.cardCount)]),
+    ]),
+  ]);
+  const body = el('div', { class: 'gw-lane-body' },
+    lane.cards.length
+      ? lane.cards.map(agendaCard)
+      : [el('p', { class: 'gw-lane-empty', 'data-test': 'lane-empty' }, ['—'])],
   );
-  return revisits ? 'revisited' : 'open';
+  return el('section', { class: 'gw-lane', 'data-test': 'tracking-lane', 'data-lane': String(lane.lane) }, [header, body]);
 }
 
-function threadCard(
-  response: AgendaThreadResponse,
-  asOf: string | null,
-): HTMLElement {
-  const thread = response.thread;
-  const members = response.members ?? [];
-  const edges = response.lifecycle_edges ?? [];
-  const total = members.length;
-  const seen = members.filter((m) => {
-    const d = isoDateFrom(m.agenda_item_id);
-    return asOf && d ? d <= asOf : false;
-  });
-  const label = thread.canonicalHumanLabel ?? thread.title ?? thread.agenda_thread_id;
-
-  const children: (Node | string)[] = [
-    el('h3', { 'data-test': 'thread-card-title' }, [label]),
-    el('div', { class: 'gw-badges' }, [
-      // Terminal backend status, rendered VERBATIM (never a frontend verdict).
-      el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'thread-backend-status', title: 'Terminal status assigned by the backend (verbatim)' }, [
-        `Backend status: ${thread.status ?? 'unknown'}`,
-      ]),
-    ]),
-    el('p', { class: 'gw-thread-span', 'data-test': 'thread-span' }, [
-      `${thread.first_seen_date ?? '—'} → ${thread.last_seen_date ?? '—'}`,
-    ]),
-    el('p', { class: 'gw-muted', 'data-test': 'thread-asof-count' }, [
-      `${seen.length} of ${total} recorded meeting instance(s) as of this date`,
-    ]),
-  ];
-
-  // Typed lifecycle edges among the instances seen so far — the "known-then"
-  // relationships, shown verbatim (Supersedes / Amends / Revisits), never untyped.
-  const seenIds = new Set(seen.map((m) => m.agenda_item_id));
-  const titleFor = (id: string): string =>
-    members.find((m) => m.agenda_item_id === id)?.title ?? id;
-  const activeEdges = edges.filter((e) => seenIds.has(e.from_node_id));
-  if (activeEdges.length) {
-    children.push(
-      el(
-        'ul',
-        { class: 'gw-thread-edges', 'data-test': 'thread-edges' },
-        activeEdges.map((e) =>
-          el('li', { class: 'gw-related', 'data-test': 'thread-edge' }, [
-            el('span', { class: 'gw-related-type' }, [EDGE_LABEL[e.edge_type] ?? e.edge_type]),
-            ' → ',
-            el('span', { class: 'gw-related-target' }, [titleFor(e.to_node_id)]),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  // Per-instance disclosure — the meeting instances recorded up to the cursor.
-  if (seen.length) {
-    children.push(
-      el('details', { class: 'gw-drawer', 'data-test': 'thread-instances-drawer' }, [
-        el('summary', {}, [`Meeting instances so far (${seen.length})`]),
-        el(
-          'ul',
-          { class: 'gw-related-list' },
-          seen.map((m) =>
-            el('li', { class: 'gw-related', 'data-test': 'thread-instance-row' }, [
-              el('span', { class: 'gw-instance-date gw-muted' }, [isoDateFrom(m.agenda_item_id) ?? '—']),
-              ' ',
-              el('span', { class: 'gw-instance-title' }, [m.title ?? m.agenda_item_id]),
-            ]),
-          ),
-        ),
-      ]),
-    );
-  }
-
-  return el('article', { class: 'gw-thread-card', 'data-test': 'thread-card', 'data-thread-id': thread.agenda_thread_id }, children);
-}
-
-/** Board B: the synthetic thread-tracking board with a working as-of scrubber. */
-function buildBoardB(thread: AgendaThreadResponse | null): HTMLElement {
+function buildBoardB(board: AgendaBoard): HTMLElement {
   const root = el('div', { 'data-test': 'board-tracking' });
   root.append(
-    el('div', { class: 'gw-synthetic-banner', role: 'status', 'data-test': 'synthetic-banner' }, [
-      'SYNTHETIC demo data — the real reviewed Alpine corpus has no agenda threads yet (backend gap, GOV-599 Child 2). This proves the lane layout + as-of movement, and is NOT real Alpine data.',
-    ]),
+    el('div', { class: 'gw-board', 'data-test': 'board-tracking-lanes', role: 'list', 'aria-label': 'Agenda tracking' },
+      board.lanes.map(lifecycleLane),
+    ),
   );
-
-  if (!thread) {
-    root.append(
-      el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-empty', role: 'status' }, [
-        el('h1', {}, ['No agenda threads']),
-        el('p', {}, ['No agenda-thread data is available to track.']),
-      ]),
-    );
-    return root;
-  }
-
-  const members = thread.members ?? [];
-  const edges = thread.lifecycle_edges ?? [];
-  const steps = scrubSteps(members);
-  // Default the cursor to the last step (terminal state — the newest known-then view).
-  let idx = steps.length - 1;
-
-  const asOfLabel = el('span', { class: 'gw-scrub-asof', 'data-test': 'scrub-asof' }, []);
-  const note = el('span', { class: 'gw-scrub-note' }, [
-    'Drag the date cursor to watch the agenda card move between statuses across meetings. Final status is backend-assigned; intermediate lanes reflect the recorded meeting instances up to the cursor.',
-  ]);
-  const prev = el('button', { type: 'button', class: 'gw-scrub-btn', 'data-test': 'scrub-prev', 'aria-label': 'Earlier date' }, ['‹']);
-  const next = el('button', { type: 'button', class: 'gw-scrub-btn', 'data-test': 'scrub-next', 'aria-label': 'Later date' }, ['›']);
-  const scrubber = el('div', { class: 'gw-scrubber', role: 'group', 'aria-label': 'As-of date' }, [
-    prev,
-    el('span', {}, ['As of: ']),
-    asOfLabel,
-    next,
-    note,
-  ]);
-
-  const board = el('div', { class: 'gw-board', 'data-test': 'board-tracking-lanes', role: 'list', 'aria-label': 'Agenda tracking' });
-
-  const renderLanes = (): void => {
-    const step = steps[idx];
-    const activeLane = laneAsOf(thread.thread, members, edges, step.iso);
-    board.setAttribute('data-active-lane', activeLane);
-    board.replaceChildren(
-      ...TRACKING_LANES.map((lane) => {
-        const here = lane.key === activeLane;
-        const header = el('div', { class: 'gw-lane-header' }, [
-          el('div', { class: 'gw-lane-title' }, [
-            el('span', { class: 'gw-lane-name', 'data-test': 'lane-name' }, [lane.name]),
-            el('span', { class: 'gw-lane-count', 'data-test': 'lane-count' }, [here ? '1' : '0']),
-          ]),
-        ]);
-        const body = el('div', { class: 'gw-lane-body' }, [
-          here
-            ? threadCard(thread, step.iso)
-            : el('p', { class: 'gw-lane-empty', 'data-test': 'lane-empty' }, ['—']),
-        ]);
-        return el('section', { class: 'gw-lane', 'data-test': 'tracking-lane', 'data-lane': lane.key }, [header, body]);
-      }),
-    );
-  };
-
-  const sync = (): void => {
-    const step = steps[idx];
-    asOfLabel.textContent = step.label;
-    prev.toggleAttribute('disabled', idx <= 0);
-    next.toggleAttribute('disabled', idx >= steps.length - 1);
-    renderLanes();
-  };
-  prev.addEventListener('click', () => {
-    if (idx > 0) idx--;
-    sync();
-  });
-  next.addEventListener('click', () => {
-    if (idx < steps.length - 1) idx++;
-    sync();
-  });
-  sync();
-
-  root.append(scrubber, board);
+  root.append(disclosureFooter(board));
   return root;
 }
 
-// =============================================================================
-// Shell — toggle + gate + both boards
-// =============================================================================
+// --- Shared: empty-state + board-level disclosures -----------------------------
+
+function emptyState(title: string, detail: string): HTMLElement {
+  return el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-empty', role: 'status' }, [
+    el('h1', {}, [title]),
+    el('p', {}, [detail]),
+  ]);
+}
+
+function emptyStateDetail(board: AgendaBoard): string {
+  const n = board.unanchoredStatementCount;
+  if (n > 0) {
+    return `No reviewed Alpine agenda cards yet. ${n} reviewed statement${n === 1 ? ' is' : 's are'} not yet anchored to an agenda item (disclosed, not dropped).`;
+  }
+  return 'No reviewed Alpine agenda records exist in this projection yet.';
+}
+
+/** Board-level disclosure block — surfaces the projection's own honest limits. */
+function disclosureFooter(board: AgendaBoard): HTMLElement {
+  const d = board.disclosures;
+  const items: HTMLElement[] = [
+    el('li', { 'data-test': 'disclosure-decisions' }, [d.decisions]),
+    el('li', { 'data-test': 'disclosure-categories' }, [d.categories]),
+  ];
+  if (board.unanchoredStatementCount > 0) {
+    items.push(
+      el('li', { 'data-test': 'disclosure-unanchored' }, [
+        `${board.unanchoredStatementCount} reviewed statement(s) not yet anchored to an agenda item (disclosed, not dropped).`,
+      ]),
+    );
+  }
+  items.push(el('li', { 'data-test': 'disclosure-scope' }, [d.scope]));
+  return el('section', { class: 'gw-state', 'data-test': 'board-disclosures', role: 'note' }, [
+    el('p', { class: 'gw-muted' }, ['What this board does NOT yet show (disclosed, never faked):']),
+    el('ul', { class: 'gw-muted' }, items),
+  ]);
+}
+
+// --- Shell — toggle + gate + both boards ---------------------------------------
 
 export interface BoardsInput {
-  /** The GOV-347 card feed (Board A source; the reviewer-internal gate lives here). */
-  feed: CardFeed;
-  /** The SYNTHETIC agenda-thread response (Board B). Null → Board B shows empty. */
-  thread: AgendaThreadResponse | null;
+  /** The GOV-605 agenda-board projection (the reviewer-internal gate lives on it). */
+  board: AgendaBoard;
+  /**
+   * Optional access override for the route (e.g. force the public lane to prove
+   * no board content leaks). Defaults to the projection's own `access`.
+   */
+  access?: string;
   /** Provenance notice shown under the fixture banner. */
   notice?: string;
+  /**
+   * True when rendering the clearly-labelled DEV sample projection (populated
+   * cards) rather than the real reviewed-Alpine capture — shows a dev banner so it
+   * can never be mistaken for real Alpine data.
+   */
+  devSample?: boolean;
 }
 
 /**
- * Render the agenda Kanban surface into `root`. Default view is "Agendas by
- * meeting". The reviewer-internal gate is the SOLE gate: on any other lane the
- * board content is empty by construction (the card model returns 0 cards and the
- * synthetic Board B is not rendered).
+ * Render the agenda Kanban surface into `root` from the GOV-605 projection.
+ * Default view is "Agendas by meeting". The reviewer-internal lane is the SOLE
+ * gate: on any other lane the board renders ZERO card content.
  */
 export function renderBoards(root: HTMLElement, input: BoardsInput): void {
   ensureStyle();
-  const { response, heads } = buildCardFeedModel(input.feed);
-  const reviewerInternal = response.access === 'reviewer_internal';
+  const board = input.board;
+  const access = input.access ?? board.access;
+  const reviewerInternal = access === 'reviewer_internal';
 
-  // The board page needs more horizontal room than the 48rem reading column, so
-  // the five lifecycle lanes fit without a horizontal scroll hiding the populated
-  // one. `gw-boards-root` (specificity 0,2,0) widens the base `.gw-root` cap.
+  // The board page needs more horizontal room than the 48rem reading column.
   root.className = 'gw-root gw-boards-root';
   root.replaceChildren();
 
-  // Always-on offline-snapshot banner (the feed is a committed fixture).
+  // Always-on offline-snapshot banner (the projection is a committed capture).
   root.append(
     el('div', { class: 'gw-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, [
       FIXTURE_BANNER_TEXT,
-      el('small', {}, ['Reviewer-internal offline snapshot — not a live read. AI-produced rows keep their own per-record label.']),
+      el('small', {}, [
+        `Reviewer-internal offline snapshot of the GOV-605 board projection (${board.generatedFrom}) — not a live read.`,
+      ]),
       ...(input.notice ? [el('div', { class: 'gw-notice' }, [input.notice])] : []),
     ]),
   );
 
-  // §5.1 — public lane renders ZERO board content. The card model already
-  // returned an empty response; surface only the reviewer-internal notice.
+  // §5 — public lane renders ZERO board content: gate before any card leaf touches the DOM.
   if (!reviewerInternal) {
     root.append(
       el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -495,26 +448,25 @@ export function renderBoards(root: HTMLElement, input: BoardsInput): void {
     return;
   }
 
+  // Clearly-labelled DEV sample banner (populated demo — never real Alpine data).
+  if (input.devSample) {
+    root.append(
+      el('div', { class: 'gw-synthetic-banner', role: 'status', 'data-test': 'dev-sample-banner' }, [
+        'DEV SAMPLE projection — populated agenda cards from the backend test seed, NOT real Alpine data. Proves the populated-card UX (videoRef / lineage / gaps / disclosed-empty latents).',
+      ]),
+    );
+  }
+
   const wrap = el('div', { class: 'gw-boards', 'data-test': 'agenda-boards' });
   wrap.append(el('h1', { class: 'gw-h1' }, ['Alpine agendas (reviewer-internal)']));
 
   // Build both boards once; the toggle swaps which is mounted (no re-fetch).
-  const boardA = buildBoardA(response, heads, reviewerInternal);
-  const boardB = buildBoardB(input.thread);
+  const boardA = buildBoardA(board);
+  const boardB = buildBoardB(board);
 
-  const mount = el('div', { 'data-test': 'board-mount' });
-  const tabMeeting = el(
-    'button',
-    { type: 'button', class: 'gw-view-tab', 'data-test': 'tab-meeting', role: 'tab', id: 'gw-tab-meeting', 'aria-controls': 'gw-board-mount' },
-    ['Agendas by meeting'],
-  );
-  const tabTracking = el(
-    'button',
-    { type: 'button', class: 'gw-view-tab', 'data-test': 'tab-tracking', role: 'tab', id: 'gw-tab-tracking', 'aria-controls': 'gw-board-mount' },
-    ['Agenda tracking'],
-  );
-  mount.setAttribute('id', 'gw-board-mount');
-  mount.setAttribute('role', 'tabpanel');
+  const mount = el('div', { 'data-test': 'board-mount', id: 'gw-board-mount', role: 'tabpanel' });
+  const tabMeeting = el('button', { type: 'button', class: 'gw-view-tab', 'data-test': 'tab-meeting', role: 'tab', id: 'gw-tab-meeting', 'aria-controls': 'gw-board-mount' }, ['Agendas by meeting']);
+  const tabTracking = el('button', { type: 'button', class: 'gw-view-tab', 'data-test': 'tab-tracking', role: 'tab', id: 'gw-tab-tracking', 'aria-controls': 'gw-board-mount' }, ['Agenda tracking']);
 
   const show = (view: BoardView): void => {
     const meeting = view === 'meeting';
