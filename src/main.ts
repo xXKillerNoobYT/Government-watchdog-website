@@ -28,6 +28,7 @@ import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
+import { renderShell } from './ui/shell';
 import {
   loadDigestResponse,
   renderNewsletterArchive,
@@ -279,40 +280,41 @@ function forcedState(forced: string | null): AsyncState<ReadApiResponse> | null 
 
 // Timeline route: ?state= overrides loading/empty/error; ?demo=complete shows
 // the backend-equivalent `complete` completeness state for screenshots.
-async function renderTimeline(query: URLSearchParams): Promise<void> {
+async function renderTimeline(mount: HTMLElement, query: URLSearchParams): Promise<void> {
   const forced = forcedState(query.get('state'));
-  if (forced) return render(root!, forced);
+  if (forced) return render(mount, forced);
   if (query.get('demo') === 'matrix') {
-    render(root!, resolved(STATE_MATRIX, 'fixture', isEmptyResponse), 'State-matrix sample — one card per trust state, not real data.');
+    render(mount, resolved(STATE_MATRIX, 'fixture', isEmptyResponse), 'State-matrix sample — one card per trust state, not real data.');
     return;
   }
   if (query.get('demo') === 'complete') {
-    render(root!, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
+    render(mount, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
     return;
   }
   if (query.get('demo') === 'provenance') {
-    render(root!, resolved(provenanceDemoBody(), 'fixture', isEmptyResponse), PROVENANCE_DEMO_NOTICE);
+    render(mount, resolved(provenanceDemoBody(), 'fixture', isEmptyResponse), PROVENANCE_DEMO_NOTICE);
     return;
   }
-  render(root!, idle<ReadApiResponse>());
+  render(mount, idle<ReadApiResponse>());
   const { state, notice } = await loadReadModel();
-  render(root!, state, notice);
+  render(mount, state, notice);
 }
 
 /** Render the topics surface: civic topic tree above the reused B card+drawer
  *  timeline. `treeOverride` lets the default view show the REAL tree above a
  *  live/fixture timeline that itself carries no tree. */
 function renderTopicsSurface(
+  mount: HTMLElement,
   state: AsyncState<ReadApiResponse>,
   notice: string | undefined,
   focusTopicId: string,
   move: MoveRequest | undefined,
   treeOverride?: ReadApiResponse['topic_tree'],
 ): void {
-  root!.replaceChildren();
+  mount.replaceChildren();
 
   const treeBox = el('div', { class: 'tt-wrap', 'data-test': 'topics-page' });
-  root!.append(treeBox);
+  mount.append(treeBox);
   const topicTree = treeOverride ?? (state.status === 'ready' ? state.data?.topic_tree : null);
   if (topicTree) {
     renderTopicTreeView(treeBox, topicTree, { focusTopicId, move });
@@ -322,7 +324,7 @@ function renderTopicsSurface(
 
   // Reuse the B card+drawer timeline below the tree.
   const timelineBox = el('div', { 'data-test': 'topics-timeline' });
-  root!.append(timelineBox);
+  mount.append(timelineBox);
   render(timelineBox, state, notice);
 }
 
@@ -334,12 +336,13 @@ function renderTopicsSurface(
  *    deep-nesting + audited-move surfaces the flat real tree cannot exercise
  *    can still be reviewed/screenshotted. (Agenda-thread completeness uses the
  *    same synthetic data via the timeline's `?demo=complete`.) */
-async function renderTopics(query: URLSearchParams): Promise<void> {
-  render(root!, idle<ReadApiResponse>());
+async function renderTopics(mount: HTMLElement, query: URLSearchParams): Promise<void> {
+  render(mount, idle<ReadApiResponse>());
   const demo = query.get('demo');
 
   if (demo === 'graph-synthetic') {
     renderTopicsSurface(
+      mount,
       resolved(GRAPH_DEMO, 'fixture', isEmptyResponse),
       GRAPH_DEMO_NOTICE,
       query.get('topic') ?? DEFAULT_FOCUS,
@@ -354,6 +357,7 @@ async function renderTopics(query: URLSearchParams): Promise<void> {
       ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
       : await loadReadModel();
   renderTopicsSurface(
+    mount,
     state,
     notice,
     query.get('topic') ?? REAL_DEFAULT_FOCUS,
@@ -364,17 +368,17 @@ async function renderTopics(query: URLSearchParams): Promise<void> {
 }
 
 /** Body / meeting page: the same B card+drawer list under a context heading. */
-async function renderContextPage(kind: 'body' | 'meeting', query: URLSearchParams): Promise<void> {
+async function renderContextPage(mount: HTMLElement, kind: 'body' | 'meeting', query: URLSearchParams): Promise<void> {
   const forced = forcedState(query.get('state'));
-  render(root!, idle<ReadApiResponse>());
+  render(mount, idle<ReadApiResponse>());
   const { state, notice } = forced ? { state: forced, notice: undefined } : await loadReadModel();
-  root!.replaceChildren();
+  mount.replaceChildren();
   const heading = kind === 'body'
     ? 'Government body — Alpine Town Council (reviewer-internal)'
     : 'Meeting record (reviewer-internal)';
-  root!.append(el('section', { class: 'gw-page-context', 'data-test': `${kind}-page` }, heading));
+  mount.append(el('section', { class: 'gw-page-context', 'data-test': `${kind}-page` }, heading));
   const timelineBox = el('div', { 'data-test': `${kind}-timeline` });
-  root!.append(timelineBox);
+  mount.append(timelineBox);
   render(timelineBox, state, notice);
 }
 
@@ -384,15 +388,15 @@ async function renderContextPage(kind: 'body' | 'meeting', query: URLSearchParam
  * `?access=public` forces the public lane (0 cards) so the no-public-leak
  * invariant (§5) can be captured/verified.
  */
-function renderCardFeedRoute(query: URLSearchParams): void {
+function renderCardFeedRoute(mount: HTMLElement, query: URLSearchParams): void {
   const forced = forcedState(query.get('state'));
   if (forced) {
-    render(root!, forced);
+    render(mount, forced);
     return;
   }
   const access = query.get('access');
   const feed = access ? { ...CARD_FEED, access } : CARD_FEED;
-  renderCardFeed(root!, feed, CARD_FEED_NOTICE);
+  renderCardFeed(mount, feed, CARD_FEED_NOTICE);
 }
 
 /**
@@ -406,16 +410,16 @@ function renderCardFeedRoute(query: URLSearchParams): void {
  * (0 board content) so the no-public-leak invariant (§5) stays capturable;
  * `?state=` forces async states for screenshots.
  */
-function renderBoardsRoute(query: URLSearchParams): void {
+function renderBoardsRoute(mount: HTMLElement, query: URLSearchParams): void {
   const forced = forcedState(query.get('state'));
   if (forced) {
-    render(root!, forced);
+    render(mount, forced);
     return;
   }
   const access = query.get('access') ?? undefined;
   const sample = query.get('demo') === 'sample';
   const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
-  renderBoards(root!, {
+  renderBoards(mount, {
     board,
     ...(access ? { access } : {}),
     notice: sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE,
@@ -430,18 +434,18 @@ function renderBoardsRoute(query: URLSearchParams): void {
  * `#/app` via the shared `gated()` wrapper (§5); this handler only runs once an
  * approved request has been admitted.
  */
-function renderNewsletterRoute(query: URLSearchParams): void {
+function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void {
   const forced = query.get('state');
   if (forced === 'loading' || forced === 'empty' || forced === 'error') {
-    renderNewsletterState(root!, forced as NewsletterStateKind);
+    renderNewsletterState(mount, forced as NewsletterStateKind);
     return;
   }
   const id = query.get('id');
   if (id) {
-    renderNewsletterDetail(root!, NEWSLETTER_DIGEST, id, NEWSLETTER_NOTICE);
+    renderNewsletterDetail(mount, NEWSLETTER_DIGEST, id, NEWSLETTER_NOTICE);
     return;
   }
-  renderNewsletterArchive(root!, NEWSLETTER_DIGEST, NEWSLETTER_NOTICE);
+  renderNewsletterArchive(mount, NEWSLETTER_DIGEST, NEWSLETTER_NOTICE);
 }
 
 /**
@@ -490,13 +494,24 @@ function accessFor(query: URLSearchParams) {
   return resolveAccess(query.get('gate'), reviewerBypassActive(query));
 }
 
+/** A gated surface handler: renders civic content into the shell's content slot. */
+type ShellHandler = (ctx: { mount: HTMLElement; path: string; query: URLSearchParams }) => void;
+
 /**
  * Wrap a full-app route so it renders ONLY when approved; otherwise the gate
  * panel shows and zero civic data reaches the DOM (acceptance #2).
+ *
+ * GOV-658 §5 — on approval, draw the persistent app shell (header/tabs/footer)
+ * into `root` and hand the surface its inner content slot. The shell renders
+ * ONLY here (inside the gate); the `#/` landing keeps its own standalone layout
+ * and never shows app nav (§5.2, fail-closed §3.4).
  */
-function gated(handler: RouteHandler): RouteHandler {
+function gated(handler: ShellHandler): RouteHandler {
   return ({ path, query }) =>
-    renderGatedApp(root!, accessFor(query), () => handler({ path, query }));
+    renderGatedApp(root!, accessFor(query), () => {
+      const mount = renderShell(root!, { active: path });
+      handler({ mount, path, query });
+    });
 }
 
 // Preview-launch landing is the DEFAULT entry (and the fallback). The full
@@ -507,14 +522,14 @@ router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
 // meeting), the owner-confirmed primary UX that replaces the long card list. The
 // prior chronological long-list timeline stays reachable at `#/timeline` (and the
 // GOV-354 single-list card feed at `#/cards`) for continuity + regression.
-router.register('/app', gated(({ query }) => renderBoardsRoute(query)));
-router.register('/boards', gated(({ query }) => renderBoardsRoute(query)));
-router.register('/timeline', gated(({ query }) => void renderTimeline(query)));
-router.register('/cards', gated(({ query }) => renderCardFeedRoute(query)));
-router.register('/newsletter', gated(({ query }) => renderNewsletterRoute(query)));
-router.register('/topics', gated(({ query }) => void renderTopics(query)));
-router.register('/body', gated(({ query }) => void renderContextPage('body', query)));
-router.register('/meeting', gated(({ query }) => void renderContextPage('meeting', query)));
+router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
+router.register('/boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
+router.register('/timeline', gated(({ mount, query }) => void renderTimeline(mount, query)));
+router.register('/cards', gated(({ mount, query }) => renderCardFeedRoute(mount, query)));
+router.register('/newsletter', gated(({ mount, query }) => renderNewsletterRoute(mount, query)));
+router.register('/topics', gated(({ mount, query }) => void renderTopics(mount, query)));
+router.register('/body', gated(({ mount, query }) => void renderContextPage(mount, 'body', query)));
+router.register('/meeting', gated(({ mount, query }) => void renderContextPage(mount, 'meeting', query)));
 
 // GOV-440 — apply the stored theme preference and mount the dark/light toggle on
 // <body> (outside #app, so it survives route re-renders). Light stays default;

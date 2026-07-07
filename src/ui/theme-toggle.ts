@@ -29,6 +29,21 @@ const LABEL: Record<ThemePref, string> = {
   light: 'Theme: Light',
 };
 
+/**
+ * GOV-658 §1.4 — true when the user has explicitly pinned ANY theme via the
+ * standalone System/Dark/Light control. The shell's reading-mode auto-palette
+ * (Advanced→dark default) applies ONLY when this is false, so an explicit theme
+ * choice always wins. `readThemePref()` can't distinguish "unset" from "explicit
+ * System" (both read as `system`); this checks for the stored key itself.
+ */
+export function hasExplicitThemePref(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** Read the persisted preference, defaulting to `system` (let the OS decide). */
 export function readThemePref(): ThemePref {
   try {
@@ -57,6 +72,17 @@ function persist(pref: ThemePref): void {
   } catch {
     /* non-fatal: the in-memory + attribute state still works for this session */
   }
+}
+
+/**
+ * GOV-658 §1.4 — apply AND persist a theme preference in one call. The single
+ * palette-authority entry point: the shell's Simple|Advanced mode control routes
+ * through here (advanced→dark, simple→light) so mode and the standalone
+ * System/Dark/Light toggle share ONE stored value — no two competing theme states.
+ */
+export function setThemePref(pref: ThemePref): void {
+  applyThemePref(pref);
+  persist(pref);
 }
 
 /**
