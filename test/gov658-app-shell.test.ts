@@ -17,7 +17,7 @@
 //     (§1 / §1.4),
 //   - the footer carries the tagline and OMITS the `data refreshed` stamp unless
 //     a real timestamp is supplied — never a fake clock (§5.2).
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   renderShell,
   readMode,
@@ -26,18 +26,37 @@ import {
   type ShellMode,
 } from '../src/ui/shell';
 
+// Hermetic in-memory localStorage. The CI runner launches vitest with a broken
+// `--localstorage-file` stub where `localStorage.getItem` is not a function;
+// these tests assert persistence, so they must own their storage rather than
+// borrow the ambient (environment-flaky) one. Production code wraps every
+// localStorage access in try/catch, so this only affects the tests.
+function installMemoryLocalStorage(): void {
+  const store = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+    setItem: (k: string, v: string) => void store.set(k, String(v)),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+    key: (i: number) => [...store.keys()][i] ?? null,
+    get length() {
+      return store.size;
+    },
+  });
+}
+
 let root: HTMLElement;
 beforeEach(() => {
+  installMemoryLocalStorage();
   document.head.replaceChildren();
   document.body.replaceChildren();
   document.documentElement.removeAttribute('data-theme');
-  try {
-    localStorage.clear();
-  } catch {
-    /* ignore */
-  }
   root = document.createElement('div');
   document.body.append(root);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('GOV-658 shell — content slot (surfaces inherit, stay untouched)', () => {
