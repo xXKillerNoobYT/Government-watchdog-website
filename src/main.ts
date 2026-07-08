@@ -30,6 +30,7 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderHome } from './ui/home';
+import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels } from './ui/pages-program';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell } from './ui/shell';
@@ -431,6 +432,37 @@ function renderBoardsRoute(mount: HTMLElement, query: URLSearchParams): void {
   });
 }
 
+/** GOV-665 Fast Agenda page: quick agenda-first read over the same GOV-605
+ * projection used by the agenda Kanban. `?demo=sample` is the only populated
+ * sample path and stays visibly labeled by the notice. */
+function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access') ?? undefined;
+  const sample = query.get('demo') === 'sample';
+  const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
+  renderFastAgenda(mount, access ? { ...board, access } : board, sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE);
+}
+
+/** GOV-665 Timeline page: level toggles + event-type filters + simple/advanced
+ * (`gw-mode`) presentation over the existing reviewed read-model data. */
+async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchParams): Promise<void> {
+  const demo = query.get('demo');
+  const access = query.get('access');
+  const { state, notice } =
+    demo === 'graph'
+      ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
+      : await loadReadModel();
+  const data: ReadApiResponse = state.status === 'ready' && state.data ? state.data : GRAPH_REAL;
+  renderTimelineLevels(mount, access ? { ...data, access } : data, query, notice);
+}
+
+/** GOV-665 Boards directory + detail: consumes the REAL GOV-149 concept-graph
+ * body/topic nodes; no score/verdict/ranking surface is rendered. */
+function renderBoardsDirectoryRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderBoardsDirectory(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
 /**
  * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
  * digest detail. `?state=loading|empty|error` forces the async states for
@@ -543,8 +575,11 @@ router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
 // GOV-354 single-list card feed at `#/cards`) for continuity + regression.
 router.register('/home', gated(({ mount, query }) => renderHomeRoute(mount, query)));
 router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
-router.register('/boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
-router.register('/timeline', gated(({ mount, query }) => void renderTimeline(mount, query)));
+router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mount, query)));
+router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
+router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
+router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
+router.register('/timeline-legacy', gated(({ mount, query }) => void renderTimeline(mount, query)));
 router.register('/cards', gated(({ mount, query }) => renderCardFeedRoute(mount, query)));
 router.register('/newsletter', gated(({ mount, query }) => renderNewsletterRoute(mount, query)));
 router.register('/topics', gated(({ mount, query }) => void renderTopics(mount, query)));
