@@ -439,7 +439,7 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
   const access = query.get('access') ?? undefined;
   const sample = query.get('demo') === 'sample';
   const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
-  renderFastAgenda(mount, access ? { ...board, access } : board, sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE);
+  renderFastAgenda(mount, access ? { ...board, access } : board, sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE, sample);
 }
 
 /** GOV-665 Timeline page: level toggles + event-type filters + simple/advanced
@@ -587,8 +587,8 @@ router.register('/body', gated(({ mount, query }) => void renderContextPage(moun
 router.register('/meeting', gated(({ mount, query }) => void renderContextPage(mount, 'meeting', query)));
 
 // GOV-440 — apply the stored theme preference and mount the dark/light toggle on
-// <body> (outside #app, so it survives route re-renders). Light stays default;
-// `prefers-color-scheme` auto-darkens; the toggle is the explicit override.
+// <body> (outside #app, so it survives route re-renders). GOV-665 page-mode
+// defaults may then apply Advanced/dark when the stored pref is still `system`;
+// explicit dark/light toggle choices continue to win.
 mountThemeToggle();
-
 router.start();

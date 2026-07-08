@@ -20,6 +20,7 @@ let store: Record<string, string>;
 beforeEach(() => {
   document.head.replaceChildren();
   document.body.replaceChildren();
+  document.documentElement.removeAttribute('data-theme');
   store = {};
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
@@ -38,6 +39,13 @@ describe('GOV-665 Fast Agenda page', () => {
     renderFastAgenda(root, REAL_BOARD, 'real');
     expect(root.querySelector('[data-test="fast-agenda-empty"]')?.textContent).toContain('No next agenda item is review-ready yet');
     expect(root.querySelector('[data-test="fast-agenda-card"]')).toBeNull();
+    expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
+    expect(root.querySelector('[data-test="source-notice"]')?.textContent).toContain('real');
+  });
+
+  it('shows the sample banner only for explicit demo/sample fixture routes', () => {
+    renderFastAgenda(root, SAMPLE_BOARD, 'sample', true);
+    expect(root.querySelector('[data-test="fixture-banner"]')?.textContent).toContain('OFFLINE SAMPLE');
   });
 
   it('uses gw-mode to switch from one-card Simple to list Advanced for the sample projection', () => {
@@ -46,7 +54,16 @@ describe('GOV-665 Fast Agenda page', () => {
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
     root.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')!.click();
     expect(localStorage.getItem('gw-mode')).toBe('advanced');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
+  });
+
+  it('does not let Advanced mode override an explicit light theme choice', () => {
+    localStorage.setItem('gw-theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+    renderFastAgenda(root, SAMPLE_BOARD, 'sample');
+    root.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')!.click();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('renders zero agenda card content for a public-lane projection', () => {

@@ -10,6 +10,7 @@ import type { AgendaBoard, AgendaBoardCard, AgendaLane } from '../types/agenda-b
 import type { ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
 import { ensureStyle, recordCard } from './render';
 import { FIXTURE_BANNER_TEXT } from './state-view';
+import { applyThemePref, readThemePref } from './theme-toggle';
 import { buildTimeline, recordTimelineDate } from './timeline';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -52,13 +53,29 @@ function fixtureBanner(notice?: string): HTMLElement {
   ]);
 }
 
-function pageShell(root: HTMLElement, testId: string, title: string, notice?: string): HTMLElement {
+function sourceNotice(notice: string): HTMLElement {
+  return el('div', { class: 'gw-state', role: 'status', 'data-test': 'source-notice' }, [notice]);
+}
+
+interface PageShellOptions {
+  notice?: string;
+  fixture?: boolean;
+}
+
+function pageShell(root: HTMLElement, testId: string, title: string, options: PageShellOptions = {}): HTMLElement {
   ensureStyle();
   root.className = 'gw-root gw-boards-root';
-  root.replaceChildren(fixtureBanner(notice));
+  root.replaceChildren();
+  if (options.fixture) root.append(fixtureBanner(options.notice));
+  else if (options.notice) root.append(sourceNotice(options.notice));
   const shell = el('main', { class: 'gw-boards', 'data-test': testId }, [el('h1', { class: 'gw-h1' }, [title])]);
   root.append(shell);
   return shell;
+}
+
+function applyModeThemeDefault(mode: PageMode): void {
+  if (readThemePref() !== 'system') return;
+  applyThemePref(mode === 'advanced' ? 'dark' : 'system');
 }
 
 function modeToggle(onChange: (mode: PageMode) => void): HTMLElement {
@@ -69,6 +86,7 @@ function modeToggle(onChange: (mode: PageMode) => void): HTMLElement {
     simple.setAttribute('aria-selected', String(mode === 'simple'));
     advanced.setAttribute('aria-selected', String(mode === 'advanced'));
     persistPageMode(mode);
+    applyModeThemeDefault(mode);
     onChange(mode);
   };
   simple.addEventListener('click', () => show('simple'));
@@ -123,8 +141,8 @@ function agendaLaneSummary(lane: AgendaLane): HTMLElement {
   ]);
 }
 
-export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?: string): void {
-  const shell = pageShell(root, 'fast-agenda-page', 'Fast Agenda', notice);
+export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?: string, fixture = false): void {
+  const shell = pageShell(root, 'fast-agenda-page', 'Fast Agenda', { notice, fixture });
   if (board.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
       el('h2', {}, ['Reviewer-internal only']),
@@ -177,7 +195,7 @@ function selectValue(query: URLSearchParams, key: string, fallback: string, allo
 }
 
 export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'timeline-levels-page', 'Timeline', notice);
+  const shell = pageShell(root, 'timeline-levels-page', 'Timeline', { notice, fixture: query.get('demo') === 'sample' });
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
       el('h2', {}, ['Reviewer-internal only']),
@@ -247,7 +265,7 @@ function bodyCard(node: TopicTreeNode): HTMLElement {
 }
 
 export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'boards-directory-page', 'Boards directory', notice);
+  const shell = pageShell(root, 'boards-directory-page', 'Boards directory', { notice, fixture: query.get('demo') === 'sample' });
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
       el('h2', {}, ['Reviewer-internal only']),
