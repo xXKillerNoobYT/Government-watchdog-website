@@ -200,7 +200,8 @@ describe('GOV-606 true-dark board chrome tokens (UX invariant preserved)', () =>
   it('dark values form a real elevation ladder board < lane < card (deeper = darker)', () => {
     const dark = GW_TOKENS.slice(GW_TOKENS.indexOf('[data-theme="dark"]'));
     const val = (name: string): number => {
-      const m = new RegExp(`${name}:#([0-9a-f]{6})`).exec(dark)!;
+      // case-insensitive: GOV-657 re-pointed these to uppercase hex (#0B0F14…)
+      const m = new RegExp(`${name}:#([0-9a-f]{6})`, 'i').exec(dark)!;
       return parseInt(m[1], 16);
     };
     expect(val('--gw-board-bg')).toBeLessThan(val('--gw-lane-bg'));

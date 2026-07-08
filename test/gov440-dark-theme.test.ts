@@ -46,19 +46,25 @@ describe('GOV-440 — dark theme is a color-only swap (floors untouchable)', () 
     expect(GW_TOKENS).toContain(':root[data-theme="light"]');
   });
 
-  it('re-declares the §11.1 dark COLOR values', () => {
+  it('re-declares the GOV-657 §2.1 dark COLOR values (wireframe Advanced palette)', () => {
     const dark = block(':root[data-theme="dark"]');
-    // a representative span of the §11.1 table (surface, text, accent, each tone)
-    expect(dark).toContain('--gw-surface:#15181d');
-    expect(dark).toContain('--gw-text:#f2f4f7');
-    expect(dark).toContain('--gw-accent:#8ab4f8');
-    expect(dark).toContain('--gw-accent-text-on:#0b1b30');
-    expect(dark).toContain('--gw-ok-text:#8fe6a8');
-    expect(dark).toContain('--gw-caution-text:#f5cf6a');
-    expect(dark).toContain('--gw-stop-text:#f6a39a');
-    expect(dark).toContain('--gw-stop-border:#e57368');
-    expect(dark).toContain('--gw-border-strong:#8a93a0');
-    expect(dark).toContain('--gw-neutral-border:#8a93a0');
+    // a representative span of the §2.1 table (surface, text, mint accent, each tone)
+    expect(dark).toContain('--gw-surface:#12181F');
+    expect(dark).toContain('--gw-text:#ECF1F7');
+    expect(dark).toContain('--gw-accent:#4ED8C3');
+    expect(dark).toContain('--gw-accent-text-on:#062019');
+    expect(dark).toContain('--gw-ok-text:#63D68F');
+    expect(dark).toContain('--gw-caution-text:#ECC35C');
+    expect(dark).toContain('--gw-stop-text:#EE7A6D');
+    expect(dark).toContain('--gw-stop-border:#EE7A6D');
+    expect(dark).toContain('--gw-border-strong:#8D99A7');
+    expect(dark).toContain('--gw-neutral-border:#8D99A7');
+    // new §2.1 tokens the wireframe language requires
+    expect(dark).toContain('--gw-page-bg:#0B0F14');
+    expect(dark).toContain('--gw-level-town:#4ED8C3');
+    expect(dark).toContain('--gw-level-county:#E5A83B');
+    expect(dark).toContain('--gw-level-state:#7DB1FB');
+    expect(dark).toContain('--gw-info-text:#7DB1FB');
   });
 
   it('NEVER overrides a dimensional/floor token in the dark block (§11.5)', () => {
@@ -94,31 +100,40 @@ describe('GOV-440 — dark theme is a color-only swap (floors untouchable)', () 
   });
 });
 
-describe('GOV-440 — dark palette is WCAG 2.1 AA (recomputed from §11.1 values)', () => {
-  // [foreground, background, target, label] — the full §11.2 table.
+describe('GOV-657 §8.1 — dark (Advanced) palette is WCAG 2.1 AA (recomputed)', () => {
+  // [foreground, background, target, label] — the full §8.1 table (new values).
   const TEXT_PAIRS: [string, string, number, string][] = [
-    ['#f2f4f7', '#15181d', 4.5, 'body on surface'],
-    ['#ced5de', '#15181d', 4.5, 'secondary on surface'],
-    ['#a4adba', '#15181d', 4.5, 'muted on surface'],
-    ['#ced5de', '#1e232b', 4.5, 'secondary on subtle'],
-    ['#a4adba', '#1e232b', 4.5, 'muted on subtle'],
-    ['#8ab4f8', '#15181d', 4.5, 'link on surface'],
-    ['#8ab4f8', '#1b2942', 4.5, 'accent on accent-tint'],
-    ['#0b1b30', '#8ab4f8', 4.5, 'text-on-accent (button)'],
-    ['#8fe6a8', '#14241a', 4.5, 'ok text on ok bg'],
-    ['#8fe6a8', '#172b1d', 4.5, 'ok text on ok-bg-soft'],
-    ['#f5cf6a', '#2a2410', 4.5, 'caution text on caution bg'],
-    ['#f8d98a', '#2a2410', 4.5, 'caution banner on caution bg'],
-    ['#f5cf6a', '#211d12', 4.5, 'caution text on caution-bg-soft'],
-    ['#f6a39a', '#2a1512', 4.5, 'stop text on stop bg'],
+    ['#ECF1F7', '#0B0F14', 4.5, 'body on page'],
+    ['#ECF1F7', '#12181F', 4.5, 'body on surface'],
+    ['#ECF1F7', '#141B23', 4.5, 'body on subtle'],
+    ['#C3CDD9', '#12181F', 4.5, 'secondary on surface'],
+    ['#C3CDD9', '#141B23', 4.5, 'secondary on subtle'],
+    ['#8D99A7', '#12181F', 4.5, 'muted on surface'],
+    ['#8D99A7', '#141B23', 4.5, 'muted on subtle'],
+    ['#4ED8C3', '#0B0F14', 4.5, 'mint on page (focus ring)'],
+    ['#4ED8C3', '#12181F', 4.5, 'mint on surface'],
+    ['#4ED8C3', '#0F1E1B', 4.5, 'mint on mint well'],
+    ['#062019', '#4ED8C3', 4.5, 'on-mint (button)'],
+    ['#63D68F', '#12181F', 4.5, 'ok text on surface'],
+    ['#63D68F', '#101820', 4.5, 'ok text on ok well'],
+    ['#63D68F', '#0E1A13', 4.5, 'ok text on ok-bg-soft'],
+    ['#ECC35C', '#12181F', 4.5, 'caution text on surface'],
+    ['#ECC35C', '#201A0E', 4.5, 'caution text on banner bg'],
+    ['#ECC35C', '#1B160C', 4.5, 'caution text on caution-bg-soft'],
+    ['#F4D488', '#201A0E', 4.5, 'caution-strong on caution bg'],
+    ['#EE7A6D', '#12181F', 4.5, 'stop text on surface'],
+    ['#EE7A6D', '#1D1412', 4.5, 'stop text on stop well'],
+    ['#E5A83B', '#12181F', 4.5, 'county amber on surface'],
+    ['#7DB1FB', '#12181F', 4.5, 'state blue on surface'],
+    ['#7DB1FB', '#141B23', 4.5, 'info link on subtle'],
   ];
   const UI_PAIRS: [string, string, number, string][] = [
-    ['#8ab4f8', '#15181d', 3.0, 'focus ring on surface'],
-    ['#8fe6a8', '#15181d', 3.0, 'ok border on surface'],
-    ['#d9a400', '#15181d', 3.0, 'caution-line on surface'],
-    ['#e57368', '#15181d', 3.0, 'stop border on surface'],
-    ['#8ab4f8', '#1b2942', 3.0, 'accent border on accent-tint'],
-    ['#8a93a0', '#15181d', 3.0, 'strong/neutral border on surface'],
+    ['#4ED8C3', '#12181F', 3.0, 'mint focus ring on surface'],
+    ['#63D68F', '#12181F', 3.0, 'ok border on surface'],
+    ['#E5A83B', '#12181F', 3.0, 'caution-line/county border on surface'],
+    ['#EE7A6D', '#12181F', 3.0, 'stop border on surface'],
+    ['#8D99A7', '#141B23', 3.0, 'strong border on subtle'],
+    ['#8D99A7', '#12181F', 3.0, 'neutral border on surface'],
   ];
 
   it.each(TEXT_PAIRS)('text %s on %s ≥ %f:1 (%s)', (fg, bg, target) => {
@@ -129,9 +144,38 @@ describe('GOV-440 — dark palette is WCAG 2.1 AA (recomputed from §11.1 values
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(target);
   });
 
-  it('matches the spec §11.2 published ratios (guards a value typo)', () => {
-    // spot-check the two tightest margins quoted in §11.2
-    expect(contrast('#8a93a0', '#15181d')).toBeCloseTo(5.73, 1); // border-strong/neutral
-    expect(contrast('#e57368', '#15181d')).toBeCloseTo(5.92, 1); // stop border
+  it('matches the spec §8.1 published ratios (guards a value typo)', () => {
+    // spot-check the two tightest margins quoted in §8.1
+    expect(contrast('#8D99A7', '#141B23')).toBeCloseTo(5.99, 1); // border-strong on subtle
+    expect(contrast('#EE7A6D', '#12181F')).toBeCloseTo(6.50, 1); // stop border on surface
+  });
+});
+
+describe('GOV-657 §8.2 — light (Simple/broadsheet) palette is WCAG 2.1 AA', () => {
+  // New coverage: light was previously untested for contrast. [fg,bg,target,label].
+  const LIGHT_PAIRS: [string, string, number, string][] = [
+    ['#1E1C17', '#FBF7EB', 4.5, 'ink on paper'],
+    ['#1E1C17', '#F3EDDD', 4.5, 'ink on canvas'],
+    ['#1E1C17', '#FDFAF1', 4.5, 'ink on panel'],
+    ['#4A463C', '#FBF7EB', 4.5, 'secondary ink on paper'],
+    ['#6E685B', '#FBF7EB', 4.5, 'muted ink on paper'],
+    ['#6E685B', '#FDFAF1', 4.5, 'muted ink on panel'],
+    ['#1A4D8F', '#FBF7EB', 4.5, 'link/blue on paper'],
+    ['#0E7A6E', '#FBF7EB', 4.5, 'town teal on paper'],
+    ['#0E7A6E', '#FDFAF1', 4.5, 'town teal on panel'],
+    ['#8F5D0E', '#FBF7EB', 4.5, 'county amber FIX on paper'],
+    ['#8F5D0E', '#FDFAF1', 4.5, 'county amber FIX on panel'],
+    ['#274F9B', '#FDFAF1', 4.5, 'state blue on panel'],
+  ];
+
+  it.each(LIGHT_PAIRS)('text %s on %s ≥ %f:1 (%s)', (fg, bg, target) => {
+    expect(contrast(fg, bg)).toBeGreaterThanOrEqual(target);
+  });
+
+  it('the county AA fix clears 4.5 where the raw wireframe value failed (§8.2)', () => {
+    // wireframe drew #A36A10 (4.24 — FAILS); spec adopts #8F5D0E (5.24 — passes).
+    expect(contrast('#A36A10', '#FBF7EB')).toBeLessThan(4.5); // documents the failure
+    expect(contrast('#8F5D0E', '#FBF7EB')).toBeGreaterThanOrEqual(4.5); // the fix ships
+    expect(contrast('#8F5D0E', '#FBF7EB')).toBeCloseTo(5.24, 1);
   });
 });
