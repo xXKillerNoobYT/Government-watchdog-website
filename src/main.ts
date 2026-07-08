@@ -18,6 +18,9 @@
  * `?move=<childId>:<newParentId>` (demonstrate an audited re-home).
  */
 
+// GOV-658 §2.3 — self-hosted webfonts (side-effect import; app-boot only, keeps
+// the unit-test path hermetic). Vendored WOFF2, zero third-party font beacons (§3.5).
+import './ui/fonts';
 import { createRouter } from './router';
 import type { RouteHandler } from './router';
 import { renderLanding, renderGatedApp } from './ui/landing';
