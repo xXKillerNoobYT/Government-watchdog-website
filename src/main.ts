@@ -29,6 +29,7 @@ import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
+import { renderHome } from './ui/home';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell } from './ui/shell';
@@ -452,6 +453,21 @@ function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void
 }
 
 /**
+ * GOV-658 §6 — reviewer-internal Home dashboard. Real widgets consume existing
+ * reviewed Alpine projections (card feed / digest / board); unavailable widgets
+ * render honest-empty states or DEV samples only behind `?demo=sample`.
+ */
+function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
+  renderHome(mount, {
+    cardFeed: CARD_FEED,
+    board: BOARD_PROJECTION,
+    newsletter: NEWSLETTER_DIGEST,
+    demo: query.get('demo') === 'sample',
+    sampleBoard: BOARD_SAMPLE,
+  });
+}
+
+/**
  * Reviewer / local bypass (GOV-419 acceptance #3) — lets Isaac SEE the full app
  * behind the gate for a local walkthrough WITHOUT shipping public access. Three
  * impure sources, all LOCAL-only (this build is reviewer-internal + noindex):
@@ -525,6 +541,7 @@ router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
 // meeting), the owner-confirmed primary UX that replaces the long card list. The
 // prior chronological long-list timeline stays reachable at `#/timeline` (and the
 // GOV-354 single-list card feed at `#/cards`) for continuity + regression.
+router.register('/home', gated(({ mount, query }) => renderHomeRoute(mount, query)));
 router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimeline(mount, query)));

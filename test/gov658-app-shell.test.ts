@@ -6,8 +6,8 @@
 //   - the shell wraps a surface and returns an inner content slot the surface
 //     renders into (§5 — "everything inherits"; surfaces stay untouched, §7),
 //   - the tab row lists ONLY shipped routes — no dead nav (§5.1 / §10 failure
-//     list): Home / Fast Agenda / Power Tracker / Source Vault / Watchlist are
-//     NOT rendered as tabs this sub-leg,
+//     list): Home is present with the shipped dashboard; Fast Agenda / Power
+//     Tracker / Source Vault / Watchlist are NOT rendered as tabs,
 //   - the active tab (incl. `/boards` alias + `/body`,`/meeting` context pages)
 //     highlights via aria-current (§5.1),
 //   - NO fake controls: no Search, no Alerts, and the jurisdiction pill is a
@@ -79,18 +79,18 @@ describe('GOV-658 shell — content slot (surfaces inherit, stay untouched)', ()
 });
 
 describe('GOV-658 shell — tab row lists ONLY shipped routes (no dead nav §5.1/§10)', () => {
-  it('renders exactly the five shipped tabs, in order', () => {
+  it('renders exactly the six shipped tabs, in order', () => {
     renderShell(root, { active: '/app' });
     const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
       (a) => a.textContent,
     );
-    expect(labels).toEqual(['Boards', 'Timeline', 'Cards', 'Topics', 'Newsletter']);
+    expect(labels).toEqual(['Home', 'Boards', 'Timeline', 'Cards', 'Topics', 'Newsletter']);
   });
 
-  it('does NOT render tabs for unshipped surfaces or the not-yet-built Home', () => {
+  it('does NOT render tabs for unshipped surfaces', () => {
     renderShell(root, { active: '/app' });
     const labels = [...root.querySelectorAll('.gw-shell-tab')].map((a) => a.textContent);
-    for (const dead of ['Home', 'Fast Agenda', 'Power Tracker', 'Source Vault', 'Watchlist']) {
+    for (const dead of ['Fast Agenda', 'Power Tracker', 'Source Vault', 'Watchlist']) {
       expect(labels, `${dead} must not be a dead nav tab this sub-leg`).not.toContain(dead);
     }
   });
@@ -101,13 +101,14 @@ describe('GOV-658 shell — tab row lists ONLY shipped routes (no dead nav §5.1
       expect(a.getAttribute('href')).toMatch(/^#\/[a-z]+$/);
     }
     // The NAV_TABS contract routes are the shipped, registered ones.
-    expect(NAV_TABS.map((t) => t.route)).toEqual(['/app', '/timeline', '/cards', '/topics', '/newsletter']);
+    expect(NAV_TABS.map((t) => t.route)).toEqual(['/home', '/app', '/timeline', '/cards', '/topics', '/newsletter']);
   });
 });
 
 describe('GOV-658 shell — active tab highlighting (§5.1)', () => {
   const cases: { path: string; expected: string }[] = [
     { path: '/app', expected: 'Boards' },
+    { path: '/home', expected: 'Home' },
     { path: '/boards', expected: 'Boards' }, // alias
     { path: '/timeline', expected: 'Timeline' },
     { path: '/cards', expected: 'Cards' },
@@ -127,7 +128,7 @@ describe('GOV-658 shell — active tab highlighting (§5.1)', () => {
   }
 
   it('marks no tab current for an unknown route (no false highlight)', () => {
-    renderShell(root, { active: '/home' }); // Home not shipped yet
+    renderShell(root, { active: '/unknown' });
     expect(root.querySelectorAll('.gw-shell-tab[aria-current="page"]').length).toBe(0);
   });
 });

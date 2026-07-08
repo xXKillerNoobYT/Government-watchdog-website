@@ -15,8 +15,8 @@
  *    standalone layout and NEVER shows app nav to unauthenticated visitors.
  *  - No dead nav: the tab row lists ONLY shipped routes (spec §5.1 "built
  *    data-driven so follow-up chains add tabs without shell rework"; §10 failure
- *    list bans dead nav tabs). The Home tab + `#/home` land together in the Home
- *    dashboard sub-leg (§6); adding one array entry there needs no shell change.
+ *    list bans dead nav tabs). The Home tab lands with the Home dashboard (§6),
+ *    while future IA pages stay absent until their routes exist.
  *  - No fake controls: Search (§5.1.3) and Alerts (§5.1.4) are NOT rendered (no
  *    index / no alert pipeline exists — a disabled fake violates honesty). The
  *    jurisdiction pill is a STATIC label (Alpine-only stage; no dropdown, no `▾`).
@@ -50,13 +50,13 @@ interface NavTab {
 
 /**
  * The tab row — SHIPPED surfaces only, in wireframe order where they exist
- * (spec §5.1). Wireframe tabs Fast Agenda / Power Tracker / Source Vault /
- * Watchlist are absent (their pages don't exist — dead nav is dishonest UI).
- * The Home tab (`#/home`) is added here alongside the Home dashboard (§6) in the
- * next sub-leg — one entry, no other shell change (the "data-driven" promise).
+ * (spec §5.1). Home ships in this sub-leg; wireframe tabs Fast Agenda / Power
+ * Tracker / Source Vault / Watchlist remain absent (their pages don't exist —
+ * dead nav is dishonest UI).
  * `#/body` + `#/meeting` are context pages that highlight their parent tab.
  */
 export const NAV_TABS: readonly NavTab[] = [
+  { route: '/home', label: 'Home' },
   { route: '/app', label: 'Boards', also: ['/boards', '/body', '/meeting'] },
   { route: '/timeline', label: 'Timeline' },
   { route: '/cards', label: 'Cards' },
