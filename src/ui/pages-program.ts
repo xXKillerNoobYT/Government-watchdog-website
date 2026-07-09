@@ -7,7 +7,7 @@
  */
 
 import type { AgendaBoard, AgendaBoardCard, AgendaLane } from '../types/agenda-board';
-import type { ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
+import type { EvidenceLink, ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
 import { ensureStyle, recordCard } from './render';
 import { FIXTURE_BANNER_TEXT } from './state-view';
 import { applyThemePref, readThemePref } from './theme-toggle';
@@ -313,3 +313,119 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
     ]),
   ]));
 }
+
+function statementTitle(record: StatementRecord): string {
+  return record.statement_text?.slice(0, 96) || record.statement_id;
+}
+
+function renderIssueDossierCard(record: StatementRecord): HTMLElement {
+  return el('article', { class: 'gw-card', 'data-test': 'issue-dossier-card', 'data-id': record.statement_id }, [
+    el('p', { class: 'gw-muted' }, [`Record ${record.statement_id}`]),
+    el('h2', { 'data-test': 'issue-title' }, [statementTitle(record)]),
+    el('div', { class: 'gw-badges' }, [
+      el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'issue-status' }, [record.ui_status ?? 'status not present']),
+      el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'issue-verification' }, [record.verification_status ?? 'verification not present']),
+    ]),
+    el('p', { class: 'gw-muted', 'data-test': 'issue-speaker' }, [record.speaker_label ?? 'Speaker label not present']),
+    el('p', { 'data-test': 'issue-statement' }, [record.statement_text ?? 'Statement text not present in reviewed projection.']),
+  ]);
+}
+
+function evidenceMetaRows(evidence: EvidenceLink[]): HTMLElement {
+  if (!evidence.length) {
+    return el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'issue-proof-empty', role: 'status' }, [
+      el('h2', {}, ['No source trail in this record']),
+      el('p', {}, ['The reviewed projection did not include source metadata for this record.']),
+    ]);
+  }
+  return el('div', { class: 'gw-board', 'data-test': 'issue-proof-rail' }, evidence.map((entry, index) =>
+    el('article', { class: 'gw-card', 'data-test': 'proof-source', 'data-source-id': entry.to_source_id ?? `source-${index + 1}` }, [
+      el('h3', {}, [entry.to_source_id ?? `Source ${index + 1}`]),
+      el('p', { class: 'gw-muted' }, [[entry.source_type, entry.published_by, entry.jurisdiction].filter(Boolean).join(' · ') || 'Source metadata not present']),
+      el('p', { class: 'gw-muted' }, [entry.source_date ?? 'Source date not present']),
+      ...(entry.original_url ? [el('a', { href: entry.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-original' }, ['Open original'])] : []),
+      ...(entry.archive_url ? [el('a', { href: entry.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-archive' }, ['Open archive'])] : []),
+    ]),
+  ));
+}
+
+export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
+  const shell = pageShell(root, 'issue-detail-page', 'Issue detail', { notice, fixture: query.get('demo') === 'sample' });
+  if (data.access !== 'reviewer_internal') {
+    shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
+      el('h2', {}, ['Reviewer-internal only']),
+      el('p', {}, ['The issue detail page renders no record outside the reviewer-internal lane.']),
+    ]));
+    return;
+  }
+  const records = data.records ?? [];
+  const id = query.get('id') ?? records[0]?.statement_id;
+  const record = records.find((r) => r.statement_id === id);
+  if (!record) {
+    shell.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'issue-missing', role: 'status' }, [
+      el('h2', {}, ['Reviewed record not found']),
+      el('p', {}, ['No dossier was fabricated for the requested id.']),
+    ]));
+    return;
+  }
+  const mount = el('div', { 'data-test': 'issue-mode-mount' });
+  shell.append(modeToggle((mode) => {
+    mount.replaceChildren(renderIssueDossierCard(record));
+    if (mode === 'advanced') mount.append(evidenceMetaRows(record.evidence ?? []));
+  }), mount);
+}
+
+function collectSources(data: ReadApiResponse): EvidenceLink[] {
+  const byKey = new Map<string, EvidenceLink>();
+  for (const record of data.records ?? []) {
+    for (const source of record.evidence ?? []) {
+      const key = source.to_source_id ?? source.original_url ?? source.archive_url ?? `${record.statement_id}:${byKey.size}`;
+      if (!byKey.has(key)) byKey.set(key, source);
+    }
+  }
+  return [...byKey.values()];
+}
+
+export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
+  const shell = pageShell(root, 'source-vault-page', 'Source vault', { notice, fixture: query.get('demo') === 'sample' });
+  if (data.access !== 'reviewer_internal') {
+    shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
+      el('h2', {}, ['Reviewer-internal only']),
+      el('p', {}, ['The Source Vault renders no source rows outside the reviewer-internal lane.']),
+    ]));
+    return;
+  }
+  const sources = collectSources(data);
+  if (!sources.length) {
+    shell.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-vault-empty', role: 'status' }, [
+      el('h2', {}, ['No reviewed source metadata yet']),
+      el('p', {}, ['No rows were invented for the vault.']),
+    ]));
+  } else {
+    shell.append(el('div', { class: 'gw-board', 'data-test': 'source-vault-list' }, sources.map((source, index) =>
+      el('article', { class: 'gw-card', 'data-test': 'source-vault-row', 'data-source-id': source.to_source_id ?? `source-${index + 1}` }, [
+        el('h2', {}, [source.to_source_id ?? `Source ${index + 1}`]),
+        el('p', { class: 'gw-muted' }, [[source.source_type, source.published_by, source.jurisdiction].filter(Boolean).join(' · ') || 'Metadata not present']),
+        el('p', { class: 'gw-muted' }, [`Date: ${source.source_date ?? 'not present'}`]),
+        el('p', { class: 'gw-muted' }, [`Validation: ${source.last_validated_utc ?? source.scan_date ?? 'not present'}`]),
+        ...(source.original_url ? [el('a', { href: source.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-original' }, ['Original'])] : []),
+        ...(source.archive_url ? [el('a', { href: source.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-archive' }, ['Archive'])] : []),
+      ]),
+    )));
+  }
+  shell.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-ledger-empty', role: 'status' }, [
+    el('h2', {}, ['Ledger history not wired yet']),
+    el('p', {}, ['The current reviewed payload has source metadata, but no ledger-change projection.']),
+  ]));
+  shell.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-alerts-empty', role: 'status' }, [
+    el('h2', {}, ['Transparency alerts not wired yet']),
+    el('p', {}, ['No live alert generation is performed on this page.']),
+  ]));
+  if (query.get('demo') === 'sample') {
+    shell.append(el('section', { class: 'gw-state', 'data-test': 'packet-diff-demo', role: 'note' }, [
+      el('h2', {}, ['Packet diff demo fixture']),
+      el('p', {}, ['Sample-only packet-diff placeholder for visual review; not real Alpine data.']),
+    ]));
+  }
+}
+

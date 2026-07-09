@@ -408,8 +408,8 @@ export function renderNewsletterArchive(
     fixtureBanner(notice),
     el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-archive' }, [
       el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
-      el('h1', { class: 'gw-nl-h1' }, ['Alpine newsletter archive']),
-      el('p', { class: 'gw-muted' }, ['Reviewed digests by Alpine coverage period. Reviewer-internal — not published.']),
+      el('h1', { class: 'gw-nl-h1' }, ['Alpine Weekly broadsheet archive']),
+      el('p', { class: 'gw-muted' }, ['Reviewed weekly digest rows by Alpine coverage period. Reviewer-internal archive only.']),
     ]),
   );
 
@@ -475,7 +475,7 @@ export function renderNewsletterDetail(
   root.append(
     el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-detail', 'data-id': digest.newsletterId }, [
       el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
-      el('h1', { class: 'gw-nl-h1' }, [`Alpine digest — ${coveragePeriodLabel(digest.coveragePeriod)}`]),
+      el('h1', { class: 'gw-nl-h1' }, [`Alpine Weekly broadsheet — ${coveragePeriodLabel(digest.coveragePeriod)}`]),
       el('p', { class: 'gw-muted' }, [digest.newsletterId]),
       el('p', {}, [el('a', { class: 'gw-nl-deeplink', href: '#/newsletter', 'data-test': 'back-to-archive' }, ['← Back to archive'])]),
     ]),
@@ -515,9 +515,9 @@ export function renderNewsletterState(root: HTMLElement, kind: NewsletterStateKi
 // ---------------------------------------------------------------------------
 
 export const NEWSLETTER_STYLE = `${GW_TOKENS}
-.gw-nl-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:52rem;margin:0 auto;padding:1.5rem var(--gw-space-5)}
+.gw-nl-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:60rem;margin:0 auto;padding:1.5rem var(--gw-space-5);background:linear-gradient(180deg,var(--gw-surface),var(--gw-bg))}
 .gw-nl-h1{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-2);line-height:var(--gw-leading-tight)}
-.gw-nl-header{margin-bottom:var(--gw-space-4)}
+.gw-nl-header{margin-bottom:var(--gw-space-4);border-bottom:var(--gw-border-w) double var(--gw-border);padding-bottom:var(--gw-space-3);text-align:center}
 .gw-muted{color:var(--gw-text-muted)}
 .gw-meta-key{color:var(--gw-text-muted);font-weight:600}
 .gw-badge{font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;background:var(--gw-surface-accent-tint);color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-neutral-border);border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:nowrap}
@@ -536,7 +536,7 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-archive-id{font-weight:700;margin-right:var(--gw-space-3)}
 .gw-nl-archive-meta{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);align-items:center}
 .gw-nl-count{font-size:var(--gw-text-sm);font-weight:700;color:var(--gw-text-secondary)}
-.gw-nl-sections{display:flex;flex-direction:column;gap:var(--gw-space-4)}
+.gw-nl-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:var(--gw-space-4)}
 .gw-nl-section{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:.8rem 1rem;background:var(--gw-surface)}
 .gw-nl-section-title{font-size:var(--gw-text-lg);margin:0 0 var(--gw-space-3)}
 .gw-nl-none{font-style:italic;margin:var(--gw-space-1) 0}

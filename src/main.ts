@@ -30,7 +30,7 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderHome } from './ui/home';
-import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels } from './ui/pages-program';
+import { renderBoardsDirectory, renderFastAgenda, renderIssueDetail, renderSourceVault, renderTimelineLevels } from './ui/pages-program';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell } from './ui/shell';
@@ -463,6 +463,22 @@ function renderBoardsDirectoryRoute(mount: HTMLElement, query: URLSearchParams):
   renderBoardsDirectory(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
+/** GOV-668 Issue Detail route: one reviewed statement per `#/issue?id=` URL,
+ * with Simple dossier and Advanced proof rail over the real GOV-149 capture. */
+function renderIssueDetailRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderIssueDetail(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+/** GOV-668 Source Vault: real per-record source metadata plus honest-empty
+ * ledger/alert rows; packet diff is demo/sample-only. */
+function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
 /**
  * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
  * digest detail. `?state=loading|empty|error` forces the async states for
@@ -577,6 +593,9 @@ router.register('/home', gated(({ mount, query }) => renderHomeRoute(mount, quer
 router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mount, query)));
 router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
+router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
+router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
+router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
 router.register('/timeline-legacy', gated(({ mount, query }) => void renderTimeline(mount, query)));
