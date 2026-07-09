@@ -15,8 +15,7 @@
  *    standalone layout and NEVER shows app nav to unauthenticated visitors.
  *  - No dead nav: the tab row lists ONLY shipped routes (spec §5.1 "built
  *    data-driven so follow-up chains add tabs without shell rework"; §10 failure
- *    list bans dead nav tabs). The Home tab lands with the Home dashboard (§6),
- *    while future IA pages stay absent until their routes exist.
+ *    list bans dead nav tabs). The Home tab lands with the Home dashboard (§6).
  *  - No fake controls: Search (§5.1.3) and Alerts (§5.1.4) are NOT rendered (no
  *    index / no alert pipeline exists — a disabled fake violates honesty). The
  *    jurisdiction pill is a STATIC label (Alpine-only stage; no dropdown, no `▾`).
@@ -61,6 +60,9 @@ export const NAV_TABS: readonly NavTab[] = [
   { route: '/app', label: 'Boards', also: ['/boards', '/body', '/meeting'] },
   { route: '/timeline', label: 'Timeline' },
   { route: '/cards', label: 'Cards' },
+  { route: '/power', label: 'Power' },
+  { route: '/watchlist', label: 'Watchlist' },
+  { route: '/location', label: 'Location' },
   { route: '/topics', label: 'Topics' },
   { route: '/vault', label: 'Source Vault', also: ['/sources'] },
   { route: '/newsletter', label: 'Newsletter' },
@@ -263,8 +265,8 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
  * shell adopts Advanced (dark) / Simple (light) with the rest of the app. No raw
  * hex; every colour is a `var(--gw-*)`. Elevation is shadow-free (surface steps +
  * border ladder, spec §2.4). Responsive collapse per §4: the top tab row becomes
- * a fixed bottom tab bar on mobile (≤640px), 5 equal ≥44px slots (the shipped tab
- * count fits without a "More" overflow until Home makes it 6, §5.1).
+ * a fixed, horizontally scrollable bottom tab bar on mobile (≤640px), with each
+ * shipped tab retaining a ≥44px tap target.
  */
 export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-root{font-family:var(--gw-font);color:var(--gw-text);background:var(--gw-page-bg);min-height:100vh;display:flex;flex-direction:column;margin:0}
