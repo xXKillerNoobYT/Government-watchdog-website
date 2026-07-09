@@ -79,18 +79,18 @@ describe('GOV-658 shell — content slot (surfaces inherit, stay untouched)', ()
 });
 
 describe('GOV-658 shell — tab row lists ONLY shipped routes (no dead nav §5.1/§10)', () => {
-  it('renders exactly the seven shipped tabs, in order', () => {
+  it('renders exactly the shipped tabs, in order', () => {
     renderShell(root, { active: '/app' });
     const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
       (a) => a.textContent,
     );
-    expect(labels).toEqual(['Home', 'Boards', 'Timeline', 'Cards', 'Topics', 'Source Vault', 'Newsletter']);
+    expect(labels).toEqual(['Home', 'Boards', 'Timeline', 'Cards', 'Power', 'Watchlist', 'Location', 'Topics', 'Source Vault', 'Newsletter']);
   });
 
   it('does NOT render tabs for unshipped surfaces', () => {
     renderShell(root, { active: '/app' });
     const labels = [...root.querySelectorAll('.gw-shell-tab')].map((a) => a.textContent);
-    for (const dead of ['Fast Agenda', 'Power Tracker', 'Watchlist']) {
+    for (const dead of ['Fast Agenda', 'Search', 'Alerts']) {
       expect(labels, `${dead} must not be a dead nav tab this sub-leg`).not.toContain(dead);
     }
   });
@@ -101,7 +101,7 @@ describe('GOV-658 shell — tab row lists ONLY shipped routes (no dead nav §5.1
       expect(a.getAttribute('href')).toMatch(/^#\/[a-z]+$/);
     }
     // The NAV_TABS contract routes are the shipped, registered ones.
-    expect(NAV_TABS.map((t) => t.route)).toEqual(['/home', '/app', '/timeline', '/cards', '/topics', '/vault', '/newsletter']);
+    expect(NAV_TABS.map((t) => t.route)).toEqual(['/home', '/app', '/timeline', '/cards', '/power', '/watchlist', '/location', '/topics', '/vault', '/newsletter']);
   });
 });
 
@@ -112,6 +112,9 @@ describe('GOV-658 shell — active tab highlighting (§5.1)', () => {
     { path: '/boards', expected: 'Boards' }, // alias
     { path: '/timeline', expected: 'Timeline' },
     { path: '/cards', expected: 'Cards' },
+    { path: '/power', expected: 'Power' },
+    { path: '/watchlist', expected: 'Watchlist' },
+    { path: '/location', expected: 'Location' },
     { path: '/topics', expected: 'Topics' },
     { path: '/vault', expected: 'Source Vault' },
     { path: '/sources', expected: 'Source Vault' }, // legacy alias

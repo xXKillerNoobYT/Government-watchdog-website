@@ -30,7 +30,7 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderHome } from './ui/home';
-import { renderBoardsDirectory, renderFastAgenda, renderIssueDetail, renderSourceVault, renderTimelineLevels } from './ui/pages-program';
+import { renderBoardsDirectory, renderFastAgenda, renderIssueDetail, renderLocation, renderPowerTracker, renderSourceVault, renderTimelineLevels, renderWatchlist } from './ui/pages-program';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell } from './ui/shell';
@@ -479,6 +479,28 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
   renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
+/** GOV-671 Power Tracker: no-ranking Alpine scaffold over the reviewed capture;
+ * roster is honest-empty until reviewed people/role rows exist. */
+function renderPowerTrackerRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderPowerTracker(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+/** GOV-671 Watchlist: device-local toggles only, no email/account sync. */
+function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderWatchlist(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+/** GOV-671 Location: static Wyoming→Lincoln→Alpine coverage picker, no geo map. */
+function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderLocation(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
 /**
  * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
  * digest detail. `?state=loading|empty|error` forces the async states for
@@ -596,6 +618,9 @@ router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRout
 router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
 router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
+router.register('/power', gated(({ mount, query }) => renderPowerTrackerRoute(mount, query)));
+router.register('/watchlist', gated(({ mount, query }) => renderWatchlistRoute(mount, query)));
+router.register('/location', gated(({ mount, query }) => renderLocationRoute(mount, query)));
 router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
 router.register('/timeline-legacy', gated(({ mount, query }) => void renderTimeline(mount, query)));
