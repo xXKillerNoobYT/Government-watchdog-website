@@ -594,6 +594,7 @@ router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, que
 router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mount, query)));
 router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
 router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
+router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));

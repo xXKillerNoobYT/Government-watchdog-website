@@ -50,9 +50,10 @@ interface NavTab {
 
 /**
  * The tab row — SHIPPED surfaces only, in wireframe order where they exist
- * (spec §5.1). Home ships in this sub-leg; wireframe tabs Fast Agenda / Power
- * Tracker / Source Vault / Watchlist remain absent (their pages don't exist —
- * dead nav is dishonest UI).
+ * (spec §5.1). Source Vault is now shipped at its GOV-656 canonical route
+ * `#/vault`; the legacy `#/sources` route stays an alias only. Fast Agenda ships
+ * as a contextual route but is not promoted here yet; Power Tracker / Watchlist
+ * remain absent until their pages exist (dead nav is dishonest UI).
  * `#/body` + `#/meeting` are context pages that highlight their parent tab.
  */
 export const NAV_TABS: readonly NavTab[] = [
@@ -61,6 +62,7 @@ export const NAV_TABS: readonly NavTab[] = [
   { route: '/timeline', label: 'Timeline' },
   { route: '/cards', label: 'Cards' },
   { route: '/topics', label: 'Topics' },
+  { route: '/vault', label: 'Source Vault', also: ['/sources'] },
   { route: '/newsletter', label: 'Newsletter' },
 ];
 

@@ -3,7 +3,7 @@
 // GOV-668 — Wave 3 pages: Issue Detail, Source Vault, and newsletter broadsheet
 // re-skin. Pins reviewer-internal gating, mode persistence, honest-empty rows,
 // and no unsupported metrics/alert generation on these pages.
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderIssueDetail, renderSourceVault } from '../src/ui/pages-program';
 import { loadDigestResponse, renderNewsletterArchive, renderNewsletterDetail } from '../src/ui/newsletter';
 import type { ReadApiResponse } from '../src/types/read-api';
@@ -79,6 +79,38 @@ describe('GOV-668 Source Vault', () => {
     renderSourceVault(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="source-vault-row"]')).toBeNull();
+  });
+
+  it('is registered at canonical #/vault, with #/sources retained only as an alias', async () => {
+    vi.resetModules();
+    document.body.replaceChildren();
+    const app = document.createElement('div');
+    app.id = 'app';
+    document.body.append(app);
+
+    window.location.hash = '#/vault?reviewer=1';
+    await import('../src/main');
+    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="tab-source vault"]')?.getAttribute('aria-current')).toBe('page');
+
+    window.location.hash = '#/sources?reviewer=1';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="tab-source vault"]')?.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('keeps canonical #/vault fail-closed before the reviewer gate', async () => {
+    vi.resetModules();
+    document.body.replaceChildren();
+    const app = document.createElement('div');
+    app.id = 'app';
+    document.body.append(app);
+
+    window.location.hash = '#/vault?gate=denied';
+    await import('../src/main');
+    expect(app.querySelector('[data-test="gated-app"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="source-vault-row"]')).toBeNull();
+    expect(app.querySelector('[data-test="source-vault-page"]')).toBeNull();
   });
 });
 
