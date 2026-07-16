@@ -15,6 +15,7 @@
 import type { AccessState, GatePanel } from '../gate/access';
 import { gatePanelContent, SCAFFOLDING_NOTE } from '../gate/access';
 import { GW_TOKENS } from './tokens';
+import { applyThemePref, readThemePref } from './theme-toggle';
 import { renderWaitlistForm, WAITLIST_STYLE } from './waitlist-form';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -76,6 +77,20 @@ function gatePanelEl(panel: GatePanel): HTMLElement {
 }
 
 /**
+ * GOV-767 — the landing arbitrates its own palette on render. The shell/page
+ * reading-mode defaults apply `dark` via `applyThemePref` WITHOUT persisting
+ * (GOV-658 §1.4), so `data-theme="dark"` leaked onto the root element survives
+ * "← Back to preview" and washed the hero out (light text tokens over the
+ * unpainted white canvas). Re-applying the STORED preference — exactly what
+ * `mountThemeToggle` does at boot — undoes any such unpersisted leak (unset
+ * reads as `system`: broadsheet-light, or honest OS-dark via the media query)
+ * while an explicit pin is simply re-applied verbatim, never overridden (§1.4).
+ */
+function syncLandingPalette(): void {
+  applyThemePref(readThemePref());
+}
+
+/**
  * Render the preview-launch landing for the given access state.
  *
  * Hard invariant (acceptance #1): NO civic evidence is rendered here. The DOM
@@ -83,6 +98,7 @@ function gatePanelEl(panel: GatePanel): HTMLElement {
  * by the gov419 test asserting zero record-cards / timeline / source-drawer nodes.
  */
 export function renderLanding(root: HTMLElement, access: AccessState): void {
+  syncLandingPalette();
   ensureLandingStyle();
   root.className = 'gw-landing-root';
   root.replaceChildren();
@@ -140,6 +156,10 @@ export function renderGatedApp(
  * gate state gets a distinct tone (acceptance #4: visibly distinct states).
  */
 export const LANDING_STYLE = `${GW_TOKENS}
+/* GOV-767 — paint the page canvas from the active token set (same token the
+   shell paints on .gw-shell-root) so a dark palette (explicit pin / OS-dark) is
+   actually dark instead of light text tokens over the white default canvas. */
+html{background:var(--gw-page-bg)}
 .gw-landing-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:42rem;margin:0 auto;padding:2rem var(--gw-space-5)}
 .gw-landing-kicker{text-transform:uppercase;letter-spacing:.08em;font-size:var(--gw-text-xs);font-weight:700;color:var(--gw-text-muted);margin:0 0 var(--gw-space-2)}
 .gw-landing-h1{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-3);line-height:var(--gw-leading-tight)}
