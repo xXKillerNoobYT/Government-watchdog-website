@@ -15,18 +15,37 @@
  */
 
 /**
- * Beta access states, ordered least → most trust. Mirrors the workflow's public
- * states: not-signed-in (`anonymous`), waitlisted/pending (`pending`),
- * denied/needs-info (`denied`), approved (`approved`). Revoked/disabled is a
- * backend concern deferred to the real-auth slice (out of scope here).
+ * Beta access states. GOV-758 (GOV-721 leg 3/5) expands the original 4-state
+ * scaffold to the full SIX gated-beta states the GATED_BETA_ACCESS_WORKFLOW
+ * enumerates — now backed (in later legs) by the real accounts/cohorts backend
+ * (GOV-753 schema / GOV-754 service), not just placeholder UI:
+ *
+ *   - `anonymous`   — not signed in (public visitor).
+ *   - `waitlisted`  — request received, sitting in the intake queue.
+ *   - `pending`     — pending review: a reviewer is actively evaluating.
+ *   - `approved`    — approved for the gated beta (full app unlocks).
+ *   - `denied`      — denied / needs more info (capacity/process only).
+ *   - `revoked`     — access previously granted, now revoked/disabled/paused.
+ *
+ * Ordered as the workflow lists them (not-signed-in → waitlisted → pending-review
+ * → approved → denied → revoked). Every non-`approved` state renders ZERO civic
+ * data (AC-1/AC-7). The `?gate=` screenshot override accepts any of these keys.
  */
-export type AccessState = 'anonymous' | 'pending' | 'denied' | 'approved';
+export type AccessState =
+  | 'anonymous'
+  | 'waitlisted'
+  | 'pending'
+  | 'approved'
+  | 'denied'
+  | 'revoked';
 
 export const ACCESS_STATES = [
   'anonymous',
+  'waitlisted',
   'pending',
-  'denied',
   'approved',
+  'denied',
+  'revoked',
 ] as const satisfies readonly AccessState[];
 
 export function isAccessState(value: unknown): value is AccessState {
@@ -86,15 +105,25 @@ export const SCAFFOLDING_NOTE =
 /** Per-state panel copy. The single place gate wording is defined. */
 export function gatePanelContent(state: AccessState): GatePanel {
   switch (state) {
-    case 'pending':
+    case 'waitlisted':
       return {
         state,
         badge: 'Waitlisted',
         title: "You're on the waitlist",
         message:
-          'Your request is pending review. We approve beta access in batches to keep ' +
-          'source-review quality and moderation manageable. A reviewer will follow up — ' +
-          'nothing more is needed from you right now.',
+          "Thanks — your request is in the queue. We admit beta access in small batches to keep " +
+          'source-review quality and moderation manageable, so there may be a wait. A reviewer ' +
+          'will follow up by email; nothing more is needed from you right now.',
+      };
+    case 'pending':
+      return {
+        state,
+        badge: 'In review',
+        title: 'Your request is being reviewed',
+        message:
+          'A reviewer is looking at your beta request now. This is a routine capacity and ' +
+          "access-review step — we'll email you the moment there's a decision. You don't need " +
+          'to do anything else.',
       };
     case 'denied':
       return {
@@ -108,6 +137,22 @@ export function gatePanelContent(state: AccessState): GatePanel {
           "We couldn't approve this beta request yet. This is only about beta capacity and " +
           'our access-review process — it does not reflect anything about you, your community, ' +
           'or your standing as a resident or citizen. You can request access again later.',
+      };
+    case 'revoked':
+      return {
+        state,
+        badge: 'Access ended',
+        title: 'Your beta access has ended',
+        // AC#5 (extended to revoked) — like denial, revocation copy must NOT
+        // imply anything about the person's civic standing. Beta access is a
+        // capacity/quality/moderation control, and can be paused for operational
+        // reasons (e.g. a cohort reset); it says nothing about the individual.
+        message:
+          'Your gated-beta access has been turned off. Beta access is a controlled, revocable ' +
+          'preview managed for capacity, quality, and moderation — it does not reflect anything ' +
+          'about you, your community, or your standing as a resident or citizen. You can request ' +
+          'access again.',
+        action: { label: 'Request access again', href: '#/?gate=anonymous', test: 'gate-rerequest' },
       };
     case 'approved':
       return {
@@ -125,10 +170,11 @@ export function gatePanelContent(state: AccessState): GatePanel {
         title: 'Request beta access',
         message:
           'The full Government Watchdog app is in gated beta. Access is controlled to protect ' +
-          'quality, safety, moderation, and source-review integrity. Join the waitlist and a ' +
-          'reviewer will follow up.',
-        // Stub: routes to the (non-functional) waitlisted state for the demo flow.
-        action: { label: 'Request beta access', href: '#/?gate=pending', test: 'gate-request' },
+          'quality, safety, moderation, and source-review integrity. Join the waitlist below and ' +
+          'a reviewer will follow up.',
+        // The waitlist intake form renders alongside this panel (landing.ts); the
+        // action doubles as the form's submit affordance / demo route to `waitlisted`.
+        action: { label: 'Join the waitlist', href: '#/?gate=waitlisted', test: 'gate-request' },
       };
   }
 }

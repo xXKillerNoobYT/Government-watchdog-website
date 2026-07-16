@@ -15,6 +15,7 @@
 import type { AccessState, GatePanel } from '../gate/access';
 import { gatePanelContent, SCAFFOLDING_NOTE } from '../gate/access';
 import { GW_TOKENS } from './tokens';
+import { renderWaitlistForm, WAITLIST_STYLE } from './waitlist-form';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -54,7 +55,13 @@ function gatePanelEl(panel: GatePanel): HTMLElement {
     el('h2', { class: 'gw-gate-title', 'data-test': 'gate-title' }, [panel.title]),
     el('p', { class: 'gw-gate-message', 'data-test': 'gate-message' }, [panel.message]),
   ];
-  if (panel.action) {
+  // Anonymous is the "join the waitlist" state: the intake FORM is the affordance,
+  // so we render it here instead of the panel's stub anchor (the anchor's `href` is
+  // kept in the model only as the demo route target). Every other state renders its
+  // action anchor normally (approved → enter app, revoked → request again).
+  if (panel.state === 'anonymous') {
+    children.push(renderWaitlistForm());
+  } else if (panel.action) {
     children.push(
       el(
         'a',
@@ -143,10 +150,12 @@ export const LANDING_STYLE = `${GW_TOKENS}
 .gw-gate-panel,.gw-gated-app{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-5) 1.1rem;margin:1.1rem 0;background:var(--gw-surface)}
 .gw-gate-badge{display:inline-block;font-size:var(--gw-text-badge);font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem var(--gw-space-3);border:var(--gw-border-w) solid;white-space:nowrap}
 /* Distinct tone per access state (colour + the badge word together); each state
-   keeps its word, so the four states stay distinct without colour (GOV-419 #4). */
+   keeps its word, so the SIX states stay distinct without colour (GOV-758 AC-7). */
 .gw-gate-anonymous{background:var(--gw-surface-accent-tint);color:var(--gw-accent);border-color:var(--gw-accent)}
+.gw-gate-waitlisted{background:var(--gw-tone-info-well);color:var(--gw-info-text);border-color:var(--gw-tone-info-line)}
 .gw-gate-pending{background:var(--gw-caution-bg);color:var(--gw-caution-text);border-color:var(--gw-caution-text)}
 .gw-gate-denied{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
+.gw-gate-revoked{background:var(--gw-surface-well);color:var(--gw-text-secondary);border-color:var(--gw-border-strong)}
 .gw-gate-approved{background:var(--gw-ok-bg);color:var(--gw-ok-text);border-color:var(--gw-ok-text)}
 .gw-gate-title{font-size:var(--gw-text-lg);margin:var(--gw-space-3) 0 var(--gw-space-1)}
 .gw-gate-message{margin:var(--gw-space-1) 0 .7rem}
@@ -155,7 +164,7 @@ export const LANDING_STYLE = `${GW_TOKENS}
 .gw-gate-action-ghost{color:var(--gw-accent);background:var(--gw-surface)}
 .gw-gate-scaffold{font-size:.78rem;margin:.7rem 0 0;border-top:var(--gw-border-w) dashed var(--gw-border);padding-top:var(--gw-space-3)}
 .gw-reviewer-hint{font-size:var(--gw-text-sm);margin:var(--gw-space-4) 0 0}
-`;
+${WAITLIST_STYLE}`;
 
 let styleInjected = false;
 function ensureLandingStyle(): void {

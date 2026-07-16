@@ -112,7 +112,10 @@ describe('GOV-419 renderLanding — preview teaser, no civic evidence (AC#1)', (
     expect(root.querySelector('[data-test="landing-scope"]')?.textContent).toMatch(/Town of Alpine/i);
     expect(root.querySelector('[data-test="landing-gated"]')?.textContent).toMatch(/gated beta/i);
     // The request-access affordance is present (AC#2: a clear access affordance).
-    expect(root.querySelector('[data-test="gate-request"]')).not.toBeNull();
+    // GOV-758: the affordance is now the waitlist intake FORM (email + interest),
+    // which replaces the earlier stub anchor on the anonymous panel.
+    expect(root.querySelector('[data-test="waitlist-form"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="waitlist-submit"]')).not.toBeNull();
     // Scaffolding is clearly labeled non-functional (AC#4).
     expect(root.querySelector('[data-test="scaffolding-note"]')?.textContent).toMatch(/non-functional beta scaffolding/i);
     assertNoCivicData(root);

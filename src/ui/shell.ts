@@ -32,6 +32,7 @@
 
 import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
+import { mountNotificationPanel } from './notification-panel';
 
 export type ShellMode = 'simple' | 'advanced';
 
@@ -247,10 +248,16 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
 
   const slot = el('div', { class: 'gw-shell-slot', 'data-test': 'shell-content' });
 
+  // Right-aligned action group: reading-mode toggle + the in-app notification bell
+  // (GOV-758). The bell renders ONLY here, inside the gated shell, so notification
+  // content is never reachable by an unauthenticated visitor.
+  const actions = el('div', { class: 'gw-shell-actions' }, [modeToggle(mode)]);
+  mountNotificationPanel(actions);
+
   root.append(
     el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' }, []),
     el('header', { class: 'gw-shell-header', 'data-test': 'app-shell', 'data-mode': mode }, [
-      el('div', { class: 'gw-shell-bar' }, [brand(), jurisdictionPill(), modeToggle(mode)]),
+      el('div', { class: 'gw-shell-bar' }, [brand(), jurisdictionPill(), actions]),
       tabRow(opts.active),
     ]),
     el('main', { class: 'gw-shell-content' }, [slot]),
@@ -280,7 +287,8 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-wordmark span{font-size:var(--gw-text-sm);color:var(--gw-text-secondary);text-transform:uppercase;letter-spacing:1px}
 .gw-shell-juris{display:inline-flex;align-items:center;gap:var(--gw-space-2);font-size:var(--gw-text-badge);font-weight:600;color:var(--gw-text-secondary);background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:.3rem var(--gw-space-4)}
 .gw-shell-juris-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-level-town)}
-.gw-shell-mode{margin-left:auto;display:inline-flex;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:2px}
+.gw-shell-actions{margin-left:auto;display:inline-flex;align-items:center;gap:var(--gw-space-3)}
+.gw-shell-mode{display:inline-flex;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:2px}
 .gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-secondary);font:600 var(--gw-text-badge)/1 var(--gw-font);min-height:calc(var(--gw-tap-min) - 8px);padding:.35rem var(--gw-space-4);border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
 .gw-shell-mode-btn:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
@@ -296,7 +304,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-refreshed{font-family:var(--gw-font-mono);font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
 @media (max-width:640px){
   .gw-shell-bar{flex-wrap:wrap;gap:var(--gw-space-3)}
-  .gw-shell-mode{margin-left:auto}
+  .gw-shell-actions{margin-left:auto}
   /* z-index above the standalone theme toggle (z-50) so the primary bottom nav is
      never obscured on mobile. Reconciling that toggle's placement into a shell
      settings row is follow-up polish (spec §5.1 — mode toggle is the primary
