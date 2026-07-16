@@ -16,9 +16,27 @@
 //     (`html{background:var(--gw-page-bg)}`), so a REAL dark palette (explicit
 //     pin, or OS-dark under `system`) is fully dark and stays AA-readable.
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderLanding, LANDING_STYLE } from '../src/ui/landing';
 import { applyThemePref, setThemePref } from '../src/ui/theme-toggle';
+
+// Hermetic in-memory localStorage — same idiom as gov658-app-shell.test.ts. The
+// CI runner launches vitest with a broken `--localstorage-file` stub (no
+// working Storage methods); these tests assert pin persistence, so they must
+// own their storage rather than borrow the ambient (environment-flaky) one.
+function installMemoryLocalStorage(): void {
+  const store = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+    setItem: (k: string, v: string) => void store.set(k, String(v)),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+    key: (i: number) => [...store.keys()][i] ?? null,
+    get length() {
+      return store.size;
+    },
+  });
+}
 
 // ── WCAG 2.1 relative-luminance contrast (same formula as gov440 / spec §11.2) ──
 function luminance(hex: string): number {
@@ -47,8 +65,7 @@ describe('GOV-767 — landing palette arbitration (leak undone, pin respected)',
   let root: HTMLElement;
 
   beforeEach(() => {
-    localStorage.clear();
-    sessionStorage.clear();
+    installMemoryLocalStorage();
     document.documentElement.removeAttribute('data-theme');
     document.body.innerHTML = '<div id="app"></div>';
     root = document.getElementById('app')!;
