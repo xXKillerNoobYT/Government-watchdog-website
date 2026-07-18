@@ -1,14 +1,16 @@
+// @vitest-environment jsdom
+//
 /**
  * GOV-799 — magic-link form unit tests.
  * Pure validator + DOM form: no backend, no real email.
+ *
+ * Uses the repo's per-file `@vitest-environment jsdom` pragma (as in
+ * gov758-gated-access.test.ts) so `document`/`Event` are provided as globals —
+ * no direct `jsdom` import, which would fail `tsc --noEmit` without @types/jsdom.
  */
 
 import { describe, it, expect } from 'vitest';
 import { validateMagicLink, renderMagicLinkForm } from '../src/ui/magic-link-form';
-import { JSDOM } from 'jsdom';
-
-const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>');
-globalThis.document = dom.window.document as unknown as Document;
 
 describe('GOV-799 validateMagicLink — pure email pre-check', () => {
   it('rejects empty email', () => {
@@ -42,7 +44,7 @@ describe('GOV-799 renderMagicLinkForm — DOM structure', () => {
     const form = renderMagicLinkForm({ onSubmit: () => { called = true; } });
     const emailInput = form.querySelector('[data-test="ml-email"]') as HTMLInputElement;
     emailInput.value = 'bad';
-    form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(called).toBe(false);
     expect(form.querySelector('[data-test="ml-email-error"]')?.hasAttribute('hidden')).toBe(false);
   });
@@ -52,7 +54,7 @@ describe('GOV-799 renderMagicLinkForm — DOM structure', () => {
     const form = renderMagicLinkForm({ onSubmit: (s) => { submission = s; } });
     const emailInput = form.querySelector('[data-test="ml-email"]') as HTMLInputElement;
     emailInput.value = 'test@example.com';
-    form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(submission).not.toBeNull();
     expect((submission as { email: string } | null)?.email).toBe('test@example.com');
   });
@@ -61,7 +63,7 @@ describe('GOV-799 renderMagicLinkForm — DOM structure', () => {
     const form = renderMagicLinkForm();
     const emailInput = form.querySelector('[data-test="ml-email"]') as HTMLInputElement;
     emailInput.value = 'any@example.com';
-    form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     const confirm = form.querySelector('[data-test="ml-confirmation"]');
     expect(confirm?.hasAttribute('hidden')).toBe(false);
     // Must not leak whether email is on the allowlist.
