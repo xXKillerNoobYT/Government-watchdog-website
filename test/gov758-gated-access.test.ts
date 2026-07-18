@@ -103,9 +103,13 @@ describe('GOV-758 — six gated-beta access states', () => {
   });
 
   it('renders a visibly distinct, civic-data-free landing panel for each state', () => {
+    // GOV-799: anonymous state shows CTA buttons (no gate-badge); non-anonymous show badge.
     for (const state of ACCESS_STATES) {
       renderLanding(root, state);
-      expect(root.querySelector('[data-test="gate-badge"]')?.getAttribute('data-state')).toBe(state);
+      // anonymous shows CTA buttons (no gate-badge); panel data-state still present for all.
+      if (state !== 'anonymous') {
+        expect(root.querySelector('[data-test="gate-badge"]')?.getAttribute('data-state')).toBe(state);
+      }
       expect(root.querySelector('[data-test="gate-panel"]')?.getAttribute('data-state')).toBe(state);
       assertNoCivicData(root);
     }
