@@ -6,9 +6,13 @@
   "description": "Government Watchdog frontend — reviewer-internal/local Alpine timeline skeleton (Stage 1 Slice 4 A).",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && node scripts/prepare-sites-build.mjs --clean && vite build && node scripts/prepare-sites-build.mjs",
+    "build": "node scripts/check-no-direct-exposure.mjs && tsc --noEmit && node scripts/prepare-sites-build.mjs --clean && vite build && node scripts/prepare-sites-build.mjs",
+    "build:integrated": "npm run fetch:artifact && npm run build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "fetch:artifact": "node scripts/fetch-artifact.mjs",
+    "check:exposure": "node scripts/check-no-direct-exposure.mjs",
+    "e2e:local": "bash scripts/local_e2e.sh",
     "test": "vitest run",
     "test:smoke": "vitest run test/integration-smoke.test.ts"
   },

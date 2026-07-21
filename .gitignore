@@ -20,3 +20,14 @@ npm-debug.log*
 # (attached to the issue, not committed — same boundary as GOV-427)
 /scripts/gen-dark-screens.mjs
 /docs/evidence/GOV-440/
+# GOV-1527 — the fetched/verified backend web artifact is NEVER committed
+# (contains the gated reviewer-internal lane + service subset; local/vault-only
+# data boundary). Rebuilt from BACKEND_REF on every build/e2e run.
+/.artifact/
+gw-web-artifact-*.tar.gz
+# The public lane is staged into public/data by fetch-artifact.mjs at build time.
+/public/data/published.json
+# Throwaway demo/e2e databases (never the registry).
+*.db
+/scripts/gen-gov1527-screens.mjs
+/gov1527-*.png
