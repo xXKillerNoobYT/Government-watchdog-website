@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Newsletter (light broadsheet)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:1000px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+          <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+          <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+        </div>
+        <span onClick="{{ printPage }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Print</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,36px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">THE NEWSLETTER · ISSUE NO. 20 · A 15-MINUTE READ</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:20px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:14px 16px;margin-bottom:16px;font-family:'Public Sans',sans-serif">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.3px">NEWS BY MEETING</div>
+        <div style="font-size:11.5px;color:#6E685B">every story hangs off a meeting — pick which side of it you want</div>
+        <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;margin-left:auto;font-size:12px;font-weight:700">
+          <span onClick="{{ nbPre }}" style="padding:5px 13px;cursor:pointer;background:{{ nbPreBgL }};color:{{ nbPreFgL }}">Pre-meeting</span>
+          <span onClick="{{ nbPost }}" style="padding:5px 13px;cursor:pointer;background:{{ nbPostBgL }};color:{{ nbPostFgL }}">Post-meeting</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <sc-for list="{{ nbItems }}" as="m" hint-placeholder-count="3">
+          <div style="border:1px solid #D8D0BC;border-left:3px solid {{ m.cL }};border-radius:6px;background:#FFFFFF;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px"><span style="font-family:'IBM Plex Mono',monospace;color:#6E685B">{{ m.date }}</span><b style="color:{{ m.cL }}">{{ m.lvl }}</b></div>
+            <div style="font-family:'Newsreader',Georgia,serif;font-size:16px;font-weight:600;margin-top:3px">{{ m.title }}</div>
+            <div style="font-size:12px;color:#4A463C;margin-top:3px;line-height:1.5">{{ m.sum }}</div>
+            <div style="font-size:11.5px;margin-top:6px"><a href="{{ m.href }}">{{ m.linkT }}</a> · <span style="color:#6E685B">{{ m.status }}</span></div>
+            <div style="font-size:11.5px;font-weight:700;margin-top:4px;border-top:1px solid #EFE8D5;padding-top:5px"><span onClick="{{ m.pairGo }}" style="color:#1A4D8F;cursor:pointer">{{ m.pairT }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="border:2px solid #1E1C17;border-radius:10px;background:#FDFAF1;padding:16px 20px;margin-bottom:22px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="width:44px;height:44px;border-radius:50%;background:#1A4D8F;display:grid;place-items:center;flex:none"><span style="width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:14px solid #FBF7EB;margin-left:4px"></span></div>
+        <div style="flex:1;min-width:220px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#A33327">THE ROUNDTABLE — 4-VOICE AI DEBATE</div>
+          <div style="font-size:19px;font-weight:600;line-height:1.2">Listen to this edition argued out loud</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;color:#6E685B;margin-top:2px">live now: today's 3 lenses + narrator · <b style="color:#7A5B00">coming soon — pending demand (low priority):</b> Constitutional, Founding Conservative, Founding Progressive</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:2px">A narrator and three perspectives debate the week — voices generated on your device. <span style="color:#7A5B00;background:#FFF3CD;border:1px solid #D9A400;border-radius:3px;padding:0 5px;font-weight:700">AI — scripted from the record</span></div>
+        </div>
+        <div style="display:flex;gap:8px;font-family:'Public Sans',sans-serif;flex-wrap:wrap">
+          <span onClick="{{ dPrev }}" style="border:2px solid #1E1C17;border-radius:9px;padding:8px 13px;font-weight:800;font-size:14px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">‹</span>
+          <span onClick="{{ dToggle }}" style="border:2px solid #1E1C17;border-radius:9px;padding:8px 20px;font-weight:800;font-size:14px;cursor:pointer;background:#1E1C17;color:#FBF7EB">{{ playLabel }}</span>
+          <span onClick="{{ dNext }}" style="border:2px solid #1E1C17;border-radius:9px;padding:8px 13px;font-weight:800;font-size:14px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">›</span>
+          <span onClick="{{ dRestart }}" style="border:2px solid #1E1C17;border-radius:9px;padding:8px 13px;font-weight:800;font-size:14px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">⟲</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:12px;font-family:'Public Sans',sans-serif;font-size:12px;flex-wrap:wrap;align-items:center">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4A463C;margin-right:5px;vertical-align:-1px"></span><b>Narrator</b></span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#A33327;margin-right:5px;vertical-align:-1px"></span><b style="color:#A33327">Conservative</b></span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#274F9B;margin-right:5px;vertical-align:-1px"></span><b style="color:#274F9B">Progressive</b></span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8A6D00;margin-right:5px;vertical-align:-1px"></span><b style="color:#8A6D00">Libertarian</b></span>
+        <span style="margin-left:auto;color:#6E685B">{{ posLabel }}</span>
+      </div>
+      <div style="height:6px;background:#EFE8D5;border:1px solid #D8D0BC;border-radius:99px;overflow:hidden;margin-top:8px"><span style="display:block;height:100%;width:{{ progress }};background:#1A4D8F"></span></div>
+      <div style="font-family:'Public Sans',sans-serif;margin-top:10px"><span onClick="{{ rtToggle }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 14px;font-weight:700;font-size:12.5px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">{{ rtLabel }}</span></div>
+      <sc-if value="{{ rtOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+        <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="4">
+          <div onClick="{{ ln.jump }}" style="display:flex;gap:10px;padding:7px 10px;border-radius:8px;background:{{ ln.bg }};border:1.5px solid {{ ln.bd }};cursor:pointer">
+            <span style="flex:none;width:9px;height:9px;border-radius:50%;background:{{ ln.color }};margin-top:7px"></span>
+            <span style="flex:1"><b style="font-family:'Public Sans',sans-serif;font-size:11px;letter-spacing:.6px;color:{{ ln.color }}">{{ ln.name }}</b><br><span style="font-size:15.5px;line-height:1.45">{{ ln.text }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;color:#6E685B;margin-top:10px">Every claim in the debate links to the record: <a href="Fast Agenda.dc.html">July 21 agenda</a> · <a href="Source Vault.dc.html">evaluation V2 diff</a> · <a href="Timeline.dc.html?issue=annexation">the annexation thread</a> · <a href="Source Vault.dc.html">pay-app receipts</a>. Voices use your device's speech engine — no audio leaves your computer.</div>
+      </sc-if>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:#A33327">FEATURED · <span style="color:#0E7A6E">TOWN</span></div>
+        <div style="font-size:30px;font-weight:600;line-height:1.1;margin-top:5px">The pause, the fee, and the packet that changed</div>
+        <div style="font-size:15.5px;color:#3A362D;line-height:1.6;margin-top:8px">On Tuesday the <a href="Boards.dc.html">Town Council</a> takes up <a href="Fast Agenda.dc.html">Resolution 2024-033</a> — a six-month pause on building permits and annexations in six zoning districts while the <a href="Source Vault.dc.html">sewer-capacity study</a> lands. Two days after the packet posted, <a href="Source Vault.dc.html">new wording appeared on page 3</a>: a $150 review fee for exemption requests. Two council members have <a href="Power Tracker.dc.html">promise checks</a> riding on the votes.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-family:'Public Sans',sans-serif;font-size:12px;flex-wrap:wrap">
+          <span style="border:1px solid #1E4620;background:#E8F0E8;color:#1E4620;border-radius:4px;padding:1px 8px;font-weight:700">✓ 4 sources</span>
+          <span style="border:1px solid #C0392B;background:#FDECEA;color:#7B241C;border-radius:4px;padding:1px 8px;font-weight:700">▲ changed after posting</span>
+          <span style="border:1px solid #D9A400;background:#FFF3CD;color:#7A5B00;border-radius:4px;padding:1px 8px;font-weight:700">vote possible Jul 7</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;font-size:13.5px">
+          <div style="border:1.5px solid #A33327;border-radius:7px;background:#F8EDE9;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#A33327">CONSERVATIVE — TODAY'S WY PARTY LENS</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #D8C4BC;border-radius:3px;padding:0 4px">LIGHT</span><br>{{ lensConNow }}</div>
+          <div style="border:2px solid #7B241C;border-radius:7px;background:#EFDCD6;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#7B241C">CONSERVATIVE — FOUNDING LENS · DRIFT CHECK</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #C9A79C;border-radius:3px;padding:0 4px">DARK</span><br>{{ lensConFound }}</div>
+          <div style="border:1.5px solid #274F9B;border-radius:7px;background:#EBF0F8;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#274F9B">PROGRESSIVE — TODAY'S WY PARTY LENS</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #BCC8DC;border-radius:3px;padding:0 4px">LIGHT</span><br>{{ lensProgNow }}</div>
+          <div style="border:2px solid #17335E;border-radius:7px;background:#DCE3F0;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#17335E">PROGRESSIVE — FOUNDING LENS · DRIFT CHECK</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #9CACC9;border-radius:3px;padding:0 4px">DARK</span><br>{{ lensProgFound }}</div>
+          <div style="border:1.5px solid #D9A400;border-radius:7px;background:#FFF8E4;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#7A5B00">LIBERTARIAN LENS</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #E0D3A8;border-radius:3px;padding:0 4px">LIGHT</span><br>{{ lensLib }}</div>
+          <div style="border:2px solid #7A5B00;border-radius:7px;background:#F0E8D0;padding:10px 13px"><b style="font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:1px;color:#5C4500">CONSTITUTIONAL LENS — FOUNDING DOCUMENTS</b> <span style="font-family:'Public Sans',sans-serif;font-size:9px;font-weight:800;color:#6E685B;border:1px solid #C9BA8C;border-radius:3px;padding:0 4px">DARK</span><br>{{ lensConst }}</div>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:11px;color:#6E685B;margin-top:7px;line-height:1.5">light = the party's stated Wyoming goals today · dark = the same question through the founding documents and founding-era mission — the gap is the drift</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 16px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.3px;border-bottom:2.5px solid #A36A10;color:#A36A10;padding-bottom:3px">COUNTY — LINCOLN</div>
+          <div style="font-size:17px;font-weight:600;margin-top:8px">Roads first: summer bids open</div>
+          <div style="font-size:14px;color:#4A463C;margin-top:3px;line-height:1.5"><a href="Boards.dc.html">Road &amp; Bridge</a> opened the summer package — Star Valley resurfacing first; bids close Jul 18. The <a href="Timeline.dc.html">rural land-use update</a> gets its hearing Jul 15.</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12px;margin-top:5px"><a href="Source Vault.dc.html">sources (3)</a></div>
+        </div>
+        <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 16px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.3px;border-bottom:2.5px solid #274F9B;color:#274F9B;padding-bottom:3px">STATE — WYOMING</div>
+          <div style="font-size:17px;font-weight:600;margin-top:8px">Three days to speak on the rental bill</div>
+          <div style="font-size:14px;color:#4A463C;margin-top:3px;line-height:1.5">Bill 26-LSO-0142 would cap how far towns can go on short-term-rental rules. <a href="Fast Agenda.dc.html">Comment closes Jul 10</a>; the committee hears it Jul 13 — it lands squarely on <a href="Timeline.dc.html">Alpine's moratorium thread</a>.</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12px;margin-top:5px"><a href="Source Vault.dc.html">sources (4)</a></div>
+        </div>
+        <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 16px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.3px">⌛ HISTORY LOOKS BACK</div>
+          <div style="font-size:14.5px;font-style:italic;color:#4A463C;margin-top:6px;line-height:1.5">In 2019 Alpine paused sewer hookups for 14 months. Two subdivisions redrew their plans — and the town wrote the capacity rules this week's debate leans on.</div>
+        </div>
+        <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 16px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.3px">✓ PUBLICATION HONESTY TRACKER</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C;margin-top:6px;line-height:1.7">SOURCED — 15 of 15 claims cite records<br>BALANCED — 3 lenses + debate on every feature<br>CLEAR — plain English before official text<br>UPDATED — Jul 6, 9:15 AM</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:11px 16px;margin-bottom:14px;font-family:'Public Sans',sans-serif;font-size:12.5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <b style="font-size:11px;letter-spacing:1.3px">ARCHIVE</b>
+      <span>past editions: <a href="#">No. 19</a> · <a href="#">No. 18</a> · <a href="#">No. 17</a> · <a href="#">No. 16</a> …</span>
+      <span style="margin-left:auto;color:#6E685B">Simple shows the last 90 days — <span onClick="{{ goAdvanced }}" style="color:#1A4D8F;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px">Advanced reaches back to 2019 →</span></span>
+    </div>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b> <span style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Nonpartisan &amp; reader-supported.</span></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C;display:flex;gap:14px;align-items:center"><a href="#">Get this by email — it arrives within a day of new agendas</a><span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Newsletter (dark digest)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1200px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px"><div style="flex:1;max-width:420px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text"><span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search agendas, meetings, documents…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span></div><div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1200px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1200px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+      <div style="font-size:20px;font-weight:800">The Weekly Digest — Issue No. 21</div>
+      <div style="font-size:12.5px;color:#8D99A7">July 20, 2026 · Alpine / Lincoln / Wyoming · a 15-minute read · <b style="color:#4ED8C3">agenda posted Jul 17 — this brief landed Jul 18, within 1 day ✓</b></div>
+      <span onClick="{{ printPage }}" style="margin-left:auto;font-size:11.5px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:5px 12px;cursor:pointer" style-hover="background:#161E27">Print / save PDF</span>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">NEWS BY MEETING</div>
+        <div style="font-size:11.5px;color:#8D99A7">every story hangs off a meeting — pick which side of it you want</div>
+        <div style="display:flex;gap:5px;background:#10161D;border:1px solid #1F2833;border-radius:10px;padding:4px;margin-left:auto">
+          <span onClick="{{ nbPre }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ nbPreBg }};color:{{ nbPreFg }}">Pre-meeting briefs</span>
+          <span onClick="{{ nbPost }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ nbPostBg }};color:{{ nbPostFg }}">Post-meeting analyses</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <sc-for list="{{ nbItems }}" as="m" hint-placeholder-count="3">
+          <div style="background:#141B23;border:1px solid #1F2833;border-left:3px solid {{ m.c }};border-radius:10px;padding:12px 14px">
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{ m.c }}">{{ m.date }}</span><span style="font-size:9.5px;font-weight:800;letter-spacing:.7px;color:{{ m.c }};border:1px solid {{ m.c }};border-radius:4px;padding:0.5px 6px">{{ m.lvl }}</span></div>
+            <a href="{{ m.href }}" style="display:block;font-size:14px;font-weight:700;color:#ECF1F7;text-decoration:none;margin-top:4px" style-hover="color:#4ED8C3">{{ m.title }}</a>
+            <div style="font-size:12px;color:#C3CDD9;margin-top:5px;line-height:1.55">{{ m.sum }}</div>
+            <div style="font-size:11px;margin-top:8px"><a href="{{ m.href }}" style="color:#7DB1FB">{{ m.linkT }}</a> · <span style="color:#8D99A7">{{ m.status }}</span></div>
+            <div style="font-size:11px;font-weight:700;margin-top:5px;border-top:1px solid #1F2833;padding-top:6px"><span onClick="{{ m.pairGo }}" title="Jump to the other side of this same meeting date" style="color:#4ED8C3;cursor:pointer" style-hover="text-decoration:underline">{{ m.pairT }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #2E6B60;border-radius:14px;padding:18px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="width:42px;height:42px;border-radius:50%;background:#4ED8C3;display:grid;place-items:center;flex:none;cursor:pointer" onClick="{{ dToggle }}"><span style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:13px solid #062019;margin-left:3px"></span></div>
+        <div style="flex:1;min-width:220px">
+          <div style="font-
+size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">THE ROUNDTABLE — 4-VOICE AI DEBATE</div>
+          <div style="font-size:17px;font-weight:700">This edition, argued out loud <span style="font-size:9.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;background:#0F1E1B;border-radius:3px;padding:1px 6px;vertical-align:2px">≈ 15-MIN LISTEN</span> <span style="font-size:9.5px;font-weight:700;color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:3px;padding:1px 6px;vertical-align:2px">AI — scripted from the record</span></div>
+          <div style="font-size:11.5px;color:#8D99A7">A real back-and-forth — openings, cross-examination, interruptions, closings · voices generated on your device · nothing leaves your browser</div>
+          <div style="font-size:11px;color:#8D99A7;margin-top:3px">live now: today's 3 lenses + narrator · <span style="color:#ECC35C;font-weight:700">coming soon — pending demand (low priority):</span> Constitutional, Founding Conservative, Founding Progressive</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span onClick="{{ dPrev }}" style="border:1px solid #2C3642;border-radius:9px;padding:7px 13px;font-weight:800;font-size:13px;cursor:pointer;color:#C3CDD9" style-hover="background:#161E27">‹</span>
+          <span onClick="{{ dToggle }}" style="border:1px solid #2E6B60;border-radius:9px;padding:7px 18px;font-weight:800;font-size:13px;cursor:pointer;background:#4ED8C3;color:#062019">{{ playLabel }}</span>
+          <span onClick="{{ dNext }}" style="border:1px solid #2C3642;border-radius:9px;padding:7px 13px;font-weight:800;font-size:13px;cursor:pointer;color:#C3CDD9" style-hover="background:#161E27">›</span>
+          <span onClick="{{ dRestart }}" style="border:1px solid #2C3642;border-radius:9px;padding:7px 13px;font-weight:800;font-size:13px;cursor:pointer;color:#C3CDD9" style-hover="background:#161E27">⟲</span>
+          <span onClick="{{ rtToggle }}" style="border:1px solid #2C3642;border-radius:9px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;color:#C3CDD9" style-hover="background:#161E27">{{ rtLabel }}</span>
+        </div>
+      </div>
+      <sc-if value="{{ rtOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:14px;margin-top:12px;font-size:11.5px;flex-wrap:wrap;align-items:center">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#C3CDD9;margin-right:5px"></span><b>Narrator</b></span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#EE7A6D;margin-right:5px"></span><b style="color:#EE7A6D">Conservative</b></span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7DB1FB;margin-right:5px"></span><b style="color:#7DB1FB">Progressive</b></span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ECC35C;margin-right:5px"></span><b style="color:#ECC35C">Libertarian</b></span>
+        <span style="margin-left:auto;color:#8D99A7">{{ posLabel }}</span>
+      </div>
+      <div style="height:5px;background:#1B232D;border-radius:99px;overflow:hidden;margin-top:8px"><span style="display:block;height:100%;width:{{ progress }};background:#4ED8C3"></span></div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{ linesD }}" as="ln" hint-placeholder-count="4">
+          <div onClick="{{ ln.jump }}" style="display:flex;gap:10px;padding:7px 11px;border-radius:9px;background:{{ ln.bg }};border:1px solid {{ ln.bd }};cursor:pointer">
+            <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ln.color }};margin-top:6px"></span>
+            <span style="flex:1"><b style="font-size:10.5px;letter-spacing:.6px;color:{{ ln.color }}">{{ ln.name }}</b><br><span style="font-size:13px;color:#C3CDD9;line-height:1.5">{{ ln.text }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:11px;color:#8D99A7;margin-top:10px">Claims link to the record: <a href="Fast Agenda.dc.html" style="color:#7DB1FB">Jul 21 agenda</a> · <a href="Source Vault.dc.html" style="color:#7DB1FB">evaluation V2 diff</a> · <a href="Timeline.dc.html?issue=annexation" style="color:#7DB1FB">the annexation thread</a> · <a href="Source Vault.dc.html" style="color:#7DB1FB">pay-app receipts</a></div>
+      </sc-if>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start">
+      <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:20px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#EE7A6D">FEATURED · <span style="color:{{ featColor }}">{{ featLvlName }}</span> <span style="font-weight:600;color:#8D99A7;letter-spacing:.2px">· pick a preview card to switch level →</span></div>
+          <div style="margin-left:auto;display:flex;gap:4px;background:#10161D;border:1px solid #1F2833;border-radius:9px;padding:3px">
+            <span onClick="{{ fsPre }}" style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:{{ fsPreBg }};color:{{ fsPreFg }}">Pre-meeting</span>
+            <span onClick="{{ fsPost }}" style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:{{ fsPostBg }};color:{{ fsPostFg }}">Post-meeting</span>
+          </div>
+        </div>
+        <sc-if value="{{ fsIsPre }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ featTown }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">Annexation night: a hearing, three ordinances, outside counsel — and $667,067.91</div>
+        <div style="font-size:11px;color:#8D99A7;margin-top:4px">the whole July 21 meeting, item by item · <span style="color:#4ED8C3;font-weight:700">≈ 15-MIN READ</span> · plain English first, official text one tap away</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">Tuesday at 6:30 the <a href="Boards.dc.html" style="color:#7DB1FB">Town Council</a> holds the <a href="Fast Agenda.dc.html" style="color:#7DB1FB">Alpine Apex annexation hearing</a>, then works through nine drafted motions: the <b>final</b> reading of one annexation (Boardwalk II Lot 18), the <b>first</b> reading of another (Alpine Apex), <a href="Source Vault.dc.html" style="color:#7DB1FB">$667,067.91 in water-meter pay applications</a>, an <b>hourly, uncapped</b> litigation engagement for an annexation dispute — and the pick of the consultant who will rewrite the town's entire land-use code, whose <a href="Source Vault.dc.html" style="color:#7DB1FB">staff evaluation was replaced with a V2 after the packet posted</a>. Here is the whole evening, in order:</div>
+        <div style="border:1px solid #1F2833;border-radius:12px;overflow:hidden;margin-top:12px">
+          <div style="background:#0E1319;padding:8px 14px;border-bottom:1px solid #1F2833;font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">STRUCTURED LIKE THE OFFICIAL MUNICODE AGENDA — numbers match · every attachment linked · suggested motions quoted</div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">1–3.</span><b style="font-size:13px">CALL TO ORDER · PLEDGE · ROLL CALL</b><span style="font-size:11.5px;color:#8D99A7">— 6:30 PM · Town Hall + YouTube live</span></div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">4.</span><b style="font-size:13px">PUBLIC HEARING</b><span style="font-size:11.5px;color:#8D99A7">— the one slot to speak on the annexation before the votes</span></div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">a.</span><b style="font-size:13px">Alpine Apex annexation petition — public hearing (Dry Dog Development, LLC)</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#EE7A6D;border:1px solid #EE7A6D;border-radius:4px;padding:1px 6px">HEARING</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">The petition, both affidavits (mailing + posting) and a <a href="Source Vault.dc.html" style="color:#7DB1FB">signed P&amp;Z recommendation</a> are on file. Ordinance 2026-013 (item 8.b) starts its readings the same night — say it here or carry it to a courtroom. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap"><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Petition to Annex (3.26 MB) ↗</a><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Affidavits ×2 ↗</a><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ P&amp;Z Report &amp; Rec — SIGNED ↗</a><a href="Timeline.dc.html?issue=annexation" style="color:#7DB1FB">▸ full thread ›</a></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> petition filed in June → P&amp;Z rec signed Jul 13 — the petition text itself is unchanged since posting ✓</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> 2 written comments on file with the clerk (both adjacent owners)</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> the 8.b motion recites "statutory conditions… have been met" <i>before</i> this hearing happens — listen for whether testimony changes a word of it</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ who pays to extend services · ◻ what zoning applies on day one <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">5–6.</span><b style="font-size:13px">ADOPT AGENDA · CONSENT AGENDA</b><span style="font-size:11.5px;color:#8D99A7">— minutes (Jun 23 + Jul 7) · bills 6/23–7/21 · May financials · Rad Curbside — one motion unless pulled</span></div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">7.</span><b style="font-size:13px">REPORTS ×7</b><span style="font-size:11.5px;color:#8D99A7">— Mayor · Events · Engineering · P&amp;Z · Economic Development · Travel &amp; Tourism · Sheriff (in writing)</span></div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">8.</span><b style="font-size:13px">ACTION ITEMS — 9 DRAFTED MOTIONS</b></div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">a.</span><b style="font-size:13px">Ordinance 2026-011 — Boardwalk II Lot 18 annexation, 3rd &amp; final reading</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #ECC35C;border-radius:4px;padding:1px 6px">FINAL VOTE</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">Reading 3 of 3 — passes tonight and the lot is in the town. 1st reading Jun 23 ✓, 2nd Jul 7 ✓, both on video with timestamps. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-size:11.5px;color:#8D99A7;font-style:italic;margin-top:4px"><b style="font-style:normal;color:#C3CDD9">Suggested motion:</b> "Motion to adopt on 3rd and Final Reading Ordinance No. 2026-011 Boardwalk II Lot 18 Annexation."</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> ordinance text unchanged through all three readings ✓ (v1→v3 diffed clean)</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> none on record across three meetings</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> "3rd and Final" bundles adoption with effect — when do town rates and rules actually start applying to the lot?</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ effective date · ◻ any service agreements attached <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">b.</span><b style="font-size:13px">Ordinance 2026-013 — Alpine Apex annexation, 1st reading</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #ECC35C;border-radius:4px;padding:1px 6px">1ST READING</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">The motion contains a formal finding that "the statutory conditions for annexation exist" — the exact finding a court would test. Watch whether the hearing changes a word of it. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> the ordinance text is new — first appearance on any agenda</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> belongs in tonight's hearing (item 4.a) — the only slot before the readings</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> the motion asserts findings as fact — findings drafted before the hearing are the courtroom target later (see 8.e)</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ what did P&amp;Z's rec condition · ◻ water/sewer capacity for the parcels <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">c.</span><b style="font-size:13px">AMI Radio Read project — pay applications 1–4</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#EE7A6D;border:1px solid #EE7A6D;border-radius:4px;padding:1px 6px">$667,067.91</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">Approve $667,067.91, apply a $286,111.01 credit for parts already paid, release $380,956.90 to Core &amp; Main, LP. Engineering and staff labor are "accounted for separately" — ask for the all-in number. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap"><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Staff report ↗</a><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Pay apps 1–4 ↗</a></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> pay apps are new — the project last appeared at contract award (Mar 17); scope unchanged, spend now real</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> none on record</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> "accounted for separately" = the $667,067.91 is <i>not</i> the all-in cost; the $286k credit makes the check sound smaller than the project</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ the all-in number incl. engineering + staff · ◻ % of installs complete <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">d–f.</span><b style="font-size:13px">JVA on-call WWTF engineering (≤$42,000) · Jackson Hole Law engagement · Playroom Learning Center lease</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #ECC35C;border-radius:4px;padding:1px 6px">3 MOTIONS</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">The engineering retainer is capped at $42,000 for 2026; the litigation engagement for the annexation matter (two LLCs) is <b>hourly with no cap in the motion</b>; the lease puts a town building to work. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap"><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ JVA agreement ↗</a><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Engagement + hourly litigation agreements ↗</a><a href="Source Vault.dc.html" style="color:#7DB1FB">▸ Lease + attachment ↗</a></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> the JVA agreement is an <i>update</i> to January's on-call terms — the diff shows scope grew; the lease and counsel items are new</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> none on record</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> "engagement agreement" reads administrative — the attachment is <i>hourly litigation</i> with no cap; the lease term &amp; renewals live in the attachment, not the motion</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ cap the hourly spend · ◻ lease rate vs. market <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">g–h.</span><b style="font-size:13px">Ordinance 2026-014 (LUDC amendments) &amp; 2026-012 (ICC exemptions) — 1st readings</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #ECC35C;border-radius:4px;padding:1px 6px">2 × 1ST READING</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">Two three-reading runs begin: targeted land-use amendments ahead of the full rewrite, and the list of international building-code requirements Alpine opts out of. Text that survives 1st reading tends to survive. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> both ordinance texts are new; the 2026-014 staff report was updated Jul 13 (a second version — compare)</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> none yet — two more readings ahead (Aug 4, Aug 18)</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> "exemptions and local amendments" is subtraction dressed as housekeeping — the list of code protections being dropped lives only in the attachment</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ which ICC chapters are dropped · ◻ does 2026-014 sunset when the rewrite lands <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="padding:10px 14px 12px 40px;border-bottom:1px solid #1F2833">
+            <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4ED8C3">i.</span><b style="font-size:13px">LUDC rewrite — consultant selection</b><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#EE7A6D;border:1px solid #EE7A6D;border-radius:4px;padding:1px 6px">▲ EVAL REPLACED</span></div>
+            <div style="font-size:12.5px;color:#C3CDD9;line-height:1.6;margin-top:3px">The quiet giant: whoever wins drafts every zoning rule Alpine lives under next. The RFP ran twice; the staff evaluation was <a href="Source Vault.dc.html" style="color:#7DB1FB">replaced with a V2 after the packet posted</a> — both archived, compare them. The drafted motion authorizes the Mayor to negotiate and execute <b>with a blank where the firm's name goes</b>. <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            <div style="font-size:11.5px;color:#8D99A7;font-style:italic;margin-top:4px"><b style="font-style:normal;color:#C3CDD9">Suggested motion:</b> "Motion to authorize the Mayor to negotiate and execute a professional services agreement with ____________ …"</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:6px;color:#C3CDD9"><b style="color:#7DB1FB">Changed since last meeting:</b> ▲ the staff evaluation was replaced with a V2 on Jul 18, after the packet posted — scoring differs between versions (<a href="Source Vault.dc.html" style="color:#7DB1FB">compare</a>)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;font-size:10.5px;line-height:1.5">
+              <div style="background:#141B23;border:1px solid #1F2833;border-radius:6px;padding:6px 9px"><b style="color:#8D99A7">WHAT v1 SAID — posted Jul 17:</b><br><span style="color:#C3CDD9">"cost of services" weighted 30%, "local familiarity" 10% — firm B ranked first on price</span></div>
+              <div style="background:#1D1412;border:1px solid #52302B;border-radius:6px;padding:6px 9px"><b style="color:#EE7A6D">WHAT V2 SAYS — swapped Jul 18:</b><br><span style="color:#F0D9D4">"local familiarity" reweighted to 25%, cost down to 20% — the ranking flips to firm A. No memo explains the reweighting.</span></div>
+            </div>
+            <div style="font-size:10.5px;color:#8D99A7;margin-top:3px">vs. the previous meeting: the Jul 7 packet carried no evaluation at all — this scoring appeared (twice) only in this cycle · <span style="color:#ECC35C">AI-read diff — verify against both archived files</span></div>
+            <div style="font-size:11px;line-height:1.6;margin-top:3px;color:#C3CDD9"><b style="color:#63D68F">Public comment so far:</b> none on file — this never had its own hearing</div>
+            <div style="font-size:11px;line-height:1.55;margin-top:5px;background:#1D1412;border-left:3px solid #EE7A6D;border-radius:0 6px 6px 0;padding:5px 9px;color:#F0D9D4"><b style="color:#EE7A6D">⚠ Watch the language:</b> "negotiate and execute… with ____________" authorizes a signature before the public hears which firm won — approval first, selection after</div>
+            <div style="font-size:11px;line-height:1.6;margin-top:4px;color:#C3CDD9"><b style="color:#ECC35C">Did they ask?</b> ◻ name the firm on the record · ◻ what changed between eval v1 and V2 <span style="color:#8D99A7">— checked ✓/✗ in the post-meeting edition</span></div>
+          </div>
+          <div style="background:#141B23;padding:9px 14px;border-bottom:1px solid #1F2833;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">9.</span><b style="font-size:13px">PUBLIC COMMENT</b><span style="font-size:11.5px;color:#8D99A7">— 20 minutes total, 3 per speaker, any topic · council listens but doesn't act · written comments by 12:00 noon meeting day</span></div>
+          <div style="background:#141B23;padding:9px 14px;display:flex;gap:10px;align-items:baseline"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4ED8C3;flex:none">10.</span><b style="font-size:13px">ADJOURNMENT</b><span style="font-size:11.5px;color:#8D99A7">— video ~2 days (streamed live) · our analysis ~4 days after</span></div>
+        </div>
+        <div style="font-size:11.5px;color:#8D99A7;margin-top:8px">Numbers and structure mirror the town's posted agenda — <a href="Fast Agenda.dc.html" style="color:#7DB1FB">open the live agenda board ›</a></div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700;flex-wrap:wrap">
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">✓ 4 sources</span>
+          <span style="border:1px solid #52302B;background:#1D1412;color:#EE7A6D;border-radius:5px;padding:2px 8px">▲ changed after posting</span>
+          <span style="border:1px solid #4a3c14;background:#201A0E;color:#ECC35C;border-radius:5px;padding:2px 8px">vote possible Jul 7</span>
+        </div>
+        </sc-if>
+        <sc-if value="{{ featCounty }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">Roads first: the bid package and the land-use rewrite</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px"><a href="Boards.dc.html" style="color:#7DB1FB">Road &amp; Bridge</a> opened the summer package — Star Valley resurfacing first; bids close July 18. The <a href="Timeline.dc.html?issue=landuse" style="color:#7DB1FB">rural land-use update</a> — the county frame Alpine's zones sit within — had its hearing July 15; the commission returns <b>August 3, 9:00 AM in Kemmerer</b> with the road-bid award on the same agenda. Commissioners <a href="Power Tracker.dc.html" style="color:#7DB1FB">Poe, Koe and Toe</a> all carry road-first promises on the tracker. <a href="Source Vault.dc.html" style="color:#7DB1FB">sources (3)</a></div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700;flex-wrap:wrap">
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">✓ 3 sources</span>
+          <span style="border:1px solid #4a3c14;background:#201A0E;color:#ECC35C;border-radius:5px;padding:2px 8px">commission Aug 3 · Kemmerer</span>
+          <span style="border:1px solid #31527e;background:#101A28;color:#7DB1FB;border-radius:5px;padding:2px 8px">bids closed — award Aug 3</span>
+        </div>
+        </sc-if>
+        <sc-if value="{{ featState }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">Three days to speak on the rental bill</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">Bill <a href="Source Vault.dc.html" style="color:#7DB1FB">26-LSO-0142</a> would cap how far towns can go on rental rules. The comment window closed Jul 10 with 214 filings; the committee <a href="Timeline.dc.html?issue=str" style="color:#7DB1FB">advanced the bill Jul 13</a> — next stop is a bill-draft vote this fall, and it still lands squarely on <a href="Timeline.dc.html?issue=moratorium" style="color:#7DB1FB">Alpine's zoning thread</a>. <a href="Source Vault.dc.html" style="color:#7DB1FB">sources (4)</a></div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700;flex-wrap:wrap">
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">✓ 4 sources</span>
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">advanced Jul 13 ✓</span>
+          <span style="border:1px solid #31527e;background:#101A28;color:#7DB1FB;border-radius:5px;padding:2px 8px">draft vote — fall</span>
+        </div>
+        </sc-if>
+        </sc-if>
+        <sc-if value="{{ fsIsPost }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ featTown }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">What the council actually did — July 7</div>
+        <div style="font-size:11px;color:#8D99A7;margin-top:4px">latest analyzed meeting · July 21's post-meeting edition lands ~4 days after the transcript — <span style="color:#ECC35C;font-weight:700">◌ pending</span></div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">The moratorium was <b>adopted 4–1</b> — with the $150 exemption-review fee that appeared on p.3 after posting still in the text. The admin-fee ordinance passed its 3rd and final reading, settling the <a href="Power Tracker.dc.html" style="color:#7DB1FB">promise verdict: BROKEN</a>. Boardwalk II Lot 18 took its 2nd reading, teeing up tomorrow's final vote, and the interim-permitting update was adopted 5–0.</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">The meeting streamed live and the video posted on time — every vote is <a href="Source Vault.dc.html" style="color:#7DB1FB">timestamped in the vault</a>. The drafted minutes land on July 21's consent agenda (item 6): once approved, they're the official memory — <a href="Source Vault.dc.html" style="color:#7DB1FB">compare them against the video</a> before the council does.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700;flex-wrap:wrap">
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">video ✓ · timestamped</span>
+          <span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">analysis ✓ · 5 sources</span>
+          <span style="border:1px solid #52302B;background:#1D1412;color:#EE7A6D;border-radius:5px;padding:2px 8px">promise verdict — BROKEN</span>
+        </div>
+        </sc-if>
+        <sc-if value="{{ featCounty }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">Post-meeting edition — pending</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">The commission returns <b>August 3</b> in Kemmerer (road-bid award + land-use follow-up). The post-meeting analysis publishes within ~4 days of the transcript. Until then, read the <span onClick="{{ fsPre }}" style="color:#7DB1FB;cursor:pointer;text-decoration:underline;text-underline-offset:2px">pre-meeting edition</span> or the <a href="Timeline.dc.html?issue=landuse" style="color:#7DB1FB">land-use thread</a>.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700"><span style="border:1px solid #4a3c14;background:#201A0E;color:#ECC35C;border-radius:5px;padding:2px 8px">◌ PENDING MEETING — AUG 3</span></div>
+        </sc-if>
+        <sc-if value="{{ featState }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:24px;font-weight:800;line-height:1.15;margin-top:6px">The committee advanced the bill — July 13</div>
+        <div style="font-size:13.5px;color:#C3CDD9;line-height:1.65;margin-top:8px">Post-hearing analysis ✓: 26-LSO-0142 moved forward after 214 public comments; a bill-draft vote is expected this fall. If it becomes law, it caps how far Alpine can regulate rentals — the preemption watch continues on <a href="Timeline.dc.html?issue=str" style="color:#7DB1FB">the thread</a>.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;font-size:10.5px;font-weight:700"><span style="border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:5px;padding:2px 8px">✓ analysis · advanced Jul 13</span></div>
+        </sc-if>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;font-size:12.5px;line-height:1.55">
+          <div style="border:1px solid #7a453c;border-left:3px solid #EE7A6D;border-radius:8px;background:#2A1512;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#EE7A6D">CONSERVATIVE — TODAY'S WY PARTY LENS</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #3E2A24;border-radius:3px;padding:0 4px">LIGHT</span><br><span style="color:#ECF1F7">{{ lensConNow }}</span></div>
+          <div style="border:1px solid #3E211C;border-left:3px solid #8a4438;border-radius:8px;background:#140A08;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#c97e6f">CONSERVATIVE — FOUNDING LENS · DRIFT CHECK</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #3E211C;border-radius:3px;padding:0 4px">DARK</span><br><span style="color:#C3CDD9">{{ lensConFound }}</span></div>
+          <div style="border:1px solid #46689A;border-left:3px solid #7DB1FB;border-radius:8px;background:#16233A;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#7DB1FB">PROGRESSIVE — TODAY'S WY PARTY LENS</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #24344F;border-radius:3px;padding:0 4px">LIGHT</span><br><span style="color:#ECF1F7">{{ lensProgNow }}</span></div>
+          <div style="border:1px solid #24344F;border-left:3px solid #4a6da8;border-radius:8px;background:#0B1220;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#6d93c9">PROGRESSIVE — FOUNDING LENS · DRIFT CHECK</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #24344F;border-radius:3px;padding:0 4px">DARK</span><br><span style="color:#C3CDD9">{{ lensProgFound }}</span></div>
+          <div style="border:1px solid #8A6D2A;border-left:3px solid #ECC35C;border-radius:8px;background:#2A2310;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#ECC35C">LIBERTARIAN LENS</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #4a3c14;border-radius:3px;padding:0 4px">LIGHT</span><br><span style="color:#ECF1F7">{{ lensLib }}</span></div>
+          <div style="border:1px solid #4a3c14;border-left:3px solid #8a6d2a;border-radius:8px;background:#151005;padding:10px 13px"><b style="font-size:10px;letter-spacing:1px;color:#c9a94f">CONSTITUTIONAL LENS — FOUNDING DOCUMENTS</b> <span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #4a3c14;border-radius:3px;padding:0 4px">DARK</span><br><span style="color:#C3CDD9">{{ lensConst }}</span></div>
+        </div>
+        <div style="font-size:10.5px;color:#8D99A7;margin-top:8px;line-height:1.5">light = the question through the party's stated Wyoming goals today · dark = the same question through the founding documents and the party's founding-era mission — the gap between the two is the drift</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ sideCards }}" as="sc" hint-placeholder-count="2">
+          <div onClick="{{ sc.open }}" style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px;cursor:pointer" style-hover="border-color:#33404E">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #232C37;padding-bottom:6px"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:{{ sc.c }}">{{ sc.label }}</div><span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#8D99A7;border:1px solid #232C37;border-radius:4px;padding:1px 6px">PREVIEW</span></div>
+            <div style="font-size:15px;font-weight:700;margin-top:8px">{{ sc.title }}</div>
+            <div style="font-size:12.5px;color:#C3CDD9;margin-top:3px;line-height:1.55">{{ sc.line }}</div>
+            <div style="font-size:11.5px;font-weight:700;color:#7DB1FB;margin-top:8px">Feature the {{ sc.short }} edition › <span style="color:#8D99A7;font-weight:400">the other levels stay in view here</span></div>
+          </div>
+        </sc-for>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#4ED8C3">MEETING LEDGER — AGENDA · PRE · POST</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:9px;font-size:11.5px">
+            <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:none;width:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E5A83B">AUG 3</span><span style="flex:1;color:#C3CDD9">County Commission</span><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px"><span style="color:#63D68F">agenda ✓</span> · <span style="color:#8D99A7">pre ◻</span> · <span style="color:#8D99A7">post ◻</span></span></div>
+            <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:none;width:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4ED8C3">JUL 28</span><span style="flex:1;color:#C3CDD9">Alpine P&amp;Z</span><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px"><span style="color:#ECC35C">agenda ◌ Jul 24</span> · <span style="color:#8D99A7">pre ◻</span> · <span style="color:#8D99A7">post ◻</span></span></div>
+            <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:none;width:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4ED8C3">JUL 21</span><span style="flex:1;color:#C3CDD9">Town Council <span style="color:#EE7A6D;font-size:10px">▲ eval V2</span></span><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px"><span style="color:#63D68F">agenda ✓</span> · <span style="color:#63D68F">pre ✓</span> · <span style="color:#ECC35C">post ◌ ~4d</span></span></div>
+            <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:none;width:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4ED8C3">JUL 7</span><span style="flex:1;color:#C3CDD9">Town Council</span><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px"><span style="color:#63D68F">agenda ✓</span> · <span style="color:#63D68F">pre ✓</span> · <span style="color:#63D68F">post ✓</span></span></div>
+            <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:none;width:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4ED8C3">JUN 23</span><span style="flex:1;color:#C3CDD9">Town Council</span><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px"><span style="color:#63D68F">agenda ✓</span> · <span style="color:#63D68F">pre ✓</span> · <span style="color:#63D68F">post ✓</span></span></div>
+          </div>
+          <div style="font-size:10px;color:#8D99A7;margin-top:8px">✓ published · ◌ pending (~4 days after transcript) · ◻ meeting not held yet</div>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#C3CDD9">⌛ HISTORY LOOKS BACK</div>
+          <div style="font-size:12.5px;color:#8D99A7;font-style:italic;margin-top:6px;line-height:1.55">In 2019 Alpine paused sewer hookups for 14 months. Two subdivisions redrew their plans — and the town wrote the capacity rules this week's debate leans on.</div>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#63D68F">✓ PUBLICATION HONESTY TRACKER</div>
+          <div style="font-size:12px;color:#C3CDD9;margin-top:6px;line-height:1.8">SOURCED — 15 of 15 claims cite records<br>BALANCED — 3 lenses + debate on every feature<br>CLEAR — plain English before official text<br>UPDATED — Jul 6, 9:15 AM</div>
+          <div style="border-top:1px solid #232C37;margin-top:10px;padding-top:9px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1.2px;color:#8D99A7">REFERENCES — THIS ISSUE</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:6px;line-height:2">
+              [1] <a href="Source Vault.dc.html" style="color:#7DB1FB">Res. 2024-033 — full text</a><br>
+              [2] <a href="Source Vault.dc.html" style="color:#7DB1FB">Jul 7 packet v2 — p.3 diff</a><br>
+              [3] <a href="Source Vault.dc.html" style="color:#7DB1FB">Sewer study — 92% max-day</a><br>
+              [4] <a href="Source Vault.dc.html" style="color:#7DB1FB">Jun 26 roll-call record</a><br>
+              [5] <a href="Power Tracker.dc.html" style="color:#7DB1FB">Roe 2024 quote archive</a><br>
+              [6] <a href="Source Vault.dc.html" style="color:#7DB1FB">Bill 26-LSO-0142 text</a><br>
+              [7] <a href="Source Vault.dc.html" style="color:#7DB1FB">Road &amp; Bridge bid package</a><br>
+              [8] <a href="Source Vault.dc.html" style="color:#7DB1FB">2019 hookup-pause minutes</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px">
+      <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#4ED8C3">ARCHIVE</span>
+      <span style="color:#C3CDD9">every edition, back to the first processed record:</span>
+      <a href="#" style="color:#7DB1FB">No. 19</a><a href="#" style="color:#7DB1FB">No. 18</a><a href="#" style="color:#7DB1FB">No. 17</a><span style="color:#8D99A7">…</span><a href="#" style="color:#7DB1FB">No. 1 — Mar 2019</a>
+      <span style="margin-left:auto;color:#8D99A7">Advanced reaches as far back as records exist &amp; we've processed · Simple shows the last 90 days</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ We Watch. We Report. You Decide.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">issue no. 20 · published Jul 6, 2026 9:15 AM</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Get this by email — within 1 day of new agendas</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span></div>
+    </div>
+  </div>
+</div>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'simple',
+    idx: (() => { try { return Math.max(0, Math.min(16, parseInt(localStorage.getItem('gw_debate_pos') || '0', 10) || 0)); } catch (e) { return 0; } })(),
+    playing: false,
+    nb: 'pre',
+    fs: 'pre',
+    feat: 'town',
+    rtOpen: false
+  };
+
+  SCRIPT = [
+    { who: 'n', name: 'NARRATOR', text: 'The Roundtable for July twenty-first. Openings, then the floor — interruptions allowed, receipts required. Tonight: an annexation hearing, three ordinance readings, a six-hundred-sixty-seven-thousand-dollar bill, and the land-use rewrite. Conservative, you open.' },
+    { who: 'c', name: 'CONSERVATIVE', text: 'Opening: annexation by the book. Petition, mailed notice, a real hearing, three readings — Alpine is running the steps, credit where due. But hiring litigation counsel the same night? Somebody expects the book to be challenged, and—' },
+    { who: 'p', name: 'PROGRESSIVE', text: '—which is exactly why the paperwork matters! My opening: the land-use rewrite is the biggest decision on that agenda and it isn\u2019t even the loud one. Whoever wins that contract drafts every zoning rule this valley lives under next.' },
+    { who: 'l', name: 'LIBERTARIAN', text: 'Short opening, as always. An hourly litigation agreement with no cap is a blank check. A motion authorizing the Mayor to sign with a blank where the consultant\u2019s name goes is a blank check with a pen attached.' },
+    { who: 'n', name: 'NARRATOR', text: 'Fact check before the floor opens. The pay applications: six-six-seven thousand, sixty-seven dollars and ninety-one cents — verified against the packet; the credit and the balance both reconcile. The consultant evaluation: replaced with a V-two after posting — both versions archived. The floor is open.' },
+    { who: 'c', name: 'CONSERVATIVE', text: 'On the V-two swap — Progressive, two weeks ago you defended the late fee wording as sloppiness. Same answer now, or—' },
+    { who: 'p', name: 'PROGRESSIVE', text: '—same answer: publish both versions and let people compare. Which, for the record, this site did. Sloppiness in daylight is survivable. What\u2019s yours for wanting—' },
+    { who: 'c', name: 'CONSERVATIVE', text: '—mine is simple! The evaluation that was in front of the public when the packet posted should be the one that counts. Swap it, and you restart the clock.' },
+    { who: 'l', name: 'LIBERTARIAN', text: 'You\u2019re both dancing past the hearing. Item four-A is the only three minutes a resident gets on this annexation before the readings start. Miss it, and your next venue is a courtroom — see item eight-E, the lawyers.' },
+    { who: 'p', name: 'PROGRESSIVE', text: 'Fair. And on the meters: I\u2019m FOR the meters. But \u201cengineering and staff labor accounted for separately\u201d means nobody says the all-in number out loud. Someone should ask for it, on the record.' },
+    { who: 'c', name: 'CONSERVATIVE', text: 'Agreed. One number, all-in, Tuesday night.' },
+    { who: 'l', name: 'LIBERTARIAN', text: 'Unanimous twice in one evening. Check the water system — something\u2019s in it.' },
+    { who: 'n', name: 'NARRATOR', text: 'Closing statements. Thirty seconds each. Conservative.' },
+    { who: 'c', name: 'CONSERVATIVE', text: 'Run the annexations by the book, count all three readings, and publish the all-in meter number.' },
+    { who: 'p', name: 'PROGRESSIVE', text: 'Pick the consultant in the open — both evaluations on the table — and fund the plan, not just the pipes.' },
+    { who: 'l', name: 'LIBERTARIAN', text: 'Cap the lawyers. Name the consultant before you authorize the signature. Property rights are primary.' },
+    { who: 'n', name: 'NARRATOR', text: 'That\u2019s the Roundtable. Tuesday, six-thirty PM, Town Hall — and live on YouTube. Every claim tonight links to the vault. We watch. We report. You decide.' }
+  ];
+
+  setMode(m) {
+    this.stopSpeech();
+    this.setState({ mode: m });
+    try { localStorage.setItem('gw_home_mode', m); } catch (e) {}
+  }
+
+  stopSpeech() {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    if (this.state.playing) this.setState({ playing: false });
+  }
+
+  saveIdx(i) { try { localStorage.setItem('gw_debate_pos', String(i)); } catch (e) {} }
+
+  speakFrom(i) {
+    const S = this.SCRIPT;
+    if (i >= S.length) { this.setState({ playing: false, idx: 0 }); this.saveIdx(0); return; }
+    try {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(S[i].text);
+      const voices = synth.getVoices().filter(v => v.lang && v.lang.indexOf('en') === 0);
+      const P = { n: { pitch: 1.0, rate: 1.0, vi: 0 }, c: { pitch: 0.72, rate: 0.97, vi: 1 }, p: { pitch: 1.28, rate: 1.06, vi: 2 }, l: { pitch: 0.9, rate: 1.1, vi: 3 } }[S[i].who];
+      if (voices.length) u.voice = voices[P.vi % voices.length];
+      u.pitch = P.pitch; u.rate = P.rate;
+      u.onend = () => { if (this.state.playing) this.speakFrom(i + 1); };
+      this.setState({ idx: i, playing: true });
+      this.saveIdx(i);
+      synth.speak(u);
+    } catch (e) {
+      this.setState({ idx: i, playing: false });
+    }
+  }
+
+  componentWillUnmount() { try { window.speechSynthesis.cancel(); } catch (e) {} }
+
+  renderVals() {
+    const { idx, playing, mode } = this.state;
+    const S = this.SCRIPT;
+    const LIGHT = { n: '#4A463C', c: '#A33327', p: '#274F9B', l: '#8A6D00' };
+    const DARK = { n: '#C3CDD9', c: '#EE7A6D', p: '#7DB1FB', l: '#ECC35C' };
+    const mk = (pal, activeBg) => S.map((s, i) => ({
+      name: s.name, text: s.text, color: pal[s.who],
+      bg: i === idx ? activeBg : 'transparent',
+      bd: i === idx ? pal[s.who] : 'transparent',
+      jump: () => { const wasPlaying = this.state.playing; if (wasPlaying) { this.speakFrom(i); } else { this.setState({ idx: i }); this.saveIdx(i); } }
+    }));
+    const move = (d) => {
+      const ni = Math.max(0, Math.min(S.length - 1, idx + d));
+      if (playing) this.speakFrom(ni); else { this.setState({ idx: ni }); this.saveIdx(ni); }
+    };
+    const feat = this.state.feat || 'town';
+    const FEATD = {
+      town: { name: 'TOWN', c: '#4ED8C3', title: 'Annexation night: a hearing, three ordinances, outside counsel \u2014 and $667,067.91', line: 'Alpine Apex hearing + 1st reading, Boardwalk II final reading, litigation counsel, the LUDC consultant pick \u2014 Tuesday 6:30 PM.', short: 'town', lenses: { conNow: 'Annex by the book or not at all: petition, mailed notice, a real hearing, three readings. Hiring litigation counsel the same night tells you how contested \u201cthe book\u201d already is.', conFound: 'The founding platform tied growth to consent of the governed \u2014 annexation as neighbors petitioning in, not paper moving faster than notice. Drift shows up as process compressed into one evening.', progNow: 'Growth needs a plan: pick the LUDC consultant on the merits, publish both versions of the evaluation, and make the $667k meter project legible line by line.', progFound: 'Born demanding open books: an evaluation swapped after posting and a motion with a blank where the winner\u2019s name goes would have been the movement\u2019s original targets.', lib: 'Annexation changes whose rules govern your land \u2014 the owner\u2019s consent is the whole question. And an hourly litigation agreement with no cap is a tax with no ceiling.', consti: 'Wyo. Const. art. 1 \u00a7\u00a7 32\u201333: municipal power over property is bounded by statute and due process. Findings recited in a motion don\u2019t make conditions true \u2014 courts check.' } },
+      county: { name: 'COUNTY \u2014 LINCOLN', c: '#E5A83B', title: 'Roads first: bids closed, award Aug 3', line: 'Resurfacing bids closed Jul 18 \u2014 award Aug 3 in Kemmerer, land-use follow-up the same morning.', short: 'county', lenses: { conNow: 'Roads before new rules \u2014 bid the resurfacing out, keep the land-use rewrite narrow and cheap for working ranchers.', conFound: 'The founding platform promised local self-rule against distant machines; a county rewrite drafted without precinct input drifts from that root.', progNow: 'Fix the roads, yes \u2014 but the land-use update is the county\u2019s one lever to plan growth. Use the Jul 15 hearing; don\u2019t rubber-stamp the draft.', progFound: 'Founded on open process: a real hearing, noticed early \u2014 not a formality after the draft has hardened.', lib: 'Fewer land-use rules, not more \u2014 every new county standard is a cost on someone\u2019s acreage before a single road is paved.', consti: 'County power is delegated, not inherent: a rewrite reaching beyond the enabling statutes invites challenge under Wyoming\u2019s constitution.' } },
+      state: { name: 'STATE \u2014 WYOMING', c: '#7DB1FB', title: 'The rental bill advanced', line: 'Bill 26-LSO-0142 advanced Jul 13 after 214 comments \u2014 bill-draft vote expected this fall.', short: 'state', lenses: { conNow: 'Property owners should decide what happens on their land \u2014 a state cap on local rental bans protects exactly that.', conFound: 'The founding platform prized federalism all the way down; Cheyenne overriding town councils sits uneasily with that inheritance.', progNow: 'Housing is regional. A one-size cap strips towns of their only tool against investor-owned rental sprawl.', progFound: 'The movement was founded fighting industry capture of statehouses \u2014 a bill written around industry asks would have been its original target.', lib: 'Rental caps are a taking by another name; the bill restores an owner\u2019s default right to rent.', consti: 'Dillon\u2019s Rule cuts both ways: the state may preempt towns, but art. 1 \u00a7 32 property protections bind state and town alike.' } }
+    };
+    const FD = FEATD[feat];
+    const sideCards = ['town', 'county', 'state'].filter(k => k !== feat).map(k => ({ label: k === 'town' ? 'TOWN \u2014 ALPINE' : FEATD[k].name, c: FEATD[k].c, title: FEATD[k].title, line: FEATD[k].line, short: FEATD[k].short, open: () => this.setState({ feat: k }) }));
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: mode !== 'simple',
+      isSimple: mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      printPage: () => window.print(),
+      featTown: feat === 'town', featCounty: feat === 'county', featState: feat === 'state',
+      featColor: FD.c, featLvlName: FD.name,
+      lensConNow: FD.lenses.conNow, lensConFound: FD.lenses.conFound,
+      lensProgNow: FD.lenses.progNow, lensProgFound: FD.lenses.progFound,
+      lensLib: FD.lenses.lib, lensConst: FD.lenses.consti,
+      sideCards,
+      rtOpen: this.state.rtOpen,
+      rtToggle: () => this.setState({ rtOpen: !this.state.rtOpen }),
+      rtLabel: this.state.rtOpen ? 'Hide transcript ▴' : 'Show transcript ▾',
+      fsIsPre: this.state.fs === 'pre', fsIsPost: this.state.fs === 'post',
+      fsPre: () => this.setState({ fs: 'pre' }), fsPost: () => this.setState({ fs: 'post' }),
+      fsPreBg: this.state.fs === 'pre' ? '#4ED8C3' : 'transparent', fsPreFg: this.state.fs === 'pre' ? '#062019' : '#8D99A7',
+      fsPostBg: this.state.fs === 'post' ? '#4ED8C3' : 'transparent', fsPostFg: this.state.fs === 'post' ? '#062019' : '#8D99A7',
+      nbPreBgL: this.state.nb === 'pre' ? '#1E1C17' : '#FDFAF1', nbPreFgL: this.state.nb === 'pre' ? '#FBF7EB' : '#1E1C17',
+      nbPostBgL: this.state.nb === 'post' ? '#1E1C17' : '#FDFAF1', nbPostFgL: this.state.nb === 'post' ? '#FBF7EB' : '#1E1C17',
+      nbPre: () => this.setState({ nb: 'pre' }),
+      nbPost: () => this.setState({ nb: 'post' }),
+      nbPreBg: this.state.nb === 'pre' ? '#4ED8C3' : 'transparent', nbPreFg: this.state.nb === 'pre' ? '#062019' : '#8D99A7',
+      nbPostBg: this.state.nb === 'post' ? '#4ED8C3' : 'transparent', nbPostFg: this.state.nb === 'post' ? '#062019' : '#8D99A7',
+      nbItems: (() => {
+        const NB = [
+          { date: 'TUE · JUL 21', lvl: 'TOWN', c: '#4ED8C3', title: 'Alpine Town Council',
+            pre: { sum: 'Alpine Apex annexation hearing + 1st reading, Boardwalk II final reading, outside litigation counsel, the $667,067.91 AMI payment, LUDC consultant pick.', href: 'Fast Agenda.dc.html', linkT: 'pre-meeting brief ›', status: 'agenda ✓ · 1 attachment ▲' },
+            post: { sum: 'No after-meeting analysis yet — the meeting is tomorrow, 6:30 PM. Analysis publishes within ~4 days of the transcript.', href: 'Fast Agenda.dc.html', linkT: 'pre-meeting brief ›', status: '◌ PENDING MEETING' },
+            pendingPost: true },
+          { date: 'TUE · JUL 28', lvl: 'TOWN', c: '#4ED8C3', title: 'Alpine Planning & Zoning',
+            pre: { sum: 'LUDC amendments pipeline — the P&Z side of the code work the council starts Jul 21. Agenda due Jul 24.', href: 'Timeline.dc.html?issue=ludc', linkT: 'pre-meeting brief ›', status: '◌ agenda due Jul 24' },
+            post: null, pendingPost: true },
+          { date: 'MON · AUG 3', lvl: 'COUNTY', c: '#E5A83B', title: 'Lincoln County Commission',
+            pre: { sum: 'Road-bid award + rural land-use follow-up from the Jul 15 hearing. 9 AM, Kemmerer.', href: 'Timeline.dc.html?issue=landuse', linkT: 'pre-meeting brief ›', status: 'agenda ✓' },
+            post: null, pendingPost: true },
+          { date: 'TUE · JUL 7', lvl: 'TOWN', c: '#4ED8C3', title: 'Alpine Town Council',
+            pre: { sum: 'What we flagged going in: moratorium + fee ordinance final readings, Boardwalk II 2nd reading — and the p.3 fee wording added after posting.', href: 'Timeline.dc.html?issue=moratorium', linkT: 'pre-meeting brief ›', status: 'published Jul 4 · meeting held ✓' },
+            post: { sum: 'Moratorium adopted 4–1 with the $150 fee intact; admin fees adopted on 3rd reading (promise conflict settled — BROKEN); Boardwalk II passed 2nd reading.', href: 'Timeline.dc.html?issue=moratorium', linkT: 'post-meeting analysis ›', status: 'video ✓ · analysis ✓' } },
+          { date: 'TUE · JUN 23', lvl: 'TOWN', c: '#4ED8C3', title: 'Alpine Town Council',
+            pre: { sum: 'Going in: Boardwalk II Lot 18 annexation 1st reading; moratorium 2nd reading; summer bills.', href: 'Timeline.dc.html?issue=annexation', linkT: 'pre-meeting brief ›', status: 'published Jun 21 · meeting held ✓' },
+            post: { sum: 'Boardwalk II Lot 18 passed 1st reading; moratorium passed 2nd reading 4–1; minutes now on the Jul 21 consent agenda.', href: 'Timeline.dc.html?issue=annexation', linkT: 'post-meeting analysis ›', status: 'video ✓ · analysis ✓' } },
+          { date: 'TUE · JUN 2', lvl: 'TOWN', c: '#4ED8C3', title: 'Alpine Town Council',
+            pre: { sum: 'Going in: admin-fee ordinance 1st reading; Alpine Lakes annexation follow-up; FY-27 budget calendar.', href: 'Timeline.dc.html?issue=fees', linkT: 'pre-meeting brief ›', status: 'published May 31 · meeting held ✓' },
+            post: { sum: 'Admin-fee ordinance introduced on 1st reading; budget calendar set; annexation infrastructure questions carried forward.', href: 'Timeline.dc.html?issue=fees', linkT: 'post-meeting analysis ›', status: 'video ✓ · analysis ✓' } }
+        ];
+        const tab = this.state.nb;
+        return NB.filter(m => tab === 'pre' ? !!m.pre : true).map(m => {
+          const side = tab === 'pre' ? m.pre : (m.post || { sum: 'No after-meeting analysis yet — the meeting hasn\u2019t been held.', href: m.pre.href, linkT: 'pre-meeting brief ›', status: '◌ PENDING MEETING' });
+          const pairT = tab === 'pre' ? (m.pendingPost ? 'post side: ◌ pending →' : 'its post-meeting analysis →') : '‹ its pre-meeting brief';
+          return Object.assign({ date: m.date, lvl: m.lvl, c: m.c, cL: ({ TOWN: '#0E7A6E', COUNTY: '#A36A10', STATE: '#274F9B' })[m.lvl], title: m.title, pairT, pairGo: () => this.setState({ nb: tab === 'pre' ? 'post' : 'pre' }) }, side);
+        });
+      })(),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      lines: mk(LIGHT, '#F3EBD3'),
+      linesD: mk(DARK, '#141B23'),
+      playLabel: playing ? '❚❚ Pause' : '▶ Play the debate',
+      posLabel: 'line ' + (idx + 1) + ' of ' + S.length + (playing ? ' · speaking' : ''),
+      progress: Math.round((idx / (S.length - 1)) * 100) + '%',
+      dToggle: () => { if (playing) { this.stopSpeech(); } else { this.speakFrom(idx); } },
+      dPrev: () => move(-1),
+      dNext: () => move(1),
+      dRestart: () => { if (playing) { this.speakFrom(0); } else { this.setState({ idx: 0 }); this.saveIdx(0); } }
+    };
+  }
+}
+</script>
+</body>
+</html>

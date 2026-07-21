@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Alerts (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1200px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:420px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text"><span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search agendas, meetings, documents…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div>
+        <div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1200px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+      <a href="Alerts.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Alerts</a>
+    </div>
+  </div>
+
+  <div style="max-width:1200px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:20px;font-weight:800">Alerts</div>
+      <div style="font-size:12.5px;color:#8D99A7">what changed, what's due, what's about to be voted — pushed to you, receipts attached</div>
+      <span onClick="{{ markAll }}" style="margin-left:auto;font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:8px;padding:6px 14px;cursor:pointer" style-hover="background:#0F1E1B">Mark all read ✓</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#EE7A6D;margin-bottom:11px">UNREAD · {{ unreadCount }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ unread }}" as="al" hint-placeholder-count="3">
+              <div style="display:flex;gap:12px;background:{{ al.bg }};border:1px solid {{ al.bd }};border-left:3px solid {{ al.c }};border-radius:10px;padding:11px 13px">
+                <span style="flex:none;font-size:16px;padding-top:1px">{{ al.icon }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:13.5px;color:#ECF1F7">{{ al.title }}</b><span style="font-size:9px;font-weight:800;letter-spacing:.7px;color:{{ al.lvlC }};border:1px solid {{ al.lvlC }};border-radius:4px;padding:0.5px 6px">{{ al.lvl }}</span></span>
+                  <span style="display:block;font-size:12px;color:#C3CDD9;margin-top:3px;line-height:1.5">{{ al.sub }}</span>
+                  <span style="display:block;font-size:11px;margin-top:5px"><a href="{{ al.href }}" style="color:#7DB1FB">{{ al.linkT }}</a> · <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7">{{ al.when }}</span></span>
+                </span>
+                <span onClick="{{ al.read }}" title="Mark read" style="flex:none;font-size:11px;font-weight:700;color:#8D99A7;border:1px solid #2C3642;border-radius:7px;padding:4px 10px;cursor:pointer;height:fit-content" style-hover="background:#161E27">✓ read</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noUnread }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center;color:#8D99A7;font-size:12.5px;padding:14px 0">All caught up ✓ — new alerts land here the moment we detect them.</div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">EARLIER · READ</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ earlier }}" as="al" hint-placeholder-count="4">
+              <div style="display:flex;gap:10px;align-items:baseline;border-bottom:1px solid #161E27;padding:7px 4px;opacity:.75">
+                <span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;width:46px">{{ al.when }}</span>
+                <span style="flex:none;font-size:9px;font-weight:800;letter-spacing:.7px;color:{{ al.lvlC }};border:1px solid {{ al.lvlC }};border-radius:4px;padding:0.5px 6px">{{ al.lvl }}</span>
+                <span style="flex:1;min-width:0;font-size:12.5px;color:#C3CDD9">{{ al.title }} <span style="color:#8D99A7">— {{ al.sub }}</span></span>
+                <a href="{{ al.href }}" style="flex:none;font-size:11px;color:#7DB1FB">{{ al.linkT }}</a>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:10px">DELIVERY</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#C3CDD9">
+            <div style="display:flex;justify-content:space-between;gap:8px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><span>Email — within 1 day of a new agenda</span><b style="color:#63D68F">ON ✓</b></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><span>Text — ▲ hidden-change flags only</span><b style="color:#63D68F">ON ✓</b></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><span>Meeting-eve reminder (6:30 PM meetings)</span><b style="color:#63D68F">ON ✓</b></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><span>Daily digest</span><b style="color:#8D99A7">OFF ◌</b></div>
+          </div>
+          <div style="font-size:11px;color:#8D99A7;margin-top:9px">Alert speed target: <b style="color:#C3CDD9">within 1 day of an agenda posting</b> · post-meeting analysis within ~4 days of the transcript.</div>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:8px">WHAT TRIGGERS AN ALERT</div>
+          <div style="font-size:12px;color:#C3CDD9;line-height:1.8">▲ a posted document changes · a new agenda posts · a tracked issue lands on any agenda · a vote is scheduled · a record goes missing past its ladder (release 0–2d → transcript 2–7d → missing) · a promise verdict settles</div>
+          <div style="font-size:11px;color:#8D99A7;margin-top:8px">You're tracking <b style="color:#4ED8C3">{{ trackedCount }}</b> issue(s) — manage them on the <a href="Fast Agenda.dc.html" style="color:#7DB1FB">agenda board</a>. If a tracked issue splits, you follow both halves automatically.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ No alert without a receipt — every notification links to the archived record.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Tip us something</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Alerts (light)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:880px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px;margin-bottom:18px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">YOUR ALERTS</div>
+    </div>
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#A33327;border-bottom:2px solid #1E1C17;padding-bottom:5px;margin-bottom:12px">NEW SINCE YOU LAST LOOKED</div>
+    <div style="display:flex;flex-direction:column;margin-bottom:22px">
+      <sc-for list="{{ unread }}" as="al" hint-placeholder-count="3">
+        <div style="display:flex;gap:12px;border-bottom:1px solid #D8D0BC;padding:11px 0">
+          <span style="flex:none;font-size:18px">{{ al.icon }}</span>
+          <span style="flex:1"><b style="font-size:17px">{{ al.title }}</b><br><span style="font-size:14.5px;color:#4A463C">{{ al.sub }}</span><br><span style="font-family:'Public Sans',sans-serif;font-size:12.5px"><a href="{{ al.href }}">{{ al.linkT }}</a> · <span style="color:#6E685B">{{ al.when }}</span></span></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C;background:#FDFAF1;border:1.5px solid #1E1C17;border-radius:8px;padding:12px 16px">You get a letter or email <b>within one day</b> of a new agenda, and a reminder the evening before each meeting. Change how you're reached from the <span onClick="{{ goAdvanced }}" style="color:#1A4D8F;font-weight:700;cursor:pointer;text-decoration:underline">Advanced view →</span></div>
+    <div style="border-top:3px double #1E1C17;padding-top:12px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C"><a href="Home.dc.html">Back to the front page →</a></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'advanced',
+    readIds: (() => { try { return JSON.parse(localStorage.getItem('gw_alerts_read') || '[]'); } catch (e) { return []; } })()
+  };
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+  markRead(ids) {
+    const merged = Array.from(new Set(this.state.readIds.concat(ids)));
+    this.setState({ readIds: merged });
+    try { localStorage.setItem('gw_alerts_read', JSON.stringify(merged)); } catch (e) {}
+  }
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GREY = '#8D99A7';
+    const ALERTS = [
+      { id: 'a1', day: 18, icon: '▲', c: RED, bg: '#1D1412', bd: '#52302B', lvl: 'TOWN', lvlC: MINT, title: 'Attachment replaced after posting', sub: 'LUDC rewrite staff evaluation swapped for a V2 — scoring weights changed and the ranking flips. Both versions archived.', href: 'Source Vault.dc.html', linkT: 'see the diff ›', when: 'JUL 18' },
+      { id: 'a2', day: 20, icon: '◉', c: '#ECC35C', bg: '#1B1708', bd: '#4a3c14', lvl: 'TOWN', lvlC: MINT, title: 'Meeting tomorrow — hearing + 9 motions', sub: 'Alpine Apex annexation hearing is your only slot to speak before the readings. 6:30 PM, Town Hall + YouTube live.', href: 'Fast Agenda.dc.html', linkT: 'the full agenda ›', when: 'JUL 20' },
+      { id: 'a3', day: 17, icon: '✓', c: GREEN, bg: '#101820', bd: '#1F3A2C', lvl: 'TOWN', lvlC: MINT, title: 'Agenda + packet posted for July 21', sub: '10 sections, 21 attachments — our plain-English brief landed within a day.', href: 'Newsletter.dc.html', linkT: 'pre-meeting brief ›', when: 'JUL 17' }
+    ];
+    const EARLIER = [
+      { id: 'e1', day: 13, lvl: 'STATE', lvlC: BLUE, title: 'Rental bill advanced', sub: 'committee moved 26-LSO-0142 toward a draft vote', href: 'Timeline.dc.html?issue=str', linkT: 'thread ›', when: 'JUL 13' },
+      { id: 'e2', day: 9, lvl: 'TOWN', lvlC: MINT, title: 'Pay applications filed — $667,067.91', sub: 'AMI Radio Read project, apps 1–4 on the Jul 21 agenda', href: 'Fast Agenda.dc.html', linkT: 'item 8.c ›', when: 'JUL 9' },
+      { id: 'e3', day: 9, lvl: 'TOWN', lvlC: MINT, title: 'Jul 7 video posted on time', sub: 'every vote timestamped in the vault', href: 'Source Vault.dc.html', linkT: 'vault ›', when: 'JUL 9' },
+      { id: 'e4', day: 7, lvl: 'TOWN', lvlC: MINT, title: 'Promise verdict settled — BROKEN', sub: 'fee ordinance adopted on 3rd reading vs. the 2024 quote', href: 'Power Tracker.dc.html', linkT: 'verdict ›', when: 'JUL 7' },
+      { id: 'e5', day: 18, lvl: 'COUNTY', lvlC: AMBER, title: 'Road bids closed', sub: 'award expected Aug 3 in Kemmerer', href: 'Timeline.dc.html?issue=landuse', linkT: 'thread ›', when: 'JUL 18' }
+    ];
+    const read = this.state.readIds;
+    const unread = ALERTS.filter(a => read.indexOf(a.id) < 0).map(a => Object.assign({ read: () => this.markRead([a.id]) }, a));
+    const earlier = EARLIER.concat(ALERTS.filter(a => read.indexOf(a.id) >= 0)).slice().sort((a, b) => (b.day || 0) - (a.day || 0));
+    const trackedCount = (() => { try { return Object.keys(JSON.parse(localStorage.getItem('gw_tracked') || '{}')).length; } catch (e) { return 0; } })();
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: this.state.mode !== 'simple',
+      isSimple: this.state.mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      unread, earlier,
+      unreadCount: unread.length,
+      noUnread: unread.length === 0,
+      markAll: () => this.markRead(ALERTS.map(a => a.id)),
+      trackedCount
+    };
+  }
+}
+</script>
+</body>
+</html>

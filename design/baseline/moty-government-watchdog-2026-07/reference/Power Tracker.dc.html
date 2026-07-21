@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Power Tracker (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓ · no verdict without receipts</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text">
+        <span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search officials, quotes, votes…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:20px;font-weight:800">Power Tracker</div>
+      <div style="font-size:12.5px;color:#8D99A7">promises vs. actions — every verdict carries its receipts</div>
+      <div style="margin-left:auto;display:flex;gap:5px;background:#10161D;border:1px solid #1F2833;border-radius:10px;padding:4px">
+        <span onClick="{{ pickAll }}" style="padding:5px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pAllBg }};color:{{ pAllFg }}">All</span>
+        <span onClick="{{ pickTown }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pTownBg }};color:{{ pTownFg }}">Town</span>
+        <span onClick="{{ pickCounty }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pCountyBg }};color:{{ pCountyFg }}">County</span>
+        <span onClick="{{ pickState }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pStateBg }};color:{{ pStateFg }}">State</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:390px 1fr;gap:16px;align-items:start">
+      <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 4px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">OFFICIALS · {{ officialCount }}</div>
+          <div style="font-size:11px;color:#8D99A7">sorted: broken promises first</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-for list="{{ officials }}" as="o" hint-placeholder-count="6">
+            <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid {{ o.bd }};border-radius:10px;padding:9px 11px;cursor:pointer" style-hover="border-color:#33404E">
+              <span style="width:34px;height:34px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:11.5px;font-weight:800;color:#C3CDD9;flex:none">{{ o.init }}</span>
+              <span style="flex:1;min-width:0"><span style="font-size:13.5px;font-weight:700">{{ o.name }}</span> <span style="font-size:9px;font-weight:800;letter-spacing:.7px;color:{{ o.lvlColor }}">{{ o.lvlName }}</span><br><span style="font-size:10.5px;color:#8D99A7">{{ o.role }}</span></span>
+              <span style="flex:none;display:flex;gap:7px;font-size:11.5px;font-weight:800;text-align:center"><span style="color:#63D68F">{{ o.k }}</span><span style="color:#EE7A6D">{{ o.b }}</span><span style="color:#ECC35C">{{ o.p }}</span></span>
+              <span style="flex:none;font-size:15px;font-weight:800;color:{{ o.scoreColor }};width:44px;text-align:right">{{ o.score }}%</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:10.5px;color:#8D99A7;margin-top:10px;padding:0 4px"><span style="color:#63D68F;font-weight:700">kept</span> · <span style="color:#EE7A6D;font-weight:700">broken</span> · <span style="color:#ECC35C;font-weight:700">partial</span> — counts of receipt-backed verdicts. <span style="color:#7DB1FB;cursor:pointer;text-decoration:underline;text-underline-offset:2px">How scoring works ⓘ</span></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #2E6B60;border-radius:14px;padding:20px">
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            <div style="width:64px;height:64px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:20px;font-weight:800;color:#C3CDD9;flex:none">{{ prof.init }}</div>
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:22px;font-weight:800">{{ prof.name }}</div>
+              <div style="font-size:12.5px;color:#8D99A7">{{ prof.role }} · <span style="color:{{ prof.lvlColor }};font-weight:700">{{ prof.lvlName }}</span> · {{ prof.board }} · term ends {{ prof.term }}</div>
+              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                <a href="Timeline.dc.html" style="font-size:11px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:4px 11px;text-decoration:none" style-hover="background:#0F1E1B">Person timeline ›</a>
+                <span style="font-size:11px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:4px 11px;cursor:pointer" style-hover="background:#161E27">Share profile</span>
+                <span style="font-size:11px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:4px 11px;cursor:pointer" style-hover="background:#161E27">Download report</span>
+              </div>
+            </div>
+            <div style="flex:none;display:flex;align-items:center;gap:16px">
+              <div style="text-align:center">
+                <div style="width:86px;height:86px;border-radius:50%;background:conic-gradient({{ prof.scoreColor }} {{ prof.scoreDeg }}, #232C37 0);display:grid;place-items:center">
+                  <div style="width:66px;height:66px;border-radius:50%;background:#12181F;display:grid;place-items:center"><div><div style="font-size:19px;font-weight:800;line-height:1;color:{{ prof.scoreColor }}">{{ prof.score }}%</div><div style="font-size:8.5px;color:#8D99A7;letter-spacing:.5px">KEEPING<br>PROMISES</div></div></div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;min-width:150px">
+                <div style="display:flex;align-items:center;gap:7px"><span style="width:52px;color:#63D68F;font-weight:700">Kept</span><span style="flex:1;height:7px;background:#1B232D;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:{{ prof.wK }};background:#63D68F"></span></span><span style="width:14px;text-align:right;font-weight:700">{{ prof.k }}</span></div>
+                <div style="display:flex;align-items:center;gap:7px"><span style="width:52px;color:#EE7A6D;font-weight:700">Broken</span><span style="flex:1;height:7px;background:#1B232D;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:{{ prof.wB }};background:#EE7A6D"></span></span><span style="width:14px;text-align:right;font-weight:700">{{ prof.b }}</span></div>
+                <div style="display:flex;align-items:center;gap:7px"><span style="width:52px;color:#ECC35C;font-weight:700">Partial</span><span style="flex:1;height:7px;background:#1B232D;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:{{ prof.wP }};background:#ECC35C"></span></span><span style="width:14px;text-align:right;font-weight:700">{{ prof.p }}</span></div>
+                <div style="display:flex;align-items:center;gap:7px"><span style="width:52px;color:#8D99A7;font-weight:700">No action</span><span style="flex:1;height:7px;background:#1B232D;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:{{ prof.wN }};background:#8D99A7"></span></span><span style="width:14px;text-align:right;font-weight:700">{{ prof.n }}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start">
+          <div style="background:#151210;border:1px solid #3E2A24;border-radius:14px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#EE7A6D">PROMISE vs ACTION — LATEST VERDICT</div>
+              <sc-if value="{{ pvOk }}" hint-placeholder-val="{{ true }}"><span style="font-size:10.5px;font-weight:800;color:{{ prof.vColor }};border:1px solid {{ prof.vColor }};border-radius:5px;padding:2px 9px">{{ prof.verdict }}</span></sc-if>
+              <sc-if value="{{ pvGate }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:800;color:#ECC35C;border:1px solid #4a3c14;border-radius:5px;padding:2px 9px">AI — GATED</span></sc-if>
+            </div>
+            <sc-if value="{{ pvGate }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#1A1512;border:1px dashed #4a3c14;border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#ECC35C">AI-GENERATED ANALYSIS — READ FIRST</div>
+              <div style="font-size:12.5px;color:#C3CDD9;margin-top:7px;line-height:1.65;max-width:560px;margin-left:auto;margin-right:auto;text-align:left">This verdict was matched by AI from the quote archive and the vote record. AI can be wrong — it is known to hallucinate and may state things that are inaccurate or not even true. Review the receipts yourself before repeating it.</div>
+              <span onClick="{{ pvShow }}" style="display:inline-block;margin-top:11px;font-size:12px;font-weight:800;color:#062019;background:#ECC35C;border-radius:8px;padding:8px 20px;cursor:pointer">I understand — show the verdict</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ pvOk }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:12px">
+                <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">WHAT WAS PROMISED</div>
+                <div style="font-size:14px;font-style:italic;color:#ECF1F7;margin-top:6px;line-height:1.5">“{{ prof.said }}”</div>
+                <div style="font-size:11px;color:#8D99A7;margin-top:7px">{{ prof.saidSrc }} · <span style="color:#63D68F;font-weight:700">✓ archived</span></div>
+              </div>
+              <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:12px">
+                <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">WHAT HAPPENED</div>
+                <div style="font-size:14px;color:#ECF1F7;margin-top:6px;line-height:1.5">{{ prof.did }}</div>
+                <div style="font-size:11px;color:#8D99A7;margin-top:7px">{{ prof.didSrc }} · <span style="color:#63D68F;font-weight:700">✓ roll call + text</span></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:11px;flex-wrap:wrap;gap:8px">
+              <div style="font-size:11.5px;color:#8D99A7">Evidence chain: quote archive → topic match → recorded action → document text · confidence <b style="color:#C3CDD9">{{ prof.conf }}</b> · score change <b style="color:{{ prof.vColor }}">{{ prof.delta }}</b></div>
+              <div style="display:flex;gap:8px">
+                <a href="Source Vault.dc.html" style="font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:5px 12px;text-decoration:none" style-hover="background:#0F1E1B">All receipts ({{ prof.receipts }}) ›</a>
+                <span style="font-size:11.5px;font-weight:700;color:#ECC35C;border:1px solid #4a3c14;border-radius:7px;padding:5px 12px;cursor:pointer" style-hover="background:#201A0E">Challenge this verdict</span>
+              </div>
+            </div>
+            </sc-if>
+          </div>
+
+          <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;flex-wrap:wrap"><div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">QUOTE LEDGER</div><span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:4px;padding:1px 7px">FOUND BY AI — VERIFY SOURCE FIRST</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ prof.quotes }}" as="q" hint-placeholder-count="3">
+                <div style="border-left:3px solid #2C3642;padding-left:11px">
+                  <div style="font-size:13px;font-style:italic;line-height:1.45">“{{ q.text }}”</div>
+                  <div style="font-size:10.5px;color:#8D99A7;margin-top:3px">{{ q.src }} · {{ q.date }} · <a href="Source Vault.dc.html" style="color:#7DB1FB">verify source ↗</a> · <span style="color:{{ q.sColor }};font-weight:700">{{ q.status }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">PROMISE LEDGER</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ prof.promises }}" as="pr" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1B232D;padding-bottom:7px">
+                  <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:{{ pr.c }};border:1px solid {{ pr.c }};border-radius:4px;padding:1.5px 7px;flex:none;width:64px;text-align:center">{{ pr.v }}</span>
+                  <span style="flex:1;font-size:12.5px">{{ pr.t }}</span>
+                  <span style="font-size:10.5px;color:#8D99A7;flex:none">{{ pr.topic }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">VOTE / ACTION RECORD</div>
+            <div style="display:grid;grid-template-columns:52px 1fr 44px 70px;gap:6px;font-size:10px;color:#8D99A7;letter-spacing:.5px;border-bottom:1px solid #232C37;padding-bottom:4px;margin-bottom:6px"><span>DATE</span><span>ITEM</span><span>VOTE</span><span style="text-align:right">ALIGNMENT</span></div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ prof.votes }}" as="v" hint-placeholder-count="4">
+                <div onClick="{{ v.open }}" title="{{ v.rowTip }}" style="display:grid;grid-template-columns:52px 1fr 44px 70px;gap:6px;font-size:12px;align-items:baseline;cursor:{{ v.cur }};border-radius:6px;padding:2px 4px;margin:0 -4px" style-hover="background:#161E27">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8D99A7">{{ v.date }}</span>
+                  <span>{{ v.item }}</span>
+                  <span style="font-weight:800;color:{{ v.voteColor }}">{{ v.vote }}</span>
+                  <span style="text-align:right;font-weight:700;color:{{ v.alignColor }}">{{ v.align }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;color:#8D99A7;margin-top:10px">Every row links to minutes, roll call &amp; video timestamp in the <a href="Source Vault.dc.html" style="color:#7DB1FB">Source Vault</a> · click a <b style="color:#C3CDD9">Kept / Broken</b> row for the full promise detail.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{ vmOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ vmClose }}" style="position:fixed;inset:0;background:rgba(3,6,10,.74);z-index:60;display:grid;place-items:center;padding:26px">
+      <div onClick="{{ vmEat }}" style="width:min(680px,94vw);max-height:88vh;overflow-y:auto;background:#12181F;border:1px solid #33404E;border-radius:16px;padding:20px 22px;box-shadow:0 28px 90px rgba(0,0,0,.6)">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:#EE7A6D">VOTE DETAIL — PROMISE CHECK</div>
+            <div style="font-size:18px;font-weight:800;line-height:1.25;margin-top:5px">{{ vm.item }} <span style="font-size:10px;font-weight:800;color:{{ vm.alignColor }};border:1px solid {{ vm.alignColor }};border-radius:4px;padding:1px 7px;vertical-align:2px">{{ vm.align }}</span></div>
+            <div style="font-size:11.5px;color:#8D99A7;margin-top:3px">{{ vm.date }}, 2026 · voted {{ vm.vote }}</div>
+          </div>
+          <span onClick="{{ vmClose }}" style="flex:none;width:28px;height:28px;border:1px solid #2C3642;border-radius:8px;display:grid;place-items:center;color:#8D99A7;cursor:pointer;font-size:13px" style-hover="background:#161E27">✕</span>
+        </div>
+        <sc-if value="{{ vmGate }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#201A0E;border:1px dashed #4a3c14;border-radius:10px;padding:16px;text-align:center;margin-top:14px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#ECC35C">FOUND BY AI — READ BEFORE VIEWING</div>
+            <div style="font-size:12.5px;color:#C3CDD9;margin-top:7px;line-height:1.65;text-align:left">This promise match was generated by AI from archived quotes and the recorded vote. AI has known issues with hallucination — the match may be inaccurate, incomplete, or not even true. Treat it as a lead, not a verdict: verify every receipt below yourself before repeating it.</div>
+            <span onClick="{{ vmAccept }}" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:#062019;background:#ECC35C;border-radius:8px;padding:8px 20px;cursor:pointer">I understand — show the full detail</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ vmShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:12px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">THE PROMISE</div>
+              <div style="font-size:13.5px;font-style:italic;margin-top:5px;line-height:1.5">“{{ vm.det.promise }}”</div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:5px">{{ vm.det.promiseSrc }}</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:12px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">THE ACTION</div>
+              <div style="font-size:13px;margin-top:5px;line-height:1.5">{{ vm.det.action }}</div>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:10px;padding:12px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:{{ vm.alignColor }}">HOW THE TWO LINE UP</div>
+              <div style="font-size:13px;color:#C3CDD9;margin-top:5px;line-height:1.6">{{ vm.det.how }} <span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px">AI ANALYSIS</span></div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ vm.det.receipts }}" as="rc" hint-placeholder-count="2">
+                <a href="{{ rc.href }}" style="font-size:11.5px;font-weight:700;color:#7DB1FB;border:1px solid #29405F;background:#101A28;border-radius:7px;padding:5px 12px;text-decoration:none" style-hover="border-color:#7DB1FB">▸ {{ rc.t }}</a>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;color:#8D99A7">Disagree with the match? <span style="color:#ECC35C;font-weight:700;cursor:pointer">Challenge this verdict</span> — challenges and their outcomes are public.</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ No broken-promise label without a saved quote, a recorded action, a topic match, and sources.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Tip us something</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Power Tracker (light scorecard)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:880px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">THE SCORECARD — PROMISES vs. ACTIONS</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:20px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 17px;margin-bottom:20px;font-size:15px">
+      <b>How this works:</b> we save what officials <i>say</i> (campaign pages, meetings, forums) and match it against what they <i>do</i> (votes, sponsorships, actions). A promise is only marked <b style="color:#7B241C">broken</b> or <b style="color:#1E4620">kept</b> when both sides have saved documents behind them. <span style="font-family:'Public Sans',sans-serif;font-size:12.5px">You can <a href="#">challenge any verdict</a>.</span>
+    </div>
+
+    <sc-for list="{{ simpleCards }}" as="o" hint-placeholder-count="5">
+      <div style="border-bottom:1px solid #D8D0BC;padding:14px 0;display:flex;gap:16px;align-items:flex-start">
+        <div style="flex:none;width:58px;text-align:center;font-family:'Public Sans',sans-serif">
+          <div style="font-size:24px;font-weight:800;color:{{ o.scoreColorL }}">{{ o.score }}%</div>
+          <div style="font-size:9px;letter-spacing:.5px;color:#6E685B">KEEPING<br>PROMISES</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:21px;font-weight:600">{{ o.name }} <span style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;color:{{ o.lvlColorL }}">{{ o.lvlName }}</span></div>
+          <div style="font-size:14px;color:#4A463C;font-family:'Public Sans',sans-serif">{{ o.role }}</div>
+          <div style="font-size:15.5px;margin-top:4px">{{ o.line }}</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;margin-top:5px"><span style="color:#1E4620;font-weight:700">{{ o.k }} kept</span> · <span style="color:#7B241C;font-weight:700">{{ o.b }} broken</span> · <span style="color:#7A5B00;font-weight:700">{{ o.p }} partial</span> &nbsp;·&nbsp; <a href="Source Vault.dc.html">see the receipts</a></div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Quote ledgers &amp; vote history? <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'advanced',
+    pvOk: false,
+    vSel: null,
+    vOk: false,
+    level: 'all',
+    sel: 'roe'
+  };
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GOLD = '#ECC35C', GREY = '#8D99A7';
+    const LVL = { town: { n: 'TOWN', c: MINT, l: '#0E7A6E' }, county: { n: 'COUNTY', c: AMBER, l: '#A36A10' }, state: { n: 'STATE', c: BLUE, l: '#274F9B' } };
+    const sc = (s) => s >= 75 ? GREEN : s >= 55 ? GOLD : RED;
+    const scL = (s) => s >= 75 ? '#1E4620' : s >= 55 ? '#7A5B00' : '#7B241C';
+
+    const OFF = [
+      { id: 'roe', init: 'RR', name: 'Councilor R. Roe', role: 'Alpine Town Council', lvl: 'town', score: 48, k: 4, b: 3, p: 1, n: 2 },
+      { id: 'doe', init: 'JD', name: 'Mayor J. Doe', role: 'Town of Alpine', lvl: 'town', score: 63, k: 6, b: 3, p: 2, n: 1 },
+      { id: 'soe', init: 'SS', name: 'Sen. S. Soe', role: 'Wyoming Senate · Dist. 16', lvl: 'state', score: 54, k: 5, b: 4, p: 2, n: 3 },
+      { id: 'koe', init: 'KK', name: 'Comm. K. Koe', role: 'Lincoln County · Dist. 2', lvl: 'county', score: 66, k: 6, b: 3, p: 1, n: 1 },
+      { id: 'hoe', init: 'HH', name: 'Rep. H. Hoe', role: 'Wyoming House · Dist. 21', lvl: 'state', score: 61, k: 6, b: 3, p: 1, n: 2 },
+      { id: 'boe', init: 'BB', name: 'Councilor B. Boe', role: 'Alpine Town Council', lvl: 'town', score: 59, k: 4, b: 2, p: 1, n: 2 },
+      { id: 'moe', init: 'MM', name: 'Councilor M. Moe', role: 'Alpine Town Council', lvl: 'town', score: 71, k: 5, b: 1, p: 2, n: 1 },
+      { id: 'toe', init: 'TT', name: 'Comm. T. Toe', role: 'Lincoln County · Dist. 3', lvl: 'county', score: 74, k: 6, b: 1, p: 1, n: 1 },
+      { id: 'loe', init: 'LL', name: 'Councilor L. Loe', role: 'Alpine Town Council', lvl: 'town', score: 82, k: 8, b: 1, p: 1, n: 0 },
+      { id: 'poe', init: 'PP', name: 'Comm. P. Poe', role: 'Lincoln County · Dist. 1', lvl: 'county', score: 88, k: 7, b: 1, p: 0, n: 1 }
+    ];
+
+    const PROF = {
+      roe: {
+        board: 'Town Council', term: 'Dec 2026', verdict: 'BROKEN', vColor: RED,
+        said: 'I oppose unnecessary fees that burden our residents.',
+        saidSrc: 'Candidate forum · Apr 2024 · video 12:41',
+        did: 'Voted YES on Ordinance 2026-0055 — new administrative & service fees (2nd reading, Jun 26).',
+        didSrc: 'Town Council roll call · Jun 26, 2026',
+        conf: 'HIGH', delta: '−15 pts', receipts: 4,
+        quotes: [
+          { text: 'I oppose unnecessary fees that burden our residents.', src: 'Candidate forum', date: 'Apr 2024', status: '→ broken', sColor: RED },
+          { text: 'Keep Alpine\u2019s government lean — no new positions we can\u2019t fund.', src: 'Campaign site (archived)', date: 'Sep 2024', status: '→ partial', sColor: GOLD },
+          { text: 'Every packet should be public before we vote. Period.', src: 'Council meeting', date: 'Feb 2026', status: '→ kept', sColor: GREEN }
+        ],
+        promises: [
+          { v: 'BROKEN', c: RED, t: 'No new unnecessary fees', topic: 'Taxes / Fees' },
+          { v: 'KEPT', c: GREEN, t: 'Post budgets online, on time', topic: 'Transparency' },
+          { v: 'KEPT', c: GREEN, t: 'Fund the sewer capacity study', topic: 'Water / Sewer' },
+          { v: 'PARTIAL', c: GOLD, t: 'Keep government lean', topic: 'Governance' },
+          { v: 'NO ACTION', c: GREY, t: 'Winter sidewalk plan', topic: 'Roads' }
+        ],
+        votes: [
+          { date: 'Jun 26', item: 'Admin-fee ordinance 2026-0055', vote: 'YES', voteColor: '#ECF1F7', align: 'Broken', alignColor: RED, det: { promise: 'I oppose unnecessary fees that burden our residents.', promiseSrc: 'Candidate forum · Apr 2024 · video 12:41 · ✓ archived', action: 'Voted YES on Ordinance 2026-0055 (administrative fees) — 2nd reading, Jun 26, 2026. Roll call recorded; 3rd reading is Jul 7.', how: 'The ordinance creates new fees for administrative services, returned payments and staff reimbursements. The topic-matcher paired it with the archived 2024 quote (topic: Taxes / Fees); a YES vote directly contradicts the promise, so the verdict is BROKEN. Confidence HIGH — quote video, roll call and ordinance text are all archived.', receipts: [{ t: 'Quote video (12:41)', href: 'Source Vault.dc.html' }, { t: 'Jun 26 roll-call', href: 'Source Vault.dc.html' }, { t: 'Ord. 2026-0055 text', href: 'Source Vault.dc.html' }] } },
+          { date: 'Jun 12', item: 'Alpine Lakes annexation (61 ac)', vote: 'YES', voteColor: '#ECF1F7', align: '—', alignColor: GREY },
+          { date: 'May 21', item: 'FY-27 budget · 2nd reading', vote: 'YES', voteColor: '#ECF1F7', align: 'Kept', alignColor: GREEN, det: { promise: 'Post budgets online, on time.', promiseSrc: 'Campaign site (archived) · Sep 2024 · ✓ archived', action: 'Voted YES on the FY-27 budget, 2nd reading — May 21, 2026. The draft budget was posted 8 days before the vote.', how: 'The archived promise (topic: Budget / Transparency) asks for on-time public budgets; the posting record shows the draft up 8 days ahead. Action matches promise — marked KEPT.', receipts: [{ t: 'Budget posting record', href: 'Source Vault.dc.html' }, { t: 'May 21 roll-call', href: 'Source Vault.dc.html' }] } },
+          { date: 'Apr 15', item: 'Public-notice ordinance', vote: 'YES', voteColor: '#ECF1F7', align: 'Kept', alignColor: GREEN },
+          { date: 'Mar 24', item: 'Fireworks ordinance cleanup', vote: 'NO', voteColor: '#8D99A7', align: '—', alignColor: GREY }
+        ]
+      },
+      doe: {
+        board: 'Mayor\u2019s Office', term: 'Dec 2026', verdict: 'PARTIAL', vColor: GOLD,
+        said: 'I will keep Alpine\u2019s government lean and transparent.',
+        saidSrc: 'Campaign mailer · Oct 2024 · archived',
+        did: 'Supported Ordinance 2026-001 creating a paid town-administrator position (carried on 3rd reading).',
+        didSrc: 'Ordinance text + minutes · Jan 2026',
+        conf: 'MEDIUM', delta: '−8 pts', receipts: 3,
+        quotes: [
+          { text: 'I will keep Alpine\u2019s government lean and transparent.', src: 'Campaign mailer', date: 'Oct 2024', status: '→ partial', sColor: GOLD },
+          { text: 'The water system is my first, second, and third priority.', src: 'Council meeting', date: 'May 2026', status: '→ kept', sColor: GREEN }
+        ],
+        promises: [
+          { v: 'PARTIAL', c: GOLD, t: 'Lean government', topic: 'Governance' },
+          { v: 'KEPT', c: GREEN, t: 'Fix the water system fast', topic: 'Water / Sewer' },
+          { v: 'KEPT', c: GREEN, t: 'Open budget workshops', topic: 'Budget' },
+          { v: 'BROKEN', c: RED, t: 'Publish a growth plan by spring', topic: 'Development' }
+        ],
+        votes: [
+          { date: 'Jun 26', item: 'Admin-fee ordinance (tie-break not needed)', vote: '—', voteColor: GREY, align: '—', alignColor: GREY },
+          { date: 'May 23', item: 'Emergency water-main repair funding', vote: 'YES', voteColor: '#ECF1F7', align: 'Kept', alignColor: GREEN },
+          { date: 'Jan 13', item: 'Ord. 2026-001 · town administrator', vote: 'YES', voteColor: '#ECF1F7', align: 'Partial', alignColor: GOLD }
+        ]
+      },
+      poe: {
+        board: 'County Commission', term: 'Jan 2027', verdict: 'KEPT', vColor: GREEN,
+        said: 'County roads get fixed before anything fancy.',
+        saidSrc: 'Candidate debate · Oct 2024',
+        did: 'Sponsored the Road & Bridge summer package putting Star Valley resurfacing first.',
+        didSrc: 'Commission minutes · Jul 2, 2026',
+        conf: 'HIGH', delta: '+7 pts', receipts: 3,
+        quotes: [
+          { text: 'County roads get fixed before anything fancy.', src: 'Candidate debate', date: 'Oct 2024', status: '→ kept', sColor: GREEN },
+          { text: 'Every county contract goes online within a week of signing.', src: 'Commission meeting', date: 'Mar 2026', status: '→ kept', sColor: GREEN }
+        ],
+        promises: [
+          { v: 'KEPT', c: GREEN, t: 'Roads before new programs', topic: 'Roads' },
+          { v: 'KEPT', c: GREEN, t: 'Contracts posted within a week', topic: 'Contracts' },
+          { v: 'NO ACTION', c: GREY, t: 'Quarterly Star Valley town halls', topic: 'Engagement' }
+        ],
+        votes: [
+          { date: 'Jul 2', item: 'Road &amp; Bridge summer bid package', vote: 'YES', voteColor: '#ECF1F7', align: 'Kept', alignColor: GREEN },
+          { date: 'Jun 17', item: 'Rural land-use rule — set hearing', vote: 'YES', voteColor: '#ECF1F7', align: '—', alignColor: GREY }
+        ]
+      }
+    };
+
+    const level = this.state.level;
+    const filtered = OFF.filter(o => level === 'all' || o.lvl === level).sort((a, b) => b.b - a.b || a.score - b.score);
+    const selId = filtered.some(o => o.id === this.state.sel) ? this.state.sel : (filtered[0] ? filtered[0].id : 'roe');
+    const officials = filtered.map(o => ({
+      init: o.init, name: o.name, role: o.role, k: o.k, b: o.b, p: o.p,
+      lvlName: LVL[o.lvl].n, lvlColor: LVL[o.lvl].c,
+      score: o.score, scoreColor: sc(o.score),
+      bd: o.id === selId ? '#2E6B60' : '#1F2833',
+      pick: () => this.setState({ sel: o.id })
+    }));
+
+    const base = OFF.find(o => o.id === selId) || OFF[0];
+    const total = base.k + base.b + base.p + base.n;
+    const d = PROF[selId] || {
+      board: base.role, term: '—', verdict: 'NO MATCHES YET', vColor: GREY,
+      said: 'No saved promise has matched a recorded action yet.',
+      saidSrc: 'Quote ledger building', did: 'Votes and actions are being ingested for this official.',
+      didSrc: 'Record ingestion in progress', conf: '—', delta: '±0', receipts: 0,
+      quotes: [], promises: [], votes: []
+    };
+    const prof = Object.assign({
+      init: base.init, name: base.name, role: base.role.split(' · ')[0],
+      lvlName: LVL[base.lvl].n, lvlColor: LVL[base.lvl].c,
+      score: base.score, scoreColor: sc(base.score), scoreDeg: Math.round(base.score * 3.6) + 'deg',
+      k: base.k, b: base.b, p: base.p, n: base.n,
+      wK: Math.round(base.k / total * 100) + '%', wB: Math.round(base.b / total * 100) + '%',
+      wP: Math.round(base.p / total * 100) + '%', wN: Math.round(base.n / total * 100) + '%'
+    }, d);
+
+    const pill = (s, color, dark) => s ? { bg: color, fg: dark } : { bg: 'transparent', fg: '#8D99A7' };
+    const pAll = pill(level === 'all', '#ECF1F7', '#0B0F14'), pTown = pill(level === 'town', MINT, '#062019'),
+      pCounty = pill(level === 'county', AMBER, '#201302'), pState = pill(level === 'state', BLUE, '#0A1A33');
+
+    const LINES = {
+      roe: 'Voted for the new fee ordinance after campaigning against “unnecessary fees” — marked broken, with the quote, roll call and ordinance text all on file.',
+      doe: 'Campaigned on lean government, then supported the paid town-administrator post — partial: the budget offsets are documented.',
+      soe: 'Backed two bills that trimmed public-records deadlines after promising “sunlight first” — under review.',
+      koe: 'Supported the land-use update without the promised public workshops — one broken verdict, challenge window open.',
+      poe: 'Says roads first, votes roads first — the highest score we track in Lincoln County.'
+    };
+    const simpleCards = ['roe', 'doe', 'koe', 'soe', 'poe'].map(id => {
+      const o = OFF.find(x => x.id === id);
+      return { name: o.name, role: o.role, score: o.score, scoreColorL: scL(o.score), lvlName: LVL[o.lvl].n, lvlColorL: LVL[o.lvl].l, k: o.k, b: o.b, p: o.p, line: LINES[id] };
+    });
+
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: this.state.mode !== 'simple',
+      isSimple: this.state.mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      pickAll: () => this.setState({ level: 'all' }),
+      pickTown: () => this.setState({ level: 'town' }),
+      pickCounty: () => this.setState({ level: 'county' }),
+      pickState: () => this.setState({ level: 'state' }),
+      pAllBg: pAll.bg, pAllFg: pAll.fg, pTownBg: pTown.bg, pTownFg: pTown.fg,
+      pCountyBg: pCounty.bg, pCountyFg: pCounty.fg, pStateBg: pState.bg, pStateFg: pState.fg,
+      officialCount: filtered.length + ' tracked',
+      officials, simpleCards,
+      prof: Object.assign({}, prof, { votes: (prof.votes || []).map(v => v.det ? Object.assign({}, v, { cur: 'pointer', rowTip: 'Click — which promise, and how this vote lines up with it', open: () => this.setState({ vSel: v, vOk: false }) }) : Object.assign({}, v, { cur: 'default', rowTip: '' })) }),
+      pvOk: this.state.pvOk, pvGate: !this.state.pvOk,
+      pvShow: () => this.setState({ pvOk: true }),
+      vmOpen: !!this.state.vSel,
+      vmGate: !!this.state.vSel && !this.state.vOk,
+      vmShow: !!this.state.vSel && this.state.vOk,
+      vm: this.state.vSel || {},
+      vmAccept: () => this.setState({ vOk: true }),
+      vmClose: () => this.setState({ vSel: null, vOk: false }),
+      vmEat: (e) => e.stopPropagation()
+    };
+  }
+}
+</script>
+</body>
+</html>

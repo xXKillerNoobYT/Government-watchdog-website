@@ -1,6 +1,7 @@
 # Government Watchdog Website
 
-Private frontend website project for Government Watchdog.
+Frontend website project for Government Watchdog. The deployed Alpine beta is
+currently private/reviewer-internal.
 
 ## Role
 
@@ -42,18 +43,34 @@ Important setup note:
 
 `2026-06-06-Paperclip-Company-Setup-Summary.md`
 
-## Privacy / launch status
+## Baseline design and deployment status
 
-This repository is private for now.
+The owner-approved MOTY July 2026 handoff is the product's visual baseline,
+especially for layout, spacing, information density, shared tooling, and the
+Simple/Advanced skins. The immutable source archive and extracted reference
+files are preserved in
+[`design/baseline/moty-government-watchdog-2026-07/`](design/baseline/moty-government-watchdog-2026-07/README.md).
+Its prototype behavior is illustrative; production behavior still follows the
+safe frontend/backend contracts.
+
+The Alpine Sites beta is deployed at
+[`alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site`](https://alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site/)
+with private/custom access. It is not public yet. The exact site name, main-branch
+release rule, update steps, rollback procedure, and public-release blockers are
+recorded in [`docs/deployment-sites.md`](docs/deployment-sites.md).
+
+The minimum standard for any civic content shown in the beta is recorded in
+[`docs/content-quality-baseline.md`](docs/content-quality-baseline.md). Evidence,
+review state, AI disclosure, freshness, corrections, accessibility, and access
+eligibility are release gates; visual polish cannot substitute for them.
 
 ---
 
-## Local development (Stage 1 · Slice 4 · A skeleton — GOV-99)
+## Local development
 
-Reviewer-internal/local only. **No public exposure**, no deploy, no accounts —
-Alpine-only (GOV-94 owner conditions). The current skeleton is intentionally
-**neutral, with no visual-style commitments**; Isaac's design direction refines
-visuals in a later slice.
+The app is Alpine-first and reviewer-internal while the backend authorization
+and public projection are completed. The MOTY baseline now defines the visual
+direction; fixture behavior remains explicitly separated from reviewed data.
 
 ```bash
 npm install            # first time
@@ -80,6 +97,9 @@ tab. Use `?demo=live` on a route to leave it. July 21 agenda content, placeholde
 officials, coverage figures, alerts, and delivery settings are always labelled
 `SYNTHETIC DESIGN FIXTURE — not a live read`; they are visual/interaction
 examples, not reviewed civic facts.
+
+The original handoff is preserved as immutable baseline source in
+[`design/baseline/moty-government-watchdog-2026-07/`](design/baseline/moty-government-watchdog-2026-07/README.md).
 
 The Timeline is intentionally hybrid: it keeps the existing reviewed-record
 cards, trust/provenance labels, protected reveal behavior, and safe data adapter,
@@ -136,11 +156,11 @@ loads first; to walk the full app, use the reviewer bypass:
 | Card feed | `/#/cards?reviewer=1` | The GOV-347 card-feed capture rendered as cards |
 | Trust matrix | `/#/app?demo=matrix&reviewer=1` | One labeled card per record-level trust state (demo scaffolding, not real data) |
 
-Every full-app surface carries the **`OFFLINE SAMPLE — not a live read`** banner and
-keeps AI-produced rows under their own per-record label. This is reviewer-internal /
-fixture-only: **no public exposure, no live read, Alpine-only** (GOV-94 owner
-condition). The frontend never recomputes trust — labels are consumed verbatim
-from the backend read-API (see the two hard invariants below).
+Every gated full-app surface carries an explicit **`REVIEWED SNAPSHOT`** or
+**`SYNTHETIC DESIGN FIXTURE`** origin banner and keeps AI-produced rows under
+their own per-record label. This remains reviewer-internal: **no public exposure,
+no live read, Alpine-only**. The frontend never recomputes trust — labels are
+consumed verbatim from the backend read-API (see the two hard invariants below).
 
 ### Stack
 

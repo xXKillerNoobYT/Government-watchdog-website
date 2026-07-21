@@ -94,8 +94,15 @@ function modeToggle(onChange: (mode: PageMode) => void): HTMLElement {
     applyModeThemeDefault(mode);
     onChange(mode);
   };
-  simple.addEventListener('click', () => show('simple'));
-  advanced.addEventListener('click', () => show('advanced'));
+  const choose = (mode: PageMode): void => {
+    show(mode);
+    // The persistent shell owns the same gw_home_mode preference. Re-route so
+    // its chrome changes with this in-page control instead of leaving (for
+    // example) an Advanced timeline inside a Simple newspaper shell.
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  };
+  simple.addEventListener('click', () => choose('simple'));
+  advanced.addEventListener('click', () => choose('advanced'));
   mount.append(el('div', { class: 'gw-view-toggle', role: 'tablist', 'aria-label': 'Page mode', 'data-test': 'mode-toggle' }, [simple, advanced]));
   show(readPageMode());
   return mount;

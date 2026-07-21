@@ -5,6 +5,12 @@ existing reviewer-internal Government Watchdog frontend. It is intentionally a
 data-boundary document as well as a UI plan: a polished fixture must never be
 mistaken for a reviewed or live civic record.
 
+The immutable owner-supplied archive and extracted design files are preserved
+in [`design/baseline/moty-government-watchdog-2026-07/`](../design/baseline/moty-government-watchdog-2026-07/README.md).
+That baseline is authoritative for layout, look, spacing, hierarchy, tool
+placement, and interaction intent. Its limited prototype functionality is not a
+production behavior contract.
+
 ## Product boundary
 
 The design handoff is the approved visual and interaction direction. Its ten
@@ -121,6 +127,9 @@ successful delivery are server assertions and cannot be claimed by the client.
 ## Release gates
 
 - Keep the current preview landing and reviewer gate.
+- Meet the per-item minimums in
+  [`docs/content-quality-baseline.md`](content-quality-baseline.md); visual
+  fidelity never overrides a missing receipt, review state, or access decision.
 - Do not publish reviewer fixtures or synthetic design content as public civic
   data.
 - Preserve the no-raw-path sweep on every live adapter.

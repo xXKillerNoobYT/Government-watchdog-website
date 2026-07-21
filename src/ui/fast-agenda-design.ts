@@ -459,14 +459,29 @@ function openDetails(
     'data-test': 'agenda-modal-backdrop',
   }, [dialog]);
 
+  const backgroundState = [...root.children]
+    .filter((node): node is HTMLElement => node instanceof HTMLElement)
+    .map((node) => ({
+      node,
+      hadInert: node.hasAttribute('inert'),
+      ariaHidden: node.getAttribute('aria-hidden'),
+    }));
+  const previousBodyOverflow = document.body.style.overflow;
+
   let closed = false;
   const close = (): void => {
     if (closed) return;
     closed = true;
     document.removeEventListener('keydown', onKeyDown);
     backdrop.remove();
+    for (const state of backgroundState) {
+      if (!state.hadInert) state.node.removeAttribute('inert');
+      if (state.ariaHidden === null) state.node.removeAttribute('aria-hidden');
+      else state.node.setAttribute('aria-hidden', state.ariaHidden);
+    }
+    document.body.style.overflow = previousBodyOverflow;
     modalCleanup.delete(root);
-    trigger.focus();
+    if (trigger.isConnected) trigger.focus();
   };
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') {
@@ -479,7 +494,10 @@ function openDetails(
     if (!focusable.length) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    if (!dialog.contains(document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first)?.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
       last?.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
@@ -498,6 +516,11 @@ function openDetails(
   modalCleanup.set(root, close);
   root.append(backdrop);
   closeButton.focus();
+  for (const state of backgroundState) {
+    state.node.setAttribute('inert', '');
+    state.node.setAttribute('aria-hidden', 'true');
+  }
+  document.body.style.overflow = 'hidden';
 }
 
 function statusTile(label: string, detail: string, tone: string): HTMLElement {
@@ -541,6 +564,43 @@ function meetingBoard(): HTMLElement {
         'The fixture places general comment at item 9 and the annexation hearing at item 4.a. Confirm all times, rules, and participation links against an official source before publication.',
       ]),
     ]),
+    el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [RECEIPTS_DISCLAIMER]),
+  ]);
+}
+
+function unavailableMeetingTools(): HTMLElement {
+  const unavailable = (label: string): HTMLButtonElement => el('button', {
+    type: 'button',
+    class: 'gw-fa-tool-unavailable',
+    disabled: '',
+    title: `${label} is unavailable because this is a synthetic fixture.`,
+    'data-test': 'unavailable-tool',
+  }, [`${label} unavailable`]);
+
+  return el('div', {
+    class: 'gw-fa-unavailable-tools',
+    'aria-label': 'Meeting tools unavailable in this synthetic fixture',
+  }, [
+    unavailable('Official agenda'),
+    unavailable('Meeting packet'),
+    unavailable('Reminder'),
+  ]);
+}
+
+function simpleMeetingDigest(): HTMLElement {
+  return el('section', {
+    class: 'gw-fa-simple-meeting',
+    'aria-labelledby': 'gw-fa-simple-meeting-title',
+    'data-test': 'simple-meeting-digest',
+  }, [
+    kicker('NEXT MEETING · SYNTHETIC SCHEDULE'),
+    el('h2', { id: 'gw-fa-simple-meeting-title' }, ['Alpine Town Council']),
+    el('p', { class: 'gw-fa-meeting-time' }, ['Tuesday, July 21, 2026 · 6:30 PM']),
+    el('p', { class: 'gw-fa-muted' }, ['Alpine Town Hall · 250 River Circle']),
+    el('p', { class: 'gw-fa-simple-lede' }, [
+      'Eight selected agenda items are summarized below. One synthetic public hearing appears at item 4.a; confirm participation rules and timing with an official source.',
+    ]),
+    unavailableMeetingTools(),
     el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [RECEIPTS_DISCLAIMER]),
   ]);
 }
@@ -601,6 +661,57 @@ function agendaBoard(root: HTMLElement, tracked: Record<string, boolean>): HTMLE
       'All summaries and language-watch notes below are AI-presented synthetic design copy. They are not independently verified and are not a live read.',
     ]),
     el('div', { class: 'gw-fa-agenda-list' }, AGENDA_ITEMS.map((item) => agendaRow(root, item, tracked))),
+  ]);
+}
+
+function simpleAgendaItem(
+  root: HTMLElement,
+  item: AgendaItem,
+  tracked: Record<string, boolean>,
+): HTMLLIElement {
+  const receiptsButton = el('button', {
+    type: 'button',
+    class: 'gw-fa-details gw-fa-simple-receipts',
+    'aria-label': `Review context and synthetic receipts for item ${item.number}: ${item.title}`,
+    'data-test': 'open-receipts',
+  }, [`Review context & receipts (${item.receipts.length})`]);
+  receiptsButton.addEventListener('click', () => openDetails(root, item, tracked, receiptsButton));
+
+  return el('li', {
+    class: 'gw-fa-simple-item',
+    'data-test': 'simple-agenda-item',
+    'data-agenda-id': item.id,
+  }, [
+    el('article', {}, [
+      el('header', { class: 'gw-fa-simple-item-head' }, [
+        el('span', { class: 'gw-fa-number', 'aria-label': `Agenda item ${item.number}` }, [item.number]),
+        el('div', {}, [
+          el('h3', {}, [item.title]),
+          el('p', { class: 'gw-fa-simple-action' }, [item.action]),
+        ]),
+      ]),
+      aiAnalysis(item.analysis),
+      el('p', { class: 'gw-fa-simple-decision' }, [
+        el('strong', {}, ['The decision: ']),
+        item.decision,
+      ]),
+      receiptsButton,
+    ]),
+  ]);
+}
+
+function simpleAgendaDigest(root: HTMLElement, tracked: Record<string, boolean>): HTMLElement {
+  return el('section', {
+    class: 'gw-fa-simple-agenda',
+    'aria-labelledby': 'gw-fa-simple-agenda-title',
+    'data-test': 'simple-agenda-digest',
+  }, [
+    kicker("WHAT'S ON THE AGENDA — JULY 21"),
+    el('h2', { id: 'gw-fa-simple-agenda-title' }, ['Eight items in plain language']),
+    el('p', { class: 'gw-fa-board-disclosure' }, [
+      'These are AI-presented synthetic design summaries, not independently verified reporting or a live agenda.',
+    ]),
+    el('ol', { class: 'gw-fa-simple-list' }, AGENDA_ITEMS.map((item) => simpleAgendaItem(root, item, tracked))),
   ]);
 }
 
@@ -759,6 +870,12 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
 
   const mode = readMode();
   const tracked = readTracked();
+  const content = mode === 'simple'
+    ? [simpleMeetingDigest(), simpleAgendaDigest(root, tracked)]
+    : [
+        el('div', { class: 'gw-fa-overview' }, [meetingBoard(), agendaBoard(root, tracked)]),
+        issueTracker(root, tracked),
+      ];
   const surface = el('div', {
     class: `gw-fa gw-fa--${mode}`,
     'data-mode': mode,
@@ -767,8 +884,7 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
     fixtureBanner(options.notice),
     el('div', { class: 'gw-fa-frame' }, [
       pageHeader(mode),
-      el('div', { class: 'gw-fa-overview' }, [meetingBoard(), agendaBoard(root, tracked)]),
-      issueTracker(root, tracked),
+      ...content,
       el('footer', { class: 'gw-fa-footer' }, [
         el('strong', {}, ['◆ Holding power accountable. Amplifying transparency.']),
         el('span', {}, ['Synthetic fixture · no live refresh timestamp']),
@@ -823,7 +939,7 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-ai{background:var(--gw-caution-bg-soft);border:var(--gw-border-w) solid var(--gw-caution-line);border-left:3px solid var(--gw-caution-line);color:var(--gw-caution-text-strong)}
 .gw-fa-language{background:var(--gw-stop-bg);border:var(--gw-border-w) solid var(--gw-stop-border);border-left:3px solid var(--gw-stop-border);color:var(--gw-stop-text)}
 .gw-fa-ai strong,.gw-fa-language strong{display:inline-block;border-radius:var(--gw-radius-sm);padding:var(--gw-space-1) var(--gw-space-2);font-size:var(--gw-text-xs);letter-spacing:.04em}
-.gw-fa-ai strong{background:var(--gw-caution-line);color:var(--gw-accent-text-on)}.gw-fa-language strong{background:var(--gw-stop-border);color:var(--gw-accent-text-on)}
+.gw-fa-ai strong{background:var(--gw-caution-text-strong);color:var(--gw-caution-bg)}.gw-fa-language strong{background:var(--gw-stop-border);color:var(--gw-accent-text-on)}
 .gw-fa-ai-caveat,.gw-fa-language-caveat{display:inline-block;margin-left:var(--gw-space-2);font-size:var(--gw-text-xs);font-weight:700}.gw-fa-ai p,.gw-fa-language p{margin:var(--gw-space-2) 0 0}
 .gw-fa-flag,.gw-fa-issue-flag{display:inline-flex;margin:var(--gw-space-3) var(--gw-space-2) 0 0;border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-sm);padding:var(--gw-space-1) var(--gw-space-2);color:var(--gw-caution-text);font-size:var(--gw-text-xs);font-weight:700}
 .gw-fa-process-wrap{display:flex;align-items:start;gap:var(--gw-space-2);margin-top:var(--gw-space-3)}.gw-fa-process-wrap>strong{padding-top:var(--gw-space-2);font-size:var(--gw-text-xs);letter-spacing:.08em;color:var(--gw-text-muted)}
@@ -843,14 +959,17 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-level{display:inline-flex;border:var(--gw-border-w) solid currentColor;border-radius:var(--gw-radius-sm);padding:var(--gw-space-1) var(--gw-space-2);font-size:var(--gw-text-xs);font-weight:800}.gw-fa-level.is-town{color:var(--gw-level-town)}.gw-fa-level.is-county{color:var(--gw-level-county)}.gw-fa-level.is-state{color:var(--gw-level-state)}
 .gw-fa-issue-card dl{display:grid;gap:var(--gw-space-2);margin:var(--gw-space-3) 0;font-size:var(--gw-text-xs)}.gw-fa-issue-card dl div{display:grid;grid-template-columns:2.5rem 1fr;gap:var(--gw-space-2)}.gw-fa-issue-card dt{font-weight:800;color:var(--gw-text-secondary)}.gw-fa-issue-card dd{margin:0;color:var(--gw-text-muted)}.gw-fa-issue-card .gw-fa-track{width:100%}
 .gw-fa-footer{display:flex;justify-content:space-between;gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-5);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
+.gw-fa-unavailable-tools{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);margin-top:var(--gw-space-4)}.gw-fa-tool-unavailable{border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-surface-well);color:var(--gw-text-muted);padding:var(--gw-space-2) var(--gw-space-3);cursor:not-allowed}
 .gw-fa-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:var(--gw-space-5);background:rgba(3,6,10,.76)}
 .gw-fa-modal{width:min(800px,96vw);max-height:90vh;overflow:auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-lg);box-shadow:0 24px 80px rgba(0,0,0,.45);padding:var(--gw-space-6);display:grid;gap:var(--gw-space-4)}
 .gw-fa-modal-head{display:flex;align-items:start;justify-content:space-between;gap:var(--gw-space-4)}.gw-fa-modal-head h2{font-size:var(--gw-text-xl)}.gw-fa-modal-close{flex:none;width:44px;height:44px;border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:transparent;color:var(--gw-text);font-size:1.4rem}
 .gw-fa-modal>.gw-fa-track{justify-self:start}.gw-fa-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-4)}.gw-fa-modal-section{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}.gw-fa-modal-section ul{margin-bottom:0;padding-left:1.25rem}.gw-fa-modal-actions{display:flex;align-items:center;gap:var(--gw-space-3);justify-content:space-between;border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-gated{max-width:52rem;margin:var(--gw-space-6) auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);color:var(--gw-text);font-family:var(--gw-font)}
-.gw-fa--simple{font-family:var(--gw-font-serif);font-size:1.03rem}.gw-fa--simple .gw-fa-frame{max-width:1000px;background:var(--gw-header-bg);border-left:var(--gw-border-w) solid var(--gw-border);border-right:var(--gw-border-w) solid var(--gw-border)}.gw-fa--simple .gw-fa-page-head{text-align:center;border-top:3px solid var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);align-items:center}.gw-fa--simple .gw-fa-page-head>div{flex:1}.gw-fa--simple .gw-fa-page-head h1{font:600 var(--gw-text-display)/1 var(--gw-font-serif)}.gw-fa--simple .gw-fa-overview{grid-template-columns:1fr}.gw-fa--simple .gw-fa-meeting,.gw-fa--simple .gw-fa-agenda,.gw-fa--simple .gw-fa-tracker{border-color:var(--gw-rule-strong);border-radius:var(--gw-radius-sm)}.gw-fa--simple .gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr);border:0;border-bottom:var(--gw-border-w) solid var(--gw-border);border-radius:0;background:transparent}.gw-fa--simple .gw-fa-number{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--gw-accent);color:var(--gw-accent-text-on)}.gw-fa--simple .gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa--simple .gw-fa-agenda-title h3{font:600 1.25rem/1.2 var(--gw-font-serif)}.gw-fa--simple .gw-fa-issue-rail{grid-auto-columns:minmax(260px,1fr)}
+.gw-fa--simple{font-family:var(--gw-font-serif);font-size:1.03rem}.gw-fa--simple .gw-fa-frame{max-width:920px;background:var(--gw-header-bg);border-left:var(--gw-border-w) solid var(--gw-border);border-right:var(--gw-border-w) solid var(--gw-border)}.gw-fa--simple .gw-fa-page-head{text-align:center;border-top:3px solid var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);align-items:center}.gw-fa--simple .gw-fa-page-head>div{flex:1}.gw-fa--simple .gw-fa-page-head h1{font:600 var(--gw-text-display)/1 var(--gw-font-serif)}
+.gw-fa-simple-meeting,.gw-fa-simple-agenda{background:var(--gw-surface);border-top:3px solid var(--gw-rule-strong);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);padding:var(--gw-space-6)}.gw-fa-simple-meeting h2,.gw-fa-simple-agenda h2{font:600 var(--gw-text-xl)/1.15 var(--gw-font-serif)}.gw-fa-simple-lede{max-width:65ch;margin-top:var(--gw-space-4);color:var(--gw-text-secondary)}
+.gw-fa-simple-list{list-style:none;margin:var(--gw-space-5) 0 0;padding:0}.gw-fa-simple-item{border-top:var(--gw-border-w) solid var(--gw-border);padding:var(--gw-space-5) 0}.gw-fa-simple-item:first-child{border-top:3px double var(--gw-rule-strong)}.gw-fa-simple-item article{display:grid;gap:var(--gw-space-3)}.gw-fa-simple-item-head{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:var(--gw-space-4);align-items:start}.gw-fa-simple-item-head h3{font:600 1.3rem/1.2 var(--gw-font-serif)}.gw-fa--simple .gw-fa-number{display:grid;place-items:center;min-width:38px;min-height:38px;border-radius:50%;background:var(--gw-accent);color:var(--gw-accent-text-on);padding:var(--gw-space-1)}.gw-fa-simple-action{margin:var(--gw-space-1) 0 0;color:var(--gw-text-muted);font:700 var(--gw-text-xs)/1.4 var(--gw-font-mono);letter-spacing:.04em}.gw-fa-simple-decision{margin:0;color:var(--gw-text-secondary)}.gw-fa-simple-receipts{justify-self:start}
 @media (max-width:1050px){.gw-fa-overview{grid-template-columns:1fr}.gw-fa-meeting{position:static}.gw-fa-stat-grid{grid-template-columns:repeat(4,minmax(90px,1fr))}}
-@media (max-width:720px){.gw-fa-frame{padding:var(--gw-space-4)}.gw-fa-page-head,.gw-fa-section-head,.gw-fa-footer{align-items:stretch;flex-direction:column}.gw-fa-status-grid,.gw-fa-stat-grid,.gw-fa-modal-grid{grid-template-columns:1fr 1fr}.gw-fa-agenda-row,.gw-fa--simple .gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr)}.gw-fa-row-actions,.gw-fa--simple .gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa-agenda,.gw-fa-meeting,.gw-fa-tracker{padding:var(--gw-space-4)}}
+@media (max-width:720px){.gw-fa-frame{padding:var(--gw-space-4)}.gw-fa-page-head,.gw-fa-section-head,.gw-fa-footer{align-items:stretch;flex-direction:column}.gw-fa-status-grid,.gw-fa-stat-grid{grid-template-columns:1fr 1fr}.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr)}.gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa-agenda,.gw-fa-meeting,.gw-fa-tracker,.gw-fa-simple-meeting,.gw-fa-simple-agenda{padding:var(--gw-space-4)}}
 @media (max-width:440px){.gw-fa-status-grid,.gw-fa-stat-grid,.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-row-actions,.gw-fa--simple .gw-fa-row-actions{grid-template-columns:1fr}.gw-fa-process-wrap{display:block}.gw-fa-process-wrap>strong{display:block;margin-bottom:var(--gw-space-2)}.gw-fa-backdrop{padding:var(--gw-space-2)}.gw-fa-modal{padding:var(--gw-space-4)}}
 @media print{.gw-fa-fixture-banner{border:2px solid var(--gw-caution-line)}.gw-fa button{display:none}.gw-fa-issue-rail{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}.gw-fa-backdrop{display:none}}
 `;

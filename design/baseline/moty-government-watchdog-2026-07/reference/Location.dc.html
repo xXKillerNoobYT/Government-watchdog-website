@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Location picker (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample coverage map · voting-lens colors are sample data</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;text-decoration:none;color:#ECF1F7">
+        <span style="width:36px;height:36px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:14px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:15px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:10px;letter-spacing:3.2px;color:#8D99A7">WATCHDOG</span></span>
+      </a>
+      <div style="font-size:17px;font-weight:700;margin-left:8px">Choose your place</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px"><div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <a href="Home.dc.html" style="color:#8D99A7;font-size:12.5px;font-weight:600;text-decoration:underline;text-underline-offset:3px">← Back to dashboard</a>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:22px 28px 40px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:13px;color:#8D99A7">Your place:</div>
+      <div style="display:flex;align-items:center;gap:8px;background:#12181F;border:1px solid #232C37;border-radius:10px;padding:8px 14px;font-size:14px;font-weight:600">
+        <span style="color:#7DB1FB">{{ crumbState }}</span><span style="color:#3A4552">›</span>
+        <span style="color:#E5A83B">{{ crumbCounty }}</span><span style="color:#3A4552">›</span>
+        <span style="color:#C3CDD9">{{ crumbRegion }}</span><span style="color:#3A4552">›</span>
+        <span style="color:#4ED8C3">{{ crumbTown }}</span>
+      </div>
+      <a href="Home.dc.html" onClick="{{ save }}" style="margin-left:auto;background:#4ED8C3;color:#062019;font-weight:800;font-size:13.5px;border-radius:10px;padding:10px 20px;text-decoration:none">Save &amp; open my dashboard →</a>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#12181F;border:1px solid #232C37;border-radius:12px;padding:12px 16px">
+      <span style="font-size:12px;font-weight:800;letter-spacing:1.2px;color:#4ED8C3">QUICK FORM</span>
+      <div style="position:relative;display:flex;align-items:center;background:#141B23;color:#ECF1F7;border:1px solid #2C3642;border-radius:8px;padding:9px 12px;font-size:14px;font-family:'Public Sans',sans-serif;min-width:170px;cursor:pointer">
+        <span>{{ selStateLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#8D99A7">▾</span>
+        <select aria-label="State" onChange="{{ onStateSel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ stateOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;background:#141B23;color:#ECF1F7;border:1px solid #2C3642;border-radius:8px;padding:9px 12px;font-size:14px;font-family:'Public Sans',sans-serif;min-width:190px;cursor:pointer">
+        <span>{{ selCountyLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#8D99A7">▾</span>
+        <select aria-label="County" onChange="{{ onCountySel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ countyOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;background:#141B23;color:#ECF1F7;border:1px solid #2C3642;border-radius:8px;padding:9px 12px;font-size:14px;font-family:'Public Sans',sans-serif;min-width:190px;cursor:pointer">
+        <span>{{ selTownLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#8D99A7">▾</span>
+        <select aria-label="Town" onChange="{{ onTownSel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ townOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <span style="font-size:12px;color:#8D99A7">…or tap the maps below.</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start">
+      <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">STEP 1 · PICK YOUR STATE</div>
+          <div style="font-size:11px;color:#8D99A7">Voting-pattern lens · <span style="font-family:'IBM Plex Mono',monospace">sample data</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px">
+          <div style="background:#101820;border:1px solid #1F3A2C;border-radius:9px;padding:9px 12px"><div style="font-size:10px;font-weight:800;letter-spacing:.8px;color:#63D68F">✓ TODAY PROCESSED — JUL 6</div><div style="font-size:11px;color:#C3CDD9;margin-top:3px">your selected area: Alpine ✓ · Lincoln Co ✓ · Wyoming ✓ — all of today's postings read &amp; filed</div></div>
+          <div style="background:#141B23;border:1px solid #232C37;border-radius:9px;padding:9px 12px"><div style="font-size:10px;font-weight:800;letter-spacing:.8px;color:#C3CDD9">BACKLOG PROCESSED</div><div style="font-size:11px;color:#C3CDD9;margin-top:3px"><b style="color:#4ED8C3">town 62%</b> · <b style="color:#E5A83B">county 38%</b> · <b style="color:#7DB1FB">state 21%</b> <span style="color:#8D99A7">of the historical record</span></div></div>
+          <div style="background:#141B23;border:1px solid #232C37;border-radius:9px;padding:9px 12px"><div style="font-size:10px;font-weight:800;letter-spacing:.8px;color:#ECC35C">SPEED = DEMAND + FUNDING</div><div style="font-size:11px;color:#C3CDD9;margin-top:3px">backlog moves fastest where residents ask &amp; fund it · <span style="color:#4ED8C3;font-weight:700;cursor:pointer">fund your area ›</span></div></div>
+        </div>
+        <div style="font-size:12px;color:#8D99A7;margin-bottom:12px">Tiles are colored by how each state's tracked officials have been voting. Wyoming is live — other states are on the waitlist.</div>
+        <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:4px">
+          <sc-for list="{{ usa }}" as="s" hint-placeholder-count="12">
+            <div onClick="{{ s.pick }}" title="{{ s.title }}" style="grid-column:{{ s.col }};grid-row:{{ s.row }};aspect-ratio:1;display:grid;place-items:center;border-radius:6px;background:{{ s.bg }};opacity:{{ s.op }};color:#FFFFFF;font-size:11px;font-weight:800;cursor:pointer;box-shadow:{{ s.ring }}">{{ s.abbr }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;color:#C3CDD9;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#C3402F;margin-right:6px;vertical-align:-1px"></span>Votes conservative</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#2E66C3;margin-right:6px;vertical-align:-1px"></span>Votes progressive</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#D9A400;margin-right:6px;vertical-align:-1px"></span>Votes libertarian / independent</span>
+          <span style="color:#8D99A7">dimmed = not covered yet</span>
+        </div>
+        <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px;margin-top:12px;font-size:12.5px;color:#C3CDD9">{{ stateNote }}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:4px">STEP 2 · PICK YOUR COUNTY</div>
+          <div style="font-size:12px;color:#8D99A7;margin-bottom:12px">{{ countyHint }}</div>
+          <sc-if value="{{ showWyMap }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">
+              <sc-for list="{{ wyCounties }}" as="c" hint-placeholder-count="8">
+                <div onClick="{{ c.pick }}" title="{{ c.title }}" style="grid-column:{{ c.col }};grid-row:{{ c.row }};height:44px;display:grid;place-items:center;border-radius:6px;background:{{ c.bg }};color:#FFFFFF;font-size:9.5px;font-weight:800;text-align:center;line-height:1.1;cursor:pointer;box-shadow:{{ c.ring }};padding:2px">{{ c.name }}</div>
+              </sc-for>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px;margin-top:12px;font-size:12.5px;color:#C3CDD9">{{ countyNote }}</div>
+          </sc-if>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:10px">STEP 3 · PICK YOUR TOWN</div>
+          <sc-for list="{{ townGroups }}" as="g" hint-placeholder-count="2">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;color:#8D99A7;margin:8px 0 6px">{{ g.region }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px">
+              <sc-for list="{{ g.towns }}" as="t" hint-placeholder-count="4">
+                <div onClick="{{ t.pick }}" style="display:flex;align-items:center;gap:7px;border:1.5px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};border-radius:9px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer">
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ t.dot }}"></span>{{ t.name }}
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <div style="font-size:11.5px;color:#8D99A7;margin-top:12px">Lean dots use the same red / blue / yellow lens — based on tracked votes of each town's officials <span style="font-family:'IBM Plex Mono',monospace">(sample)</span>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#12181F;border:1px solid #232C37;border-radius:12px;padding:12px 16px;font-size:12.5px;color:#8D99A7">
+      <span>Built for the whole USA — <b style="color:#C3CDD9">testing in Wyoming first.</b> Not in Wyoming? <span style="color:#7DB1FB;text-decoration:underline;text-underline-offset:3px;cursor:pointer">Join the waitlist</span> and we'll wire up your state.</span>
+      <a href="Home.dc.html" onClick="{{ save }}" style="background:#4ED8C3;color:#062019;font-weight:800;font-size:13.5px;border-radius:10px;padding:10px 20px;text-decoration:none;flex:none">Save &amp; open my dashboard →</a>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Location picker (light)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample coverage map · voting-lens colors are sample data</div>
+  <div style="max-width:1000px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:20px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <a href="Home.dc.html" style="font-weight:700">← Back to the front page</a>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:14px 0 12px;margin-bottom:6px">
+      <div style="font-size:clamp(26px,4.5vw,40px);font-weight:600;line-height:1.05">Where do you live?</div>
+      <div style="font-style:italic;font-size:15px;color:#4A463C;margin-top:6px">Pick your place and we'll watch the right governments for you — town, county, and state.</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Public Sans',sans-serif;font-size:14px;font-weight:700;padding:10px 0 16px;flex-wrap:wrap">
+      <span style="color:#274F9B">{{ crumbState }}</span><span style="color:#9A927C">›</span>
+      <span style="color:#A36A10">{{ crumbCounty }}</span><span style="color:#9A927C">›</span>
+      <span>{{ crumbRegion }}</span><span style="color:#9A927C">›</span>
+      <span style="color:#0E7A6E">{{ crumbTown }}</span>
+      <a href="Home.dc.html" onClick="{{ save }}" style="margin-left:14px;background:#1A4D8F;color:#FBF7EB;font-weight:800;font-size:14px;border-radius:9px;padding:10px 20px;text-decoration:none">Save &amp; read my paper →</a>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:'Public Sans',sans-serif">
+      <span style="font-size:11px;font-weight:800;letter-spacing:1.2px">QUICK FORM</span>
+      <div style="position:relative;display:flex;align-items:center;background:#FFFFFF;color:#1E1C17;border:1.5px solid #1E1C17;border-radius:8px;padding:10px 12px;font-size:15px;font-family:'Public Sans',sans-serif;min-width:170px;cursor:pointer">
+        <span>{{ selStateLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#6E685B">▾</span>
+        <select aria-label="State" onChange="{{ onStateSel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ stateOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;background:#FFFFFF;color:#1E1C17;border:1.5px solid #1E1C17;border-radius:8px;padding:10px 12px;font-size:15px;font-family:'Public Sans',sans-serif;min-width:190px;cursor:pointer">
+        <span>{{ selCountyLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#6E685B">▾</span>
+        <select aria-label="County" onChange="{{ onCountySel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ countyOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;background:#FFFFFF;color:#1E1C17;border:1.5px solid #1E1C17;border-radius:8px;padding:10px 12px;font-size:15px;font-family:'Public Sans',sans-serif;min-width:190px;cursor:pointer">
+        <span>{{ selTownLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#6E685B">▾</span>
+        <select aria-label="Town" onChange="{{ onTownSel }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ townOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <span style="font-size:13px;color:#6E685B">…or tap the maps.</span>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:16px 18px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Public Sans',sans-serif">
+        <div style="font-size:12px;font-weight:800;letter-spacing:1.2px">STEP 1 · YOUR STATE</div>
+        <div style="font-size:11.5px;color:#6E685B">Colors show how each state's officials have been voting <span style="font-family:'IBM Plex Mono',monospace">(sample data)</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:12px">
+        <sc-for list="{{ usa }}" as="s" hint-placeholder-count="12">
+          <div onClick="{{ s.pick }}" title="{{ s.title }}" style="grid-column:{{ s.col }};grid-row:{{ s.row }};aspect-ratio:1;display:grid;place-items:center;border-radius:6px;background:{{ s.bg }};opacity:{{ s.op }};color:#FFFFFF;font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;cursor:pointer;box-shadow:{{ s.ring }}">{{ s.abbr }}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-family:'Public Sans',sans-serif;font-size:12.5px;flex-wrap:wrap">
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#C3402F;margin-right:6px;vertical-align:-1px"></span>Votes conservative</span>
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#2E66C3;margin-right:6px;vertical-align:-1px"></span>Votes progressive</span>
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#D9A400;margin-right:6px;vertical-align:-1px"></span>Votes libertarian / independent</span>
+        <span style="color:#6E685B">faded = not covered yet</span>
+      </div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:#4A463C;border-top:1px solid #D8D0BC;margin-top:10px;padding-top:8px">{{ stateNote }}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:16px 18px">
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.2px">STEP 2 · YOUR COUNTY</div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#6E685B;margin:4px 0 10px">{{ countyHint }}</div>
+        <sc-if value="{{ showWyMap }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">
+            <sc-for list="{{ wyCounties }}" as="c" hint-placeholder-count="8">
+              <div onClick="{{ c.pick }}" title="{{ c.title }}" style="grid-column:{{ c.col }};grid-row:{{ c.row }};height:46px;display:grid;place-items:center;border-radius:6px;background:{{ c.bg }};color:#FFFFFF;font-family:'Public Sans',sans-serif;font-size:9.5px;font-weight:800;text-align:center;line-height:1.1;cursor:pointer;box-shadow:{{ c.ring }};padding:2px">{{ c.name }}</div>
+            </sc-for>
+          </div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:#4A463C;border-top:1px solid #D8D0BC;margin-top:10px;padding-top:8px">{{ countyNote }}</div>
+        </sc-if>
+      </div>
+      <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:16px 18px">
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.2px;margin-bottom:8px">STEP 3 · YOUR TOWN</div>
+        <sc-for list="{{ townGroups }}" as="g" hint-placeholder-count="2">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;color:#6E685B;margin:8px 0 6px">{{ g.region }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ g.towns }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.pick }}" style="display:flex;align-items:center;gap:8px;border:2px solid {{ t.bdL }};background:{{ t.bgL }};color:#1E1C17;border-radius:9px;padding:10px 16px;font-family:'Public Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ t.dot }}"></span>{{ t.name }}
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:12px">Dots use the same red / blue / yellow voting lens <span style="font-family:'IBM Plex Mono',monospace">(sample)</span>.</div>
+      </div>
+    </div>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="font-size:15px">Built for the whole USA — <b>testing in Wyoming first.</b> <span style="font-family:'Public Sans',sans-serif;font-size:13px;color:#4A463C">Not in Wyoming? <a href="#">Join the waitlist.</a></span></div>
+      <a href="Home.dc.html" onClick="{{ save }}" style="background:#1A4D8F;color:#FBF7EB;font-family:'Public Sans',sans-serif;font-weight:800;font-size:14px;border-radius:9px;padding:11px 22px;text-decoration:none">Save &amp; read my paper →</a>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = (() => {
+    let mode = 'advanced', loc = null;
+    try {
+      mode = localStorage.getItem('gw_home_mode') || 'advanced';
+      loc = JSON.parse(localStorage.getItem('gw_location') || 'null');
+    } catch (e) {}
+    return {
+      mode,
+      st: (loc && loc.state) || 'WY',
+      county: (loc && loc.county) || 'Lincoln',
+      town: (loc && loc.town) || 'Alpine'
+    };
+  })();
+
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+
+
+  regionOf(town) {
+    const SV = ['Alpine', 'Star Valley Ranch', 'Thayne', 'Afton', 'Grover'];
+    return SV.indexOf(town) >= 0 ? 'Star Valley' : 'South Lincoln';
+  }
+
+  renderVals() {
+    const LEAN = { r: '#C3402F', b: '#2E66C3', y: '#D9A400' };
+    const LEAN_WORD = { r: 'votes conservative', b: 'votes progressive', y: 'votes libertarian / independent' };
+    const RING = '0 0 0 2.5px #FFFFFF, 0 0 0 5px #1E1C17';
+    const { st, county, town, mode } = this.state;
+
+    const USA = [
+      ['AK',1,1,'y'],['ME',11,1,'b'],
+      ['VT',10,2,'b'],['NH',11,2,'y'],
+      ['WA',1,3,'b'],['ID',2,3,'r'],['MT',3,3,'y'],['ND',4,3,'r'],['MN',5,3,'b'],['WI',6,3,'b'],['MI',8,3,'b'],['NY',9,3,'b'],['MA',10,3,'b'],['RI',11,3,'b'],
+      ['OR',1,4,'b'],['NV',2,4,'b'],['WY',3,4,'r'],['SD',4,4,'r'],['IA',5,4,'r'],['IL',6,4,'b'],['IN',7,4,'r'],['OH',8,4,'r'],['PA',9,4,'r'],['NJ',10,4,'b'],['CT',11,4,'b'],
+      ['CA',1,5,'b'],['UT',2,5,'r'],['CO',3,5,'b'],['NE',4,5,'r'],['MO',5,5,'r'],['KY',6,5,'r'],['WV',7,5,'r'],['VA',8,5,'b'],['MD',9,5,'b'],['DE',10,5,'b'],
+      ['AZ',2,6,'r'],['NM',3,6,'b'],['KS',4,6,'r'],['AR',5,6,'r'],['TN',6,6,'r'],['NC',7,6,'r'],['SC',8,6,'r'],
+      ['OK',4,7,'r'],['LA',5,7,'r'],['MS',6,7,'r'],['AL',7,7,'r'],['GA',8,7,'r'],
+      ['HI',1,8,'b'],['TX',4,8,'r'],['FL',9,8,'r']
+    ];
+    const usa = USA.map(([abbr, col, row, lean]) => ({
+      abbr, col, row,
+      bg: LEAN[lean],
+      op: abbr === 'WY' ? 1 : 0.38,
+      ring: abbr === st ? RING : 'none',
+      title: abbr + ' — ' + LEAN_WORD[lean] + (abbr === 'WY' ? ' · covered' : ' · coming soon'),
+      pick: () => this.setState({ st: abbr })
+    }));
+
+    const WYC = [
+      ['Teton',1,1,'b'],['Park',2,1,'r'],['Big Horn',3,1,'r'],['Sheridan',4,1,'r'],['Campbell',5,1,'r'],['Crook',6,1,'r'],
+      ['Lincoln',1,2,'r'],['Hot Springs',2,2,'r'],['Washakie',3,2,'r'],['Johnson',4,2,'r'],['Weston',6,2,'r'],
+      ['Sublette',1,3,'y'],['Fremont',2,3,'y'],['Natrona',3,3,'r'],['Converse',4,3,'r'],['Niobrara',6,3,'r'],
+      ['Uinta',1,4,'r'],['Sweetwater',2,4,'r'],['Carbon',3,4,'r'],['Albany',4,4,'b'],['Platte',5,4,'r'],['Goshen',6,4,'r'],
+      ['Laramie',5,5,'y']
+    ];
+    const wyCounties = WYC.map(([name, col, row, lean]) => ({
+      name, col, row,
+      bg: LEAN[lean],
+      ring: name === county ? RING : 'none',
+      title: name + ' County — ' + LEAN_WORD[lean] + ' (sample)',
+      pick: () => this.setState({ county: name, town: name === 'Lincoln' ? this.state.town : '—' })
+    }));
+
+    const GROUPS = [
+      { region: 'STAR VALLEY', towns: [['Alpine', 'y'], ['Star Valley Ranch', 'r'], ['Thayne', 'r'], ['Afton', 'r'], ['Grover', 'r']] },
+      { region: 'SOUTH LINCOLN', towns: [['Kemmerer', 'b'], ['Diamondville', 'r'], ['La Barge', 'y'], ['Cokeville', 'r']] }
+    ];
+    const townGroups = GROUPS.map(g => ({
+      region: g.region,
+      towns: g.towns.map(([name, lean]) => ({
+        name,
+        dot: LEAN[lean],
+        bd: name === town ? '#4ED8C3' : '#2C3642',
+        bg: name === town ? '#0F1E1B' : '#141B23',
+        fg: name === town ? '#4ED8C3' : '#C3CDD9',
+        bdL: name === town ? '#1A4D8F' : '#C9C0A8',
+        bgL: name === town ? '#E6EDF8' : '#FFFFFF',
+        pick: () => this.setState({ county: 'Lincoln', town: name })
+      }))
+    }));
+
+    const region = this.regionOf(town);
+    const mk = (v) => ({ v, t: v });
+    const save = () => {
+      try {
+        localStorage.setItem('gw_location', JSON.stringify({ state: st, county, region, town }));
+      } catch (e) {}
+    };
+
+    return {
+      isAdvanced: mode !== 'simple',
+      isSimple: mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      crumbState: st === 'WY' ? 'Wyoming' : st,
+      crumbCounty: county === '—' ? 'pick a county' : county + ' County',
+      crumbRegion: region,
+      crumbTown: town === '—' ? 'pick a town' : town,
+      selState: st, selCounty: county, selTown: town,
+      selStateLabel: st === 'WY' ? 'Wyoming (covered)' : st + ' — coming soon',
+      selCountyLabel: county === '—' ? 'Pick a county' : county + ' County' + (county === 'Lincoln' ? ' (covered)' : ''),
+      selTownLabel: town === '—' ? 'Pick a town' : town,
+
+      stateOptions: [mk('WY')].concat(USA.filter(u => u[0] !== 'WY').map(u => mk(u[0]))).map(o => ({ v: o.v, t: o.v === 'WY' ? 'Wyoming (covered)' : o.v + ' — coming soon' })),
+      countyOptions: WYC.map(c => ({ v: c[0], t: c[0] + ' County' + (c[0] === 'Lincoln' ? ' (covered)' : ' — coming soon') })),
+      townOptions: GROUPS.flatMap(g => g.towns.map(t => ({ v: t[0], t: t[0] }))),
+      onStateSel: (e) => this.setState({ st: e.target.value }),
+      onCountySel: (e) => this.setState({ county: e.target.value }),
+      onTownSel: (e) => this.setState({ county: 'Lincoln', town: e.target.value }),
+      usa, wyCounties, townGroups,
+      showWyMap: st === 'WY',
+      countyHint: st === 'WY' ? 'Lincoln County is fully covered; the rest of Wyoming is being wired up.' : 'We haven\u2019t mapped ' + st + ' yet — Wyoming is our test state. Join the waitlist below.',
+      stateNote: st === 'WY'
+        ? 'Wyoming — 23 counties · 99 towns · legislature, agencies & boards tracked. Tracked officials have voted with their stated positions 71% of the time (sample).'
+        : st + ' — not covered yet. Everything you see is being tested in Wyoming first, then rolled out nationwide.',
+      countyNote: county === 'Lincoln'
+        ? 'Lincoln County — Commission, Planning, Sheriff, Clerk, Road & Bridge tracked · officials vote 74% conservative-aligned (sample).'
+        : county + ' County — coverage coming after the Lincoln County pilot.',
+      save
+    };
+  }
+}
+</script>
+</body>
+</html>

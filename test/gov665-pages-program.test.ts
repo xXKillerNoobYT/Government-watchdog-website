@@ -3,7 +3,7 @@
 // GOV-665 — Wave 2 pages program: Fast Agenda, timeline levels/filters, and
 // Boards directory/detail. These tests pin the public-lane 0-leak invariant, the
 // shared `gw_home_mode` Simple/Advanced switch, and the no-score body detail rule.
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels, readPageMode } from '../src/ui/pages-program';
 import type { AgendaBoard } from '../src/types/agenda-board';
 import type { ReadApiResponse } from '../src/types/read-api';
@@ -52,9 +52,12 @@ describe('GOV-665 Fast Agenda page', () => {
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
     expect(readPageMode()).toBe('advanced');
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
+    const shellRerender = vi.fn();
+    window.addEventListener('hashchange', shellRerender, { once: true });
     root.querySelector<HTMLButtonElement>('[data-test="mode-simple"]')!.click();
     expect(localStorage.getItem('gw_home_mode')).toBe('simple');
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
+    expect(shellRerender).toHaveBeenCalledOnce();
   });
 
   it('does not let Advanced mode override an explicit light theme choice', () => {

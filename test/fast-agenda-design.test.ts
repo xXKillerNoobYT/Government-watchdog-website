@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderFastAgendaDesign } from '../src/ui/fast-agenda-design';
+import { FAST_AGENDA_DESIGN_STYLE, renderFastAgendaDesign } from '../src/ui/fast-agenda-design';
 
 let root: HTMLElement;
 
@@ -109,14 +109,39 @@ describe('Fast Agenda interactions', () => {
     expect(root.querySelector<HTMLButtonElement>('[data-track-key="annexation"]')?.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('closes the accessible detail modal with Escape, the backdrop, and either close button', () => {
+  it('traps focus, isolates the background, locks scrolling, and restores state on Escape', () => {
     renderFixture();
     const open = root.querySelector<HTMLButtonElement>('[data-test="open-details"]')!;
+    const surface = root.querySelector<HTMLElement>('[data-test="fast-agenda-advanced"]')!;
+    document.body.style.overflow = 'clip';
+    open.focus();
 
     open.click();
     expect(root.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
+    expect(surface.hasAttribute('inert')).toBe(true);
+    expect(surface.getAttribute('aria-hidden')).toBe('true');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    const first = root.querySelector<HTMLButtonElement>('[data-test="modal-close"]')!;
+    const last = root.querySelector<HTMLButtonElement>('[data-test="modal-footer-close"]')!;
+    expect(document.activeElement).toBe(first);
+    last.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(first);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(last);
+
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(root.querySelector('[data-test="agenda-modal"]')).toBeNull();
+    expect(surface.hasAttribute('inert')).toBe(false);
+    expect(surface.hasAttribute('aria-hidden')).toBe(false);
+    expect(document.body.style.overflow).toBe('clip');
+    expect(document.activeElement).toBe(open);
+  });
+
+  it('closes with the backdrop and either close button, including rerender cleanup', () => {
+    renderFixture();
+    const open = root.querySelector<HTMLButtonElement>('[data-test="open-details"]')!;
 
     open.click();
     root.querySelector<HTMLElement>('[data-test="agenda-modal-backdrop"]')?.click();
@@ -129,18 +154,58 @@ describe('Fast Agenda interactions', () => {
     open.click();
     root.querySelector<HTMLButtonElement>('[data-test="modal-footer-close"]')?.click();
     expect(root.querySelector('[data-test="agenda-modal"]')).toBeNull();
+
+    document.body.style.overflow = 'auto';
+    open.click();
+    renderFixture();
+    expect(root.querySelector('[data-test="agenda-modal"]')).toBeNull();
+    expect(document.body.style.overflow).toBe('auto');
+    const rerenderedSurface = root.querySelector<HTMLElement>('[data-test="fast-agenda-advanced"]')!;
+    expect(rerenderedSurface.hasAttribute('inert')).toBe(false);
+    expect(rerenderedSurface.hasAttribute('aria-hidden')).toBe(false);
   });
 });
 
 describe('Fast Agenda reading mode', () => {
-  it('reads the existing gw_home_mode key and renders the Simple broadsheet without a second mode key', () => {
+  it('renders a reduced numbered Simple digest with honest receipt and unavailable-tool affordances', () => {
     localStorage.setItem('gw_home_mode', 'simple');
     renderFixture();
 
     expect(root.querySelector('[data-test="fast-agenda-simple"]')?.getAttribute('data-mode')).toBe('simple');
     expect(root.querySelector('[data-test="fast-agenda-advanced"]')).toBeNull();
     expect(root.querySelector('[data-test="reading-mode"]')?.textContent).toContain('Simple');
-    expect(root.querySelectorAll('[data-test="agenda-row"]').length).toBeGreaterThanOrEqual(6);
+    expect(root.querySelector('[data-test="simple-meeting-digest"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="simple-agenda-digest"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="simple-agenda-item"]')).toHaveLength(8);
+    expect(root.querySelectorAll('[data-test="open-receipts"]')).toHaveLength(8);
+    expect(root.querySelectorAll('[data-test="agenda-row"]')).toHaveLength(0);
+    expect(root.querySelector('[data-test="meeting-board"]')).toBeNull();
+    expect(root.querySelector('[data-test="issue-tracker"]')).toBeNull();
+    expect(root.querySelector('[data-test="language-watch"]')).toBeNull();
+    expect(root.querySelector('[data-test="process-ladder"]')).toBeNull();
+
+    const unavailable = [...root.querySelectorAll<HTMLButtonElement>('[data-test="unavailable-tool"]')];
+    expect(unavailable).toHaveLength(3);
+    for (const button of unavailable) {
+      expect(button.disabled).toBe(true);
+      expect(button.textContent).toContain('unavailable');
+    }
     expect([...Array(localStorage.length)].map((_, index) => localStorage.key(index))).toEqual(['gw_home_mode']);
+
+    root.querySelector<HTMLButtonElement>('[data-test="open-receipts"]')?.click();
+    expect(root.querySelector('[data-test="agenda-modal"]')?.textContent).toContain('Receipts');
+    expect(root.querySelector('[data-test="agenda-modal"]')?.textContent).toContain('synthetic design placeholders');
+  });
+
+  it('uses a contrast-safe AI badge pairing and collapses modal columns by 720px', () => {
+    expect(FAST_AGENDA_DESIGN_STYLE).toContain(
+      '.gw-fa-ai strong{background:var(--gw-caution-text-strong);color:var(--gw-caution-bg)}',
+    );
+    expect(FAST_AGENDA_DESIGN_STYLE).not.toContain(
+      '.gw-fa-ai strong{background:var(--gw-caution-line);color:var(--gw-accent-text-on)}',
+    );
+    expect(FAST_AGENDA_DESIGN_STYLE).toMatch(
+      /@media \(max-width:720px\)\{[\s\S]*?\.gw-fa-modal-grid\{grid-template-columns:1fr\}/,
+    );
   });
 });

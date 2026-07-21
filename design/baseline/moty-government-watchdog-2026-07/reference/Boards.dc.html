@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Boards (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text">
+        <span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search boards, members, meetings…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+
+    <div style="display:flex;justify-content:center">
+      <div style="display:flex;gap:6px;background:#10161D;border:1px solid #1F2833;border-radius:12px;padding:6px">
+        <span onClick="{{ tabTown }}" style="padding:8px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ tTownBg }};color:{{ tTownFg }}">Town boards · Alpine</span>
+        <span onClick="{{ tabCounty }}" style="padding:8px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ tCountyBg }};color:{{ tCountyFg }}">County boards · Lincoln</span>
+        <span onClick="{{ tabState }}" style="padding:8px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ tStateBg }};color:{{ tStateFg }}">State bodies · Wyoming</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <sc-for list="{{ boards }}" as="b" hint-placeholder-count="6">
+        <div onClick="{{ b.pick }}" style="background:#12181F;border:1px solid {{ b.bd }};border-radius:14px;padding:16px;cursor:pointer" style-hover="border-color:#33404E">
+          <div style="display:flex;align-items:center;gap:11px">
+            <div style="width:40px;height:40px;border-radius:10px;background:{{ b.tint }};border:1px solid {{ b.bd2 }};display:grid;place-items:center;flex:none">
+              <div style="display:flex;gap:2px;align-items:flex-end"><span style="width:3.5px;height:11px;background:{{ b.color }};border-radius:1px"></span><span style="width:3.5px;height:15px;background:{{ b.color }};border-radius:1px"></span><span style="width:3.5px;height:11px;background:{{ b.color }};border-radius:1px"></span></div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700;line-height:1.2">{{ b.name }}</div>
+              <div style="font-size:11px;color:#8D99A7">Next meeting: <span style="color:#C3CDD9;font-weight:600">{{ b.next }}</span></div>
+            </div>
+            <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:{{ b.color }};border:1px solid {{ b.color }};border-radius:4px;padding:1px 6px;flex:none">{{ b.lvlName }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px;text-align:center">
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:8px;padding:6px 4px"><div style="font-size:16px;font-weight:800">{{ b.issues }}</div><div style="font-size:9.5px;color:#8D99A7;letter-spacing:.3px">active issues</div></div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:8px;padding:6px 4px"><div style="font-size:16px;font-weight:800;color:{{ b.voteColor }}">{{ b.vote }}</div><div style="font-size:9.5px;color:#8D99A7;letter-spacing:.3px">vote soon</div></div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:8px;padding:6px 4px"><div style="font-size:16px;font-weight:800;color:{{ b.chColor }}">{{ b.changed }}</div><div style="font-size:9.5px;color:#8D99A7;letter-spacing:.3px">changed docs</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:#8D99A7">
+            <span>{{ b.officials }} officials tracked · {{ b.promises }} promises affected</span>
+            <span style="color:#4ED8C3;font-weight:700">{{ b.openLabel }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #2E6B60;border-radius:14px;padding:20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">BOARD DETAIL</div>
+        <div style="font-size:19px;font-weight:800">{{ detail.name }}</div>
+        <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:{{ detail.color }};border:1px solid {{ detail.color }};border-radius:4px;padding:1px 7px">{{ detail.lvlName }}</span>
+        <span style="font-size:12px;color:#8D99A7">{{ detail.jurisdiction }}</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <a href="Fast Agenda.dc.html" style="font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:5px 12px;text-decoration:none" style-hover="background:#0F1E1B">Fast agenda ›</a>
+          <a href="Timeline.dc.html" style="font-size:11.5px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:5px 12px;text-decoration:none" style-hover="background:#161E27">Board timeline ›</a>
+          <a href="Source Vault.dc.html" style="font-size:11.5px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:5px 12px;text-decoration:none" style-hover="background:#161E27">Documents ›</a>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:#8D99A7;margin-bottom:14px">{{ detail.about }}</div>
+      <div style="display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:14px;align-items:start">
+        <div style="background:#141B23;border:1px solid #1F2833;border-radius:11px;padding:14px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:10px">MEMBERS · KEEPING-PROMISES SCORE</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ detail.members }}" as="m" hint-placeholder-count="4">
+              <a href="Power Tracker.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#ECF1F7;padding:4px 6px;border-radius:8px" style-hover="background:#161E27">
+                <span style="width:30px;height:30px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:11px;font-weight:800;color:#C3CDD9;flex:none">{{ m.init }}</span>
+                <span style="flex:1;min-width:0"><span style="font-size:13px;font-weight:700">{{ m.name }}</span><br><span style="font-size:10.5px;color:#8D99A7">{{ m.role }}</span></span>
+                <span style="font-size:14px;font-weight:800;color:{{ m.scoreColor }}">{{ m.score }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:11px;padding:14px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:10px">RECENT ACTIONS &amp; VOTES</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ detail.recent }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;gap:10px;border-bottom:1px solid #1B232D;padding-bottom:8px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8D99A7;flex:none;width:46px;padding-top:2px">{{ r.date }}</span>
+                  <span style="flex:1;font-size:12.5px"><b>{{ r.what }}</b> <span style="color:{{ r.resColor }};font-weight:700">{{ r.result }}</span><br><span style="font-size:11px;color:#8D99A7">{{ r.sub }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:11px;padding:14px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:10px">ACTIVE ISSUES BEFORE THIS BOARD</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ detail.issues }}" as="i" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:50%;background:{{ i.dot }};flex:none"></span><span style="flex:1"><a href="{{ i.tlHref }}" style="font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">{{ i.t }}</a> <span style="color:#8D99A7">— {{ i.s }}</span></span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:11px;padding:14px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:10px">DOCUMENTS &amp; PROOF</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+              <sc-for list="{{ detail.docs }}" as="d" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #1B232D;padding-bottom:7px"><span>{{ d.t }}<br><span style="font-size:10.5px;color:#8D99A7">{{ d.sub }}</span></span><span style="font-size:10.5px;font-weight:700;color:{{ d.c }};flex:none">{{ d.status }}</span></div>
+              </sc-for>
+            </div>
+            <a href="Source Vault.dc.html" style="display:block;text-align:center;font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:8px;padding:6px 0;margin-top:11px;text-decoration:none" style-hover="background:#0F1E1B">Open in Source Vault ›</a>
+          </div>
+          <div style="background:#1D1412;border:1px solid #52302B;border-radius:11px;padding:14px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#EE7A6D;margin-bottom:8px">WATCH FLAGS</div>
+            <div style="font-size:12px;color:#C3CDD9;line-height:1.6">{{ detail.flags }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ Holding power accountable. Amplifying transparency.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Tip us something</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Boards (light)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:900px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">WHO DECIDES WHAT — YOUR BOARDS</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:20px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="font-size:16px;color:#4A463C;font-style:italic;text-align:center;margin-bottom:20px">Every decision in your life runs through one of these rooms. Here's who sits in them and when they meet next.</div>
+
+    <sc-for list="{{ simpleGroups }}" as="g" hint-placeholder-count="3">
+      <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;color:{{ g.color }};border-bottom:2.5px solid {{ g.color }};padding-bottom:4px;margin:18px 0 6px">{{ g.title }}</div>
+      <sc-for list="{{ g.rows }}" as="b" hint-placeholder-count="4">
+        <div style="display:flex;gap:14px;border-bottom:1px solid #D8D0BC;padding:11px 0;align-items:baseline">
+          <div style="flex:1"><span style="font-size:19px;font-weight:600">{{ b.name }}</span><br><span style="font-size:14.5px;color:#4A463C">{{ b.what }}</span></div>
+          <div style="flex:none;text-align:right;font-family:'Public Sans',sans-serif"><span style="font-size:13px;font-weight:700">{{ b.next }}</span><br><a href="Fast Agenda.dc.html" style="font-size:12.5px">agenda &amp; packet</a> · <a href="Watchlist.dc.html" style="font-size:12.5px">watch</a></div>
+        </div>
+      </sc-for>
+    </sc-for>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;margin-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Member scores &amp; vote history? <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'advanced',
+    tab: 'town',
+    board: 'council'
+  };
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GOLD = '#ECC35C', GREY = '#8D99A7';
+    const LVLMAP = { town: { n: 'TOWN', c: MINT, tint: '#0F1E1B', bd2: '#29564E' }, county: { n: 'COUNTY', c: AMBER, tint: '#201A0E', bd2: '#4a3c14' }, state: { n: 'STATE', c: BLUE, tint: '#101A2B', bd2: '#31527e' } };
+    const score = (s) => ({ score: s + '%', scoreColor: s >= 75 ? GREEN : s >= 55 ? GOLD : RED });
+    const tab = this.state.tab, boardId = this.state.board;
+
+    const BOARDS = {
+      town: [
+        { id: 'council', name: 'Alpine Town Council', next: 'Jul 7 · 6:00 PM', issues: 5, vote: 2, changed: 1, officials: 5, promises: 3 },
+        { id: 'pz', name: 'Planning & Zoning', next: 'Jul 14 · 6:00 PM', issues: 3, vote: 0, changed: 0, officials: 5, promises: 1 },
+        { id: 'boa', name: 'Board of Adjustment', next: 'Aug 4 · 5:30 PM', issues: 1, vote: 0, changed: 0, officials: 3, promises: 0 },
+        { id: 'pw', name: 'Public Works / Utilities', next: 'Jul 21 · 4:00 PM', issues: 2, vote: 0, changed: 0, officials: 2, promises: 1 },
+        { id: 'tourism', name: 'Tourism Board', next: 'Jul 9 · 12:00 PM', issues: 1, vote: 1, changed: 0, officials: 5, promises: 0 },
+        { id: 'clerk', name: 'Clerk / Treasurer', next: 'office hours', issues: 1, vote: 0, changed: 0, officials: 1, promises: 0 }
+      ],
+      county: [
+        { id: 'commission', name: 'Lincoln County Commission', next: 'Jul 15 · 9:00 AM', issues: 4, vote: 1, changed: 0, officials: 3, promises: 2 },
+        { id: 'coplanning', name: 'County Planning & Zoning', next: 'Jul 15 · 1:00 PM', issues: 2, vote: 0, changed: 0, officials: 5, promises: 0 },
+        { id: 'sheriff', name: 'Sheriff\u2019s Office', next: 'report Jul 15', issues: 1, vote: 0, changed: 0, officials: 1, promises: 1 },
+        { id: 'coclerk', name: 'County Clerk & Elections', next: 'office hours', issues: 1, vote: 0, changed: 0, officials: 1, promises: 0 },
+        { id: 'roadbridge', name: 'Road & Bridge', next: 'bids close Jul 18', issues: 2, vote: 0, changed: 0, officials: 1, promises: 1 },
+        { id: 'health', name: 'Health / Emergency Mgmt', next: 'Jul 22 · 10:00 AM', issues: 1, vote: 0, changed: 0, officials: 2, promises: 0 }
+      ],
+      state: [
+        { id: 'interim', name: 'Interim Committee — Corporations', next: 'Jul 13 · Cheyenne', issues: 3, vote: 0, changed: 0, officials: 14, promises: 1 },
+        { id: 'senate', name: 'Wyoming Senate', next: 'session Feb 2027', issues: 4, vote: 0, changed: 0, officials: 31, promises: 4 },
+        { id: 'house', name: 'Wyoming House', next: 'session Feb 2027', issues: 4, vote: 0, changed: 0, officials: 62, promises: 6 },
+        { id: 'governor', name: 'Governor\u2019s Office', next: 'weekly briefings', issues: 2, vote: 0, changed: 0, officials: 1, promises: 2 },
+        { id: 'agencies', name: 'State Agencies (DEQ, WYDOT…)', next: 'rule deadlines vary', issues: 3, vote: 0, changed: 1, officials: 8, promises: 0 },
+        { id: 'stboards', name: 'State Boards & Commissions', next: 'various', issues: 1, vote: 0, changed: 0, officials: 12, promises: 0 }
+      ]
+    };
+
+    const D = {
+      council: {
+        jurisdiction: 'Town of Alpine · incorporated municipality',
+        about: 'Five elected members set ordinances, budgets, fees, and land-use policy for Alpine. Meets 1st & 3rd Tuesdays, 6:00 PM, Town Hall.',
+        members: [
+          Object.assign({ init: 'JD', name: 'Mayor J. Doe', role: 'Mayor · term ends Dec 2026' }, score(63)),
+          Object.assign({ init: 'RR', name: 'Councilor R. Roe', role: 'Council · term ends Dec 2026' }, score(48)),
+          Object.assign({ init: 'MM', name: 'Councilor M. Moe', role: 'Council · term ends Dec 2028' }, score(71)),
+          Object.assign({ init: 'LL', name: 'Councilor L. Loe', role: 'Council · term ends Dec 2028' }, score(82)),
+          Object.assign({ init: 'BB', name: 'Councilor B. Boe', role: 'Council · term ends Dec 2026' }, score(59))
+        ],
+        recent: [
+          { date: 'Jun 26', what: 'Ord. 2026-0055 — admin fees, 2nd reading', result: 'passed 4–1', resColor: GREEN, sub: 'Loe voted no · promise conflict flagged for Roe' },
+          { date: 'Jun 12', what: 'Alpine Lakes Addition annexation (61 ac)', result: 'passed 4–1', resColor: GREEN, sub: 'roll call archived · will-serve letters now count against sewer capacity' },
+          { date: 'Jun 12', what: 'Res. 2026-027 — Alpine Apex petition certified', result: 'passed', resColor: GREEN, sub: 'Dry Dog Development LLC · next stop: P&Z review' },
+          { date: 'May 21', what: 'FY-27 budget — 2nd reading', result: 'carried', resColor: GREEN, sub: 'revenues up ~$690k across general, water & wastewater funds' }
+        ],
+        issues: [
+          { t: 'Building & annexation moratorium', s: 'vote possible Jul 7', dot: RED },
+          { t: 'Admin-fee ordinance 2026-0055', s: '3rd reading Jul 7', dot: GOLD },
+          { t: 'Alpine Flats 3–4 permit extension', s: 'discussion Jul 7', dot: '#C3CDD9' },
+          { t: 'Public-notice standardization', s: 'staff recommendation pending', dot: BLUE },
+          { t: 'Fireworks ordinance cleanup', s: 'rules contradict — clerk report', dot: GOLD }
+        ],
+        docs: [
+          { t: 'Jul 7 packet v2', sub: 'changed Jul 5, 10:42 AM · sha 8f3c…', status: '▲ 2 versions', c: RED },
+          { t: 'Jul 7 agenda', sub: 'posted Jul 3 · archived', status: '✓ verified', c: GREEN },
+          { t: 'Jun 26 minutes', sub: 'posted Jun 30 · AI text extraction', status: '✓ + AI', c: GOLD },
+          { t: 'Jun 26 meeting video', sub: 'expected within 48h of meeting', status: 'missing', c: GREY }
+        ],
+        flags: '▲ Packet changed after posting (Jul 5) · Jun 26 video still missing · 2 members have promise matches on Jul 7 agenda items.'
+      },
+      pz: {
+        jurisdiction: 'Town of Alpine · planning & permitting',
+        about: 'Reviews zoning, subdivisions, and permit applications; recommended the emergency moratorium to council via Resolution 2024-033.',
+        members: [
+          Object.assign({ init: 'CH', name: 'Chair C. Hill', role: 'Chair · appointed 2024' }, score(77)),
+          Object.assign({ init: 'VP', name: 'V. Park', role: 'Member' }, score(69)),
+          Object.assign({ init: 'SW', name: 'S. Wells', role: 'Member' }, score(74))
+        ],
+        recent: [
+          { date: 'Jun 18', what: 'Recommended emergency moratorium (Res. 2024-033)', result: 'sent to council', resColor: GOLD, sub: 'covers R2, MRC, C, LI, PCF & RC zones · single-family exempt' },
+          { date: 'Jun 4', what: 'Dark-sky lighting initiative', result: 'continued', resColor: '#C3CDD9', sub: 'draft outdoor-lighting standards requested from staff' }
+        ],
+        issues: [
+          { t: 'Alpine Apex annexation review', s: 'certified by council Jun 12', dot: BLUE },
+          { t: 'Dark-sky lighting standards', s: 'draft in progress', dot: '#C3CDD9' },
+          { t: 'Moratorium zone map', s: 'exhibit for Jul 7 council', dot: GOLD }
+        ],
+        docs: [
+          { t: 'Res. 2024-033 text', sub: 'archived · hash verified', status: '✓ verified', c: GREEN },
+          { t: 'May meeting minutes', sub: 'posted 34 days late', status: '⚠ late', c: GOLD }
+        ],
+        flags: 'May minutes posted 34 days after the meeting — outside the town\u2019s own 30-day practice.'
+      },
+      commission: {
+        jurisdiction: 'Lincoln County, Wyoming',
+        about: 'Three commissioners govern the unincorporated county — budget, roads, land use, and contracts. Meets 1st & 3rd Tuesdays, Kemmerer courthouse.',
+        members: [
+          Object.assign({ init: 'PP', name: 'Comm. P. Poe', role: 'District 1 · chair' }, score(88)),
+          Object.assign({ init: 'KK', name: 'Comm. K. Koe', role: 'District 2' }, score(66)),
+          Object.assign({ init: 'TT', name: 'Comm. T. Toe', role: 'District 3' }, score(74))
+        ],
+        recent: [
+          { date: 'Jul 2', what: 'Road & Bridge summer bid package opened', result: 'bids close Jul 18', resColor: GOLD, sub: '4 bidders expected · Star Valley resurfacing included' },
+          { date: 'Jun 17', what: 'Rural land-use rule update — first look', result: 'hearing set', resColor: '#C3CDD9', sub: 'public hearing Jul 15 · frames what towns like Alpine can zone' }
+        ],
+        issues: [
+          { t: 'Rural land-use rule update', s: 'hearing Jul 15', dot: AMBER },
+          { t: 'Road & Bridge bids', s: 'close Jul 18', dot: '#C3CDD9' },
+          { t: 'FY-27 county budget', s: 'workshops in August', dot: BLUE }
+        ],
+        docs: [
+          { t: 'Jul 15 agenda', sub: 'posted Jul 1 · archived', status: '✓ verified', c: GREEN },
+          { t: 'Land-use rule draft', sub: 'v1 · first seen Jun 17', status: '✓ verified', c: GREEN }
+        ],
+        flags: 'No open transparency flags. Last flag (unclear vote record, May 9) was resolved when the amended minutes posted.'
+      }
+    };
+
+    const FALLBACK = (b, lvl) => ({
+      jurisdiction: LVLMAP[lvl].n === 'TOWN' ? 'Town of Alpine' : LVLMAP[lvl].n === 'COUNTY' ? 'Lincoln County, Wyoming' : 'State of Wyoming',
+      about: b.name + ' — records are being ingested. Meetings, votes, members and documents will appear here as the archive fills in.',
+      members: [], recent: [], issues: [], docs: [],
+      flags: 'No watch flags recorded yet for this body.'
+    });
+
+    const list = BOARDS[tab];
+    const cur = list.find(b => b.id === boardId) || list[0];
+    const lvl = LVLMAP[tab];
+    const boards = list.map(b => ({
+      name: b.name, next: b.next, issues: b.issues, vote: b.vote, changed: b.changed,
+      officials: b.officials, promises: b.promises,
+      lvlName: lvl.n, color: lvl.c, tint: lvl.tint, bd2: lvl.bd2,
+      voteColor: b.vote > 0 ? GOLD : '#ECF1F7', chColor: b.changed > 0 ? RED : '#ECF1F7',
+      bd: b.id === cur.id ? '#2E6B60' : '#232C37',
+      openLabel: b.id === cur.id ? '● shown below' : 'Open detail ↓',
+      pick: () => this.setState({ board: b.id })
+    }));
+    const issOf = (t) => t.indexOf('moratorium') >= 0 ? 'moratorium' : (t.indexOf('fee') >= 0 || t.indexOf('Fee') >= 0) ? 'fees' : (t.indexOf('rental') >= 0 || t.indexOf('Apex') >= 0) ? 'str' : (t.indexOf('land-use') >= 0 || t.indexOf('Land-Use') >= 0) ? 'landuse' : (t.indexOf('annexation') >= 0 || t.indexOf('Lakes') >= 0) ? 'annexation' : (t.indexOf('permit') >= 0 || t.indexOf('Permit') >= 0 || t.indexOf('Flats') >= 0) ? 'permits' : (t.indexOf('Water') >= 0 || t.indexOf('water') >= 0 || t.indexOf('Sewer') >= 0) ? 'water' : 'all';
+    const rawDetail = D[cur.id] || FALLBACK(cur, tab);
+    const detail = Object.assign({}, rawDetail, { name: cur.name, color: lvl.c, lvlName: lvl.n, issues: (rawDetail.issues || []).map(i => Object.assign({ tlHref: 'Timeline.dc.html?issue=' + issOf(i.t) }, i)) });
+
+    const tabSty = (sel) => sel ? { bg: '#4ED8C3', fg: '#062019' } : { bg: 'transparent', fg: '#8D99A7' };
+    const tT = tabSty(tab === 'town'), tC = tabSty(tab === 'county'), tS = tabSty(tab === 'state');
+
+    const simpleGroups = [
+      { title: 'IN TOWN — ALPINE', color: '#0E7A6E', rows: [
+        { name: 'Town Council', what: 'Ordinances, budgets, fees, and the final word on land use.', next: 'Tue Jul 7 · 6:00 PM' },
+        { name: 'Planning & Zoning', what: 'Reviews building plans and zoning — recommended the moratorium.', next: 'Jul 14 · 6:00 PM' },
+        { name: 'Board of Adjustment', what: 'Hears variance requests when rules pinch a specific property.', next: 'Aug 4 · 5:30 PM' },
+        { name: 'Public Works / Utilities', what: 'Water, sewer, streets — ran the May water-main repair.', next: 'Jul 21 · 4:00 PM' }
+      ]},
+      { title: 'IN THE COUNTY — LINCOLN', color: '#A36A10', rows: [
+        { name: 'County Commission', what: 'County budget, roads, contracts, and rural land use.', next: 'Jul 15 · 9:00 AM · Kemmerer' },
+        { name: 'County Planning & Zoning', what: 'Sets the county rules Alpine\u2019s zoning must fit within.', next: 'Jul 15 · 1:00 PM' },
+        { name: 'Sheriff\u2019s Office', what: 'Law enforcement for the whole county, including Star Valley.', next: 'quarterly report Jul 15' },
+        { name: 'Road & Bridge', what: 'County road work — summer paving bids close July 18.', next: 'bids close Jul 18' }
+      ]},
+      { title: 'IN THE STATE — WYOMING', color: '#274F9B', rows: [
+        { name: 'Legislature (Senate & House)', what: 'Writes state law — including limits on what towns may regulate.', next: 'session Feb 2027' },
+        { name: 'Interim Committee — Corporations', what: 'Working on the short-term-rental bill between sessions.', next: 'Jul 13 · Cheyenne' },
+        { name: 'Governor & Agencies', what: 'Signs bills; agencies write the day-to-day rules.', next: 'rule deadlines vary' }
+      ]}
+    ];
+
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: this.state.mode !== 'simple',
+      isSimple: this.state.mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      tabTown: () => this.setState({ tab: 'town', board: 'council' }),
+      tabCounty: () => this.setState({ tab: 'county', board: 'commission' }),
+      tabState: () => this.setState({ tab: 'state', board: 'interim' }),
+      tTownBg: tT.bg, tTownFg: tT.fg, tCountyBg: tC.bg, tCountyFg: tC.fg, tStateBg: tS.bg, tStateFg: tS.fg,
+      boards, detail, simpleGroups
+    };
+  }
+}
+</script>
+</body>
+</html>

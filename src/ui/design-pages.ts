@@ -8,7 +8,7 @@
  * surface is visibly labelled, and every persisted interaction is device-local.
  */
 
-import { applyMode, readMode } from './shell';
+import { readMode } from './shell';
 import type { ShellMode } from './shell';
 import { applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { GW_TOKENS } from './tokens';
@@ -84,58 +84,45 @@ function fixtureBanner(): HTMLElement {
   }, [DESIGN_FIXTURE_LABEL]);
 }
 
-function modeToggle(mode: ShellMode, rerender: () => void): HTMLElement {
-  const group = el('div', {
-    class: 'gw-dp-mode',
-    role: 'group',
-    'aria-label': 'Reading mode',
-    'data-test': 'design-mode-toggle',
-  });
-
-  for (const value of ['simple', 'advanced'] as const) {
-    const button = el('button', {
-      type: 'button',
-      class: 'gw-dp-mode-button',
-      'data-test': `design-mode-${value}`,
-      'aria-pressed': String(mode === value),
-    }, [value === 'simple' ? 'Simple' : 'Advanced']);
-    button.addEventListener('click', () => {
-      applyMode(value);
-      rerender();
-    });
-    group.append(button);
-  }
-  return group;
-}
-
 function beginPage(
   root: HTMLElement,
   pageId: string,
   title: string,
   subtitle: string,
   options: DesignPageOptions,
-  rerender: () => void,
 ): PageFrame | null {
   ensureDesignPagesStyle();
   root.className = 'gw-design-root';
   root.replaceChildren();
 
+  const mode = readMode();
+  syncUnpinnedPalette(mode);
+
   if (!hasFixtureAccess(options)) {
     root.append(el('main', {
-      class: 'gw-dp-gated',
+      class: 'gw-dp-page gw-dp-gated',
+      'data-mode': mode,
       'data-test': `${pageId}-gated`,
     }, [
-      el('h1', {}, [title]),
-      el('section', { class: 'gw-dp-empty', role: 'status' }, [
-        el('h2', {}, ['Preview unavailable']),
-        el('p', {}, ['No page data is available for this access context.']),
+      el('div', { class: 'gw-dp-inner' }, [
+        el('header', { class: 'gw-dp-page-head' }, [
+          el('div', {}, [
+            el('p', { class: 'gw-dp-kicker' }, [mode === 'simple' ? 'PLAIN-ENGLISH VIEW' : 'REVIEWER VIEW']),
+            el('h1', { class: 'gw-dp-title' }, [title]),
+            el('p', { class: 'gw-dp-subtitle' }, [subtitle]),
+          ]),
+        ]),
+        el('section', { class: 'gw-dp-empty', role: 'status' }, [
+          el('h2', {}, ['Data connection not available yet']),
+          el('p', {}, [
+            'The baseline layout is ready, but this page will not display civic rows until its reviewed backend projection is connected.',
+          ]),
+        ]),
       ]),
     ]));
     return null;
   }
 
-  const mode = readMode();
-  syncUnpinnedPalette(mode);
   const content = el('div', { class: 'gw-dp-content' });
   const page = el('main', {
     class: 'gw-dp-page',
@@ -151,7 +138,6 @@ function beginPage(
           el('h1', { class: 'gw-dp-title' }, [title]),
           el('p', { class: 'gw-dp-subtitle' }, [subtitle]),
         ]),
-        modeToggle(mode, rerender),
       ]),
       content,
     ]),
@@ -242,19 +228,55 @@ function openPowerDetailModal(page: HTMLElement, opener: HTMLButtonElement, offi
     'data-test': 'power-modal',
   }, [dialog]);
 
+  const backgroundNodes = [...page.children].filter((node): node is HTMLElement => node instanceof HTMLElement);
+  const priorHidden = new Map<HTMLElement, string | null>();
+  for (const node of backgroundNodes) {
+    priorHidden.set(node, node.getAttribute('aria-hidden'));
+    node.inert = true;
+    node.setAttribute('aria-hidden', 'true');
+  }
+  const priorBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+
   const close = (): void => {
     window.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('hashchange', close);
     backdrop.remove();
+    document.body.style.overflow = priorBodyOverflow;
+    for (const node of backgroundNodes) {
+      node.inert = false;
+      const hidden = priorHidden.get(node);
+      if (hidden === null || hidden === undefined) node.removeAttribute('aria-hidden');
+      else node.setAttribute('aria-hidden', hidden);
+    }
     if (opener.isConnected) opener.focus();
   };
   const onKeydown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') close();
+    if (event.key === 'Escape') {
+      close();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )].filter((node) => !node.hasAttribute('hidden'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
   closeButton.addEventListener('click', close);
   backdrop.addEventListener('click', (event) => {
     if (event.target === backdrop) close();
   });
   window.addEventListener('keydown', onKeydown);
+  window.addEventListener('hashchange', close);
 
   const consent = el('button', {
     type: 'button',
@@ -332,7 +354,6 @@ export function renderPowerTracker(root: HTMLElement, options: DesignPageOptions
     'Power Tracker',
     'A consent-first preview of promise/action review. Placeholder people and synthetic records only.',
     options,
-    () => renderPowerTracker(root, options),
   );
   if (!frame) return;
 
@@ -343,13 +364,62 @@ export function renderPowerTracker(root: HTMLElement, options: DesignPageOptions
     { 'data-test': 'power-score-disclaimer' },
   ));
 
+  if (frame.mode === 'simple') {
+    frame.content.append(
+      el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'power-simple-edition' }, [
+        el('div', { class: 'gw-dp-newspaper-rule' }, [
+          el('span', {}, ['WHO HOLDS POWER']),
+          el('span', {}, ['PLAIN-LANGUAGE FIXTURE EDITION']),
+        ]),
+        ...FIXTURE_OFFICIALS.map((official) => el('article', { class: 'gw-dp-newspaper-story' }, [
+          el('p', { class: `gw-dp-kicker gw-dp-level-${official.level}` }, [official.level.toUpperCase()]),
+          el('h2', {}, [official.name]),
+          el('p', { class: 'gw-dp-newspaper-deck' }, [official.role]),
+          el('p', {}, [official.review]),
+          el('p', { class: 'gw-dp-muted' }, ['No score or verdict is available. Receipts and analyst comparison tools remain withheld until a reviewed backend projection exists.']),
+        ])),
+        el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
+          el('strong', {}, ['Need the evidence workbench?']),
+          el('span', {}, [' Switch to Advanced for filters, profile comparison, AI consent gates, quote ledgers, and receipt review.']),
+        ]),
+      ]),
+    );
+    return;
+  }
+
   const officialsMount = el('div', { class: 'gw-dp-official-list', 'data-test': 'power-official-list' });
   const profileMount = el('div', { 'data-test': 'power-profile-mount' });
   let selectedId = FIXTURE_OFFICIALS[0].id;
+  let selectedLevel: 'all' | FixtureOfficial['level'] = 'all';
+
+  const levelTools = el('div', {
+    class: 'gw-dp-toolbox',
+    role: 'group',
+    'aria-label': 'Filter placeholder officials by government level',
+    'data-test': 'power-level-tools',
+  });
+  for (const level of ['all', 'town', 'county', 'state'] as const) {
+    const button = el('button', {
+      type: 'button',
+      class: 'gw-dp-tool-pill',
+      'aria-pressed': String(level === selectedLevel),
+      'data-power-level': level,
+    }, [level === 'all' ? 'All levels' : level[0].toUpperCase() + level.slice(1)]);
+    button.addEventListener('click', () => {
+      selectedLevel = level;
+      const visible = FIXTURE_OFFICIALS.filter((official) => level === 'all' || official.level === level);
+      if (!visible.some((official) => official.id === selectedId)) selectedId = visible[0]?.id ?? FIXTURE_OFFICIALS[0].id;
+      for (const sibling of levelTools.querySelectorAll<HTMLButtonElement>('[data-power-level]')) {
+        sibling.setAttribute('aria-pressed', String(sibling === button));
+      }
+      renderSelection();
+    });
+    levelTools.append(button);
+  }
 
   const renderSelection = (): void => {
     officialsMount.replaceChildren();
-    for (const official of FIXTURE_OFFICIALS) {
+    for (const official of FIXTURE_OFFICIALS.filter((candidate) => selectedLevel === 'all' || candidate.level === selectedLevel)) {
       const selected = official.id === selectedId;
       const button = el('button', {
         type: 'button',
@@ -406,7 +476,7 @@ export function renderPowerTracker(root: HTMLElement, options: DesignPageOptions
   };
   renderSelection();
 
-  frame.content.append(el('div', { class: 'gw-dp-power-grid' }, [
+  frame.content.append(levelTools, el('div', { class: 'gw-dp-power-grid' }, [
     panel('Placeholder officials', 'BROKEN-FIRST SORT PREVIEW', [
       officialsMount,
       el('p', { class: 'gw-dp-muted' }, ['Visual ordering only. No real comparison, score, or outcome ranking is produced.']),
@@ -475,7 +545,6 @@ export function renderWatchlist(root: HTMLElement, options: DesignPageOptions = 
     'Your Watchlist',
     'A device-local digest of issue keys shared through gw_tracked.',
     options,
-    () => renderWatchlist(root, options),
   );
   if (!frame) return;
 
@@ -548,14 +617,46 @@ export function renderWatchlist(root: HTMLElement, options: DesignPageOptions = 
   };
   renderItems();
 
-  frame.content.append(panel('Watched issues', 'DEVICE-LOCAL WATCHLIST', [
+  const watchedPanel = panel(frame.mode === 'simple' ? 'Stories you are following' : 'Watched issues', frame.mode === 'simple' ? 'YOUR LOCAL NEWS FILE' : 'DEVICE-LOCAL WATCHLIST', [
     el('div', { class: 'gw-dp-count-line' }, [
       el('span', {}, ['Currently tracking']),
       count,
     ]),
     list,
     status,
-  ], { 'data-test': 'watchlist-panel' }));
+  ], { 'data-test': 'watchlist-panel' });
+
+  if (frame.mode === 'simple') {
+    frame.content.append(el('div', { class: 'gw-dp-newspaper-section', 'data-test': 'watchlist-simple-edition' }, [
+      watchedPanel,
+      el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
+        el('strong', {}, ['This is a reading list, not an alert service.']),
+        el('span', {}, [' Switch to Advanced for type filters, delivery controls, deadlines, and activity history when those reviewed services are connected.']),
+      ]),
+    ]));
+    return;
+  }
+
+  frame.content.append(el('div', { class: 'gw-dp-workbench-grid', 'data-test': 'watchlist-advanced-workbench' }, [
+    watchedPanel,
+    el('div', { class: 'gw-dp-stack' }, [
+      panel('Watch controls', 'ADVANCED TOOLS', [
+        el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Watchlist record types' }, [
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Issues']),
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs a reviewed boards projection' }, ['Boards · unavailable']),
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs policy-cleared official profiles' }, ['Officials · unavailable']),
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs the source monitoring service' }, ['Documents · unavailable']),
+        ]),
+        el('p', { class: 'gw-dp-muted' }, ['The full tool layout is present, but unsupported record types stay disabled instead of being filled with synthetic civic facts.']),
+      ]),
+      panel('Recent activity', 'REVIEWED ALERT HISTORY', [
+        el('div', { class: 'gw-dp-empty' }, [
+          el('h3', {}, ['No connected alert history']),
+          el('p', {}, ['Recent changes, votes, deadlines, and missing-record events will appear here only when the alerts backend supplies them.']),
+        ]),
+      ]),
+    ]),
+  ]));
 }
 
 const STATE_NAMES: Readonly<Record<string, string>> = {
@@ -633,7 +734,6 @@ export function renderLocation(root: HTMLElement, options: DesignPageOptions = {
     'Choose your place',
     'A valid state, county, region, and town selection stored only on this device.',
     options,
-    () => renderLocation(root, options),
   );
   if (!frame) return;
 
@@ -742,13 +842,38 @@ export function renderLocation(root: HTMLElement, options: DesignPageOptions = {
       townGrid.append(el('p', { class: 'gw-dp-muted' }, ['Choose Lincoln County to see the synthetic town list.']));
     }
 
+    const locationSelects = el('div', { class: 'gw-dp-location-selects' }, [
+      el('label', { for: 'gw-location-state' }, ['State', stateSelect]),
+      el('label', { for: 'gw-location-county' }, ['County', countySelect]),
+      el('label', { for: 'gw-location-town' }, ['Town', townSelect]),
+    ]);
+    const savedNotice = notice(
+      'Saved automatically on this device',
+      `Current valid selection: ${locationLabel(location)}. Saving a location does not confirm coverage or create an account.`,
+      'info',
+      { 'data-test': 'location-saved-notice' },
+    );
+
+    if (frame.mode === 'simple') {
+      mount.replaceChildren(
+        el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'location-simple-edition' }, [
+          breadcrumbs,
+          el('h2', {}, ['Your local edition']),
+          el('p', { class: 'gw-dp-newspaper-deck' }, ['Choose the place whose public records you want to read.']),
+          locationSelects,
+          savedNotice,
+          el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
+            el('strong', {}, ['Coverage details stay out of the reading view.']),
+            el('span', {}, [' Advanced contains the state and county workbench, coverage diagnostics, and backlog tools.']),
+          ]),
+        ]),
+      );
+      return;
+    }
+
     mount.replaceChildren(
       breadcrumbs,
-      el('div', { class: 'gw-dp-location-selects' }, [
-        el('label', { for: 'gw-location-state' }, ['State', stateSelect]),
-        el('label', { for: 'gw-location-county' }, ['County', countySelect]),
-        el('label', { for: 'gw-location-town' }, ['Town', townSelect]),
-      ]),
+      locationSelects,
       notice(
         'Fixture coverage figures',
         'Every percentage and coverage state below is a synthetic design fixture, not a measurement of service or processed public records.',
@@ -777,12 +902,7 @@ export function renderLocation(root: HTMLElement, options: DesignPageOptions = {
         panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid]),
         panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid]),
       ]),
-      notice(
-        'Saved automatically on this device',
-        `Current valid selection: ${locationLabel(location)}. Saving a location does not confirm coverage or create an account.`,
-        'info',
-        { 'data-test': 'location-saved-notice' },
-      ),
+      savedNotice,
     );
   };
 
@@ -900,7 +1020,6 @@ export function renderAlerts(root: HTMLElement, options: DesignPageOptions = {})
     'Alerts',
     'A read-state and delivery-settings interaction preview. Nothing here is subscribed or sent.',
     options,
-    () => renderAlerts(root, options),
   );
   if (!frame) return;
 
@@ -1018,15 +1137,28 @@ export function renderAlerts(root: HTMLElement, options: DesignPageOptions = {})
   };
   renderDelivery();
 
-  frame.content.append(el('div', { class: 'gw-dp-alert-grid' }, [
-    el('div', { class: 'gw-dp-stack' }, [
-      panel('Unread fixture cards', 'UNREAD', [
+  const feedColumn = el('div', { class: 'gw-dp-stack' }, [
+      panel(frame.mode === 'simple' ? 'New since you last read' : 'Unread fixture cards', 'UNREAD', [
         el('div', { class: 'gw-dp-panel-actions' }, [unreadCount, markAll]),
         unreadMount,
         feedStatus,
       ]),
-      panel('Earlier fixture cards', 'EARLIER · READ', [earlierMount]),
-    ]),
+      panel(frame.mode === 'simple' ? 'Earlier notices' : 'Earlier fixture cards', 'EARLIER · READ', [earlierMount]),
+    ]);
+
+  if (frame.mode === 'simple') {
+    frame.content.append(el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'alerts-simple-edition' }, [
+      feedColumn,
+      el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
+        el('strong', {}, ['A calm reading view.']),
+        el('span', {}, [' Switch to Advanced to configure device-only delivery previews, inspect trigger types, and review tracked-item diagnostics.']),
+      ]),
+    ]));
+    return;
+  }
+
+  frame.content.append(el('div', { class: 'gw-dp-alert-grid', 'data-test': 'alerts-advanced-workbench' }, [
+    feedColumn,
     el('div', { class: 'gw-dp-stack' }, [
       panel('Delivery controls', 'DEVICE-ONLY PREVIEW', [
         deliveryMount,
@@ -1062,11 +1194,19 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-title{font-size:var(--gw-text-display);line-height:var(--gw-leading-tight);margin:.15rem 0}
 .gw-dp-subtitle{max-width:52rem;margin:0;color:var(--gw-text-secondary)}
 .gw-dp-kicker{margin:0;color:var(--gw-accent);font:800 var(--gw-text-kicker)/1.35 var(--gw-font);letter-spacing:1.4px;text-transform:uppercase}
-.gw-dp-mode{display:inline-flex;flex:none;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:3px;background:var(--gw-surface-well)}
-.gw-dp-mode-button,.gw-dp-button,.gw-dp-icon-button,.gw-dp-official,.gw-dp-place-tile,.gw-dp-switch,.gw-dp-select{min-height:var(--gw-tap-min);min-width:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.25 var(--gw-font)}
-.gw-dp-mode-button{padding:.45rem .9rem;border:0;border-radius:var(--gw-radius-pill);color:var(--gw-text-secondary);background:transparent;cursor:pointer}
-.gw-dp-mode-button[aria-pressed="true"]{color:var(--gw-accent-text-on);background:var(--gw-accent)}
+.gw-dp-button,.gw-dp-icon-button,.gw-dp-official,.gw-dp-place-tile,.gw-dp-switch,.gw-dp-select,.gw-dp-tool-pill{min-height:var(--gw-tap-min);min-width:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.25 var(--gw-font)}
 .gw-dp-content,.gw-dp-stack{display:grid;gap:var(--gw-space-5)}
+.gw-dp-toolbox{display:flex;align-items:center;gap:var(--gw-space-2);flex-wrap:wrap;padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-well)}
+.gw-dp-tool-pill{appearance:none;padding:.45rem .85rem;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);background:var(--gw-surface);color:var(--gw-text-secondary);cursor:pointer}
+.gw-dp-tool-pill[aria-pressed="true"]{border-color:var(--gw-accent);background:var(--gw-tone-mint-well);color:var(--gw-accent)}
+.gw-dp-tool-pill:disabled{cursor:not-allowed;opacity:.58}
+.gw-dp-workbench-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(18rem,.75fr);gap:var(--gw-space-5);align-items:start}
+.gw-dp-newspaper-section{display:grid;gap:0;border-top:3px double var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);padding:var(--gw-space-4) 0}
+.gw-dp-newspaper-rule{display:flex;align-items:center;justify-content:space-between;gap:var(--gw-space-4);padding:0 0 var(--gw-space-3);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);font:800 12px/1.25 var(--gw-font);letter-spacing:1px}
+.gw-dp-newspaper-story{padding:var(--gw-space-6) 0;border-bottom:var(--gw-border-w) solid var(--gw-border);column-count:2;column-gap:var(--gw-space-6)}
+.gw-dp-newspaper-story:last-of-type{border-bottom:0}.gw-dp-newspaper-story h2{column-span:all;margin:.15rem 0;font:600 1.55rem/1.08 var(--gw-font-serif)}
+.gw-dp-newspaper-story .gw-dp-kicker,.gw-dp-newspaper-story .gw-dp-newspaper-deck{column-span:all}.gw-dp-newspaper-deck{font-size:1.08rem;color:var(--gw-text-secondary);font-style:italic}
+.gw-dp-newspaper-note{margin-top:var(--gw-space-4);padding:var(--gw-space-4) 0;border-top:var(--gw-border-w) solid var(--gw-rule-strong);font-style:italic;color:var(--gw-text-secondary)}
 .gw-dp-panel{padding:var(--gw-space-6);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);background:var(--gw-surface)}
 .gw-dp-page[data-mode="simple"] .gw-dp-panel{border-radius:var(--gw-radius-sm);background:var(--gw-surface-subtle)}
 .gw-dp-panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--gw-space-3);margin-bottom:var(--gw-space-4)}
@@ -1147,8 +1287,8 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-switch[aria-checked="true"]>b{color:var(--gw-accent)}.gw-dp-switch[aria-checked="false"]>b{color:var(--gw-text-muted)}
 .gw-dp-trigger-list{margin:.3rem 0;padding-left:1.25rem;color:var(--gw-text-secondary)}
 .gw-dp-page button:focus-visible,.gw-dp-page select:focus-visible,.gw-dp-page a:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
-@media (max-width:860px){.gw-dp-power-grid,.gw-dp-alert-grid,.gw-dp-location-grid{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:640px){.gw-dp-inner,.gw-dp-gated,.gw-dp-page[data-mode="simple"] .gw-dp-inner{width:100%;padding:var(--gw-space-4)}.gw-dp-page-head{display:grid}.gw-dp-mode{width:100%}.gw-dp-mode-button{flex:1}.gw-dp-watch-row,.gw-dp-alert-row{grid-template-columns:auto minmax(0,1fr)}.gw-dp-watch-row .gw-dp-remove,.gw-dp-alert-row .gw-dp-mark-read{grid-column:1/-1;width:100%}.gw-dp-location-selects,.gw-dp-coverage-grid,.gw-dp-compare{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-dp-panel{padding:var(--gw-space-4)}}
+@media (max-width:860px){.gw-dp-power-grid,.gw-dp-alert-grid,.gw-dp-location-grid,.gw-dp-workbench-grid{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.gw-dp-inner,.gw-dp-gated,.gw-dp-page[data-mode="simple"] .gw-dp-inner{width:100%;padding:var(--gw-space-4)}.gw-dp-page-head{display:grid}.gw-dp-watch-row,.gw-dp-alert-row{grid-template-columns:auto minmax(0,1fr)}.gw-dp-watch-row .gw-dp-remove,.gw-dp-alert-row .gw-dp-mark-read{grid-column:1/-1;width:100%}.gw-dp-location-selects,.gw-dp-coverage-grid,.gw-dp-compare{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-dp-panel{padding:var(--gw-space-4)}.gw-dp-newspaper-story{column-count:1}.gw-dp-newspaper-rule{align-items:flex-start;flex-direction:column;gap:var(--gw-space-1)}}
 @media (prefers-reduced-motion:reduce){.gw-dp-page *{scroll-behavior:auto!important;transition:none!important}}
 `;
 

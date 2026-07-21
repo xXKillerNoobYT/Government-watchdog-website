@@ -50,7 +50,7 @@ import {
 } from './ui/design-pages';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
-import { renderShell } from './ui/shell';
+import { renderShell, type ShellOrigin } from './ui/shell';
 import {
   loadDigestResponse,
   renderNewsletterArchive,
@@ -649,6 +649,44 @@ function designPreviewActive(query: URLSearchParams): boolean {
   }
 }
 
+/**
+ * Shell-wide provenance follows the explicit demo contract. The design preview
+ * is tab-sticky; all other synthetic modes are URL-local. Real captures and the
+ * live/default route remain reviewed snapshots rather than being called live.
+ */
+const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
+  '/home',
+  '/app',
+  '/agenda-boards',
+  '/agenda',
+  '/timeline',
+  '/boards',
+  '/power',
+  '/watchlist',
+  '/location',
+  '/issue',
+  '/vault',
+  '/sources',
+]);
+const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
+  '/home',
+  '/agenda',
+  '/power',
+  '/watchlist',
+  '/location',
+  '/alerts',
+]);
+function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
+  const designFixture = designPreviewActive(query);
+  const demo = query.get('demo');
+  const explicitFixture =
+    (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
+    || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
+    || (path === '/topics' && demo === 'graph-synthetic');
+  if ((designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) || explicitFixture) return 'fixture';
+  return 'reviewed_snapshot';
+}
+
 /** Resolve the access state for a request from its query + the live bypass. */
 function accessFor(query: URLSearchParams) {
   return resolveAccess(query.get('gate'), reviewerBypassActive(query));
@@ -669,7 +707,7 @@ type ShellHandler = (ctx: { mount: HTMLElement; path: string; query: URLSearchPa
 function gated(handler: ShellHandler): RouteHandler {
   return ({ path, query }) =>
     renderGatedApp(root!, accessFor(query), () => {
-      const mount = renderShell(root!, { active: path });
+      const mount = renderShell(root!, { active: path, origin: shellOriginFor(path, query) });
       handler({ mount, path, query });
     });
 }

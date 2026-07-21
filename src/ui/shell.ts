@@ -21,6 +21,7 @@ import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-togg
 import { mountNotificationPanel } from './notification-panel';
 
 export type ShellMode = 'simple' | 'advanced';
+export type ShellOrigin = 'fixture' | 'reviewed_snapshot';
 
 /** Shared per-user reading mode used by the approved page designs. */
 const MODE_KEY = 'gw_home_mode';
@@ -52,7 +53,8 @@ export const NAV_TABS: readonly NavTab[] = [
 ];
 
 const BRAND_ROUTE = NAV_TABS[0].route;
-const FOOTER_TAGLINE = '◆ Holding power accountable. Amplifying transparency.';
+const ADVANCED_MOTTO = '◆ Holding power accountable. Amplifying transparency.';
+const SIMPLE_MOTTO = '★ We Watch. We Report. You Decide.';
 const AI_DISCLOSURE =
   'AI-generated summaries and flags can be wrong. Verify every conclusion against the linked primary records.';
 
@@ -112,25 +114,26 @@ function brand(): HTMLAnchorElement {
   return el('a', {
     class: 'gw-shell-brand',
     href: `#${BRAND_ROUTE}`,
-    'aria-label': 'Government Watchdog home',
+    'aria-label': `Government Watchdog home. AI-powered analysis. ${AI_DISCLOSURE}`,
     'data-test': 'shell-brand',
   }, [
     el('span', { class: 'gw-shell-logo', 'aria-hidden': 'true' }, ['GW']),
-    el('span', { class: 'gw-shell-wordmark', 'aria-hidden': 'true' }, [
+    el('span', { class: 'gw-shell-wordmark' }, [
       el('b', {}, ['GOVERNMENT']),
       el('span', {}, ['WATCHDOG']),
+      aiDisclosure(),
     ]),
   ]);
 }
 
 /** Disclosure, not a certification or a claim that a human reviewed the output. */
-function aiDisclosure(): HTMLSpanElement {
-  return el('span', {
+function aiDisclosure(): HTMLElement {
+  return el('small', {
     class: 'gw-shell-ai',
     'data-test': 'shell-ai-disclosure',
     title: AI_DISCLOSURE,
     'aria-label': `AI analysis disclosure. ${AI_DISCLOSURE}`,
-  }, ['AI ANALYSIS']);
+  }, ['AI-POWERED ANALYSIS']);
 }
 
 /** A real route link; the location screen owns any later picker behavior. */
@@ -266,6 +269,26 @@ function modeToggle(mode: ShellMode): HTMLDivElement {
   return group;
 }
 
+function printControl(): HTMLButtonElement {
+  const button = el('button', {
+    type: 'button',
+    class: 'gw-shell-print',
+    'data-test': 'shell-print',
+    'aria-label': 'Print or save this page as a PDF',
+  }, ['Print']);
+  button.addEventListener('click', () => window.print());
+  return button;
+}
+
+/** Keep the server-authoritative notification panel in both reading modes. */
+function shellActions(mode: ShellMode, includePrint = false): HTMLDivElement {
+  const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [accountChip()]);
+  mountNotificationPanel(actions);
+  actions.append(modeToggle(mode));
+  if (includePrint) actions.append(printControl());
+  return actions;
+}
+
 function tabRow(path: string): HTMLElement {
   const nav = el('nav', {
     class: 'gw-shell-tabs',
@@ -287,18 +310,108 @@ function tabRow(path: string): HTMLElement {
 
 function simpleMasthead(): HTMLDivElement {
   return el('div', { class: 'gw-shell-simple-masthead', 'data-test': 'shell-simple-masthead' }, [
-    el('div', { class: 'gw-shell-simple-title' }, ['Government Watchdog Updates']),
-    el('div', { class: 'gw-shell-simple-deck' }, [
-      'TOWN  /  COUNTY  /  STATE · A nonpartisan guide to what your government is doing',
+    brand(),
+    el('div', { class: 'gw-shell-simple-headline' }, [
+      el('div', { class: 'gw-shell-simple-title' }, ['Government Watchdog Updates']),
+      el('div', { class: 'gw-shell-simple-deck' }, [
+        'TOWN  /  COUNTY  /  STATE · A nonpartisan guide to what your government is doing',
+      ]),
     ]),
+    el('blockquote', { class: 'gw-shell-simple-quote' }, ['“We Watch. We Report. You Decide.”']),
   ]);
 }
 
-function footer(refreshedAt?: string): HTMLElement {
+function localDateLabel(date: Date): string {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return 'Today';
+  }
+}
+
+function localDateIso(date: Date): string {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function advancedBar(mode: ShellMode): HTMLElement {
+  return el('div', { class: 'gw-shell-bar gw-shell-advanced-bar' }, [
+    brand(),
+    locationLink(),
+    searchControl(),
+    shellActions(mode),
+  ]);
+}
+
+function simpleUtilityBar(mode: ShellMode): HTMLElement {
+  const today = new Date();
+  return el('div', { class: 'gw-shell-simple-utility', 'data-test': 'shell-simple-utility' }, [
+    el('div', { class: 'gw-shell-simple-place' }, [
+      locationLink(),
+      el('time', {
+        datetime: localDateIso(today),
+        'data-test': 'shell-local-date',
+      }, [localDateLabel(today)]),
+    ]),
+    shellActions(mode, true),
+  ]);
+}
+
+function simpleTools(): HTMLElement {
+  return el('div', { class: 'gw-shell-simple-tools', 'data-test': 'shell-simple-tools' }, [
+    el('span', { class: 'gw-shell-simple-tools-label' }, [
+      'Plain English first · official records one tap away',
+    ]),
+    searchControl(),
+  ]);
+}
+
+function originBanner(origin: ShellOrigin, refreshedAt?: string): HTMLElement {
+  const fixture = origin === 'fixture';
   const children: (Node | string)[] = [
-    el('span', { class: 'gw-shell-tagline', 'data-test': 'shell-tagline' }, [FOOTER_TAGLINE]),
-    el('span', { class: 'gw-shell-preview-note', 'data-test': 'shell-preview-note' }, [
-      'Preview interface · verify AI analysis against primary records.',
+    el('strong', {}, [fixture ? 'SYNTHETIC DESIGN FIXTURE' : 'REVIEWED SNAPSHOT']),
+    el('span', {}, [
+      fixture
+        ? 'visual-review sample · not a live read'
+        : 'reviewer-internal archived projection · not a live read',
+    ]),
+  ];
+  if (refreshedAt) {
+    children.push(el('time', { datetime: refreshedAt }, [`snapshot generated ${refreshedAt}`]));
+  }
+  return el('div', {
+    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : 'reviewed'}`,
+    role: 'status',
+    'data-test': 'shell-origin-banner',
+    'data-origin': origin,
+  }, children);
+}
+
+function footer(mode: ShellMode, refreshedAt?: string): HTMLElement {
+  const children: (Node | string)[] = [
+    el('div', { class: 'gw-shell-footer-brand' }, [
+      el('strong', { class: 'gw-shell-tagline', 'data-test': 'shell-tagline' }, [
+        mode === 'simple' ? SIMPLE_MOTTO : ADVANCED_MOTTO,
+      ]),
+      el('span', { class: 'gw-shell-preview-note', 'data-test': 'shell-preview-note' }, [
+        'Beta interface · verify AI analysis against primary records.',
+      ]),
+    ]),
+    el('nav', {
+      class: 'gw-shell-footer-links',
+      'aria-label': 'Footer navigation',
+      'data-test': 'shell-footer-links',
+    }, [
+      el('a', { href: '#/vault' }, ['Source Vault']),
+      el('a', { href: '#/newsletter' }, ['Newsletter']),
+      el('a', { href: '#/watchlist' }, ['Watchlist']),
     ]),
   ];
   if (refreshedAt) {
@@ -318,6 +431,8 @@ export interface ShellOptions {
   mode?: ShellMode;
   /** Real projection-generation timestamp. Omitted means no stamp is rendered. */
   refreshedAt?: string;
+  /** Explicit shell-wide data origin. Omitted when a page owns its own origin notice. */
+  origin?: ShellOrigin;
 }
 
 /**
@@ -333,30 +448,22 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
 
   root.className = 'gw-shell-root';
   root.setAttribute('data-mode', mode);
+  if (opts.origin) root.setAttribute('data-origin', opts.origin);
+  else root.removeAttribute('data-origin');
   root.replaceChildren();
 
   const slot = el('div', { class: 'gw-shell-slot', 'data-test': 'shell-content' });
-  // The server-authoritative notification panel replaces the handoff's synthetic
-  // alert count while keeping the Account → Alerts → Mode action order.
-  const actions = el('div', { class: 'gw-shell-actions' }, [accountChip()]);
-  mountNotificationPanel(actions);
-  actions.append(modeToggle(mode));
+  const bannerSlot = el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' });
+  if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt));
+  const headerChildren = mode === 'simple'
+    ? [simpleUtilityBar(mode), simpleMasthead(), simpleTools(), tabRow(opts.active)]
+    : [advancedBar(mode), tabRow(opts.active)];
 
   root.append(
-    el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' }, []),
-    el('header', { class: 'gw-shell-header', 'data-test': 'app-shell', 'data-mode': mode }, [
-      el('div', { class: 'gw-shell-bar' }, [
-        brand(),
-        aiDisclosure(),
-        locationLink(),
-        searchControl(),
-        actions,
-      ]),
-      simpleMasthead(),
-      tabRow(opts.active),
-    ]),
+    bannerSlot,
+    el('header', { class: 'gw-shell-header', 'data-test': 'app-shell', 'data-mode': mode }, headerChildren),
     el('main', { class: 'gw-shell-content' }, [slot]),
-    footer(opts.refreshedAt),
+    footer(mode, opts.refreshedAt),
   );
 
   return slot;
@@ -368,6 +475,11 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-root{font-family:var(--gw-font);font-size:14px;line-height:var(--gw-leading);color:var(--gw-text);background:var(--gw-page-bg);min-height:100vh;display:flex;flex-direction:column;margin:0}
 .gw-shell-root[data-mode="simple"]{font-family:var(--gw-font-serif);font-size:16px}
 .gw-shell-banner-slot:empty{display:none}
+.gw-shell-banner-slot{width:100%;position:relative;z-index:30}
+.gw-shell-origin{width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;padding:5px 16px;border-bottom:var(--gw-border-w) solid var(--gw-tone-info-line);background:var(--gw-tone-info-well);color:var(--gw-info-text);font:500 11.5px/1.35 var(--gw-font-mono);letter-spacing:.03em;text-align:center}
+.gw-shell-origin strong{font-weight:800;letter-spacing:.06em}
+.gw-shell-origin time{color:var(--gw-text-muted)}
+.gw-shell-origin-fixture{border-bottom-color:var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text)}
 .gw-shell-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .gw-shell-header{position:sticky;top:0;z-index:20;background:var(--gw-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-shell-bar{display:flex;align-items:center;gap:18px;max-width:1460px;margin:0 auto;padding:14px 28px}
@@ -376,7 +488,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-wordmark{display:flex;flex-direction:column;line-height:1.05}
 .gw-shell-wordmark b{font-size:16.5px;font-weight:800;letter-spacing:.2px}
 .gw-shell-wordmark span{font-size:11px;color:var(--gw-text-muted);font-weight:600;letter-spacing:3.4px}
-.gw-shell-ai{flex:none;font:800 11px/1 var(--gw-font);letter-spacing:.8px;color:var(--gw-info-text);border:var(--gw-border-w) solid var(--gw-tone-info-line);background:var(--gw-tone-info-well);border-radius:5px;padding:5px 8px;cursor:help}
+.gw-shell-wordmark .gw-shell-ai{display:block;margin-top:3px;color:var(--gw-accent);font:800 9px/1.05 var(--gw-font);letter-spacing:1.35px;white-space:nowrap;cursor:help}
 .gw-shell-location{display:inline-flex;align-items:center;gap:8px;flex:none;min-height:var(--gw-tap-min);padding:7px 14px;color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none}
 .gw-shell-location:hover{border-color:var(--gw-accent);color:var(--gw-text)}
 .gw-shell-location-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-level-town);flex:none}
@@ -400,23 +512,39 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:calc(var(--gw-tap-min) - 4px);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn:hover{color:var(--gw-text)}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
-.gw-shell-mode-btn:focus-visible,.gw-shell-location:focus-visible,.gw-shell-brand:focus-visible,.gw-shell-tab:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
-.gw-shell-simple-masthead{display:none}
+.gw-shell-print{appearance:none;min-height:var(--gw-tap-min);padding:6px 13px;border:1.5px solid var(--gw-rule-strong);border-radius:8px;background:transparent;color:var(--gw-text);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
+.gw-shell-print:hover{background:var(--gw-surface-well)}
+.gw-shell-mode-btn:focus-visible,.gw-shell-location:focus-visible,.gw-shell-brand:focus-visible,.gw-shell-tab:focus-visible,.gw-shell-print:focus-visible,.gw-shell-footer-links a:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
+.gw-shell-simple-utility,.gw-shell-simple-masthead,.gw-shell-simple-tools{width:calc(100% - 56px);max-width:1404px;margin:0 auto}
+.gw-shell-simple-utility{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;padding:8px 0;border-bottom:var(--gw-border-w) solid var(--gw-border);font-family:var(--gw-font)}
+.gw-shell-simple-place{display:flex;align-items:center;gap:12px;min-width:0}
+.gw-shell-simple-place time{color:var(--gw-text-secondary);font-size:12px;font-weight:600;white-space:nowrap}
+.gw-shell-simple-utility .gw-shell-location{min-height:var(--gw-tap-min);padding:4px 0;border:0;border-radius:0;color:var(--gw-text-secondary)}
+.gw-shell-simple-utility .gw-shell-location:hover{text-decoration:underline;text-underline-offset:3px}
+.gw-shell-simple-utility .gw-shell-actions{justify-content:flex-end}
+.gw-shell-simple-masthead{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(180px,.36fr);align-items:center;gap:24px;padding:13px 0 12px;text-align:center;border-bottom:3px double var(--gw-rule-strong)}
+.gw-shell-simple-masthead .gw-shell-brand{text-align:left}
+.gw-shell-simple-masthead .gw-shell-logo{background:var(--gw-accent);color:var(--gw-accent-text-on)}
+.gw-shell-simple-headline{min-width:0}
+.gw-shell-simple-quote{margin:0;color:var(--gw-text-secondary);font:italic 500 14px/1.35 var(--gw-font-serif);text-align:right}
+.gw-shell-simple-tools{display:flex;align-items:center;gap:18px;padding:8px 0;border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);font-family:var(--gw-font)}
+.gw-shell-simple-tools-label{flex:none;color:var(--gw-text-secondary);font-size:12px;font-weight:700;letter-spacing:.25px}
+.gw-shell-simple-tools .gw-shell-search{margin-left:auto;max-width:520px;background:var(--gw-surface-subtle)}
 .gw-shell-tabs{display:flex;align-items:stretch;gap:30px;max-width:1460px;margin:0 auto;padding:0 28px;overflow-x:auto;scrollbar-width:none;font-family:var(--gw-font)}
 .gw-shell-tabs::-webkit-scrollbar{display:none}
 .gw-shell-tab{display:inline-flex;align-items:center;flex:none;min-height:var(--gw-tap-min);padding:4px 2px 9px;color:var(--gw-text-muted);border-bottom:2px solid transparent;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
 .gw-shell-tab:hover{color:var(--gw-text)}
 .gw-shell-tab[aria-current="page"]{color:var(--gw-accent);border-bottom-color:var(--gw-accent)}
 .gw-shell-content{flex:1 0 auto;width:100%;max-width:1460px;margin:0 auto;padding:18px 28px 34px}
-.gw-shell-footer{width:calc(100% - 56px);max-width:1404px;margin:0 auto;padding:14px 0;border-top:var(--gw-border-w) solid var(--gw-border-subtle);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;color:var(--gw-text-muted);font-size:12px}
+.gw-shell-footer{width:calc(100% - 56px);max-width:1404px;margin:0 auto;padding:14px 0;border-top:var(--gw-border-w) solid var(--gw-border-subtle);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 24px;color:var(--gw-text-muted);font-size:12px}
+.gw-shell-footer-brand{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 14px}
 .gw-shell-tagline{color:var(--gw-text-secondary)}
 .gw-shell-preview-note{font-style:italic}
-.gw-shell-refreshed{font-family:var(--gw-font-mono);font-size:11px;color:var(--gw-text-muted)}
+.gw-shell-refreshed{grid-column:1/-1;font-family:var(--gw-font-mono);font-size:11px;color:var(--gw-text-muted)}
+.gw-shell-footer-links{display:flex;align-items:center;justify-content:flex-end;gap:16px;font-family:var(--gw-font)}
+.gw-shell-footer-links a{color:var(--gw-text-secondary);font-weight:600;text-decoration:none}
+.gw-shell-footer-links a:hover{text-decoration:underline;text-underline-offset:3px}
 .gw-shell-root[data-mode="simple"] .gw-shell-header{position:relative;border-top:2px solid var(--gw-rule-strong);border-bottom:2px solid var(--gw-rule-strong)}
-.gw-shell-root[data-mode="simple"] .gw-shell-bar{padding-top:10px;padding-bottom:10px;border-bottom:var(--gw-border-w) solid var(--gw-border)}
-.gw-shell-root[data-mode="simple"] .gw-shell-logo{background:var(--gw-accent);color:var(--gw-accent-text-on)}
-.gw-shell-root[data-mode="simple"] .gw-shell-ai,.gw-shell-root[data-mode="simple"] .gw-shell-location,.gw-shell-root[data-mode="simple"] .gw-shell-search,.gw-shell-root[data-mode="simple"] .gw-shell-account,.gw-shell-root[data-mode="simple"] .gw-shell-mode{font-family:var(--gw-font)}
-.gw-shell-root[data-mode="simple"] .gw-shell-simple-masthead{display:block;max-width:1404px;margin:0 auto;padding:12px 0 10px;text-align:center;border-bottom:var(--gw-border-w) solid var(--gw-rule-strong)}
 .gw-shell-simple-title{font:600 var(--gw-text-display)/1 var(--gw-font-serif);letter-spacing:-.5px}
 .gw-shell-simple-deck{margin-top:8px;color:var(--gw-text-secondary);font:700 12px/1.4 var(--gw-font);letter-spacing:1.2px}
 .gw-shell-root[data-mode="simple"] .gw-shell-tabs{justify-content:center;gap:24px;max-width:1404px;padding:0;border-bottom:var(--gw-border-w) solid var(--gw-rule-strong)}
@@ -428,33 +556,48 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-bar{flex-wrap:wrap}
   .gw-shell-search{order:3;max-width:none;flex-basis:100%}
   .gw-shell-actions{margin-left:auto}
-  .gw-shell-root[data-mode="simple"] .gw-shell-simple-masthead,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{margin-left:28px;margin-right:28px}
+  .gw-shell-root[data-mode="simple"] .gw-shell-tabs{margin-left:28px;margin-right:28px}
+  .gw-shell-simple-masthead{grid-template-columns:auto minmax(0,1fr)}
+  .gw-shell-simple-quote{display:none}
 }
 @media (max-width:760px){
   .gw-shell-bar{padding:10px 14px;gap:10px}
   .gw-shell-wordmark b{font-size:14px}
   .gw-shell-wordmark span{font-size:10px;letter-spacing:2.6px}
-  .gw-shell-ai{margin-left:auto}
   .gw-shell-location{order:2;padding:6px 10px}
   .gw-shell-search{order:4;flex-basis:100%;min-width:0}
   .gw-shell-actions{order:3;width:100%;margin-left:0;justify-content:space-between;gap:6px}
   .gw-shell-account{padding:4px 8px}
   .gw-shell-account-copy small{display:none}
   .gw-shell-mode-btn{padding-left:10px;padding-right:10px}
-  .gw-shell-simple-masthead{display:none!important}
+  .gw-shell-simple-utility,.gw-shell-simple-masthead,.gw-shell-simple-tools{width:calc(100% - 28px)}
+  .gw-shell-simple-utility{align-items:stretch;flex-direction:column;padding:7px 0}
+  .gw-shell-simple-place,.gw-shell-simple-utility .gw-shell-actions{justify-content:space-between;gap:8px}
+  .gw-shell-simple-utility .gw-shell-actions{overflow-x:auto;padding-bottom:2px}
+  .gw-shell-simple-masthead{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:10px 0;text-align:left}
+  .gw-shell-simple-headline{text-align:left}
+  .gw-shell-simple-title{font-size:clamp(1.45rem,7vw,2.1rem)}
+  .gw-shell-simple-deck{font-size:10px;letter-spacing:.75px}
+  .gw-shell-simple-tools{display:block;padding:8px 0}
+  .gw-shell-simple-tools-label{display:block;margin-bottom:7px}
+  .gw-shell-simple-tools .gw-shell-search{margin:0;max-width:none}
   .gw-shell-tabs,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{position:fixed;bottom:0;left:0;right:0;z-index:60;justify-content:flex-start;max-width:none;margin:0;padding:0 8px env(safe-area-inset-bottom);gap:0;background:var(--gw-header-bg);border-top:var(--gw-border-w) solid var(--gw-border);border-bottom:0;overflow-x:auto}
   .gw-shell-tab,.gw-shell-root[data-mode="simple"] .gw-shell-tab{flex:0 0 auto;justify-content:center;min-width:96px;min-height:var(--gw-tap-min);padding:4px 10px;border-top:2px solid transparent;border-bottom:0;font-size:12px;letter-spacing:0;text-transform:none}
   .gw-shell-tab[aria-current="page"],.gw-shell-root[data-mode="simple"] .gw-shell-tab[aria-current="page"]{border-top-color:var(--gw-accent);border-bottom-color:transparent;color:var(--gw-accent)}
   .gw-shell-content,.gw-shell-root[data-mode="simple"] .gw-shell-content{padding:14px 14px calc(var(--gw-tap-min) + 28px);border:0}
-  .gw-shell-footer,.gw-shell-root[data-mode="simple"] .gw-shell-footer{width:calc(100% - 28px);padding-bottom:calc(var(--gw-tap-min) + 14px)}
+  .gw-shell-footer,.gw-shell-root[data-mode="simple"] .gw-shell-footer{width:calc(100% - 28px);grid-template-columns:1fr;padding-bottom:calc(var(--gw-tap-min) + 14px)}
+  .gw-shell-footer-links{justify-content:flex-start}
+  .gw-shell-refreshed{grid-column:auto}
   .gw-theme-toggle{bottom:calc(var(--gw-tap-min) + var(--gw-space-4))!important}
 }
 @media (max-width:430px){
   .gw-shell-logo{width:34px;height:34px}
-  .gw-shell-ai{font-size:10px;padding:4px 6px}
+  .gw-shell-wordmark .gw-shell-ai{font-size:8px;letter-spacing:1px}
   .gw-shell-location{font-size:12px}
   .gw-shell-account-copy b{font-size:10px}
   .gw-shell-search-shortcut{display:none}
+  .gw-shell-simple-place time{font-size:10.5px}
+  .gw-shell-simple-utility .gw-shell-account{display:none}
 }
 `;
 

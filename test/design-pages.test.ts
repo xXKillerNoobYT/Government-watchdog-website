@@ -36,6 +36,7 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-theme');
   document.head.replaceChildren();
   document.body.replaceChildren();
+  document.body.style.removeProperty('overflow');
   root = document.createElement('div');
   document.body.append(root);
 });
@@ -61,14 +62,47 @@ describe('synthetic design pages — hard fixture gate', () => {
     });
   }
 
-  it('reads and persists the shared gw_home_mode value', () => {
+  it('reads the shell-owned gw_home_mode without rendering a duplicate page toggle', () => {
     localStorage.setItem('gw_home_mode', 'simple');
     renderWatchlist(root, ALLOWED);
     expect(root.querySelector('[data-test="watchlist-page"]')?.getAttribute('data-mode')).toBe('simple');
+    expect(root.querySelector('[data-test="design-mode-toggle"]')).toBeNull();
+    expect(localStorage.getItem('gw_home_mode')).toBe('simple');
+  });
 
-    root.querySelector<HTMLButtonElement>('[data-test="design-mode-advanced"]')!.click();
-    expect(localStorage.getItem('gw_home_mode')).toBe('advanced');
-    expect(root.querySelector('[data-test="watchlist-page"]')?.getAttribute('data-mode')).toBe('advanced');
+  it('keeps the complete baseline page frame when reviewed backend data is unavailable', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderPowerTracker(root, { access: 'reviewer_internal', fixture: false });
+    expect(root.querySelector('[data-test="power-tracker-gated"]')?.getAttribute('data-mode')).toBe('simple');
+    expect(root.querySelector('.gw-dp-title')?.textContent).toBe('Power Tracker');
+    expect(root.textContent).toContain('reviewed backend projection');
+    expect(root.querySelector('[data-fixture]')).toBeNull();
+  });
+
+  it('keeps Simple editorial and Advanced workbench surfaces meaningfully distinct', () => {
+    const cases = [
+      [renderPowerTracker, 'power-simple-edition', 'power-level-tools'],
+      [renderWatchlist, 'watchlist-simple-edition', 'watchlist-advanced-workbench'],
+      [renderLocation, 'location-simple-edition', 'location-coverage-disclaimer'],
+      [renderAlerts, 'alerts-simple-edition', 'alerts-advanced-workbench'],
+    ] as const;
+
+    for (const [renderer, simpleTestId, advancedTestId] of cases) {
+      localStorage.setItem('gw_home_mode', 'simple');
+      renderer(root, ALLOWED);
+      expect(root.querySelector(`[data-test="${simpleTestId}"]`)).not.toBeNull();
+      expect(root.querySelector(`[data-test="${advancedTestId}"]`)).toBeNull();
+
+      localStorage.setItem('gw_home_mode', 'advanced');
+      renderer(root, ALLOWED);
+      expect(root.querySelector(`[data-test="${simpleTestId}"]`)).toBeNull();
+      expect(root.querySelector(`[data-test="${advancedTestId}"]`)).not.toBeNull();
+    }
+
+    renderWatchlist(root, ALLOWED);
+    const unavailableTools = root.querySelectorAll('[data-test="watchlist-advanced-workbench"] button:disabled');
+    expect(unavailableTools).toHaveLength(3);
+    expect(root.textContent).toContain('unsupported record types stay disabled');
   });
 });
 
@@ -101,6 +135,20 @@ describe('Power Tracker synthetic consent flow', () => {
     open.click();
     root.querySelector<HTMLElement>('[data-test="power-modal"]')!.click();
     expect(root.querySelector('[data-test="power-modal"]')).toBeNull();
+  });
+
+  it('locks background interaction and restores focus and scrolling when the modal closes', () => {
+    renderPowerTracker(root, ALLOWED);
+    const open = root.querySelector<HTMLButtonElement>('[data-test="power-open-detail"]')!;
+    open.focus();
+    open.click();
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(root.querySelector('.gw-dp-inner')?.getAttribute('aria-hidden')).toBe('true');
+
+    root.querySelector<HTMLButtonElement>('[data-test="power-modal-close"]')!.click();
+    expect(document.body.style.overflow).toBe('');
+    expect(root.querySelector('.gw-dp-inner')?.hasAttribute('aria-hidden')).toBe(false);
+    expect(document.activeElement).toBe(open);
   });
 });
 

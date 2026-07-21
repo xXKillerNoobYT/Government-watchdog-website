@@ -59,6 +59,22 @@ describe('GOV-658 shell — content slot and persistent chrome', () => {
     expect(root.querySelectorAll('[data-test="shell-tabs"]')).toHaveLength(1);
     expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
   });
+
+  it('renders distinct Advanced application chrome and Simple newspaper chrome', () => {
+    renderShell(root, { active: '/home', mode: 'advanced' });
+    expect(root.querySelector('.gw-shell-advanced-bar')).not.toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-utility"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-masthead"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-tools"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-print"]')).toBeNull();
+
+    renderShell(root, { active: '/home', mode: 'simple' });
+    expect(root.querySelector('.gw-shell-advanced-bar')).toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-utility"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-masthead"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="shell-simple-tools"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="shell-print"]')).not.toBeNull();
+  });
 });
 
 describe('GOV-658 shell — approved primary navigation', () => {
@@ -184,25 +200,42 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     expect(document.activeElement).toBe(input);
   });
 
-  it('shows the honest preview account and the gated notification panel', () => {
-    renderShell(root, { active: '/home' });
-    const account = root.querySelector('[data-test="shell-account"]');
-    const bell = root.querySelector('[data-test="notification-bell"]');
-    expect(account?.textContent).toContain('PREVIEW ACCOUNT');
-    expect(account?.textContent).not.toMatch(/✓\s*ID|ID-verified/i);
-    expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
-    expect(bell?.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(bell?.getAttribute('aria-expanded')).toBe('false');
-    expect(root.querySelector('[data-test="shell-alerts"]')).toBeNull();
-    expect(root.querySelector('[data-test="shell-alert-count"]')).toBeNull();
-  });
+  for (const mode of ['advanced', 'simple'] as const) {
+    it(`shows the honest preview account and gated notification panel in ${mode} mode`, () => {
+      renderShell(root, { active: '/home', mode });
+      const account = root.querySelector('[data-test="shell-account"]');
+      const bell = root.querySelector('[data-test="notification-bell"]');
+      expect(account?.textContent).toContain('PREVIEW ACCOUNT');
+      expect(account?.textContent).not.toMatch(/✓\s*ID|ID-verified/i);
+      expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
+      expect(bell?.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(bell?.getAttribute('aria-expanded')).toBe('false');
+      expect(root.querySelector('[data-test="shell-alerts"]')).toBeNull();
+      expect(root.querySelector('[data-test="shell-alert-count"]')).toBeNull();
+    });
+  }
 
-  it('discloses the limitations of AI analysis', () => {
-    renderShell(root, { active: '/home' });
-    const chip = root.querySelector('[data-test="shell-ai-disclosure"]');
-    expect(chip?.textContent).toBe('AI ANALYSIS');
-    expect(chip?.getAttribute('title')).toMatch(/can be wrong/i);
-    expect(chip?.getAttribute('title')).toMatch(/primary records/i);
+  for (const mode of ['advanced', 'simple'] as const) {
+    it(`keeps the shared logo and AI limitation line visible in ${mode} mode`, () => {
+      renderShell(root, { active: '/home', mode });
+      const brand = root.querySelector('[data-test="shell-brand"]');
+      const disclosure = root.querySelector('[data-test="shell-ai-disclosure"]');
+      expect(root.querySelectorAll('[data-test="shell-brand"]')).toHaveLength(1);
+      expect(root.querySelectorAll('[data-test="shell-ai-disclosure"]')).toHaveLength(1);
+      expect(brand?.textContent).toContain('GOVERNMENTWATCHDOG');
+      expect(disclosure?.textContent).toBe('AI-POWERED ANALYSIS');
+      expect(disclosure?.getAttribute('title')).toMatch(/can be wrong/i);
+      expect(disclosure?.getAttribute('title')).toMatch(/primary records/i);
+    });
+  }
+
+  it('offers a functional print-or-PDF control in Simple mode', () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    renderShell(root, { active: '/home', mode: 'simple' });
+    const button = root.querySelector('[data-test="shell-print"]') as HTMLButtonElement;
+    expect(button.getAttribute('aria-label')).toMatch(/print or save/i);
+    button.click();
+    expect(print).toHaveBeenCalledOnce();
   });
 });
 
@@ -250,13 +283,21 @@ describe('GOV-658 shell — mode control and the single palette authority', () =
 });
 
 describe('GOV-658 shell — footer honesty', () => {
-  it('carries the brand tagline and source-verification reminder', () => {
-    renderShell(root, { active: '/home' });
+  it('carries mode-specific mottos, source verification, and real footer routes', () => {
+    renderShell(root, { active: '/home', mode: 'advanced' });
     expect(root.querySelector('[data-test="shell-tagline"]')?.textContent).toMatch(
       /Holding power accountable/i,
     );
     expect(root.querySelector('[data-test="shell-preview-note"]')?.textContent).toMatch(
       /verify AI analysis against primary records/i,
+    );
+    expect([...root.querySelectorAll('[data-test="shell-footer-links"] a')].map((link) => (
+      link.getAttribute('href')
+    ))).toEqual(['#/vault', '#/newsletter', '#/watchlist']);
+
+    renderShell(root, { active: '/home', mode: 'simple' });
+    expect(root.querySelector('[data-test="shell-tagline"]')?.textContent).toMatch(
+      /We Watch\. We Report\. You Decide/i,
     );
   });
 
@@ -269,6 +310,30 @@ describe('GOV-658 shell — footer honesty', () => {
     renderShell(root, { active: '/home', refreshedAt: '2026-07-07T22:00:00Z' });
     expect(root.querySelector('[data-test="shell-refreshed"]')?.textContent)
       .toBe('data refreshed 2026-07-07T22:00:00Z');
+  });
+
+  it('renders only an explicitly supplied truthful origin banner', () => {
+    renderShell(root, { active: '/home' });
+    expect(root.querySelector('[data-test="shell-origin-banner"]')).toBeNull();
+
+    renderShell(root, { active: '/home', origin: 'fixture' });
+    const fixture = root.querySelector('[data-test="shell-origin-banner"]');
+    expect(root.getAttribute('data-origin')).toBe('fixture');
+    expect(fixture?.getAttribute('data-origin')).toBe('fixture');
+    expect(fixture?.textContent).toMatch(/SYNTHETIC DESIGN FIXTURE/i);
+    expect(fixture?.textContent).toMatch(/not a live read/i);
+
+    renderShell(root, {
+      active: '/home',
+      origin: 'reviewed_snapshot',
+      refreshedAt: '2026-07-07T22:00:00Z',
+    });
+    const reviewed = root.querySelector('[data-test="shell-origin-banner"]');
+    expect(reviewed?.getAttribute('data-origin')).toBe('reviewed_snapshot');
+    expect(reviewed?.textContent).toMatch(/REVIEWED SNAPSHOT/i);
+    expect(reviewed?.textContent).toMatch(/reviewer-internal archived projection/i);
+    expect(reviewed?.querySelector('time')?.getAttribute('datetime'))
+      .toBe('2026-07-07T22:00:00Z');
   });
 });
 
