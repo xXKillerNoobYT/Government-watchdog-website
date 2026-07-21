@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import agendaBoardData from '../src/fixtures/agenda-board-projection.json';
+import sampleAgendaBoardData from '../src/fixtures/agenda-board-projection.sample.dev.json';
+import type { AgendaBoard } from '../src/types/agenda-board';
 import { FAST_AGENDA_DESIGN_STYLE, renderFastAgendaDesign } from '../src/ui/fast-agenda-design';
 
 let root: HTMLElement;
+const REVIEWED_BOARD = agendaBoardData as unknown as AgendaBoard;
+const POPULATED_REVIEWED_BOARD = sampleAgendaBoardData as unknown as AgendaBoard;
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -34,6 +39,15 @@ function renderFixture(): void {
     access: 'reviewer_internal',
     fixture: true,
     notice: 'Design handoff review',
+  });
+}
+
+function renderReviewed(board: AgendaBoard = REVIEWED_BOARD, access = 'reviewer_internal'): void {
+  renderFastAgendaDesign(root, {
+    access,
+    fixture: false,
+    board,
+    notice: 'Reviewed projection test notice',
   });
 }
 
@@ -88,6 +102,145 @@ describe('Fast Agenda fixture content and disclosure', () => {
 
     expect(root.querySelectorAll('[data-test="issue-stage"]')).toHaveLength(7);
     expect(root.querySelector('[data-test="issue-tracker"]')?.getAttribute('tabindex')).toBe('0');
+  });
+});
+
+describe('Fast Agenda reviewed projection baseline', () => {
+  it('uses the reviewed board access when no route-level override is supplied', () => {
+    renderFastAgendaDesign(root, {
+      fixture: false,
+      board: REVIEWED_BOARD,
+      notice: 'Board access test',
+    });
+
+    expect(root.querySelector('[data-test="fast-agenda-reviewed-advanced"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="reviewed-banner"]')?.textContent).toContain('Board access test');
+  });
+
+  it.each(['advanced', 'simple'] as const)(
+    'keeps the %s baseline slots while showing only honest reviewed gaps',
+    (mode) => {
+      localStorage.setItem('gw_home_mode', mode);
+      renderReviewed();
+
+      expect(root.querySelector(`[data-test="fast-agenda-reviewed-${mode}"]`)).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-banner"]')?.textContent).toContain(
+        'REVIEWED AGENDA PROJECTION — not a live read',
+      );
+      expect(root.querySelector('[data-test="reviewed-banner"]')?.textContent).toContain(
+        'Reviewed projection test notice',
+      );
+      expect(root.querySelector('[data-test="reviewed-meeting-readiness"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-agenda-area"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-analysis-slot"]')?.textContent).toContain('unavailable');
+      expect(root.querySelector('[data-test="reviewed-language-slot"]')?.textContent).toContain('unavailable');
+      expect(root.querySelector('[data-test="reviewed-process-slot"]')?.textContent).toContain('unavailable');
+      expect(root.querySelector('[data-test="reviewed-receipts-slot"]')?.textContent).toContain('unavailable');
+      expect(root.querySelector('[data-test="reviewed-decision-context-slot"]')?.textContent).toContain('unavailable');
+      expect(root.querySelector('[data-test="reviewed-meeting-logistics-gap"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-posting-version-gap"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-agenda-counts-gap"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-nearby-meetings-gap"]')).not.toBeNull();
+      expect(root.querySelector('[data-test="reviewed-public-comment-gap"]')).not.toBeNull();
+      expect(root.querySelectorAll('[data-test="reviewed-meeting-tools"] button:disabled')).toHaveLength(3);
+      expect(root.querySelector('[data-test="reviewed-agenda-stage-area"]')).not.toBeNull();
+      expect(root.querySelectorAll('[data-test="reviewed-issue-stage"]')).toHaveLength(REVIEWED_BOARD.lanes.length);
+      expect(root.querySelector('[data-test="reviewed-issue-tracker-gap"]')?.textContent).toContain(
+        'not substituted for the baseline issue-thread stages',
+      );
+
+      expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
+      expect(root.querySelectorAll('[data-test="agenda-row"]')).toHaveLength(0);
+      expect(root.querySelectorAll('[data-test="simple-agenda-item"]')).toHaveLength(0);
+      expect(root.textContent).not.toContain('SYNTHETIC DESIGN FIXTURE');
+      expect(root.textContent).not.toContain('July 21');
+      expect(root.textContent).not.toContain('Jul 21');
+      expect(root.textContent).not.toContain('Alpine Apex annexation');
+      expect(root.textContent).not.toContain('$667,067.91');
+      expect([...Array(localStorage.length)].map((_, index) => localStorage.key(index))).toEqual(['gw_home_mode']);
+    },
+  );
+
+  it('renders unanchored counts and board disclosures without replacing their supplied values', () => {
+    const board: AgendaBoard = {
+      ...REVIEWED_BOARD,
+      unanchoredStatementCount: 37,
+      disclosures: {
+        ...REVIEWED_BOARD.disclosures,
+        decisions: 'DECISIONS DISCLOSURE — verbatim sentinel.',
+        categories: 'CATEGORIES DISCLOSURE — verbatim sentinel.',
+        scope: 'SCOPE DISCLOSURE — verbatim sentinel.',
+        unanchoredStatementCount: 37,
+      },
+    };
+
+    renderReviewed(board);
+
+    expect(root.querySelector('[data-test="reviewed-unanchored-disclosure"]')?.textContent).toBe(
+      'Unanchored statements: 37',
+    );
+    expect(root.querySelector('[data-test="reviewed-agenda-empty"]')?.textContent).toContain(
+      '37 reviewed statement(s) are not yet anchored to an agenda item.',
+    );
+    expect(root.querySelector('[data-test="reviewed-disclosure-decisions"]')?.textContent).toBe(
+      board.disclosures.decisions,
+    );
+    expect(root.querySelector('[data-test="reviewed-disclosure-categories"]')?.textContent).toBe(
+      board.disclosures.categories,
+    );
+    expect(root.querySelector('[data-test="reviewed-disclosure-scope"]')?.textContent).toBe(
+      board.disclosures.scope,
+    );
+  });
+
+  it('preserves every supplied populated-card trust, meeting, evidence, video, and gap field', () => {
+    renderReviewed(POPULATED_REVIEWED_BOARD);
+
+    expect(root.querySelectorAll('[data-test="reviewed-agenda-row"]')).toHaveLength(2);
+    expect([...root.querySelectorAll('[data-test="reviewed-status-badge"]')].map((node) => node.textContent)).toEqual([
+      'Unverified',
+      'Unverified',
+    ]);
+    expect([...root.querySelectorAll('[data-test="reviewed-confidence-badge"]')].map((node) => node.textContent)).toEqual([
+      'auto_caption_untimed',
+      'auto_caption_untimed',
+    ]);
+    expect(root.querySelector('[data-test="reviewed-confidence-gap"]')).toBeNull();
+
+    const meetingContext = root.querySelector('[data-test="reviewed-meeting-context"]')?.textContent ?? '';
+    expect(meetingContext).toContain('Meeting 1');
+    expect(meetingContext).toContain('2026-04-13');
+    expect(meetingContext).toContain('Town Council');
+    expect(meetingContext).toContain('Regular Meeting');
+    const meetingSources = [...root.querySelectorAll<HTMLAnchorElement>('[data-test="reviewed-meeting-source"]')];
+    expect(meetingSources).toHaveLength(2);
+    expect(meetingSources[0]?.href).toBe('https://www.alpinewy.gov/meetings/2026-04-13');
+    expect(root.querySelector<HTMLAnchorElement>('[data-test="reviewed-video-ref"]')?.href).toBe(
+      'https://www.youtube.com/watch?v=alpine0413',
+    );
+    expect(root.querySelector('[data-test="reviewed-video-ref"]')?.textContent).toBe('Watch from 45s');
+
+    expect(root.querySelectorAll('[data-test="reviewed-source-original"]')).toHaveLength(2);
+    expect(root.querySelector('[data-test="reviewed-receipts-slot"]')?.textContent).toContain('alpine_minutes');
+    expect(root.querySelector('[data-test="reviewed-lineage"]')?.textContent).toContain('agenda_item_supersedes');
+    expect(root.querySelector('[data-test="reviewed-category-anchor"]')?.textContent).toContain('agenda_thread');
+    expect(root.querySelector('[data-test="reviewed-statement-ids"]')?.textContent).toContain('s-zoning-1');
+    expect(root.querySelectorAll('[data-test="reviewed-gap-badge"]')).toHaveLength(4);
+    expect(root.querySelector('[data-test="reviewed-gap-badges"]')?.textContent).toContain('Low source confidence');
+    expect(root.textContent).not.toContain('SYNTHETIC DESIGN FIXTURE');
+  });
+
+  it.each([
+    ['public route override', 'public', REVIEWED_BOARD],
+    ['non-reviewer board', 'reviewer_internal', { ...REVIEWED_BOARD, access: 'public' } as AgendaBoard],
+  ])('fails closed for %s', (_label, access, board) => {
+    renderReviewed(board, access);
+
+    expect(root.querySelector('[data-test="fast-agenda-gated"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="reviewed-banner"]')).toBeNull();
+    expect(root.querySelector('[data-test="reviewed-agenda-area"]')).toBeNull();
+    expect(root.querySelector('[data-test="reviewed-unanchored-disclosure"]')).toBeNull();
+    expect(root.textContent).not.toContain(board.generatedFrom);
   });
 });
 

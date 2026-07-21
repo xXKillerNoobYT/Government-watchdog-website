@@ -24,6 +24,38 @@ The project ID in `.openai/hosting.json` is an opaque binding. Reuse it; never
 create a second Sites project for this app. Repository write credentials and
 Sites bypass tokens are short-lived secrets and must never be committed.
 
+## Owner login and private access
+
+The hosted beta does **not** implement its own email magic-link service. Sites
+is the authentication boundary. Its `custom` access policy admits the approved
+owner account, then `dist/server/index.js` performs the app-specific
+authorization check before serving any HTML, JavaScript, CSS, image, or route
+fallback.
+
+The worker reads the platform-provided `oai-authenticated-user-email` header
+only on the server and compares it with the comma-separated hosted runtime value
+`GW_APPROVED_REVIEWER_EMAILS`. It injects only a boolean `approved` marker into
+authorized HTML; the email address is never added to the page or browser
+bundle. Missing configuration returns `503`; missing or non-allowlisted identity
+returns the same non-enumerating `403`; all responses are private/no-store and
+noindex.
+
+For the current owner-only beta:
+
+1. keep Sites access at `custom` and keep only the approved owner in its access
+   list;
+2. set `GW_APPROVED_REVIEWER_EMAILS` through Sites runtime environment settings,
+   never through source, `.env`, or `.openai/hosting.json`;
+3. keep the Sites access list and runtime allowlist synchronized whenever an
+   owner/reviewer is added or removed;
+4. deploy privately; and
+5. confirm the stable root URL opens Home directly for the approved owner.
+
+Being signed into Gmail in another tab does not authenticate the site. The
+browser must complete the Sites/ChatGPT sign-in as the approved account. The
+local landing's “Send magic link” control is intentionally only a UI scaffold
+and must never be used as production-login evidence.
+
 ## Release-source rule
 
 GitHub `main` is the release source of truth. A production deployment must point
@@ -58,11 +90,14 @@ npm run build
 contain all three Sites pieces:
 
 - `dist/client/index.html` and static assets;
-- `dist/server/index.js`, the assets/fallback worker; and
+- `dist/server/index.js`, the fail-closed owner-authorization and
+  assets/fallback worker; and
 - `dist/.openai/hosting.json`, copied from the existing project binding.
 
-The build script rewrites the document's runtime origin through the worker so
-metadata and route fallbacks use the deployed host rather than localhost.
+The build script copies the reviewed worker source, and the worker rewrites the
+document's runtime origin so metadata and route fallbacks use the deployed host
+rather than localhost. Release verification must also prove that unauthorized
+requests cannot fetch the app assets.
 
 ## Save and deploy with Sites
 
@@ -71,14 +106,22 @@ update the existing project from the verified GitHub `main` commit. The release
 operator should:
 
 1. read and reuse `.openai/hosting.json`;
-2. create a short-lived source-repository credential;
-3. push exact `HEAD` to the managed Sites `main` branch without saving the token;
-4. package the verified `dist/` output with the Sites packaging helper;
-5. save a Sites version using the same exact commit SHA;
-6. deploy that saved version with the access-appropriate deployment action;
-7. poll until the deployment is `succeeded`; and
-8. open the stable production URL and smoke-test the landing, reviewer gate,
-   Fast Agenda, Timeline, both modes, and a mobile-width view.
+2. read the Sites custom access list and set the secret runtime value
+   `GW_APPROVED_REVIEWER_EMAILS` to that reviewed owner/reviewer allowlist;
+3. read the environment back and confirm the key exists before saving a version
+   (do not print or persist its value); environment revisions take effect on the
+   subsequent saved-version deployment;
+4. create a short-lived source-repository credential;
+5. push exact `HEAD` to the managed Sites `main` branch without saving the token;
+6. package the verified `dist/` output with the Sites packaging helper;
+7. save a Sites version using the same exact commit SHA;
+8. deploy that saved version with the access-appropriate deployment action so
+   the saved source and the new environment revision activate together;
+9. poll until the deployment is `succeeded`;
+10. confirm the hosted runtime allowlist and the Sites custom access list still
+   agree; and
+11. open the stable production URL as the approved owner and smoke-test direct
+   Home entry, Fast Agenda, Timeline, both modes, and a mobile-width view.
 
 For the current owner-only/private beta, use the private deployment action. If
 the access policy is shared or public, Sites requires the open-world deployment
@@ -86,16 +129,17 @@ action and explicit owner approval.
 
 ## Public-release gate
 
-The Sites project supports public access, but **this build is not safe to make
-public yet**. It still has a client-side `?reviewer=1` walkthrough bypass and
-ships reviewer/synthetic projection modules in the browser bundle. Changing
-only the Sites access policy would let an unauthenticated visitor retrieve data
-that is currently protected by the private beta boundary.
+The Sites project supports public access, but **this build is not a public
+product yet**. Its worker now protects every asset with an explicit owner
+allowlist, but the browser bundle still contains a local `?reviewer=1`
+walkthrough path plus reviewer/synthetic projection modules. Simply changing
+the Sites access policy would still not create a reviewed public-data lane.
 
 Before changing Sites access from `custom` to `public`, all of these must be
 true:
 
-- real server-side authentication and authorization replace the query bypass;
+- a separately reviewed public authorization/data path replaces the private
+  owner-only worker policy;
 - production builds cannot enable `?reviewer=1` or `VITE_REVIEWER_BYPASS`;
 - reviewer-only and synthetic data are excluded from public assets, not merely
   hidden in the DOM;

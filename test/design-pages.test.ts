@@ -14,8 +14,65 @@ import {
   renderWatchlist,
   type DesignPageOptions,
 } from '../src/ui/design-pages';
+import type { ReadApiResponse } from '../src/types/read-api';
 
 const ALLOWED: DesignPageOptions = { access: 'reviewer_internal', fixture: true };
+const REVIEWED_OPTIONS: DesignPageOptions = { access: 'reviewer_internal', fixture: false };
+const REVIEWED_NOTICE = 'Captured reviewed Alpine projection — not a live read.';
+const REVIEWED_DATA: ReadApiResponse = {
+  scope: 'alpine',
+  access: 'reviewer_internal',
+  records: [
+    {
+      statement_id: 'reviewed-record-17',
+      statement_text: 'Reviewed statement supplied by the backend projection.',
+      ui_status: 'source-backed',
+      verification_status: 'reviewed_source_linked',
+      produced_by: 'human',
+      evidence: [
+        {
+          to_source_id: 'reviewed-source-9',
+          published_by: 'Reviewed publisher',
+          source_date: '2026-07-20',
+          page: 7,
+          original_url: 'https://example.gov/reviewed-source-9',
+        },
+      ],
+    },
+  ],
+};
+const MATERIAL_STATUS_DATA: ReadApiResponse = {
+  ...REVIEWED_DATA,
+  records: [
+    {
+      statement_id: 'reviewed-material-status',
+      statement_text: 'Material trust labels supplied by the reviewed projection.',
+      ui_status: 'source-changed',
+      verification_status: 'do_not_publish',
+      publication_state: 'not_publishable',
+      correction_status: 'corrected',
+      source_changed: 1,
+      confidence: 'low',
+      confidence_label: 'derived_summary',
+      provenance_status: 'unverified',
+      produced_by: 'ai',
+      evidence: [
+        {
+          to_source_id: 'material-source',
+          relation: 'supports',
+          source_type: 'minutes',
+          verification_status: 'source_recorded',
+          correction_status: 'corrected',
+          confidence: 'low',
+          original_url: 'https://example.gov/material-source',
+          archive_url: 'https://archive.example.gov/material-source',
+          final_url: 'https://example.gov/material-source-final',
+          url: 'https://cdn.example.gov/material-source',
+        },
+      ],
+    },
+  ],
+};
 const renderers = [renderPowerTracker, renderWatchlist, renderLocation, renderAlerts] as const;
 
 let root: HTMLElement;
@@ -73,9 +130,10 @@ describe('synthetic design pages — hard fixture gate', () => {
   it('keeps the complete baseline page frame when reviewed backend data is unavailable', () => {
     localStorage.setItem('gw_home_mode', 'simple');
     renderPowerTracker(root, { access: 'reviewer_internal', fixture: false });
-    expect(root.querySelector('[data-test="power-tracker-gated"]')?.getAttribute('data-mode')).toBe('simple');
+    expect(root.querySelector('[data-test="power-tracker-page"]')?.getAttribute('data-mode')).toBe('simple');
+    expect(root.querySelector('[data-test="power-real-simple-edition"]')).not.toBeNull();
     expect(root.querySelector('.gw-dp-title')?.textContent).toBe('Power Tracker');
-    expect(root.textContent).toContain('reviewed backend projection');
+    expect(root.querySelector('[data-test="power-records-unavailable"]')).not.toBeNull();
     expect(root.querySelector('[data-fixture]')).toBeNull();
   });
 
@@ -103,6 +161,188 @@ describe('synthetic design pages — hard fixture gate', () => {
     const unavailableTools = root.querySelectorAll('[data-test="watchlist-advanced-workbench"] button:disabled');
     expect(unavailableTools).toHaveLength(3);
     expect(root.textContent).toContain('unsupported record types stay disabled');
+  });
+});
+
+describe('reviewed baseline pages — real path', () => {
+  it('keeps public access gated and renders zero reviewed or fixture rows', () => {
+    const cases = [
+      [renderPowerTracker, 'power-tracker-gated'],
+      [renderWatchlist, 'watchlist-gated'],
+      [renderLocation, 'location-gated'],
+      [renderAlerts, 'alerts-gated'],
+    ] as const;
+
+    for (const [renderer, gateId] of cases) {
+      renderer(root, { access: 'public', fixture: false }, REVIEWED_DATA, REVIEWED_NOTICE);
+      expect(root.querySelector(`[data-test="${gateId}"]`)).not.toBeNull();
+      expect(root.querySelector('[data-origin="reviewed-projection"]')).toBeNull();
+      expect(root.textContent).not.toContain('Reviewed statement supplied by the backend projection.');
+      expect(root.querySelector('[data-fixture]')).toBeNull();
+    }
+  });
+
+  it('fails closed when the supplied response is not reviewer-internal', () => {
+    renderPowerTracker(root, REVIEWED_OPTIONS, { ...REVIEWED_DATA, access: 'public' }, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="power-real-record"]')).toBeNull();
+    expect(root.querySelector('[data-test="power-tracker-gated"]')).not.toBeNull();
+    expect(root.textContent).not.toContain('Reviewed statement supplied by the backend projection.');
+  });
+
+  it('derives admission from each response when caller options omit access', () => {
+    const cases = [
+      [renderPowerTracker, 'power-tracker-page', 'power-tracker-gated'],
+      [renderWatchlist, 'watchlist-page', 'watchlist-gated'],
+      [renderLocation, 'location-page', 'location-gated'],
+      [renderAlerts, 'alerts-page', 'alerts-gated'],
+    ] as const;
+
+    for (const [renderer, pageId, gateId] of cases) {
+      renderer(root, {}, REVIEWED_DATA, REVIEWED_NOTICE);
+      expect(root.querySelector(`[data-test="${pageId}"]`), renderer.name).not.toBeNull();
+      expect(root.querySelector(`[data-test="${gateId}"]`), renderer.name).toBeNull();
+
+      renderer(root, {}, { ...REVIEWED_DATA, access: 'public' }, REVIEWED_NOTICE);
+      expect(root.querySelector(`[data-test="${gateId}"]`), renderer.name).not.toBeNull();
+      expect(root.querySelector('[data-test="design-reviewed-banner"]'), renderer.name).toBeNull();
+      expect(root.textContent, renderer.name).not.toContain('Reviewed statement supplied by the backend projection.');
+    }
+  });
+
+  it('never renders synthetic fixture rows on any reviewed path', () => {
+    for (const renderer of renderers) {
+      renderer(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+      expect(root.querySelector('[data-fixture]')).toBeNull();
+      expect(root.querySelector('[data-test="design-fixture-banner"]')).toBeNull();
+      expect(root.querySelector('[data-test="power-official"]')).toBeNull();
+      expect(root.querySelector('[data-test="location-coverage-figure"]')).toBeNull();
+      expect(root.querySelector('[data-test="alerts-unread-item"]')).toBeNull();
+      expect(root.textContent).not.toMatch(/Placeholder Official|Fixture estimate|Fixture packet attachment replaced/);
+    }
+  });
+
+  it('renders Power Tracker in both baseline modes with reviewed IDs and receipts but no people, scores, or verdicts', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderPowerTracker(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="design-reviewed-banner"]')?.textContent).toBe(REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="power-real-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-real-record"][data-record-id="reviewed-record-17"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-receipt"][data-source-id="reviewed-source-9"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-score-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-verdict-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-quote-ledger-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-vote-action-unavailable"]')).not.toBeNull();
+    expect(root.textContent).not.toContain('Placeholder Official');
+    expect(root.textContent).not.toMatch(/\b\d+%/);
+
+    localStorage.setItem('gw_home_mode', 'advanced');
+    renderPowerTracker(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="power-real-advanced-workbench"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="power-real-advanced-workbench"] button:disabled')).toHaveLength(3);
+    expect(root.querySelector('[data-test="power-quote-ledger-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-vote-action-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-open-detail"]')).toBeNull();
+    expect(root.querySelector('[data-fixture]')).toBeNull();
+  });
+
+  it('surfaces every supplied material trust label and receipt metadata without treating a link as verification', () => {
+    renderPowerTracker(root, REVIEWED_OPTIONS, MATERIAL_STATUS_DATA, REVIEWED_NOTICE);
+
+    expect(root.querySelector('[data-test="reviewed-ui-status"]')?.textContent).toBe('Status: Source changed');
+    expect(root.querySelector('[data-test="reviewed-verification-status"]')?.textContent).toBe('Verification: Do not publish');
+    expect(root.querySelector('[data-test="reviewed-publication-state"]')?.textContent).toBe('Publication: not publishable');
+    expect(root.querySelector('[data-test="reviewed-correction-status"]')?.textContent).toBe('Correction: Corrected');
+    expect(root.querySelector('[data-test="reviewed-source-changed"]')?.textContent).toBe('Source changed: yes');
+    expect(root.querySelector('[data-test="reviewed-confidence"]')?.textContent).toBe('Confidence: low');
+    expect(root.querySelector('[data-test="reviewed-confidence-label"]')?.textContent).toBe('Confidence class: Derived summary');
+    expect(root.querySelector('[data-test="reviewed-provenance-status"]')?.textContent).toContain('Unverified provenance');
+    expect(root.querySelector('[data-test="reviewed-provenance-status"]')?.getAttribute('data-provenance')).toBe('unverified');
+    expect(root.querySelector('[data-test="reviewed-produced-by"]')?.textContent).toBe('Produced by: ai');
+    expect(root.querySelector('[data-test="power-receipt-labels"]')?.textContent).toContain('Verification: Source recorded');
+    expect(root.querySelector('[data-test="power-receipt-labels"]')?.textContent).toContain('Correction: Corrected');
+    const receiptLinks = [...root.querySelectorAll<HTMLAnchorElement>('[data-test="power-receipt-link"]')];
+    expect(receiptLinks.map((link) => link.textContent)).toEqual([
+      'Open original source',
+      'Open archived source',
+      'Open final source',
+      'Open supplied source',
+    ]);
+    expect(receiptLinks.map((link) => link.getAttribute('data-link-kind'))).toEqual([
+      'original',
+      'archive',
+      'final',
+      'source',
+    ]);
+    expect(root.querySelector('[data-test="power-real-record"]')?.textContent).not.toMatch(/link (?:is )?verified|verified link/i);
+  });
+
+  it('resolves Watchlist rows only from reviewed records and preserves unmatched local keys as a gap', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify({ 'reviewed-record-17': true, moratorium: true }));
+    renderWatchlist(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="watchlist-real-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="watchlist-real-item"][data-record-id="reviewed-record-17"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="watchlist-receipt"][data-source-id="reviewed-source-9"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="watchlist-unresolved-local"]')?.textContent).toContain('1 device-local key');
+    expect(root.querySelector('[data-test="watchlist-history-unavailable"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="watchlist-real-simple-edition"] button:disabled')).toHaveLength(3);
+    expect(root.textContent).not.toContain('Building and annexation moratorium');
+
+    localStorage.setItem('gw_home_mode', 'advanced');
+    renderWatchlist(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="watchlist-real-advanced-workbench"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="watchlist-history-unavailable"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="watchlist-advanced-workbench"]')).toHaveLength(0);
+  });
+
+  it('keeps Location slots and reviewed receipts without fixture coverage percentages', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({ state: 'WY', county: 'Lincoln', region: 'Star Valley', town: 'Alpine' }));
+    renderLocation(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="location-real-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-real-record"][data-record-id="reviewed-record-17"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-receipt"][data-source-id="reviewed-source-9"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-coverage-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-identity-policy-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-history-unavailable"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="location-real-simple-edition"] select:disabled')).toHaveLength(3);
+    expect(root.querySelector('[data-test="location-coverage-figure"]')).toBeNull();
+    expect(root.textContent).not.toMatch(/\b\d+%/);
+
+    localStorage.setItem('gw_home_mode', 'advanced');
+    renderLocation(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="location-real-advanced-workbench"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="location-real-advanced-workbench"] select:disabled')).toHaveLength(3);
+    expect(root.querySelector('[data-test="location-history-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="location-identity-policy-unavailable"]')).not.toBeNull();
+
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({ state: 'WY', county: 'Teton', region: '', town: 'Jackson' }));
+    renderLocation(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="location-real-record"]')).toBeNull();
+    expect(root.querySelector('[data-test="location-records-unavailable"]')?.textContent).toContain('does not match');
+  });
+
+  it('keeps Alerts feed, history, trigger, and delivery slots unavailable instead of converting statements into alerts', () => {
+    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify({ 'reviewed-record-17': true }));
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderAlerts(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="alerts-real-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-feed-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-delivery-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-triggers-unavailable"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="alerts-real-simple-edition"] [data-test="alerts-real-delivery-controls"] button:disabled')).toHaveLength(4);
+    expect(root.querySelector('[data-test="alerts-real-tracked-count"]')?.textContent).toContain('1 locally stored key');
+    expect(root.querySelector('[data-test="alerts-unread-item"]')).toBeNull();
+    expect(root.textContent).not.toContain('Fixture packet attachment replaced');
+
+    localStorage.setItem('gw_home_mode', 'advanced');
+    renderAlerts(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(root.querySelector('[data-test="alerts-real-advanced-workbench"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-history-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-delivery-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="alerts-triggers-unavailable"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="alerts-real-delivery-controls"] button:disabled')).toHaveLength(4);
+    expect(root.querySelector('[data-fixture]')).toBeNull();
   });
 });
 

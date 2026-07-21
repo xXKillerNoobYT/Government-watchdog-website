@@ -81,6 +81,25 @@ describe('MOTY design-handoff route integration', () => {
     expect(origin?.getAttribute('data-origin')).toBe('reviewed_snapshot');
     expect(origin?.textContent).toContain('REVIEWED SNAPSHOT');
     expect(origin?.textContent).toContain('not a live read');
+
+    const reviewedRoutes = [
+      ['/agenda', 'fast-agenda-reviewed-advanced', 'reviewed-agenda-empty'],
+      ['/power', 'power-real-advanced-workbench', 'power-score-unavailable'],
+      ['/watchlist', 'watchlist-real-advanced-workbench', 'watchlist-history-unavailable'],
+      ['/location', 'location-real-advanced-workbench', 'location-coverage-unavailable'],
+      ['/alerts', 'alerts-real-advanced-workbench', 'alerts-history-unavailable'],
+    ] as const;
+    for (const [route, baselineId, gapId] of reviewedRoutes) {
+      window.location.hash = `#${route}?reviewer=1`;
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      expect(app.querySelector(`[data-test="${baselineId}"]`), route).not.toBeNull();
+      expect(app.querySelector(`[data-test="${gapId}"]`), route).not.toBeNull();
+      expect(app.querySelector('[data-test="design-fixture-banner"]'), route).toBeNull();
+      expect(app.querySelector('[data-test="fixture-banner"]'), route).toBeNull();
+      expect(app.querySelector('[data-fixture]'), route).toBeNull();
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), route)
+        .toBe('reviewed_snapshot');
+    }
   });
 
   it('classifies explicit demos only on routes that actually render those fixtures', async () => {
@@ -89,7 +108,7 @@ describe('MOTY design-handoff route integration', () => {
 
     const app = document.querySelector('#app')!;
     const fixtureRoutes = [
-      ['/power', 'sample'],
+      ['/app', 'sample'],
       ['/timeline-legacy', 'complete'],
       ['/timeline-legacy', 'matrix'],
       ['/timeline-legacy', 'provenance'],
@@ -104,6 +123,7 @@ describe('MOTY design-handoff route integration', () => {
 
     const reviewedRoutes = [
       ['/power', 'complete'],
+      ['/power', 'sample'],
       ['/newsletter', 'sample'],
       ['/cards', 'sample'],
       ['/topics', 'graph'],
