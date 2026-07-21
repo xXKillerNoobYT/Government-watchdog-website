@@ -18,6 +18,9 @@ reviewer-internal; a public lane must render no civic records.
    withheld.
 3. Simple and Advanced views may change density and wording, but must preserve
    the same facts, qualifications, labels, receipts, and access restrictions.
+4. The owner-approved design's information types and component slots are part
+   of content quality. A reviewed route keeps those slots even when its current
+   backend projection can supply only an honest gap.
 
 ## Enforceable minimums
 
@@ -145,6 +148,31 @@ reviewer-internal; a public lane must render no civic records.
   required safety/security review, and explicit owner approval of the exact
   release. Those conditions are not claimed complete here.
 
+### 12. Information-type and layout completeness
+
+- Each production route's ready state preserves the corresponding baseline's
+  principal information groups, hierarchy, tools, spacing rhythm, trust tones,
+  and Simple/Advanced distinction. Reviewed content and honest-empty results
+  keep those slots visible; this standard is not limited to the populated
+  design fixture.
+- Loading and error outcomes keep the shared shell, route context, origin
+  disclosure, and a neutral state message while withholding stale civic data.
+  Because their result is not yet known (or could not be loaded), they do not
+  duplicate every ready-state information slot.
+- Bind every baseline slot to one of four states: reviewed backend value,
+  explicit designed gap, clearly labelled device-local control, or gated
+  synthetic fixture. The route must never silently collapse to a thinner legacy
+  page just because reviewed data is sparse.
+- A designed gap names the missing capability or projection without borrowing
+  a value from another record, fixture, nearby date, or level of government.
+  Controls that cannot perform a real action remain visibly unavailable.
+- Simple and Advanced may rearrange or summarize the same information, but
+  neither mode may hide a material evidence gap, trust label, source receipt,
+  correction, or freshness limitation.
+- The current binding for every baseline information group is recorded in
+  [`design-information-type-matrix.md`](design-information-type-matrix.md).
+  Any new route or deliberate omission updates that ledger in the same change.
+
 ## Page-level states
 
 - **Loading:** show a neutral loading state; do not show stale cards as if they
@@ -192,6 +220,8 @@ owner.
 - [ ] Corrections preserve the earlier record and cite the correction source.
 - [ ] Status and essential meaning are accessible without color, hover, or imagery.
 - [ ] The item is in the correct reviewed, gap, fixture, or withheld lane.
+- [ ] Every applicable baseline information slot has a reviewed, gap,
+      device-local, or gated-fixture state in both reading modes.
 
 If any box cannot be checked, the item does not ship as a verified reviewer-beta
 item. It remains a clearly labeled gap/non-verified item or is withheld.

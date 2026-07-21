@@ -12,6 +12,14 @@ import { readMode } from './shell';
 import type { ShellMode } from './shell';
 import { applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { GW_TOKENS } from './tokens';
+import type { EvidenceLink, ReadApiResponse, StatementRecord } from '../types/read-api';
+import {
+  confidenceLabel,
+  correctionStatusLabel,
+  provenanceBadge,
+  verificationStatusLabel,
+} from './statement-presenter';
+import { trustLabel } from './state-view';
 
 export interface DesignPageOptions {
   access?: string;
@@ -65,6 +73,21 @@ function hasFixtureAccess(options: DesignPageOptions): boolean {
   return options.access === 'reviewer_internal' && options.fixture === true;
 }
 
+/**
+ * The response is the authority for civic-data admission. Route options may
+ * narrow access, but they must never upgrade a public response into the
+ * reviewer lane (and callers that omit options still inherit the response's
+ * reviewer-internal admission).
+ */
+function responseScopedOptions(
+  options: DesignPageOptions,
+  data: ReadApiResponse | undefined,
+): DesignPageOptions {
+  if (!data) return options;
+  if (data.access !== 'reviewer_internal') return { ...options, access: data.access };
+  return options.access === undefined ? { ...options, access: data.access } : options;
+}
+
 function syncUnpinnedPalette(mode: ShellMode): void {
   if (hasExplicitThemePref()) return;
   applyThemePref(mode === 'advanced' ? 'dark' : 'light');
@@ -74,6 +97,7 @@ interface PageFrame {
   page: HTMLElement;
   content: HTMLElement;
   mode: ShellMode;
+  fixture: boolean;
 }
 
 function fixtureBanner(): HTMLElement {
@@ -84,12 +108,21 @@ function fixtureBanner(): HTMLElement {
   }, [DESIGN_FIXTURE_LABEL]);
 }
 
+function reviewedBanner(sourceNotice?: string): HTMLElement {
+  return el('div', {
+    class: 'gw-dp-fixture gw-dp-reviewed-origin',
+    role: 'status',
+    'data-test': 'design-reviewed-banner',
+  }, [sourceNotice?.trim() || 'REVIEWED BACKEND PROJECTION — not a live read']);
+}
+
 function beginPage(
   root: HTMLElement,
   pageId: string,
   title: string,
   subtitle: string,
   options: DesignPageOptions,
+  sourceNotice?: string,
 ): PageFrame | null {
   ensureDesignPagesStyle();
   root.className = 'gw-design-root';
@@ -98,7 +131,7 @@ function beginPage(
   const mode = readMode();
   syncUnpinnedPalette(mode);
 
-  if (!hasFixtureAccess(options)) {
+  if (options.access !== 'reviewer_internal') {
     root.append(el('main', {
       class: 'gw-dp-page gw-dp-gated',
       'data-mode': mode,
@@ -113,9 +146,9 @@ function beginPage(
           ]),
         ]),
         el('section', { class: 'gw-dp-empty', role: 'status' }, [
-          el('h2', {}, ['Data connection not available yet']),
+          el('h2', {}, ['Reviewer access required']),
           el('p', {}, [
-            'The baseline layout is ready, but this page will not display civic rows until its reviewed backend projection is connected.',
+            'This page renders no civic records, fixture rows, or device-local selections outside the reviewer-internal lane.',
           ]),
         ]),
       ]),
@@ -123,18 +156,22 @@ function beginPage(
     return null;
   }
 
+  const fixture = hasFixtureAccess(options);
   const content = el('div', { class: 'gw-dp-content' });
   const page = el('main', {
     class: 'gw-dp-page',
     'data-mode': mode,
     'data-test': `${pageId}-page`,
-    'data-fixture': 'synthetic',
+    'data-origin': fixture ? 'synthetic-design-fixture' : 'reviewed-projection',
+    ...(fixture ? { 'data-fixture': 'synthetic' } : {}),
   }, [
-    fixtureBanner(),
+    fixture ? fixtureBanner() : reviewedBanner(sourceNotice),
     el('div', { class: 'gw-dp-inner' }, [
       el('header', { class: 'gw-dp-page-head' }, [
         el('div', {}, [
-          el('p', { class: 'gw-dp-kicker' }, [mode === 'simple' ? 'PLAIN-ENGLISH PREVIEW' : 'REVIEWER DESIGN PREVIEW']),
+          el('p', { class: 'gw-dp-kicker' }, [mode === 'simple'
+            ? (fixture ? 'PLAIN-ENGLISH PREVIEW' : 'PLAIN-ENGLISH REVIEWED VIEW')
+            : (fixture ? 'REVIEWER DESIGN PREVIEW' : 'REVIEWER EVIDENCE WORKBENCH')]),
           el('h1', { class: 'gw-dp-title' }, [title]),
           el('p', { class: 'gw-dp-subtitle' }, [subtitle]),
         ]),
@@ -143,7 +180,7 @@ function beginPage(
     ]),
   ]);
   root.append(page);
-  return { page, content, mode };
+  return { page, content, mode, fixture };
 }
 
 function panel(title: string, kicker: string, children: (Node | string)[], attrs: Record<string, string> = {}): HTMLElement {
@@ -161,6 +198,163 @@ function notice(title: string, body: string, tone = 'info', attrs: Record<string
     el('strong', {}, [title]),
     el('p', {}, [body]),
   ]);
+}
+
+function reviewedRecords(data?: ReadApiResponse): readonly StatementRecord[] {
+  if (data?.access !== 'reviewer_internal') return [];
+  return data.records ?? [];
+}
+
+function reviewedRecordTitle(record: StatementRecord): string {
+  const statement = record.statement_text?.trim();
+  return statement || `Reviewed record ${record.statement_id}`;
+}
+
+function reviewedReceiptLabel(entry: EvidenceLink, index: number): string {
+  return entry.to_source_id?.trim() || `Source ${index + 1}`;
+}
+
+function reviewedReceipts(record: StatementRecord, pageId: string): HTMLElement {
+  if (!record.evidence.length) {
+    return el('section', {
+      class: 'gw-dp-empty',
+      role: 'status',
+      'data-test': `${pageId}-receipt-gap`,
+    }, [
+      el('h3', {}, ['Source trail unavailable']),
+      el('p', {}, ['This reviewed record did not supply a web-safe receipt. No source was inferred on the client.']),
+    ]);
+  }
+
+  return el('div', { class: 'gw-dp-receipt-list', 'data-test': `${pageId}-receipts` }, record.evidence.map((entry, index) => {
+    const sourceId = reviewedReceiptLabel(entry, index);
+    const locator = [
+      entry.page === null || entry.page === undefined ? '' : `page ${entry.page}`,
+      entry.section?.trim() || '',
+      entry.timestamp_human?.trim() || '',
+    ].filter(Boolean).join(' · ');
+    const suppliedUrls = [
+      ['original', 'Open original source', entry.original_url],
+      ['archive', 'Open archived source', entry.archive_url],
+      ['final', 'Open final source', entry.final_url],
+      ['source', 'Open supplied source', entry.url],
+    ].filter((item): item is [string, string, string] => Boolean(item[2]))
+      .filter((item, itemIndex, items) => items.findIndex((candidate) => candidate[2] === item[2]) === itemIndex);
+    const receiptLabels = [
+      entry.relation ? `Relation: ${entry.relation}` : '',
+      entry.source_type ? `Type: ${entry.source_type}` : '',
+      entry.jurisdiction ? `Jurisdiction: ${entry.jurisdiction}` : '',
+      entry.verification_status ? `Verification: ${verificationStatusLabel(entry.verification_status)}` : '',
+      entry.correction_status ? `Correction: ${correctionStatusLabel(entry.correction_status)}` : '',
+      entry.confidence ? `Confidence: ${entry.confidence}` : '',
+      entry.archive_status ? `Archive: ${entry.archive_status}` : '',
+      entry.layer ? `Layer: ${entry.layer}` : '',
+    ].filter(Boolean);
+    return el('article', {
+      class: 'gw-dp-receipt',
+      'data-test': `${pageId}-receipt`,
+      'data-source-id': sourceId,
+    }, [
+      el('strong', {}, [sourceId]),
+      el('span', { class: 'gw-dp-muted' }, [[entry.published_by, entry.source_date, locator].filter(Boolean).join(' · ') || 'Receipt metadata not present']),
+      ...(receiptLabels.length ? [el('span', {
+        class: 'gw-dp-muted',
+        'data-test': `${pageId}-receipt-labels`,
+      }, [receiptLabels.join(' · ')])] : []),
+      ...suppliedUrls.map(([kind, label, url]) => el('a', {
+        href: url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        'data-test': `${pageId}-receipt-link`,
+        'data-link-kind': kind,
+      }, [label])),
+    ]);
+  }));
+}
+
+function reviewedRecordLabels(record: StatementRecord): HTMLElement {
+  const confidenceClass = confidenceLabel(record);
+  const rawConfidence = record.confidence?.trim() ?? '';
+  const provenance = provenanceBadge(record);
+  const correction = correctionStatusLabel(record.correction_status);
+  const labels: HTMLElement[] = [
+    el('span', {
+      class: 'gw-dp-chip',
+      'data-test': 'reviewed-ui-status',
+      'data-ui-status': record.ui_status ?? 'unverified',
+    }, [`Status: ${trustLabel(record)}`]),
+    el('span', {
+      class: 'gw-dp-chip gw-dp-caution',
+      'data-test': 'reviewed-verification-status',
+    }, [`Verification: ${verificationStatusLabel(record.verification_status) ?? 'unavailable'}`]),
+    el('span', {
+      class: 'gw-dp-chip gw-dp-caution',
+      'data-test': 'reviewed-publication-state',
+    }, [`Publication: ${record.publication_state?.replace(/_/g, ' ') ?? 'unavailable'}`]),
+    el('span', {
+      class: 'gw-dp-chip',
+      'data-test': 'reviewed-correction-status',
+    }, [`Correction: ${correction ?? 'unavailable'}`]),
+    el('span', {
+      class: 'gw-dp-chip gw-dp-caution',
+      'data-test': 'reviewed-source-changed',
+    }, [`Source changed: ${record.source_changed == null ? 'unavailable' : record.source_changed ? 'yes' : 'no'}`]),
+    el('span', {
+      class: `gw-dp-chip gw-dp-${provenance.tone === 'ok' ? 'ok' : 'caution'}`,
+      'data-test': 'reviewed-provenance-status',
+      'data-provenance': provenance.state,
+      title: provenance.description,
+    }, [`${provenance.icon} Provenance: ${provenance.label}`]),
+    el('span', {
+      class: 'gw-dp-chip',
+      'data-test': 'reviewed-produced-by',
+    }, [`Produced by: ${record.produced_by ?? 'unavailable'}`]),
+  ];
+  if (rawConfidence) {
+    labels.push(el('span', {
+      class: 'gw-dp-chip',
+      'data-test': 'reviewed-confidence',
+    }, [`Confidence: ${rawConfidence}`]));
+  }
+  if (confidenceClass) {
+    labels.push(el('span', {
+      class: 'gw-dp-chip',
+      'data-test': 'reviewed-confidence-label',
+      'data-confidence-label': String(record.confidence_label),
+    }, [`Confidence class: ${confidenceClass}`]));
+  }
+  if (!rawConfidence && !confidenceClass) {
+    labels.push(el('span', {
+      class: 'gw-dp-chip gw-dp-caution',
+      'data-test': 'reviewed-confidence-unavailable',
+    }, ['Confidence: unavailable']));
+  }
+  return el('div', {
+    class: 'gw-dp-toolbox',
+    'aria-label': 'Backend-supplied record labels',
+    'data-test': 'reviewed-record-labels',
+  }, labels);
+}
+
+function reviewedRecordCard(record: StatementRecord, pageId: string, includeReceipts = true): HTMLElement {
+  return el('article', {
+    class: 'gw-dp-panel gw-dp-reviewed-record',
+    'data-test': `${pageId}-real-record`,
+    'data-record-id': record.statement_id,
+  }, [
+    el('p', { class: 'gw-dp-kicker' }, [`REVIEWED RECORD · ${record.statement_id}`]),
+    el('h3', {}, [reviewedRecordTitle(record)]),
+    reviewedRecordLabels(record),
+    ...(includeReceipts ? [reviewedReceipts(record, pageId)] : []),
+  ]);
+}
+
+function unavailableSlot(title: string, body: string, testId: string): HTMLElement {
+  return el('section', {
+    class: 'gw-dp-empty gw-dp-unavailable-slot',
+    role: 'status',
+    'data-test': testId,
+  }, [el('h3', {}, [title]), el('p', {}, [body])]);
 }
 
 interface FixtureOfficial {
@@ -347,15 +541,99 @@ function openPowerDetailModal(page: HTMLElement, opener: HTMLButtonElement, offi
   closeButton.focus();
 }
 
-export function renderPowerTracker(root: HTMLElement, options: DesignPageOptions = {}): void {
+function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
+  const records = reviewedRecords(data);
+  const scoreGap = unavailableSlot(
+    'Scores and rankings unavailable',
+    'The reviewed statement projection does not contain a policy-cleared official roster or a backend score product. No person, score, ranking, or comparison was inferred.',
+    'power-score-unavailable',
+  );
+  const verdictGap = unavailableSlot(
+    'Promise/action verdicts unavailable',
+    'A reviewed power-profile contract with backend-supplied promises, actions, verdict labels, and receipts is required before this slot can open.',
+    'power-verdict-unavailable',
+  );
+  const quoteLedgerGap = unavailableSlot(
+    'Quote ledger unavailable',
+    'No reviewed, speaker-safe quote ledger with exact-source anchors was supplied. Statement rows are not relabeled as official quotes.',
+    'power-quote-ledger-unavailable',
+  );
+  const voteActionGap = unavailableSlot(
+    'Vote and action table unavailable',
+    'No reviewed vote, motion, attendance, or official-action table was supplied. Evidence statements are not converted into votes or actions.',
+    'power-vote-action-unavailable',
+  );
+  const recordList = records.length
+    ? el('div', { class: 'gw-dp-stack', 'data-test': 'power-real-records' }, records.map((record) => reviewedRecordCard(record, 'power')))
+    : unavailableSlot(
+      'No reviewed evidence records available',
+      'The reviewer projection supplied no statement records. The baseline remains visible without inventing an official or civic claim.',
+      'power-records-unavailable',
+    );
+
+  if (frame.mode === 'simple') {
+    frame.content.append(el('section', {
+      class: 'gw-dp-newspaper-section',
+      'data-test': 'power-real-simple-edition',
+    }, [
+      el('div', { class: 'gw-dp-newspaper-rule' }, [
+        el('span', {}, ['WHO HOLDS POWER']),
+        el('span', {}, ['REVIEWED EVIDENCE EDITION']),
+      ]),
+      el('p', { class: 'gw-dp-newspaper-deck' }, ['Reviewed statements and their receipt trails are shown below. They are evidence records, not official profiles or performance judgments.']),
+      recordList,
+      scoreGap,
+      verdictGap,
+      quoteLedgerGap,
+      voteActionGap,
+    ]));
+    return;
+  }
+
+  frame.content.append(el('div', {
+    class: 'gw-dp-workbench-grid',
+    'data-test': 'power-real-advanced-workbench',
+  }, [
+    panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
+    el('div', { class: 'gw-dp-stack' }, [
+      panel('Power tools', 'BACKEND PRODUCTS', [
+        el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Unavailable power tools' }, [
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Scores · unavailable']),
+          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Verdicts · unavailable']),
+        ]),
+        el('p', { class: 'gw-dp-muted' }, ['These controls remain in the baseline workbench but stay disabled until the reviewed power-profile API supplies their data.']),
+      ]),
+      scoreGap,
+      verdictGap,
+      quoteLedgerGap,
+      voteActionGap,
+    ]),
+  ]));
+}
+
+export function renderPowerTracker(
+  root: HTMLElement,
+  options: DesignPageOptions = {},
+  data?: ReadApiResponse,
+  sourceNotice?: string,
+): void {
   const frame = beginPage(
     root,
     'power-tracker',
     'Power Tracker',
-    'A consent-first preview of promise/action review. Placeholder people and synthetic records only.',
-    options,
+    options.fixture
+      ? 'A consent-first preview of promise/action review. Placeholder people and synthetic records only.'
+      : 'The baseline power workbench populated only by reviewed statement records and their web-safe receipts.',
+    responseScopedOptions(options, data),
+    sourceNotice,
   );
   if (!frame) return;
+
+  if (!frame.fixture) {
+    renderReviewedPower(frame, data);
+    return;
+  }
 
   frame.content.append(notice(
     'No real people, scores, or verdicts',
@@ -538,15 +816,190 @@ function trackedMeta(key: string): TrackedMeta {
   };
 }
 
-export function renderWatchlist(root: HTMLElement, options: DesignPageOptions = {}): void {
+function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void {
+  const records = reviewedRecords(data);
+  const recordsById = new Map(records.map((record) => [record.statement_id, record]));
+  const mount = el('div', { 'data-test': 'watchlist-real-mount' });
+  const status = el('p', {
+    class: 'gw-dp-sr-status',
+    role: 'status',
+    'aria-live': 'polite',
+    'data-test': 'watchlist-real-status',
+  });
+
+  const render = (): void => {
+    const tracked = readTracked();
+    const trackedIds = Object.keys(tracked).sort();
+    const watched = trackedIds.flatMap((id) => {
+      const record = recordsById.get(id);
+      return record ? [record] : [];
+    });
+    const unresolvedCount = trackedIds.length - watched.length;
+
+    const watchedList = watched.length
+      ? el('div', { class: 'gw-dp-stack', 'data-test': 'watchlist-real-items' }, watched.map((record) => {
+        const remove = el('button', {
+          type: 'button',
+          class: 'gw-dp-button gw-dp-remove',
+          'data-test': 'watchlist-real-remove',
+          'data-record-id': record.statement_id,
+          'aria-label': `Stop watching reviewed record ${record.statement_id} on this device`,
+        }, ['Stop watching locally']);
+        remove.addEventListener('click', () => {
+          const next = readTracked();
+          delete next[record.statement_id];
+          writeStoredJson(TRACKED_STORAGE_KEY, next);
+          status.textContent = `Reviewed record ${record.statement_id} was removed from this device.`;
+          render();
+        });
+        const card = reviewedRecordCard(record, 'watchlist');
+        card.setAttribute('data-test', 'watchlist-real-item');
+        card.append(remove);
+        return card;
+      }))
+      : unavailableSlot(
+        'No reviewed records watched on this device',
+        'This local reading list is empty. No sample issue was inserted.',
+        'watchlist-real-empty',
+      );
+
+    const unresolved = unresolvedCount
+      ? notice(
+        'Stored selections not present in this projection',
+        `${unresolvedCount} device-local key${unresolvedCount === 1 ? '' : 's'} remain stored, but no civic title or detail is shown without a matching reviewed record.`,
+        'caution',
+        { 'data-test': 'watchlist-unresolved-local' },
+      )
+      : el('span');
+
+    const candidates = records.filter((record) => !tracked[record.statement_id]);
+    const candidateList = candidates.length
+      ? el('div', { class: 'gw-dp-stack', 'data-test': 'watchlist-real-candidates' }, candidates.map((record) => {
+        const add = el('button', {
+          type: 'button',
+          class: 'gw-dp-button gw-dp-secondary',
+          'data-test': 'watchlist-real-add',
+          'data-record-id': record.statement_id,
+          'aria-label': `Watch reviewed record ${record.statement_id} on this device`,
+        }, ['Watch locally']);
+        add.addEventListener('click', () => {
+          const next = readTracked();
+          next[record.statement_id] = true;
+          writeStoredJson(TRACKED_STORAGE_KEY, next);
+          status.textContent = `Reviewed record ${record.statement_id} is now watched on this device.`;
+          render();
+        });
+        return el('article', {
+          class: 'gw-dp-review-card',
+          'data-test': 'watchlist-real-candidate',
+          'data-record-id': record.statement_id,
+        }, [
+          el('strong', {}, [reviewedRecordTitle(record)]),
+          el('p', { class: 'gw-dp-muted' }, [`Reviewed record ${record.statement_id} · ${record.evidence.length} receipt${record.evidence.length === 1 ? '' : 's'}`]),
+          add,
+        ]);
+      }))
+      : unavailableSlot(
+        'No additional reviewed records available',
+        'The current reviewer projection has no other record that can be added to this device-local list.',
+        'watchlist-candidates-unavailable',
+      );
+
+    const watchedPanel = panel(
+      frame.mode === 'simple' ? 'Stories you are following' : 'Watched reviewed records',
+      frame.mode === 'simple' ? 'YOUR LOCAL NEWS FILE' : 'DEVICE-LOCAL WATCHLIST',
+      [
+        el('div', { class: 'gw-dp-count-line' }, [
+          el('span', {}, ['Matched reviewed selections']),
+          el('strong', { 'data-test': 'watchlist-real-count' }, [`${watched.length}`]),
+        ]),
+        watchedList,
+        unresolved,
+        status,
+      ],
+      { 'data-test': 'watchlist-real-panel' },
+    );
+
+    if (frame.mode === 'simple') {
+      mount.replaceChildren(el('section', {
+        class: 'gw-dp-newspaper-section',
+        'data-test': 'watchlist-real-simple-edition',
+      }, [
+        watchedPanel,
+        notice(
+          'Device-local reading list',
+          'Watching a record here does not create an account, subscription, reminder, or alert.',
+          'info',
+          { 'data-test': 'watchlist-real-local-notice' },
+        ),
+        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
+        panel('Watch controls', 'UNAVAILABLE RECORD TYPES', [
+          el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Unavailable watchlist record types' }, [
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Reviewed statements']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Boards · unavailable']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
+          ]),
+        ]),
+        unavailableSlot(
+          'Watch history unavailable',
+          'The statement projection does not include reviewed change, vote, deadline, or delivery history.',
+          'watchlist-history-unavailable',
+        ),
+      ]));
+      return;
+    }
+
+    mount.replaceChildren(el('div', {
+      class: 'gw-dp-workbench-grid',
+      'data-test': 'watchlist-real-advanced-workbench',
+    }, [
+      watchedPanel,
+      el('div', { class: 'gw-dp-stack' }, [
+        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
+        panel('Watch controls', 'ADVANCED TOOLS', [
+          el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Watchlist record types' }, [
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Reviewed statements']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Boards · unavailable']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
+            el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
+          ]),
+        ]),
+        unavailableSlot(
+          'Watch history unavailable',
+          'The statement projection does not include reviewed change, vote, deadline, or delivery history.',
+          'watchlist-history-unavailable',
+        ),
+      ]),
+    ]));
+  };
+
+  render();
+  frame.content.append(mount);
+}
+
+export function renderWatchlist(
+  root: HTMLElement,
+  options: DesignPageOptions = {},
+  data?: ReadApiResponse,
+  sourceNotice?: string,
+): void {
   const frame = beginPage(
     root,
     'watchlist',
     'Your Watchlist',
-    'A device-local digest of issue keys shared through gw_tracked.',
-    options,
+    options.fixture
+      ? 'A device-local digest of issue keys shared through gw_tracked.'
+      : 'A device-local reading list that resolves titles and receipts only from the reviewed projection.',
+    responseScopedOptions(options, data),
+    sourceNotice,
   );
   if (!frame) return;
+
+  if (!frame.fixture) {
+    renderReviewedWatchlist(frame, data);
+    return;
+  }
 
   frame.content.append(notice(
     'Local tracking only',
@@ -727,15 +1180,142 @@ function option(value: string, label: string): HTMLOptionElement {
   return el('option', { value }, [label]);
 }
 
-export function renderLocation(root: HTMLElement, options: DesignPageOptions = {}): void {
+function readReviewedDeviceLocation(): SavedLocation | null {
+  const parsed = readStoredJson(LOCATION_STORAGE_KEY);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const candidate = parsed as Record<string, unknown>;
+  const value = (key: keyof SavedLocation): string => typeof candidate[key] === 'string'
+    ? candidate[key].trim().slice(0, 100)
+    : '';
+  const location = {
+    state: value('state'),
+    county: value('county'),
+    region: value('region'),
+    town: value('town'),
+  };
+  return Object.values(location).some(Boolean) ? location : null;
+}
+
+function reviewedLocationLabel(location: SavedLocation | null): string {
+  if (!location) return 'No device-local location selected';
+  return [location.state, location.county, location.region, location.town].filter(Boolean).join(' › ');
+}
+
+function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void {
+  const location = readReviewedDeviceLocation();
+  const records = reviewedRecords(data);
+  const alpineScope = data?.access === 'reviewer_internal' && data.scope === 'alpine';
+  const selectedAlpine = Boolean(
+    location
+    && ['wy', 'wyoming'].includes(location.state.toLowerCase())
+    && ['lincoln', 'lincoln county'].includes(location.county.toLowerCase())
+    && location.town.toLowerCase() === 'alpine',
+  );
+  const selectedElsewhere = Boolean(location && !selectedAlpine);
+  const scopedRecords = alpineScope && !selectedElsewhere ? records : [];
+  const savedLabel = reviewedLocationLabel(location);
+  const coverageGap = unavailableSlot(
+    'Coverage measurements unavailable',
+    'The reviewed statement projection does not include a coverage directory, completeness percentage, processing backlog, or geographic availability decision.',
+    'location-coverage-unavailable',
+  );
+  const identityPolicyGap = unavailableSlot(
+    'Place identity lock and change policy unavailable',
+    'No reviewed canonical place identifier, locked jurisdiction chain, or change-place policy was supplied. The device label below is not treated as official identity.',
+    'location-identity-policy-unavailable',
+  );
+  const recordsSlot = scopedRecords.length
+    ? el('div', { class: 'gw-dp-stack', 'data-test': 'location-real-records' }, scopedRecords.map((record) => reviewedRecordCard(record, 'location')))
+    : unavailableSlot(
+      selectedElsewhere ? 'No reviewed projection for this saved place' : 'No reviewed Alpine records available',
+      selectedElsewhere
+        ? 'The device-local selection does not match the supplied Alpine projection, so no civic records are shown.'
+        : 'The supplied reviewer response contains no statement rows. No location content was fabricated.',
+      'location-records-unavailable',
+    );
+
+  const selection = el('section', { class: 'gw-dp-panel', 'data-test': 'location-real-picker' }, [
+    el('p', { class: 'gw-dp-kicker' }, ['DEVICE-LOCAL SELECTION']),
+    el('h2', {}, [savedLabel]),
+    el('p', { class: 'gw-dp-muted' }, [location
+      ? 'This label comes only from this device. It does not establish official coverage.'
+      : 'The location-directory backend is not connected, so the app does not choose a place on your behalf.']),
+  ]);
+
+  const disabledSelect = (label: string): HTMLElement => {
+    const select = el('select', { class: 'gw-dp-select', disabled: '', 'aria-label': label });
+    select.append(option('', `${label} directory unavailable`));
+    return el('label', {}, [label, select]);
+  };
+  const disabledPlaceControls = (): HTMLElement => panel('Place tools', 'LOCATION DIRECTORY', [
+    el('div', { class: 'gw-dp-location-selects' }, [
+      disabledSelect('State'),
+      disabledSelect('County'),
+      disabledSelect('Town'),
+    ]),
+    el('p', { class: 'gw-dp-muted' }, ['The baseline picker stays visible, but unsupported geography controls remain disabled instead of implying coverage.']),
+  ]);
+  const locationHistoryGap = (): HTMLElement => unavailableSlot(
+    'Coverage history and backlog unavailable',
+    'No reviewed per-level freshness, backlog, funding, or processing-speed contract was supplied.',
+    'location-history-unavailable',
+  );
+
+  if (frame.mode === 'simple') {
+    frame.content.append(el('section', {
+      class: 'gw-dp-newspaper-section',
+      'data-test': 'location-real-simple-edition',
+    }, [
+      el('div', { class: 'gw-dp-newspaper-rule' }, [
+        el('span', {}, ['YOUR LOCAL EDITION']),
+        el('span', {}, [alpineScope ? 'REVIEWED ALPINE SCOPE' : 'SCOPE UNAVAILABLE']),
+      ]),
+      selection,
+      recordsSlot,
+      disabledPlaceControls(),
+      coverageGap,
+      identityPolicyGap,
+      locationHistoryGap(),
+    ]));
+    return;
+  }
+
+  frame.content.append(el('div', {
+    class: 'gw-dp-workbench-grid',
+    'data-test': 'location-real-advanced-workbench',
+  }, [
+    el('div', { class: 'gw-dp-stack' }, [selection, panel('Reviewed records in scope', 'BACKEND STATEMENT PROJECTION', [recordsSlot])]),
+    el('div', { class: 'gw-dp-stack' }, [
+      disabledPlaceControls(),
+      coverageGap,
+      identityPolicyGap,
+      locationHistoryGap(),
+    ]),
+  ]));
+}
+
+export function renderLocation(
+  root: HTMLElement,
+  options: DesignPageOptions = {},
+  data?: ReadApiResponse,
+  sourceNotice?: string,
+): void {
   const frame = beginPage(
     root,
     'location',
     'Choose your place',
-    'A valid state, county, region, and town selection stored only on this device.',
-    options,
+    options.fixture
+      ? 'A valid state, county, region, and town selection stored only on this device.'
+      : 'The baseline location workspace with device-local selection and only backend-reviewed records in scope.',
+    responseScopedOptions(options, data),
+    sourceNotice,
   );
   if (!frame) return;
+
+  if (!frame.fixture) {
+    renderReviewedLocation(frame, data);
+    return;
+  }
 
   let location = normalizeLocation(readStoredJson(LOCATION_STORAGE_KEY));
   const mount = el('div', { 'data-test': 'location-picker' });
@@ -1013,15 +1593,121 @@ function alertRow(alert: FixtureAlert, read = false): HTMLElement {
   ]);
 }
 
-export function renderAlerts(root: HTMLElement, options: DesignPageOptions = {}): void {
+function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
+  const records = reviewedRecords(data);
+  const recordIds = new Set(records.map((record) => record.statement_id));
+  const watchedIds = Object.keys(readTracked()).filter((id) => recordIds.has(id));
+  const historyGap = unavailableSlot(
+    'Alert history unavailable',
+    'The reviewed statement projection contains no alert events, read-state history, document-change events, deadlines, or delivery receipts.',
+    'alerts-history-unavailable',
+  );
+  const deliveryGap = unavailableSlot(
+    'Delivery settings unavailable',
+    'No backend alert-preference or recipient contract was supplied. Email, text, push, reminders, and digests remain disabled.',
+    'alerts-delivery-unavailable',
+  );
+  const triggerGap = unavailableSlot(
+    'Trigger rules unavailable',
+    'No reviewed alert-trigger contract was supplied, so the page does not infer agenda, document-change, deadline, or meeting events.',
+    'alerts-triggers-unavailable',
+  );
+  const trackingNote = notice(
+    'Device-local watch diagnostics only',
+    `${watchedIds.length} locally stored key${watchedIds.length === 1 ? '' : 's'} match reviewed records in this response. This does not mean monitoring or delivery is active.`,
+    'info',
+    { 'data-test': 'alerts-real-tracked-count' },
+  );
+  const disabledDelivery = el('div', { class: 'gw-dp-delivery-list', 'data-test': 'alerts-real-delivery-controls' });
+  for (const label of ['Email', 'Text', 'Meeting-eve reminder', 'Daily digest']) {
+    disabledDelivery.append(el('button', {
+      type: 'button',
+      class: 'gw-dp-switch',
+      role: 'switch',
+      'aria-checked': 'false',
+      'aria-label': `${label} unavailable`,
+      disabled: '',
+    }, [
+      el('span', { class: 'gw-dp-switch-track', 'aria-hidden': 'true' }, [el('span')]),
+      el('span', { class: 'gw-dp-switch-copy' }, [
+        el('strong', {}, [label]),
+        el('small', {}, ['Backend preference contract unavailable']),
+      ]),
+      el('b', {}, ['OFF']),
+    ]));
+  }
+
+  if (frame.mode === 'simple') {
+    frame.content.append(el('section', {
+      class: 'gw-dp-newspaper-section',
+      'data-test': 'alerts-real-simple-edition',
+    }, [
+      el('div', { class: 'gw-dp-newspaper-rule' }, [
+        el('span', {}, ['NEW SINCE YOU LAST READ']),
+        el('span', {}, ['REVIEWED ALERT FEED']),
+      ]),
+      unavailableSlot(
+        'No reviewed alert feed is connected',
+        'No alert cards are rendered from statement records. The page keeps this reading slot empty until the alerts API supplies reviewed events.',
+        'alerts-feed-unavailable',
+      ),
+      trackingNote,
+      historyGap,
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryGap]),
+      triggerGap,
+    ]));
+    return;
+  }
+
+  frame.content.append(el('div', {
+    class: 'gw-dp-alert-grid',
+    'data-test': 'alerts-real-advanced-workbench',
+  }, [
+    el('div', { class: 'gw-dp-stack' }, [
+      panel('Unread', 'REVIEWED ALERT EVENTS', [
+        unavailableSlot(
+          'No reviewed unread events',
+          'Statement records are not converted into alerts on the client.',
+          'alerts-unread-unavailable',
+        ),
+      ]),
+      panel('Earlier', 'REVIEWED ALERT HISTORY', [historyGap]),
+    ]),
+    el('div', { class: 'gw-dp-stack' }, [
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryGap]),
+      panel('Tracked-item diagnostics', 'DEVICE LOCAL', [
+        trackingNote,
+        ...(watchedIds.length ? [el('ul', { class: 'gw-dp-trigger-list', 'data-test': 'alerts-real-watched-ids' }, watchedIds.map((id) => el('li', {
+          'data-record-id': id,
+        }, [`Reviewed record ${id}`])))] : []),
+      ]),
+      triggerGap,
+    ]),
+  ]));
+}
+
+export function renderAlerts(
+  root: HTMLElement,
+  options: DesignPageOptions = {},
+  data?: ReadApiResponse,
+  sourceNotice?: string,
+): void {
   const frame = beginPage(
     root,
     'alerts',
     'Alerts',
-    'A read-state and delivery-settings interaction preview. Nothing here is subscribed or sent.',
-    options,
+    options.fixture
+      ? 'A read-state and delivery-settings interaction preview. Nothing here is subscribed or sent.'
+      : 'The baseline alerts workspace with unsupported feed, history, trigger, and delivery products kept visibly unavailable.',
+    responseScopedOptions(options, data),
+    sourceNotice,
   );
   if (!frame) return;
+
+  if (!frame.fixture) {
+    renderReviewedAlerts(frame, data);
+    return;
+  }
 
   frame.content.append(notice(
     'Device-only preview — not subscribed',
@@ -1188,6 +1874,7 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-page[data-mode="simple"]{font-family:var(--gw-font-serif);font-size:var(--gw-text-md)}
 .gw-dp-page[data-mode="advanced"]{font-family:var(--gw-font);font-size:var(--gw-text-body)}
 .gw-dp-fixture{position:relative;z-index:2;padding:var(--gw-space-2) var(--gw-space-5);border-bottom:var(--gw-border-w) solid var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text);font:700 var(--gw-text-badge)/1.35 var(--gw-font-mono);text-align:center;letter-spacing:.03em}
+.gw-dp-reviewed-origin{border-color:var(--gw-tone-info-line);background:var(--gw-tone-info-well);color:var(--gw-info-text)}
 .gw-dp-inner,.gw-dp-gated{width:min(100% - 2rem,1200px);margin:0 auto;padding:var(--gw-space-6) 0 2rem}
 .gw-dp-page[data-mode="simple"] .gw-dp-inner{width:min(100% - 2rem,900px);background:var(--gw-surface);padding:var(--gw-space-6);border-inline:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-dp-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-5);padding-bottom:var(--gw-space-5);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);margin-bottom:var(--gw-space-5)}
@@ -1223,6 +1910,7 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-remove{color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
 .gw-dp-icon-button{padding:0;border-radius:var(--gw-radius-pill);font-size:1.5rem}
 .gw-dp-chip,.gw-dp-ai-badge{display:inline-flex;align-items:center;min-height:1.65rem;padding:.15rem .5rem;border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-sm);font:800 var(--gw-text-badge)/1.2 var(--gw-font);letter-spacing:.04em}
+.gw-dp-chip.gw-dp-ok{border-color:var(--gw-ok-text);color:var(--gw-ok-text)}
 .gw-dp-ai-badge,.gw-dp-caution{color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border-color:var(--gw-caution-line)}
 .gw-dp-stop{color:var(--gw-stop-text);background:var(--gw-stop-bg);border-color:var(--gw-stop-border)}
 .gw-dp-level-town{color:var(--gw-level-town);border-color:var(--gw-level-town)}
@@ -1230,6 +1918,10 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-level-state{color:var(--gw-level-state);border-color:var(--gw-level-state)}
 .gw-dp-muted{color:var(--gw-text-muted)}
 .gw-dp-empty{padding:2rem var(--gw-space-5);border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);text-align:center;background:var(--gw-surface-well)}
+.gw-dp-unavailable-slot{text-align:left}.gw-dp-reviewed-record{display:grid;gap:var(--gw-space-3)}
+.gw-dp-receipt-list{display:grid;gap:var(--gw-space-2);margin-top:var(--gw-space-3)}
+.gw-dp-receipt{display:grid;gap:var(--gw-space-1);padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-sm);background:var(--gw-surface-subtle);overflow-wrap:anywhere}
+.gw-dp-receipt a{width:max-content;max-width:100%;color:var(--gw-accent)}
 .gw-dp-power-grid{display:grid;grid-template-columns:minmax(16rem,.72fr) minmax(0,1.6fr);gap:var(--gw-space-5);align-items:start}
 .gw-dp-official-list{display:grid;gap:var(--gw-space-3)}
 .gw-dp-official{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:var(--gw-space-3);padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);color:var(--gw-text);background:var(--gw-surface-subtle);text-align:left;cursor:pointer}

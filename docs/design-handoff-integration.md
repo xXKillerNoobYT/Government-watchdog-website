@@ -31,6 +31,22 @@ tracked cards, read-state, and player position). It is never authentication,
 authorization, identity proof, alert subscription, or evidence that a delivery
 channel was configured.
 
+The fixture restriction applies to the fixture **values**, not to the design's
+layout or information architecture. Reviewed routes use the same component
+grammar and retain every applicable information slot. A slot with no reviewed
+value renders an explicit gap or unavailable control in place; it does not
+disappear and it is not populated from the handoff. See the binding ledger in
+[`design-information-type-matrix.md`](design-information-type-matrix.md).
+
+The production binding rule is deliberately small:
+
+- **real value** when a reviewed, web-safe contract supplies it;
+- **designed slot** in the owner-approved hierarchy in every case; and
+- **explicit gap** when the contract is absent or incomplete.
+
+Device-local preview state is allowed only where it is labelled as such.
+Synthetic values require the fixture gate described above.
+
 ## Existing safe data that can be reused
 
 - `ReadApiResponse` reviewed statements and their backend-supplied trust,

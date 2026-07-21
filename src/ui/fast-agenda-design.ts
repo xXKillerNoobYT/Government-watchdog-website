@@ -7,6 +7,7 @@
  * before any fixture leaf is added to the DOM.
  */
 
+import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
 import { readMode, type ShellMode } from './shell';
 import { GW_TOKENS } from './tokens';
 
@@ -14,6 +15,8 @@ export interface FastAgendaDesignOptions {
   access?: string;
   fixture?: boolean;
   notice?: string;
+  /** Reviewed GOV-605 agenda-board projection used when `fixture !== true`. */
+  board?: AgendaBoard;
 }
 
 type Jurisdiction = 'town' | 'county' | 'state';
@@ -54,6 +57,7 @@ interface IssueCard {
 }
 
 const FIXTURE_LABEL = 'SYNTHETIC DESIGN FIXTURE — not a live read';
+const REVIEWED_LABEL = 'REVIEWED AGENDA PROJECTION — not a live read';
 const RECEIPTS_DISCLAIMER =
   'Receipt references are synthetic design placeholders — not verified sources and not a live read.';
 
@@ -715,6 +719,391 @@ function simpleAgendaDigest(root: HTMLElement, tracked: Record<string, boolean>)
   ]);
 }
 
+function allReviewedCards(board: AgendaBoard): AgendaBoardCard[] {
+  return board.lanes.flatMap((lane) => lane.cards);
+}
+
+function reviewedMetric(value: string, label: string, tone = 'neutral'): HTMLElement {
+  return el('article', { class: `gw-fa-stat is-${tone}`, 'data-test': 'reviewed-readiness-metric' }, [
+    el('strong', {}, [value]),
+    el('span', {}, [label]),
+  ]);
+}
+
+function reviewedMeetingReadiness(board: AgendaBoard): HTMLElement {
+  const cards = allReviewedCards(board);
+  return el('aside', {
+    class: 'gw-fa-meeting gw-fa-reviewed-meeting',
+    'aria-labelledby': 'gw-fa-reviewed-meeting-title',
+    'data-test': 'reviewed-meeting-readiness',
+  }, [
+    kicker('MEETING READINESS · REVIEWED PROJECTION'),
+    el('h2', { id: 'gw-fa-reviewed-meeting-title' }, ['Reviewed meeting readiness']),
+    el('p', { class: 'gw-fa-muted' }, [
+      cards.length
+        ? 'Agenda-anchored meeting context is listed below exactly as supplied by the reviewed projection.'
+        : 'Meeting details are unavailable because this projection contains no agenda-anchored cards.',
+    ]),
+    el('div', { class: 'gw-fa-stat-grid gw-fa-reviewed-metrics' }, [
+      reviewedMetric(String(board.cardCount), 'AGENDA-ANCHORED CARDS', board.cardCount > 0 ? 'accent' : 'neutral'),
+      reviewedMetric(
+        String(board.unanchoredStatementCount),
+        'UNANCHORED STATEMENTS',
+        board.unanchoredStatementCount > 0 ? 'caution' : 'neutral',
+      ),
+      reviewedMetric(String(board.lanes.length), 'SUPPLIED LIFECYCLE LANES'),
+    ]),
+    el('p', { class: 'gw-fa-row-receipt', 'data-test': 'reviewed-generated-from' }, [
+      `Projection origin: ${board.generatedFrom}`,
+    ]),
+    el('div', { class: 'gw-fa-reviewed-slot-grid', 'data-test': 'reviewed-meeting-slots' }, [
+      reviewedGapSlot(
+        'reviewed-meeting-logistics-gap',
+        'Venue and stream unavailable',
+        'The reviewed AgendaBoard contract supplies no meeting venue, streaming channel, or public-access instructions.',
+      ),
+      reviewedGapSlot(
+        'reviewed-posting-version-gap',
+        'Posting and version events unavailable',
+        'Agenda-posted time and attachment-replacement history require a reviewed meeting-readiness projection.',
+      ),
+      reviewedGapSlot(
+        'reviewed-agenda-counts-gap',
+        'Motion, hearing, and attachment counts unavailable',
+        'Card count is shown above, but it is not substituted for official motion, hearing, section, or attachment totals.',
+      ),
+      reviewedGapSlot(
+        'reviewed-nearby-meetings-gap',
+        'Last and upcoming meetings unavailable',
+        'The current projection does not supply the prior-meeting recap or upcoming-body calendar required for this slot.',
+      ),
+      reviewedGapSlot(
+        'reviewed-public-comment-gap',
+        'Public-comment rules unavailable',
+        'No reviewed deadline, time limit, venue policy, or hearing-specific instruction is present.',
+      ),
+    ]),
+    el('div', { class: 'gw-fa-unavailable-tools', role: 'group', 'aria-label': 'Meeting tools unavailable', 'data-test': 'reviewed-meeting-tools' }, [
+      el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Official agenda · unavailable']),
+      el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Packet · unavailable']),
+      el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Reminder · unavailable']),
+    ]),
+  ]);
+}
+
+function reviewedGapSlot(test: string, title: string, detail: string): HTMLElement {
+  return el('section', {
+    class: 'gw-fa-reviewed-slot is-unavailable',
+    'data-test': test,
+    role: 'note',
+  }, [
+    el('h3', {}, [title]),
+    el('p', {}, [detail]),
+  ]);
+}
+
+function reviewedAnalysisSlot(card?: AgendaBoardCard): HTMLElement {
+  return reviewedGapSlot(
+    'reviewed-analysis-slot',
+    'Analysis unavailable',
+    card
+      ? 'AgendaBoard does not supply analysis text for this item; no analysis has been invented.'
+      : 'No agenda-anchored reviewed item is present to analyze.',
+  );
+}
+
+function reviewedLanguageSlot(card?: AgendaBoardCard): HTMLElement {
+  return reviewedGapSlot(
+    'reviewed-language-slot',
+    'Language watch unavailable',
+    card
+      ? 'AgendaBoard does not supply a language-watch block for this item; no wording assessment has been invented.'
+      : 'No agenda-anchored reviewed item is present for a language-watch assessment.',
+  );
+}
+
+function reviewedProcessSlot(card?: AgendaBoardCard): HTMLElement {
+  if (!card) {
+    return reviewedGapSlot(
+      'reviewed-process-slot',
+      'Item process unavailable',
+      'No agenda-anchored reviewed item is present to place in a per-item process.',
+    );
+  }
+
+  const details: (Node | string)[] = [
+    el('p', { 'data-test': 'reviewed-lane' }, [
+      el('strong', {}, ['Lifecycle lane: ']),
+      `${card.laneLabel} (${card.lane})`,
+    ]),
+  ];
+  if (card.agendaThreadId || card.threadLabel || card.threadStatus) {
+    details.push(el('p', { 'data-test': 'reviewed-thread' }, [
+      el('strong', {}, ['Agenda thread: ']),
+      [card.agendaThreadId, card.threadLabel, card.threadStatus].filter(Boolean).join(' · '),
+    ]));
+  }
+  if (card.lineage.length) {
+    details.push(el('ul', { 'data-test': 'reviewed-lineage' }, card.lineage.map((edge) => el('li', {}, [`${edge.relation}: ${edge.ref}`]))));
+  }
+  details.push(el('p', { 'data-test': 'reviewed-category-anchor' }, [
+    el('strong', {}, [`Category anchor (${card.categoryAnchor.kind}): `]),
+    card.categoryAnchor.disclosure,
+  ]));
+  if (card.gapBadges.length) {
+    details.push(el('ul', {
+      class: 'gw-fa-reviewed-gap-list',
+      'data-test': 'reviewed-gap-badges',
+    }, card.gapBadges.map((gap) => el('li', { 'data-test': 'reviewed-gap-badge' }, [gap]))));
+  }
+  return el('section', { class: 'gw-fa-reviewed-slot', 'data-test': 'reviewed-process-slot' }, [
+    el('h3', {}, ['Item process']),
+    ...details,
+  ]);
+}
+
+function sourceLocatorText(card: AgendaBoardCard, sourceIndex: number): string {
+  const locator = card.sourceRefs[sourceIndex]?.locator;
+  if (!locator) return '';
+  const parts: string[] = [];
+  if (locator.page !== undefined) parts.push(`page ${locator.page}`);
+  if (locator.section) parts.push(locator.section);
+  if (locator.paragraph) parts.push(locator.paragraph);
+  if (locator.timestampHuman) parts.push(locator.timestampHuman);
+  if (locator.timestampSeconds !== undefined) parts.push(`${locator.timestampSeconds}s`);
+  return parts.join(' · ');
+}
+
+function reviewedReceiptSlot(card?: AgendaBoardCard): HTMLElement {
+  if (!card || card.sourceRefs.length === 0) {
+    return reviewedGapSlot(
+      'reviewed-receipts-slot',
+      'Receipts unavailable',
+      card
+        ? 'No web-safe source reference was supplied for this agenda item.'
+        : 'No agenda-anchored reviewed item is present to carry a receipt.',
+    );
+  }
+
+  const receipts = card.sourceRefs.map((source, index) => {
+    const locator = sourceLocatorText(card, index);
+    const children: (Node | string)[] = [el('strong', {}, [source.sourceId])];
+    if (source.originalUrl) {
+      children.push(' · ', el('a', {
+        href: source.originalUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        'data-test': 'reviewed-source-original',
+      }, ['Open supplied source']));
+    }
+    if (source.archiveUrl) {
+      children.push(' · ', el('a', {
+        href: source.archiveUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        'data-test': 'reviewed-source-archive',
+      }, ['Open supplied archive']));
+    }
+    if (locator) children.push(` · ${locator}`);
+    return el('li', {}, children);
+  });
+  return el('section', { class: 'gw-fa-reviewed-slot', 'data-test': 'reviewed-receipts-slot' }, [
+    el('h3', {}, ['Receipts']),
+    el('ul', {}, receipts),
+  ]);
+}
+
+function reviewedDecisionContextSlot(card?: AgendaBoardCard): HTMLElement {
+  return reviewedGapSlot(
+    'reviewed-decision-context-slot',
+    'Decision context unavailable',
+    card
+      ? 'Past-meeting analyses, connected issue ids, and a policy-cleared decision-maker record are not supplied for this item.'
+      : 'No agenda-anchored reviewed item is present for past-meeting, connected-issue, or decision-maker context.',
+  );
+}
+
+function reviewedAgendaCard(card: AgendaBoardCard): HTMLElement {
+  const meetingContext = [
+    card.meetingId == null ? '' : `Meeting ${card.meetingId}`,
+    card.meetingDate,
+    card.meetingBody,
+    card.meetingTitle,
+  ].filter(Boolean).join(' · ');
+  const number = card.itemOrder === undefined ? '—' : String(card.itemOrder);
+  const trustBadges: HTMLElement[] = [
+    el('span', {
+      class: 'gw-fa-action',
+      'data-test': 'reviewed-status-badge',
+    }, [card.statusBadge]),
+  ];
+  if (card.confidenceBadge) {
+    trustBadges.push(el('span', {
+      class: 'gw-fa-flag',
+      'data-test': 'reviewed-confidence-badge',
+    }, [card.confidenceBadge]));
+  } else {
+    trustBadges.push(el('span', {
+      class: 'gw-fa-muted',
+      'data-test': 'reviewed-confidence-gap',
+    }, ['Confidence not supplied']));
+  }
+  const meetingLinks: HTMLElement[] = [];
+  if (card.meetingSourceUrl) {
+    meetingLinks.push(el('a', {
+      href: card.meetingSourceUrl,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-test': 'reviewed-meeting-source',
+    }, ['Open supplied meeting source']));
+  }
+  if (card.videoRef) {
+    meetingLinks.push(el('a', {
+      href: card.videoRef.url,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-test': 'reviewed-video-ref',
+    }, [`Watch from ${card.videoRef.timestampSeconds}s`]));
+  }
+  return el('article', {
+    class: 'gw-fa-agenda-row gw-fa-reviewed-agenda-row',
+    'data-test': 'reviewed-agenda-row',
+    'data-agenda-id': card.agendaItemId,
+  }, [
+    el('div', { class: 'gw-fa-number', 'aria-label': `Agenda item ${number}` }, [number]),
+    el('div', { class: 'gw-fa-agenda-main' }, [
+      el('header', { class: 'gw-fa-agenda-title' }, [
+        el('h3', {}, [card.agendaItemTitle ?? card.agendaItemId]),
+        el('div', { class: 'gw-fa-reviewed-trust', 'data-test': 'reviewed-trust-fields' }, trustBadges),
+      ]),
+      el('p', { class: 'gw-fa-muted', 'data-test': 'reviewed-meeting-context' }, [meetingContext || 'Meeting context not supplied']),
+      ...(meetingLinks.length ? [el('div', {
+        class: 'gw-fa-reviewed-links',
+        'data-test': 'reviewed-meeting-links',
+      }, meetingLinks)] : [el('p', {
+        class: 'gw-fa-muted',
+        'data-test': 'reviewed-meeting-links-gap',
+      }, ['No meeting source or video reference was supplied.'])]),
+      el('p', { class: 'gw-fa-row-receipt', 'data-test': 'reviewed-card-identifiers' }, [
+        `Card ${card.cardId} · agenda item ${card.agendaItemId}`,
+      ]),
+      el('p', { class: 'gw-fa-row-receipt' }, [
+        `${card.recordCount} reviewed statement${card.recordCount === 1 ? '' : 's'} · ${card.laneLabel}`,
+      ]),
+      ...(card.statementIds.length ? [el('p', {
+        class: 'gw-fa-row-receipt',
+        'data-test': 'reviewed-statement-ids',
+      }, [`Statement IDs: ${card.statementIds.join(' · ')}`])] : []),
+      el('div', { class: 'gw-fa-reviewed-slot-grid', 'data-test': 'reviewed-agenda-slots' }, [
+        reviewedAnalysisSlot(card),
+        reviewedLanguageSlot(card),
+        reviewedProcessSlot(card),
+        reviewedReceiptSlot(card),
+        reviewedDecisionContextSlot(card),
+      ]),
+      el('div', { class: 'gw-fa-unavailable-tools', role: 'group', 'aria-label': 'Agenda item tools unavailable', 'data-test': 'reviewed-agenda-tools' }, [
+        el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Track · unavailable']),
+        el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Analysis · unavailable']),
+        el('button', { type: 'button', class: 'gw-fa-tool-unavailable', disabled: '' }, ['Attachments · unavailable']),
+      ]),
+    ]),
+  ]);
+}
+
+function reviewedAgendaArea(board: AgendaBoard): HTMLElement {
+  const cards = allReviewedCards(board);
+  const content = cards.length
+    ? cards.map(reviewedAgendaCard)
+    : [
+        el('section', { class: 'gw-fa-reviewed-empty', role: 'status', 'data-test': 'reviewed-agenda-empty' }, [
+          el('h3', {}, ['No agenda item is review-ready yet']),
+          el('p', {}, [
+            board.unanchoredStatementCount > 0
+              ? `${board.unanchoredStatementCount} reviewed statement(s) are not yet anchored to an agenda item.`
+              : 'The reviewed projection contains no agenda-anchored cards.',
+          ]),
+        ]),
+        el('div', { class: 'gw-fa-reviewed-slot-grid', 'data-test': 'reviewed-agenda-slots' }, [
+          reviewedAnalysisSlot(),
+          reviewedLanguageSlot(),
+          reviewedProcessSlot(),
+          reviewedReceiptSlot(),
+          reviewedDecisionContextSlot(),
+        ]),
+      ];
+
+  return el('section', {
+    class: 'gw-fa-agenda gw-fa-reviewed-agenda',
+    'aria-labelledby': 'gw-fa-reviewed-agenda-title',
+    'data-test': 'reviewed-agenda-area',
+  }, [
+    el('div', { class: 'gw-fa-section-head' }, [
+      el('div', {}, [
+        kicker('AGENDA CONTENT · REVIEWED PROJECTION'),
+        el('h2', { id: 'gw-fa-reviewed-agenda-title' }, ['Agenda items and evidence slots']),
+      ]),
+      el('span', { class: 'gw-fa-muted', 'data-test': 'reviewed-card-count' }, [String(board.cardCount)]),
+    ]),
+    el('p', { class: 'gw-fa-board-disclosure' }, [
+      'Only fields supplied by the reviewed AgendaBoard projection appear here. Unavailable analysis is shown as a gap.',
+    ]),
+    el('div', { class: 'gw-fa-agenda-list' }, content),
+  ]);
+}
+
+function reviewedAgendaStages(board: AgendaBoard): HTMLElement {
+  const stages = board.lanes.map((lane) => el('section', {
+    class: 'gw-fa-issue-column gw-fa-reviewed-stage',
+    'data-test': 'reviewed-issue-stage',
+    'data-lane': String(lane.lane),
+  }, [
+    el('header', {}, [
+      el('h3', {}, [lane.laneLabel]),
+      el('span', { 'data-test': 'reviewed-issue-stage-count' }, [String(lane.cardCount)]),
+    ]),
+    lane.cards.length
+      ? el('ul', { class: 'gw-fa-reviewed-stage-items' }, lane.cards.map((card) => el('li', {}, [
+          card.agendaItemTitle ?? card.agendaItemId,
+        ])))
+      : el('p', { class: 'gw-fa-muted' }, ['No reviewed agenda item in this stage.']),
+  ]));
+
+  return el('section', {
+    class: 'gw-fa-tracker gw-fa-reviewed-stages',
+    'aria-labelledby': 'gw-fa-reviewed-stages-title',
+    'data-test': 'reviewed-agenda-stage-area',
+  }, [
+    el('div', { class: 'gw-fa-section-head' }, [
+      el('div', {}, [
+        kicker('AGENDA LIFECYCLE · SUPPLIED PROJECTION'),
+        el('h2', { id: 'gw-fa-reviewed-stages-title' }, ['Where reviewed agenda items stand']),
+      ]),
+    ]),
+    el('div', {
+      class: 'gw-fa-issue-rail',
+      role: 'region',
+      'aria-label': 'Reviewed agenda lifecycle stages',
+      tabindex: '0',
+    }, stages),
+    reviewedGapSlot(
+      'reviewed-issue-tracker-gap',
+      'Seven-stage issue tracker unavailable',
+      'The six supplied AgendaBoard lanes describe agenda-card lifecycle. They are not substituted for the baseline issue-thread stages; typed cross-meeting issue ids and edges are required.',
+    ),
+    el('section', { class: 'gw-fa-reviewed-disclosures', role: 'note', 'data-test': 'reviewed-disclosures' }, [
+      el('h3', {}, ['Projection limits']),
+      el('ul', {}, [
+        el('li', { 'data-test': 'reviewed-disclosure-decisions' }, [board.disclosures.decisions]),
+        el('li', { 'data-test': 'reviewed-disclosure-categories' }, [board.disclosures.categories]),
+        el('li', { 'data-test': 'reviewed-disclosure-scope' }, [board.disclosures.scope]),
+        el('li', { 'data-test': 'reviewed-unanchored-disclosure' }, [
+          `Unanchored statements: ${board.unanchoredStatementCount}`,
+        ]),
+      ]),
+    ]),
+  ]);
+}
+
 function issueCard(
   root: HTMLElement,
   issue: IssueCard,
@@ -825,6 +1214,15 @@ function fixtureBanner(notice?: string): HTMLElement {
   return el('div', { class: 'gw-fa-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, children);
 }
 
+function reviewedBanner(board: AgendaBoard, notice?: string): HTMLElement {
+  const children: (Node | string)[] = [
+    el('strong', {}, [REVIEWED_LABEL]),
+    el('span', {}, [`Scope: ${board.scope} · access: ${board.access}`]),
+  ];
+  if (notice) children.push(el('span', { class: 'gw-fa-notice' }, [notice]));
+  return el('div', { class: 'gw-fa-reviewed-banner', role: 'status', 'data-test': 'reviewed-banner' }, children);
+}
+
 function pageHeader(mode: ShellMode): HTMLElement {
   return el('header', { class: 'gw-fa-page-head' }, [
     el('div', {}, [
@@ -842,20 +1240,41 @@ function pageHeader(mode: ShellMode): HTMLElement {
   ]);
 }
 
-function gate(root: HTMLElement): void {
+function reviewedPageHeader(mode: ShellMode, board: AgendaBoard): HTMLElement {
+  return el('header', { class: 'gw-fa-page-head' }, [
+    el('div', {}, [
+      kicker('GOVERNMENT WATCHDOG · MEETINGS & AGENDAS'),
+      el('h1', {}, [mode === 'simple' ? 'What the reviewed agenda can support' : 'Fast Agenda']),
+      el('p', {}, [
+        mode === 'simple'
+          ? `A plain-language view of the reviewed ${board.scope} agenda projection and its disclosed gaps.`
+          : `Meeting readiness, evidence slots, and lifecycle lanes supplied by ${board.generatedFrom}.`,
+      ]),
+    ]),
+    el('span', { class: 'gw-fa-mode', 'data-test': 'reading-mode' }, [
+      `${mode === 'simple' ? 'Simple' : 'Advanced'} reading mode`,
+    ]),
+  ]);
+}
+
+function gate(
+  root: HTMLElement,
+  detail = 'Reviewer-internal fixture access is required for this design surface.',
+): void {
   root.append(el('section', {
     class: 'gw-fa-gated',
     role: 'status',
     'data-test': 'fast-agenda-gated',
   }, [
     el('h1', {}, ['Fast Agenda unavailable']),
-    el('p', {}, ['Reviewer-internal fixture access is required for this design surface.']),
+    el('p', {}, [detail]),
   ]));
 }
 
 /**
- * Render the Fast Agenda handoff as an accessible synthetic design fixture.
- * The fixture fails closed unless both gate requirements are explicitly present.
+ * Render the Fast Agenda handoff from either its explicit synthetic fixture or
+ * a reviewer-internal AgendaBoard projection. Both paths fail closed at their
+ * access/data boundary; reviewed mode never borrows facts from the fixture.
  */
 export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDesignOptions = {}): void {
   ensureFastAgendaStyle();
@@ -863,35 +1282,65 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
   root.className = 'gw-fast-agenda-design-root';
   root.replaceChildren();
 
-  if (options.access !== 'reviewer_internal' || options.fixture !== true) {
-    gate(root);
+  const mode = readMode();
+  if (options.fixture === true) {
+    if (options.access !== 'reviewer_internal') {
+      gate(root);
+      return;
+    }
+
+    const tracked = readTracked();
+    const content = mode === 'simple'
+      ? [simpleMeetingDigest(), simpleAgendaDigest(root, tracked)]
+      : [
+          el('div', { class: 'gw-fa-overview' }, [meetingBoard(), agendaBoard(root, tracked)]),
+          issueTracker(root, tracked),
+        ];
+    root.append(el('div', {
+      class: `gw-fa gw-fa--${mode}`,
+      'data-mode': mode,
+      'data-test': `fast-agenda-${mode}`,
+    }, [
+      fixtureBanner(options.notice),
+      el('div', { class: 'gw-fa-frame' }, [
+        pageHeader(mode),
+        ...content,
+        el('footer', { class: 'gw-fa-footer' }, [
+          el('strong', {}, ['◆ Holding power accountable. Amplifying transparency.']),
+          el('span', {}, ['Synthetic fixture · no live refresh timestamp']),
+        ]),
+      ]),
+    ]));
     return;
   }
 
-  const mode = readMode();
-  const tracked = readTracked();
-  const content = mode === 'simple'
-    ? [simpleMeetingDigest(), simpleAgendaDigest(root, tracked)]
-    : [
-        el('div', { class: 'gw-fa-overview' }, [meetingBoard(), agendaBoard(root, tracked)]),
-        issueTracker(root, tracked),
-      ];
-  const surface = el('div', {
-    class: `gw-fa gw-fa--${mode}`,
+  const board = options.board;
+  const access = options.access ?? board?.access;
+  if (!board || access !== 'reviewer_internal' || board.access !== 'reviewer_internal') {
+    gate(root, 'A reviewer-internal AgendaBoard projection is required for this Fast Agenda surface.');
+    return;
+  }
+
+  root.append(el('div', {
+    class: `gw-fa gw-fa--${mode} gw-fa--reviewed`,
     'data-mode': mode,
-    'data-test': `fast-agenda-${mode}`,
+    'data-origin': 'reviewed',
+    'data-test': `fast-agenda-reviewed-${mode}`,
   }, [
-    fixtureBanner(options.notice),
+    reviewedBanner(board, options.notice),
     el('div', { class: 'gw-fa-frame' }, [
-      pageHeader(mode),
-      ...content,
+      reviewedPageHeader(mode, board),
+      el('div', { class: 'gw-fa-overview gw-fa-reviewed-overview' }, [
+        reviewedMeetingReadiness(board),
+        reviewedAgendaArea(board),
+      ]),
+      reviewedAgendaStages(board),
       el('footer', { class: 'gw-fa-footer' }, [
         el('strong', {}, ['◆ Holding power accountable. Amplifying transparency.']),
-        el('span', {}, ['Synthetic fixture · no live refresh timestamp']),
+        el('span', {}, [`Reviewed projection · ${board.generatedFrom}`]),
       ]),
     ]),
-  ]);
-  root.append(surface);
+  ]));
 }
 
 export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
@@ -906,6 +1355,7 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa h3{font-size:var(--gw-text-body);line-height:1.35;margin-bottom:0}
 .gw-fa-fixture-banner{display:flex;justify-content:center;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;background:var(--gw-caution-bg);border-bottom:var(--gw-border-w) solid var(--gw-caution-line);color:var(--gw-caution-text-strong);padding:var(--gw-space-2) var(--gw-space-5);font:var(--gw-text-sm)/1.4 var(--gw-font-mono);text-align:center}
 .gw-fa-fixture-banner strong{letter-spacing:.04em}.gw-fa-notice{border-left:var(--gw-border-w) solid var(--gw-caution-line);padding-left:var(--gw-space-3)}
+.gw-fa-reviewed-banner{display:flex;justify-content:center;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;background:var(--gw-surface-subtle);border-bottom:var(--gw-border-w) solid var(--gw-border-strong);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-5);font:var(--gw-text-sm)/1.4 var(--gw-font-mono);text-align:center}.gw-fa-reviewed-banner strong{color:var(--gw-accent);letter-spacing:.04em}.gw-fa-reviewed-banner .gw-fa-notice{border-color:var(--gw-border-strong)}
 .gw-fa-frame{width:min(1460px,100%);margin:0 auto;padding:var(--gw-space-6);display:grid;gap:var(--gw-space-6)}
 .gw-fa-page-head{display:flex;align-items:end;justify-content:space-between;gap:var(--gw-space-5);border-bottom:var(--gw-border-w) solid var(--gw-border);padding-bottom:var(--gw-space-5)}
 .gw-fa-page-head p{color:var(--gw-text-secondary);margin-bottom:0;max-width:70ch}
@@ -958,6 +1408,9 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-issue-stack{display:grid;gap:var(--gw-space-3)}.gw-fa-issue-card{background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3)}.gw-fa-issue-card h4{font-size:var(--gw-text-sm);line-height:1.35;margin-bottom:var(--gw-space-1)}.gw-fa-issue-card p{font-size:var(--gw-text-xs);margin-bottom:var(--gw-space-2)}
 .gw-fa-level{display:inline-flex;border:var(--gw-border-w) solid currentColor;border-radius:var(--gw-radius-sm);padding:var(--gw-space-1) var(--gw-space-2);font-size:var(--gw-text-xs);font-weight:800}.gw-fa-level.is-town{color:var(--gw-level-town)}.gw-fa-level.is-county{color:var(--gw-level-county)}.gw-fa-level.is-state{color:var(--gw-level-state)}
 .gw-fa-issue-card dl{display:grid;gap:var(--gw-space-2);margin:var(--gw-space-3) 0;font-size:var(--gw-text-xs)}.gw-fa-issue-card dl div{display:grid;grid-template-columns:2.5rem 1fr;gap:var(--gw-space-2)}.gw-fa-issue-card dt{font-weight:800;color:var(--gw-text-secondary)}.gw-fa-issue-card dd{margin:0;color:var(--gw-text-muted)}.gw-fa-issue-card .gw-fa-track{width:100%}
+.gw-fa-reviewed-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.gw-fa-reviewed-agenda-row{grid-template-columns:3rem minmax(0,1fr)}.gw-fa-reviewed-empty{border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-surface-subtle);padding:var(--gw-space-4)}.gw-fa-reviewed-empty p{margin:var(--gw-space-2) 0 0;color:var(--gw-text-secondary)}
+.gw-fa-reviewed-slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-fa-reviewed-slot{min-width:0;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-subtle);padding:var(--gw-space-3)}.gw-fa-reviewed-slot.is-unavailable{border-style:dashed}.gw-fa-reviewed-slot h3{color:var(--gw-text-secondary)}.gw-fa-reviewed-slot p{margin:var(--gw-space-2) 0 0;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}.gw-fa-reviewed-slot ul{margin:var(--gw-space-2) 0 0;padding-left:1.2rem;color:var(--gw-text-secondary);font-size:var(--gw-text-sm);overflow-wrap:anywhere}
+.gw-fa-reviewed-stage-items{margin:0;padding-left:1.2rem;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-fa-reviewed-disclosures{margin-top:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-fa-reviewed-disclosures ul{margin-bottom:0;padding-left:1.2rem;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-footer{display:flex;justify-content:space-between;gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-5);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-unavailable-tools{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);margin-top:var(--gw-space-4)}.gw-fa-tool-unavailable{border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-surface-well);color:var(--gw-text-muted);padding:var(--gw-space-2) var(--gw-space-3);cursor:not-allowed}
 .gw-fa-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:var(--gw-space-5);background:rgba(3,6,10,.76)}
@@ -966,12 +1419,13 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-modal>.gw-fa-track{justify-self:start}.gw-fa-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-4)}.gw-fa-modal-section{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}.gw-fa-modal-section ul{margin-bottom:0;padding-left:1.25rem}.gw-fa-modal-actions{display:flex;align-items:center;gap:var(--gw-space-3);justify-content:space-between;border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-gated{max-width:52rem;margin:var(--gw-space-6) auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);color:var(--gw-text);font-family:var(--gw-font)}
 .gw-fa--simple{font-family:var(--gw-font-serif);font-size:1.03rem}.gw-fa--simple .gw-fa-frame{max-width:920px;background:var(--gw-header-bg);border-left:var(--gw-border-w) solid var(--gw-border);border-right:var(--gw-border-w) solid var(--gw-border)}.gw-fa--simple .gw-fa-page-head{text-align:center;border-top:3px solid var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);align-items:center}.gw-fa--simple .gw-fa-page-head>div{flex:1}.gw-fa--simple .gw-fa-page-head h1{font:600 var(--gw-text-display)/1 var(--gw-font-serif)}
+.gw-fa--simple .gw-fa-reviewed-overview{grid-template-columns:1fr}.gw-fa--simple .gw-fa-reviewed-meeting,.gw-fa--simple .gw-fa-reviewed-agenda,.gw-fa--simple .gw-fa-reviewed-stages{border-color:var(--gw-rule-strong);border-radius:var(--gw-radius-sm)}.gw-fa--simple .gw-fa-reviewed-slot-grid{grid-template-columns:1fr}.gw-fa--simple .gw-fa-reviewed-slot{background:transparent}
 .gw-fa-simple-meeting,.gw-fa-simple-agenda{background:var(--gw-surface);border-top:3px solid var(--gw-rule-strong);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);padding:var(--gw-space-6)}.gw-fa-simple-meeting h2,.gw-fa-simple-agenda h2{font:600 var(--gw-text-xl)/1.15 var(--gw-font-serif)}.gw-fa-simple-lede{max-width:65ch;margin-top:var(--gw-space-4);color:var(--gw-text-secondary)}
 .gw-fa-simple-list{list-style:none;margin:var(--gw-space-5) 0 0;padding:0}.gw-fa-simple-item{border-top:var(--gw-border-w) solid var(--gw-border);padding:var(--gw-space-5) 0}.gw-fa-simple-item:first-child{border-top:3px double var(--gw-rule-strong)}.gw-fa-simple-item article{display:grid;gap:var(--gw-space-3)}.gw-fa-simple-item-head{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:var(--gw-space-4);align-items:start}.gw-fa-simple-item-head h3{font:600 1.3rem/1.2 var(--gw-font-serif)}.gw-fa--simple .gw-fa-number{display:grid;place-items:center;min-width:38px;min-height:38px;border-radius:50%;background:var(--gw-accent);color:var(--gw-accent-text-on);padding:var(--gw-space-1)}.gw-fa-simple-action{margin:var(--gw-space-1) 0 0;color:var(--gw-text-muted);font:700 var(--gw-text-xs)/1.4 var(--gw-font-mono);letter-spacing:.04em}.gw-fa-simple-decision{margin:0;color:var(--gw-text-secondary)}.gw-fa-simple-receipts{justify-self:start}
 @media (max-width:1050px){.gw-fa-overview{grid-template-columns:1fr}.gw-fa-meeting{position:static}.gw-fa-stat-grid{grid-template-columns:repeat(4,minmax(90px,1fr))}}
-@media (max-width:720px){.gw-fa-frame{padding:var(--gw-space-4)}.gw-fa-page-head,.gw-fa-section-head,.gw-fa-footer{align-items:stretch;flex-direction:column}.gw-fa-status-grid,.gw-fa-stat-grid{grid-template-columns:1fr 1fr}.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr)}.gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa-agenda,.gw-fa-meeting,.gw-fa-tracker,.gw-fa-simple-meeting,.gw-fa-simple-agenda{padding:var(--gw-space-4)}}
+@media (max-width:720px){.gw-fa-frame{padding:var(--gw-space-4)}.gw-fa-page-head,.gw-fa-section-head,.gw-fa-footer{align-items:stretch;flex-direction:column}.gw-fa-status-grid,.gw-fa-stat-grid{grid-template-columns:1fr 1fr}.gw-fa-modal-grid,.gw-fa-reviewed-slot-grid{grid-template-columns:1fr}.gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr)}.gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa-agenda,.gw-fa-meeting,.gw-fa-tracker,.gw-fa-simple-meeting,.gw-fa-simple-agenda{padding:var(--gw-space-4)}}
 @media (max-width:440px){.gw-fa-status-grid,.gw-fa-stat-grid,.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-row-actions,.gw-fa--simple .gw-fa-row-actions{grid-template-columns:1fr}.gw-fa-process-wrap{display:block}.gw-fa-process-wrap>strong{display:block;margin-bottom:var(--gw-space-2)}.gw-fa-backdrop{padding:var(--gw-space-2)}.gw-fa-modal{padding:var(--gw-space-4)}}
-@media print{.gw-fa-fixture-banner{border:2px solid var(--gw-caution-line)}.gw-fa button{display:none}.gw-fa-issue-rail{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}.gw-fa-backdrop{display:none}}
+@media print{.gw-fa-fixture-banner{border:2px solid var(--gw-caution-line)}.gw-fa-reviewed-banner{border:2px solid var(--gw-border-strong)}.gw-fa button{display:none}.gw-fa-issue-rail{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}.gw-fa-backdrop{display:none}}
 `;
 
 function ensureFastAgendaStyle(): void {

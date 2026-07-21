@@ -3,6 +3,8 @@ import type { CardFeed, CardFeedCard, PresentCard } from './card-feed';
 import type { NewsletterDigest, NewsletterDigestResponse, NewsletterItem } from '../types/newsletter-digest';
 import { GW_TOKENS } from './tokens';
 import { readMode } from './shell';
+import { claimPresentation } from './newsletter';
+import { AI_LABEL_TEXT } from './state-view';
 
 export type HomeLevel = 'all' | 'town' | 'county' | 'state';
 
@@ -10,6 +12,8 @@ interface HomeOptions {
   cardFeed: CardFeed;
   board: AgendaBoard;
   newsletter: NewsletterDigestResponse;
+  /** Explicit route access lane. Any value other than reviewer_internal fails closed. */
+  access?: string;
   demo?: boolean;
   sampleBoard?: AgendaBoard;
 }
@@ -70,20 +74,21 @@ function statusText(status: string): string {
 }
 
 function sourceTotal(items: NewsletterItem[]): number {
-  return new Set(items.flatMap((item) => item.sourceIds)).size;
+  return items.reduce((total, item) => total + item.sourceTrail.length, 0);
 }
 
 function makeModel(opts: HomeOptions, level: HomeLevel): HomeModel {
   const digest = opts.newsletter.digests[0] ?? null;
   const digestItems = digest?.items ?? [];
   const newsletterItems = digestItems.filter((item) => matchesItemLevel(level, item));
+  const townBoardVisible = level === 'all' || level === 'town';
   return {
     level,
     presentCards: opts.cardFeed.cards.filter(isPresentCard).filter((card) => matchesLevel(level, card)),
     newsletterItems,
     primaryDigest: digest,
-    boardCards: allBoardCards(opts.board),
-    demoCards: opts.sampleBoard ? allBoardCards(opts.sampleBoard) : [],
+    boardCards: townBoardVisible ? allBoardCards(opts.board) : [],
+    demoCards: townBoardVisible && opts.sampleBoard ? allBoardCards(opts.sampleBoard) : [],
     sourceCount: sourceTotal(newsletterItems),
   };
 }
@@ -129,27 +134,32 @@ function honestEmpty(title: string, body: string, source: string): HTMLElement {
 }
 
 function demoBanner(): HTMLElement {
-  return el('div', { class: 'gw-home-demo', role: 'status', 'data-test': 'home-demo-banner' }, [
-    'DEV SAMPLE — populated Home modules use backend test-seed projection data, not real Alpine records.',
+  return el('div', {
+    class: 'gw-home-demo',
+    role: 'status',
+    'data-test': 'home-demo-banner',
+    'data-origin': 'fixture',
+  }, [
+    'SYNTHETIC DESIGN FIXTURE — not a live read. DEV SAMPLE synthetic modules: Fast Agenda, Transparency Alerts, and Source Vault. Civic Weather, Active Issues, Timeline Preview, and newsletter content remain reviewed snapshot data; designed gaps remain empty.',
   ]);
 }
 
-function civicWeather(model: HomeModel, demo: boolean): HTMLElement {
+function civicWeather(model: HomeModel, nested = false): HTMLElement {
   const realEvents = model.presentCards.length;
   const items = [
-    { label: 'Reviewed records', value: String(realEvents), state: realEvents ? 'REAL timeline cards in the reviewer-internal feed.' : 'No reviewed activity summary yet — the archive is still filling in.' },
-    { label: 'Agenda cards', value: String(model.boardCards.length), state: model.boardCards.length ? 'REAL agenda projection cards.' : 'No reviewed agenda-card rollup yet.' },
-    { label: 'Source receipts', value: String(model.sourceCount), state: model.sourceCount ? 'REAL digest source trails.' : 'Source counts need the vault projection.' },
-    { label: 'Changes/votes', value: demo ? 'sample' : '—', state: 'No weekly change/vote aggregate endpoint is live yet.' },
+    { key: 'reviewed-records', label: 'Reviewed records', value: String(realEvents), state: realEvents ? 'REAL timeline cards in the reviewer-internal feed.' : 'No reviewed activity summary yet — the archive is still filling in.', origin: 'reviewed_snapshot' },
+    { key: 'agenda-cards', label: 'Agenda cards', value: String(model.boardCards.length), state: model.boardCards.length ? 'REAL agenda projection cards.' : 'No reviewed agenda-card rollup yet.', origin: 'reviewed_snapshot' },
+    { key: 'source-receipts', label: 'Source receipts', value: String(model.sourceCount), state: model.sourceCount ? 'REAL digest source trails.' : 'Source counts need the vault projection.', origin: 'reviewed_snapshot' },
+    { key: 'changes-votes', label: 'Changes/votes', value: '—', state: 'No weekly change/vote aggregate endpoint is live yet.', origin: 'designed-gap' },
   ];
   return el('section', { class: 'gw-home-weather', 'data-test': 'home-civic-weather' }, [
     el('div', {}, [
       el('p', { class: 'gw-home-kicker' }, ['CIVIC WEATHER']),
-      el('h1', {}, ['Alpine government dashboard']),
+      el(nested ? 'h2' : 'h1', {}, ['Alpine government dashboard']),
       el('p', {}, ['Reviewed records first, honest-empty where the archive or backend projection is not ready yet.']),
     ]),
     el('div', { class: 'gw-home-weather-grid' }, items.map((item) =>
-      el('article', { class: 'gw-home-stat' }, [
+      el('article', { class: 'gw-home-stat', 'data-metric': item.key, 'data-origin': item.origin }, [
         el('span', {}, [item.label]),
         el('strong', {}, [item.value]),
         el('small', {}, [item.state]),
@@ -161,21 +171,30 @@ function civicWeather(model: HomeModel, demo: boolean): HTMLElement {
 function fastAgenda(model: HomeModel, demo: boolean): HTMLElement {
   const cards = demo ? model.demoCards.slice(0, 3) : model.boardCards.slice(0, 3);
   if (!cards.length) {
+    if (demo) {
+      return widget('Fast Agenda', 'DEV SAMPLE', [
+        honestEmpty(
+          'No sample agenda cards for this level',
+          'The synthetic Alpine/Town agenda cards do not populate County or State filters.',
+          'Source: explicit reviewer design fixture; no civic record is inferred for this filter.',
+        ),
+      ], { 'data-test': 'home-fast-agenda', 'data-origin': 'fixture' });
+    }
     return widget('Fast Agenda', 'NEXT MEETING', [
       honestEmpty(
         'No upcoming reviewed meeting records',
         'Meeting agenda cards will appear here after the agenda-thread and meeting-id contract lands in the reviewed projection.',
         'Source: GOV-605 board projection today reports an honest empty board for the real Alpine corpus.',
       ),
-    ], { 'data-test': 'home-fast-agenda' });
+    ], { 'data-test': 'home-fast-agenda', 'data-origin': 'reviewed_snapshot' });
   }
   return widget('Fast Agenda', demo ? 'DEV SAMPLE' : 'NEXT MEETING', [
-    ...cards.map((card) => el('article', { class: 'gw-home-mini-card', 'data-test': 'home-agenda-card' }, [
+    ...cards.map((card) => el('article', { class: 'gw-home-mini-card', 'data-test': 'home-agenda-card', 'data-origin': demo ? 'fixture' : 'reviewed_snapshot' }, [
       el('span', { class: 'gw-home-chip gw-level-town' }, ['TOWN']),
       el('h3', {}, [card.agendaItemTitle ?? card.agendaItemId]),
       el('p', {}, [[card.meetingDate, card.meetingBody, card.laneLabel].filter(Boolean).join(' · ')]),
     ])),
-  ], { 'data-test': 'home-fast-agenda' });
+  ], { 'data-test': 'home-fast-agenda', 'data-origin': demo ? 'fixture' : 'reviewed_snapshot' });
 }
 
 function transparencyAlerts(demo: boolean): HTMLElement {
@@ -186,15 +205,15 @@ function transparencyAlerts(demo: boolean): HTMLElement {
         'Late packet, missing-video, and quiet-edit alerts will appear here when the version-diff pipeline is live and reviewed.',
         'Source: future document version-diff projection; no claims are made before that contract exists.',
       ),
-    ], { 'data-test': 'home-transparency-alerts' });
+    ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'designed-gap' });
   }
   return widget('Transparency Alerts', 'DEV SAMPLE', [
-    el('article', { class: 'gw-home-mini-card' }, [
+    el('article', { class: 'gw-home-mini-card', 'data-origin': 'fixture' }, [
       el('span', { class: 'gw-home-chip gw-tone-caution' }, ['SAMPLE']),
       el('h3', {}, ['Packet changed after posting']),
       el('p', {}, ['Demonstration only — not a real Alpine alert.']),
     ]),
-  ], { 'data-test': 'home-transparency-alerts' });
+  ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'fixture' });
 }
 
 function activeIssues(model: HomeModel): HTMLElement {
@@ -205,11 +224,14 @@ function activeIssues(model: HomeModel): HTMLElement {
         'Issue rows derive from reviewed topic/card records only. Empty filters mean no matching reviewed records, not a broken dashboard.',
         'Source: GOV-347 card feed and GOV-149 topic projection.',
       ),
-    ], { 'data-test': 'home-active-issues' });
+    ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' });
   }
   return widget('Active Issues', 'SOURCE-BACKED ROWS', [
+    el('p', { class: 'gw-home-source-note', 'data-test': 'home-issues-record-disclosure' }, [
+      'Reviewed card-feed records — not typed or inferred issue threads.',
+    ]),
     el('div', { class: 'gw-home-issue-list' }, model.presentCards.slice(0, 5).map((card) =>
-      el('article', { class: 'gw-home-issue-row', 'data-test': 'home-issue-row' }, [
+      el('article', { class: 'gw-home-issue-row', 'data-test': 'home-issue-row', 'data-origin': 'reviewed_snapshot' }, [
         el('span', { class: 'gw-home-chip gw-level-town' }, ['TOWN']),
         el('div', {}, [
           el('h3', {}, [titleForCard(card)]),
@@ -218,7 +240,7 @@ function activeIssues(model: HomeModel): HTMLElement {
         el('a', { href: '#/cards', class: 'gw-home-link' }, ['receipts ›']),
       ]),
     )),
-  ], { 'data-test': 'home-active-issues' });
+  ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' });
 }
 
 function timelinePreview(model: HomeModel): HTMLElement {
@@ -229,17 +251,31 @@ function timelinePreview(model: HomeModel): HTMLElement {
         'Latest events will show here directly from the reviewer-internal Alpine projection.',
         'Source: the same reviewed read/card projection that powers #/timeline and #/cards.',
       ),
-    ], { 'data-test': 'home-timeline-preview' });
+    ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' });
   }
   return widget('Timeline Preview', 'LATEST REVIEWED EVENTS', [
     el('ol', { class: 'gw-home-timeline' }, model.presentCards.slice(0, 4).map((card) =>
-      el('li', { 'data-test': 'home-timeline-event' }, [
+      el('li', { 'data-test': 'home-timeline-event', 'data-origin': 'reviewed_snapshot' }, [
         el('time', {}, [card.date ?? 'undated']),
-        el('span', {}, [titleForCard(card)]),
+        el('div', {}, [
+          el('span', {}, [titleForCard(card)]),
+          el('div', { class: 'gw-home-record-meta' }, [
+            el('span', {
+              class: 'gw-home-chip',
+              'data-test': 'home-timeline-status',
+              'data-status': card.status,
+            }, [statusText(card.status)]),
+            ...(card.confidence_label ? [el('span', { class: 'gw-home-chip', 'data-test': 'home-timeline-confidence' }, [card.confidence_label])] : []),
+            ...(card.provenance_status ? [el('span', { class: 'gw-home-chip', 'data-test': 'home-timeline-provenance' }, [card.provenance_status])] : []),
+            el('a', { href: '#/cards', class: 'gw-home-link', 'data-test': 'home-timeline-receipts' }, [
+              `${card.evidence?.length ?? 0} receipt${(card.evidence?.length ?? 0) === 1 ? '' : 's'} ›`,
+            ]),
+          ]),
+        ]),
       ]),
     )),
     el('a', { href: '#/timeline', class: 'gw-home-link' }, ['Timeline ›']),
-  ], { 'data-test': 'home-timeline-preview' });
+  ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' });
 }
 
 function sourceVault(model: HomeModel, demo: boolean): HTMLElement {
@@ -248,30 +284,86 @@ function sourceVault(model: HomeModel, demo: boolean): HTMLElement {
       honestEmpty(
         'Source statistics are not wired yet',
         'Counts, hash verification, and latest-source summaries will appear when the source-vault projection is live.',
-        model.sourceCount ? `The digest currently exposes ${model.sourceCount} real source trail entr${model.sourceCount === 1 ? 'y' : 'ies'}; no vault percentages are inferred.` : 'Source: future source-registry stats projection; no hardcoded numbers.',
+        'Source: future source-registry stats projection; no vault percentages or verification totals are inferred.',
       ),
-    ], { 'data-test': 'home-source-vault' });
+      ...(model.sourceCount ? [el('p', { class: 'gw-home-source-note', 'data-origin': 'reviewed_snapshot' }, [
+        `The selected digest items carry ${model.sourceCount} source trail receipt${model.sourceCount === 1 ? '' : 's'}.`,
+      ])] : []),
+    ], { 'data-test': 'home-source-vault', 'data-origin': 'designed-gap' });
   }
   return widget('Source Vault', 'DEV SAMPLE', [
     el('p', {}, ['Sample source statistics would render here only in demo mode.']),
-  ], { 'data-test': 'home-source-vault' });
+  ], { 'data-test': 'home-source-vault', 'data-origin': 'fixture' });
+}
+
+function latestVerdict(): HTMLElement {
+  return widget('Latest Verdict', 'PROMISE CONFLICTS', [
+    honestEmpty(
+      'No reviewed promise-versus-action verdict is available',
+      'Reviewed statements are not verdicts. This slot stays unscored until the backend supplies a saved quote, a recorded action, a reviewed comparison, and the receipts supporting that comparison.',
+      'Source: future reviewed promise-versus-action projection; no official, score, or verdict is inferred from the card feed.',
+    ),
+    el('a', { href: '#/power', class: 'gw-home-link' }, ['Open the Power Tracker baseline ›']),
+  ], { 'data-test': 'home-latest-verdict-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' });
+}
+
+function languageWatch(): HTMLElement {
+  return widget('Language Watch', 'AI-PRESENTED REVIEW SLOT', [
+    honestEmpty(
+      'No reviewed language-watch flags are available',
+      'The Home route does not classify agenda wording on its own. Exact excerpts, their source anchors, an AI-presented label, and reviewer state must arrive together before this area can identify wording for attention.',
+      'Source: future reviewed language-watch projection; ordinary agenda and statement text remains unflagged.',
+    ),
+  ], { 'data-test': 'home-language-watch-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' });
+}
+
+function explainerVideo(): HTMLElement {
+  return widget('How Government Watchdog Works', 'EXPLAINER VIDEO', [
+    honestEmpty(
+      'Explainer video is not published in this app yet',
+      'The baseline keeps a place for the visual walkthrough, but the production route needs an approved media asset, captions, and a text transcript before a play control can be offered.',
+      'Source: product media capability; no video URL or playback status is connected.',
+    ),
+  ], { 'data-test': 'home-explainer-video-unavailable', 'data-origin': 'designed-gap' });
 }
 
 function simpleThings(model: HomeModel): HTMLElement {
   const items = model.newsletterItems.slice(0, 3);
   if (!items.length) {
-    return honestEmpty(
-      'No reviewed briefing items for this filter',
-      'The front-page summary uses reviewed digest or briefing items verbatim when present.',
-      'Source: Stage 4.05 digest / Stage 4.08 briefing trail.',
-    );
+    return el('section', { class: 'gw-simple-things', 'data-test': 'home-simple-things', 'data-origin': 'reviewed_snapshot' }, [
+      el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
+      honestEmpty(
+        'No reviewed briefing items for this filter',
+        'The front-page summary uses reviewed digest or briefing items verbatim when present.',
+        'Source: Stage 4.05 digest / Stage 4.08 briefing trail.',
+      ),
+    ]);
   }
-  return el('section', { class: 'gw-simple-things', 'data-test': 'home-simple-things' }, [
+  return el('section', { class: 'gw-simple-things', 'data-test': 'home-simple-things', 'data-origin': 'reviewed_snapshot' }, [
     el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
-    ...items.map((item, idx) => el('article', { class: 'gw-simple-thing', 'data-test': 'home-simple-item' }, [
-      el('span', {}, [String(idx + 1)]),
-      el('p', {}, [item.summary ?? item.title ?? item.id]),
-    ])),
+    ...items.map((item, idx) => {
+      const presentation = claimPresentation(item.labels.claimStatus, item.labels.aiPresented);
+      return el('article', { class: 'gw-simple-thing', 'data-test': 'home-simple-item', 'data-origin': 'reviewed_snapshot' }, [
+        el('span', {}, [String(idx + 1)]),
+        el('div', {}, [
+          el('p', {}, [item.summary ?? item.title ?? item.id]),
+          el('div', { class: 'gw-home-record-meta' }, [
+            el('span', {
+              class: `gw-home-chip gw-tone-${presentation.tone}`,
+              'data-test': 'home-simple-claim-label',
+              'data-claim': presentation.claimStatus,
+            }, [presentation.label]),
+            ...(presentation.ai ? [el('span', { class: 'gw-home-chip gw-badge-ai', 'data-test': 'home-simple-ai-label' }, [AI_LABEL_TEXT])] : []),
+            ...(item.labels.correctionStatus !== 'none'
+              ? [el('span', { class: 'gw-home-chip', 'data-test': 'home-simple-correction-label' }, [`Correction: ${item.labels.correctionStatus}`])]
+              : []),
+            el('a', { href: `#/newsletter?id=${encodeURIComponent(item.newsletterId)}`, class: 'gw-home-link', 'data-test': 'home-simple-item-receipts' }, [
+              `${item.sourceTrail.length} receipt${item.sourceTrail.length === 1 ? '' : 's'} ›`,
+            ]),
+          ]),
+        ]),
+      ]);
+    }),
   ]);
 }
 
@@ -283,16 +375,74 @@ function simpleFeatured(model: HomeModel): HTMLElement {
     ], { 'data-test': 'home-simple-featured' });
   }
   const sourceCount = item.sourceTrail.length;
-  return el('article', { class: 'gw-simple-feature', 'data-test': 'home-simple-featured' }, [
+  const presentation = claimPresentation(item.labels.claimStatus, item.labels.aiPresented);
+  return el('article', { class: 'gw-simple-feature', 'data-test': 'home-simple-featured', 'data-origin': 'reviewed_snapshot' }, [
     el('p', { class: 'gw-home-kicker' }, ['FEATURED STORY']),
     el('h2', {}, [item.title ?? item.summary ?? item.id]),
-    el('p', { class: 'gw-simple-dek' }, [`${item.recordDate} · ${item.labels.claimStatus}`]),
+    el('div', { class: 'gw-simple-dek gw-home-record-meta' }, [
+      el('span', {}, [item.recordDate]),
+      el('span', {
+        class: `gw-home-chip gw-tone-${presentation.tone}`,
+        'data-test': 'home-simple-feature-claim-label',
+        'data-claim': presentation.claimStatus,
+      }, [presentation.label]),
+      ...(presentation.ai ? [el('span', { class: 'gw-home-chip gw-badge-ai', 'data-test': 'home-simple-feature-ai-label' }, [AI_LABEL_TEXT])] : []),
+      ...(item.labels.correctionStatus !== 'none'
+        ? [el('span', { class: 'gw-home-chip', 'data-test': 'home-simple-feature-correction-label' }, [`Correction: ${item.labels.correctionStatus}`])]
+        : []),
+    ]),
     el('div', { class: 'gw-simple-columns' }, [
-      el('section', {}, [el('h3', {}, ['PLAIN-ENGLISH SUMMARY ', el('span', { class: 'gw-home-chip gw-badge-ai' }, ['AI'])]), el('p', {}, [item.summary ?? 'Reviewed digest item.'])]),
+      el('section', {}, [el('h3', {}, ['PLAIN-ENGLISH SUMMARY']), el('p', {}, [item.summary ?? 'Reviewed digest item.'])]),
       el('section', {}, [el('h3', {}, ['WHY IT MATTERS']), el('p', {}, ['This item is included only because it exists in the reviewer-internal digest trail.'])]),
       el('section', {}, [el('h3', {}, ['NEXT ACTION']), el('p', {}, ['Open the timeline or newsletter detail to inspect the source trail.'])]),
     ]),
-    el('a', { href: '#/newsletter', class: 'gw-home-link' }, [`✓ ${sourceCount} source${sourceCount === 1 ? '' : 's'} verified ›`]),
+    el('a', { href: '#/newsletter', class: 'gw-home-link', 'data-test': 'home-simple-source-link' }, [
+      `View ${sourceCount} source trail receipt${sourceCount === 1 ? '' : 's'} ›`,
+    ]),
+  ]);
+}
+
+function editionHistorySelector(): HTMLElement {
+  const id = 'gw-home-edition-history';
+  return el('div', {
+    class: 'gw-home-edition-history',
+    'data-test': 'home-edition-history-unavailable',
+    'data-origin': 'designed-gap',
+  }, [
+    el('label', { for: id }, ['EDITION VERSIONS — archived updates']),
+    el('select', {
+      id,
+      disabled: '',
+      'aria-disabled': 'true',
+      'data-test': 'home-edition-history-select',
+    }, [el('option', {}, ['Edition history unavailable'])]),
+    el('p', {}, ['The digest coverage period is not version history. This selector will activate only when the backend provides reviewed edition versions and their archive receipts.']),
+  ]);
+}
+
+function simpleSearchTools(): HTMLElement {
+  const inputId = 'gw-home-simple-search';
+  return el('section', { class: 'gw-simple-tools', 'data-test': 'home-simple-90-day-tools', 'data-origin': 'designed-gap' }, [
+    el('div', { class: 'gw-simple-tool-copy' }, [
+      el('p', { class: 'gw-home-kicker' }, ['SEARCH THE RECORD']),
+      el('h2', {}, ['Simple 90-day search']),
+      el('p', {}, ['Past 90 days is the intended Simple reading window. The connected digest does not yet provide a reviewed 90-day search index, so no range, match count, or result is claimed here.']),
+    ]),
+    el('div', { class: 'gw-simple-search', 'data-test': 'home-simple-search-unavailable' }, [
+      el('label', { for: inputId }, ['Search agendas, meetings, documents, and issues']),
+      el('div', { class: 'gw-simple-search-row' }, [
+        el('input', {
+          id: inputId,
+          type: 'search',
+          disabled: '',
+          'aria-disabled': 'true',
+          placeholder: '90-day search unavailable',
+          'data-test': 'home-simple-search-input',
+        }),
+        el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['Search unavailable']),
+      ]),
+      el('small', {}, ['Designed slot · awaiting a reviewed archive-search projection.']),
+    ]),
   ]);
 }
 
@@ -300,16 +450,51 @@ function simpleRails(model: HomeModel): HTMLElement {
   return el('aside', { class: 'gw-simple-rail', 'data-test': 'home-simple-rail' }, [
     widget('Sources / Receipts', 'RECEIPTS', [
       model.sourceCount
-        ? el('p', {}, [`${model.sourceCount} unique source trail entr${model.sourceCount === 1 ? 'y' : 'ies'} in the selected digest items.`])
+        ? el('p', {}, [`${model.sourceCount} source trail receipt${model.sourceCount === 1 ? '' : 's'} in the selected digest items.`])
         : honestEmpty('No source trail in this filter', 'Receipts appear when selected briefing items carry source trails.', 'Source: digest sourceTrail.'),
-    ]),
+    ], { 'data-origin': 'reviewed_snapshot' }),
     widget('History Looks Back', 'ARCHIVE', [
       model.newsletterItems[0]
         ? el('p', {}, [model.newsletterItems[0].summary ?? 'Reviewed historical item available.'])
-        : honestEmpty('No historical echo yet', 'Historical items appear only when verified briefing items are present.', 'Source: Stage 4.08 reviewed historical briefing.'),
-    ]),
+        : honestEmpty('No historical echo yet', 'Historical items appear only when reviewed digest items are present.', 'Source: Stage 4.08 reviewed historical briefing.'),
+      editionHistorySelector(),
+    ], { 'data-origin': 'reviewed_snapshot' }),
     widget('Publication Honesty Tracker', 'HONESTY', [
       honestEmpty('Metrics not computed yet', 'Sourced, balanced, clear, and updated scores are not self-asserted until digest metadata can compute them.', 'Source: future digest-metadata metrics projection.'),
+    ], { 'data-origin': 'designed-gap' }),
+  ]);
+}
+
+function localEditionGaps(): HTMLElement {
+  return el('div', { class: 'gw-simple-local-boxes', 'data-test': 'home-local-edition-gaps', 'data-origin': 'designed-gap' }, [
+    widget('County', 'HONEST EMPTY', [honestEmpty('No county dashboard yet', 'County-level rows filter real data and show empty until reviewed county records land.', 'Source: same Alpine-first projections.')]),
+    widget('State', 'HONEST EMPTY', [honestEmpty('No state dashboard yet', 'State-level rows filter real data and show empty until reviewed state records land.', 'Source: same Alpine-first projections.')]),
+  ]);
+}
+
+function advancedBriefingGroups(model: HomeModel): HTMLElement {
+  return el('div', { class: 'gw-home-advanced-briefing', 'data-test': 'home-advanced-briefing' }, [
+    simpleSearchTools(),
+    simpleThings(model),
+    el('div', { class: 'gw-home-advanced-briefing-grid' }, [
+      simpleFeatured(model),
+      simpleRails(model),
+    ]),
+    localEditionGaps(),
+  ]);
+}
+
+function simpleAccountabilityGroups(model: HomeModel, opts: HomeOptions): HTMLElement {
+  return el('section', {
+    class: 'gw-simple-accountability',
+    'data-test': 'home-simple-accountability',
+    'aria-label': 'Accountability dashboard details',
+  }, [
+    civicWeather(model, true),
+    el('div', { class: 'gw-home-grid' }, [
+      el('div', { class: 'gw-home-col' }, [activeIssues(model), timelinePreview(model)]),
+      el('div', { class: 'gw-home-col' }, [latestVerdict(), sourceVault(model, Boolean(opts.demo))]),
+      el('div', { class: 'gw-home-col' }, [explainerVideo(), languageWatch()]),
     ]),
   ]);
 }
@@ -317,12 +502,14 @@ function simpleRails(model: HomeModel): HTMLElement {
 function renderAdvanced(root: HTMLElement, model: HomeModel, opts: HomeOptions, setLevel: (level: HomeLevel) => void): void {
   root.append(
     levelFilter(model.level, setLevel),
-    civicWeather(model, Boolean(opts.demo)),
+    civicWeather(model),
     el('div', { class: 'gw-home-grid', 'data-test': 'home-grid' }, [
       el('div', { class: 'gw-home-col' }, [fastAgenda(model, Boolean(opts.demo)), transparencyAlerts(Boolean(opts.demo))]),
       el('div', { class: 'gw-home-col' }, [activeIssues(model), timelinePreview(model)]),
-      el('div', { class: 'gw-home-col' }, [sourceVault(model, Boolean(opts.demo))]),
+      el('div', { class: 'gw-home-col' }, [latestVerdict(), sourceVault(model, Boolean(opts.demo)), explainerVideo()]),
     ]),
+    languageWatch(),
+    advancedBriefingGroups(model),
   );
 }
 
@@ -338,17 +525,16 @@ function renderSimple(root: HTMLElement, model: HomeModel, opts: HomeOptions, se
         el('p', {}, [dateline]),
       ]),
       levelFilter(model.level, setLevel),
+      simpleSearchTools(),
       simpleThings(model),
       el('div', { class: 'gw-simple-layout' }, [
         el('aside', { class: 'gw-simple-rail' }, [fastAgenda(model, Boolean(opts.demo)), transparencyAlerts(Boolean(opts.demo))]),
         simpleFeatured(model),
         simpleRails(model),
       ]),
-      el('div', { class: 'gw-simple-local-boxes' }, [
-        widget('County', 'HONEST EMPTY', [honestEmpty('No county dashboard yet', 'County-level rows filter real data and show empty until reviewed county records land.', 'Source: same Alpine-first projections.')]),
-        widget('State', 'HONEST EMPTY', [honestEmpty('No state dashboard yet', 'State-level rows filter real data and show empty until reviewed state records land.', 'Source: same Alpine-first projections.')]),
-      ]),
-      el('footer', { class: 'gw-simple-footer' }, ['We Watch. We Report. You Decide. · Switch to Advanced for the full data dashboard.']),
+      localEditionGaps(),
+      simpleAccountabilityGroups(model, opts),
+      el('footer', { class: 'gw-simple-footer' }, ['We Watch. We Report. You Decide. · Switch to Advanced for the denser data-workbench layout.']),
     ]),
   );
 }
@@ -357,6 +543,23 @@ export function renderHome(root: HTMLElement, opts: HomeOptions): void {
   ensureHomeStyle();
   root.className = 'gw-home-root';
   root.replaceChildren();
+  const access = opts.access ?? opts.cardFeed.access;
+  const sourceLanesAreReviewerInternal = opts.cardFeed.access === 'reviewer_internal'
+    && opts.board.access === 'reviewer_internal'
+    && opts.newsletter.access === 'reviewer_internal'
+    && (!opts.demo || !opts.sampleBoard || opts.sampleBoard.access === 'reviewer_internal');
+  if (access !== 'reviewer_internal' || !sourceLanesAreReviewerInternal) {
+    root.append(el('section', {
+      class: 'gw-state',
+      'data-state': 'empty',
+      'data-test': 'state-reviewer-gated',
+      role: 'status',
+    }, [
+      el('h1', {}, ['Reviewer-internal only']),
+      el('p', {}, ['The Alpine Home dashboard is gated to the reviewer-internal lane. The public lane renders no civic records.']),
+    ]));
+    return;
+  }
   let level: HomeLevel = 'all';
   const draw = (): void => {
     root.replaceChildren();
@@ -377,7 +580,7 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-level{min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);background:var(--gw-surface);color:var(--gw-text-secondary);border-radius:var(--gw-radius-pill);padding:0 var(--gw-space-5);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
 .gw-home-level[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on);border-color:var(--gw-accent)}
 .gw-home-weather{display:grid;grid-template-columns:minmax(280px,1fr) 1.5fr;gap:var(--gw-space-5);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);margin-bottom:var(--gw-space-5)}
-.gw-home-weather h1{margin:0;font-size:var(--gw-text-display);line-height:var(--gw-leading-tight)}
+.gw-home-weather h1,.gw-home-weather h2{margin:0;font-size:var(--gw-text-display);line-height:var(--gw-leading-tight)}
 .gw-home-weather p{margin:.35rem 0 0;color:var(--gw-text-secondary)}
 .gw-home-weather-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gw-space-3)}
 .gw-home-stat{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
@@ -388,9 +591,11 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-widget{background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-5)}
 .gw-home-widget h2{margin:0;font-size:var(--gw-text-lg);line-height:var(--gw-leading-tight)}
 .gw-home-widget-head{border-bottom:var(--gw-border-w) solid var(--gw-border-subtle);padding-bottom:var(--gw-space-3);margin-bottom:var(--gw-space-4)}
+.gw-home-widget[data-tone="caution"]{border-color:var(--gw-caution-line)}
 .gw-home-empty{background:var(--gw-surface-well);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4);color:var(--gw-text-secondary)}
 .gw-home-empty strong{display:block;color:var(--gw-text);margin-bottom:var(--gw-space-2)}
 .gw-home-empty p{margin:.35rem 0 0}.gw-home-source-note{font-family:var(--gw-font-mono);font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
+.gw-home-widget>.gw-home-link{display:inline-block;margin-top:var(--gw-space-3)}
 .gw-home-demo{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:700;color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3) var(--gw-space-4);margin-bottom:var(--gw-space-5)}
 .gw-home-mini-card,.gw-home-issue-row{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-4);margin-top:var(--gw-space-3)}
 .gw-home-mini-card h3,.gw-home-issue-row h3{margin:.35rem 0;font-size:var(--gw-text-md)}
@@ -399,11 +604,14 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-issue-row{display:grid;grid-template-columns:auto 1fr auto;gap:var(--gw-space-3);align-items:start}
 .gw-home-link{color:var(--gw-info-text);font-weight:700;text-decoration:none}.gw-home-link:hover{text-decoration:underline}
 .gw-home-timeline{list-style:none;margin:0;padding:0;display:grid;gap:var(--gw-space-3)}.gw-home-timeline li{display:grid;grid-template-columns:6.5rem 1fr;gap:var(--gw-space-3);position:relative}.gw-home-timeline time{font-family:var(--gw-font-mono);font-size:var(--gw-text-sm);color:var(--gw-text-muted)}
+.gw-home-record-meta{display:flex;align-items:center;flex-wrap:wrap;gap:var(--gw-space-2);margin-top:var(--gw-space-2);font-family:var(--gw-font);font-style:normal;font-size:var(--gw-text-sm)}
 .gw-simple-home{max-width:1150px;margin:0 auto;font-family:var(--gw-font-serif);background:var(--gw-header-bg);border:var(--gw-border-w) solid var(--gw-rule-strong);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);color:var(--gw-text)}
 .gw-simple-masthead{text-align:center;border-bottom:3px double var(--gw-rule-strong);margin-bottom:var(--gw-space-5);padding-bottom:var(--gw-space-5)}.gw-simple-masthead h1{font-size:var(--gw-text-display);line-height:1;margin:.2rem 0}.gw-simple-masthead p,.gw-simple-masthead blockquote{margin:.25rem 0;color:var(--gw-text-secondary)}
+.gw-simple-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:var(--gw-space-5);align-items:end;border:2px solid var(--gw-rule-strong);background:var(--gw-surface-subtle);padding:var(--gw-space-5);margin-bottom:var(--gw-space-5)}.gw-simple-tools h2{margin:0;font-size:var(--gw-text-xl)}.gw-simple-tool-copy>p:last-child{margin:.35rem 0 0;color:var(--gw-text-secondary)}.gw-simple-search{display:grid;gap:var(--gw-space-2);font-family:var(--gw-font)}.gw-simple-search label,.gw-home-edition-history label{font-size:var(--gw-text-badge);font-weight:800;letter-spacing:1px;text-transform:uppercase}.gw-simple-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--gw-space-2)}.gw-simple-search input,.gw-simple-search button,.gw-home-edition-history select{min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface);color:var(--gw-text);padding:0 var(--gw-space-3);font:600 var(--gw-text-sm)/1 var(--gw-font)}.gw-simple-search button{font-weight:800}.gw-simple-search :disabled,.gw-home-edition-history select:disabled{cursor:not-allowed;opacity:.72}.gw-simple-search small{color:var(--gw-text-muted)}
 .gw-simple-things{border:2px solid var(--gw-rule-strong);padding:var(--gw-space-5);margin-bottom:var(--gw-space-5)}.gw-simple-thing{display:grid;grid-template-columns:2rem 1fr;gap:var(--gw-space-3);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-simple-thing span{font:800 1.4rem/1 var(--gw-font-serif)}
-.gw-simple-layout{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;gap:var(--gw-space-5);align-items:start}.gw-simple-feature{border-top:3px solid var(--gw-rule-strong);border-bottom:3px solid var(--gw-rule-strong);padding:var(--gw-space-5) 0}.gw-simple-feature h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.05;margin:0}.gw-simple-dek{color:var(--gw-text-secondary);font-style:italic}.gw-simple-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-simple-columns h3{font-family:var(--gw-font);font-size:var(--gw-text-kicker);letter-spacing:1.2px;text-transform:uppercase}.gw-simple-rail{display:grid;gap:var(--gw-space-4)}.gw-simple-local-boxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5);margin-top:var(--gw-space-5)}.gw-simple-footer{text-align:center;border-top:3px double var(--gw-rule-strong);margin-top:var(--gw-space-5);padding-top:var(--gw-space-5);color:var(--gw-text-secondary)}
-@media (max-width:980px){.gw-home-weather{grid-template-columns:1fr}.gw-home-weather-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-home-grid{grid-template-columns:1fr 1fr}.gw-home-col:first-child{grid-column:1/-1}.gw-simple-layout{grid-template-columns:1fr}.gw-simple-local-boxes{grid-template-columns:1fr}.gw-simple-columns{grid-template-columns:1fr}}
+.gw-simple-layout{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;gap:var(--gw-space-5);align-items:start}.gw-simple-feature{border-top:3px solid var(--gw-rule-strong);border-bottom:3px solid var(--gw-rule-strong);padding:var(--gw-space-5) 0}.gw-simple-feature h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.05;margin:0}.gw-simple-dek{color:var(--gw-text-secondary);font-style:italic}.gw-simple-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-simple-columns h3{font-family:var(--gw-font);font-size:var(--gw-text-kicker);letter-spacing:1.2px;text-transform:uppercase}.gw-simple-rail{display:grid;gap:var(--gw-space-4)}.gw-home-edition-history{display:grid;gap:var(--gw-space-2);border-top:var(--gw-border-w) solid var(--gw-border);margin-top:var(--gw-space-4);padding-top:var(--gw-space-4);font-family:var(--gw-font)}.gw-home-edition-history p{margin:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-simple-local-boxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5);margin-top:var(--gw-space-5)}.gw-simple-footer{text-align:center;border-top:3px double var(--gw-rule-strong);margin-top:var(--gw-space-5);padding-top:var(--gw-space-5);color:var(--gw-text-secondary)}
+.gw-home-advanced-briefing,.gw-simple-accountability{display:grid;gap:var(--gw-space-5);margin-top:var(--gw-space-6);padding-top:var(--gw-space-6);border-top:3px double var(--gw-rule-strong)}.gw-home-advanced-briefing-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.5fr);gap:var(--gw-space-5);align-items:start}.gw-home-advanced-briefing .gw-simple-things{margin-bottom:0}.gw-simple-accountability .gw-home-weather{margin-bottom:0}
+@media (max-width:980px){.gw-home-weather{grid-template-columns:1fr}.gw-home-weather-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-home-grid{grid-template-columns:1fr 1fr}.gw-home-col:first-child{grid-column:1/-1}.gw-simple-tools,.gw-simple-layout,.gw-home-advanced-briefing-grid{grid-template-columns:1fr}.gw-simple-local-boxes{grid-template-columns:1fr}.gw-simple-columns{grid-template-columns:1fr}}
 @media (max-width:640px){.gw-home-weather-grid,.gw-home-grid{grid-template-columns:1fr}.gw-home-issue-row{grid-template-columns:1fr}.gw-home-timeline li{grid-template-columns:1fr}.gw-simple-home{padding:var(--gw-space-4)}}`;
 
 let styleInjected = false;

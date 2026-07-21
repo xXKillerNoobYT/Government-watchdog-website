@@ -72,6 +72,8 @@ describe('GOV-665 Fast Agenda page', () => {
     renderFastAgenda(root, { ...SAMPLE_BOARD, access: 'public' }, 'sample');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="fast-agenda-card"]')).toBeNull();
+    expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
+    expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
   });
 });
 
@@ -86,6 +88,52 @@ describe('GOV-665 Timeline levels and event filters', () => {
     expect(root.querySelector('[data-test="timeline-hybrid-intro"]')?.textContent).toContain('existing fail-closed record cards');
     expect(root.querySelector('[data-test="timeline-filter-form"]')).not.toBeNull();
     expect(root.textContent).toContain('County and State lanes remain unavailable');
+    expect(root.querySelector('[data-test="timeline-map"]')?.getAttribute('data-mode')).toBe('advanced');
+    expect(root.querySelectorAll('[data-test="timeline-map-event"]')).toHaveLength(GRAPH_REAL.records!.length);
+    expect(root.querySelector('[data-test="timeline-county-gap"]')?.textContent).toContain('No reviewed county events');
+    expect(root.querySelector('[data-test="timeline-state-gap"]')?.textContent).toContain('No reviewed state events');
+    expect(root.querySelector('[data-test="timeline-connector-gap"]')?.textContent).toContain('typed cross-record issue edges');
+    expect(root.querySelector('[data-test="timeline-tools-unavailable"]')?.textContent).toContain('archive-completeness metadata');
+    expect(root.querySelectorAll('[data-test="timeline-tools-unavailable"] button:disabled')).toHaveLength(4);
+    expect(root.querySelector('[data-test="timeline-map"]')?.textContent).toContain('not an inferred event date');
+  });
+
+  it('keeps map-marker navigation on the Timeline route and focuses the reviewed card', () => {
+    window.location.hash = '#/timeline?reviewer=1';
+    renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const marker = root.querySelector<HTMLButtonElement>('[data-test="timeline-map-event"]')!;
+    const targetId = root.querySelector<HTMLElement>('.gw-timeline-record-anchor')!.id;
+
+    marker.click();
+
+    expect(window.location.hash).toBe('#/timeline?reviewer=1');
+    expect(document.activeElement?.id).toBe(targetId);
+  });
+
+  it('orders map markers oldest-to-newest to match the left-to-right date axis', () => {
+    const base = GRAPH_REAL.records![0];
+    const source = base.evidence[0]!;
+    const dated: ReadApiResponse = {
+      ...GRAPH_REAL,
+      records: [
+        { ...base, statement_id: 'newer', agenda_item_id: null, evidence: [{ ...source, source_date: '2026-07-20', scan_date: null, last_validated_utc: null }] },
+        { ...base, statement_id: 'older', agenda_item_id: null, evidence: [{ ...source, source_date: '2025-01-03', scan_date: null, last_validated_utc: null }] },
+      ],
+    };
+
+    renderTimelineLevels(root, dated, new URLSearchParams(), 'real');
+
+    expect([...root.querySelectorAll<HTMLElement>('[data-test="timeline-map-event"]')].map((node) => node.dataset.date))
+      .toEqual(['2025-01-03', '2026-07-20']);
+  });
+
+  it('never labels reviewed Timeline or Boards data as a sample fixture', () => {
+    renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams('demo=sample'), 'real');
+    expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
+
+    renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams('demo=sample'), 'real');
+    expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
+    expect(root.querySelector('[data-test="boards-topic-context-card"]')).not.toBeNull();
   });
 
   it('shows an honest empty state instead of inventing records for unmatched filters', () => {
@@ -116,26 +164,53 @@ describe('GOV-665 Timeline levels and event filters', () => {
     renderTimelineLevels(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="record-card"]')).toBeNull();
+    expect(root.querySelector('[data-test="timeline-map"]')).toBeNull();
   });
 });
 
 describe('GOV-665 Boards directory and detail', () => {
-  it('renders only real concept-graph body/topic nodes in the directory', () => {
+  it('never relabels reviewed civic topics as government body cards', () => {
     renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
-    expect(root.querySelector('[data-test="boards-directory-note"]')?.textContent).toContain('No scores');
-    expect(root.querySelectorAll('[data-test="board-directory-card"]').length).toBeGreaterThan(1);
+    expect(root.querySelector('[data-test="boards-advanced-workbench"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="boards-directory-note"]')?.textContent).toContain('civic topics, not policy-cleared government body records');
+    expect(root.querySelector('[data-test="board-directory-card"]')).toBeNull();
+    expect(root.querySelectorAll('[data-test="boards-topic-context-card"]').length).toBeGreaterThan(1);
+    expect(root.querySelector('[data-test="boards-bodies-gap"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="boards-cadence-gap"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="boards-members-gap"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="boards-links-gap"]')).not.toBeNull();
   });
 
-  it('renders detail without scores and with honest-empty member names/roles', () => {
+  it('rejects a topic id as a body detail while preserving its Timeline path', () => {
     renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams('id=topic:alpine:budget-taxes'), 'real');
-    expect(root.querySelector('[data-test="board-detail"]')?.textContent).toContain('Town budget and taxes');
-    expect(root.querySelector('[data-test="board-no-scores"]')?.textContent).toContain('No scores');
-    expect(root.querySelector('[data-test="board-members"]')?.textContent).toContain('No reviewed member-name/role rows');
+    expect(root.querySelector('[data-test="board-detail"]')).toBeNull();
+    expect(root.querySelector('[data-test="boards-topic-not-body"]')?.textContent).toContain('Town budget and taxes is a reviewed civic topic');
+    expect(root.querySelector('[data-test="boards-topic-not-body"] a')?.getAttribute('href')).toContain('#/timeline?search=Town%20budget%20and%20taxes');
   });
 
   it('renders zero directory cards outside reviewer-internal access', () => {
     renderBoardsDirectory(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="board-directory-card"]')).toBeNull();
+    expect(root.querySelector('[data-test="boards-topic-context-card"]')).toBeNull();
+    expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
+  });
+
+  it('shows supplied topic aliases as sourced context without relabeling them as boards', () => {
+    renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const suppliedAliasCount = (GRAPH_REAL.topic_tree?.tree.children ?? [])
+      .reduce((count, node) => count + node.topic.sourceAliases.length, 0);
+    expect(root.querySelectorAll('[data-test="boards-topic-alias"]')).toHaveLength(suppliedAliasCount);
+    expect(root.querySelector('[data-test="boards-topic-alias"]')?.textContent).toContain('source alpine_local_corpus');
+  });
+
+  it('keeps the full directory contract in the Simple newspaper composition', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
+
+    expect(root.querySelector('[data-test="boards-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="boards-bodies-gap"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="boards-topic-alias"]').length).toBeGreaterThan(0);
     expect(root.querySelector('[data-test="board-directory-card"]')).toBeNull();
   });
 });

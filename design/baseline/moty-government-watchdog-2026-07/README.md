@@ -17,6 +17,30 @@ interaction illustration, not as production business logic. Production
 behavior must use this repository's access gate, web-safe backend contracts,
 review labels, and source/provenance rules.
 
+## Minimum product standard
+
+This baseline is not limited to fixture previews. Its information types,
+component hierarchy, tool placement, spacing, typography, color, and distinct
+Simple/Advanced reading modes are the minimum presentation standard for the
+corresponding reviewed-data routes.
+
+Every baseline information slot must have one explicit production outcome:
+
+1. **Reviewed value** — render the backend-supplied value and its complete
+   trust/provenance bundle.
+2. **Designed gap** — preserve the slot in the baseline layout and say exactly
+   which reviewed projection, receipt, or account capability is unavailable.
+3. **Device-local control** — keep the interaction only when it is clearly
+   labelled as local preview state and makes no server, identity, subscription,
+   or delivery claim.
+4. **Synthetic fixture** — populate the slot only behind reviewer access plus
+   the explicit design-fixture flag and banner.
+
+Removing a slot merely because the backend has not supplied it is a baseline
+regression. Filling it with an inferred, hard-coded, or synthetic civic value
+on a reviewed route is a data-integrity failure. The governing implementation
+rule is: **real value, designed slot, explicit gap**.
+
 ## Preserved source
 
 - Original archive: `MOTY Government Watchdog Frontend Design.zip`

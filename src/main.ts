@@ -25,6 +25,7 @@ import { createRouter } from './router';
 import type { RouteHandler } from './router';
 import { renderLanding, renderGatedApp } from './ui/landing';
 import { resolveAccess } from './gate/access';
+import { hostedReviewerAccessActive } from './gate/hosted-access';
 import { loadReadModel, isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
@@ -34,11 +35,8 @@ import {
   renderBoardsDirectory,
   renderFastAgenda,
   renderIssueDetail,
-  renderLocation as renderReviewedLocation,
-  renderPowerTracker as renderReviewedPowerTracker,
   renderSourceVault,
   renderTimelineLevels,
-  renderWatchlist as renderReviewedWatchlist,
 } from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
 import {
@@ -464,7 +462,17 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
     });
     return;
   }
-  renderFastAgenda(mount, access ? { ...board, access } : board, sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE, sample);
+  const scopedBoard = access ? { ...board, access } : board;
+  if (sample) {
+    renderFastAgenda(mount, scopedBoard, BOARD_SAMPLE_NOTICE, true);
+    return;
+  }
+  renderFastAgendaDesign(mount, {
+    access: access ?? board.access,
+    fixture: false,
+    board: scopedBoard,
+    notice: BOARD_NOTICE,
+  });
 }
 
 /** GOV-665 Timeline page: level toggles + event-type filters + simple/advanced
@@ -472,6 +480,7 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
 async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchParams): Promise<void> {
   const demo = query.get('demo');
   const access = query.get('access');
+  if (demo !== 'graph') render(mount, loading<ReadApiResponse>());
   const { state, notice } =
     demo === 'graph'
       ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
@@ -512,17 +521,21 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
  * approved request has been admitted.
  */
 function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const requestedAccess = query.get('access');
+  const newsletter = requestedAccess
+    ? { ...NEWSLETTER_DIGEST, access: requestedAccess }
+    : NEWSLETTER_DIGEST;
   const forced = query.get('state');
   if (forced === 'loading' || forced === 'empty' || forced === 'error') {
-    renderNewsletterState(mount, forced as NewsletterStateKind);
+    renderNewsletterState(mount, forced as NewsletterStateKind, newsletter.access);
     return;
   }
   const id = query.get('id');
   if (id) {
-    renderNewsletterDetail(mount, NEWSLETTER_DIGEST, id, NEWSLETTER_NOTICE);
+    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE);
     return;
   }
-  renderNewsletterArchive(mount, NEWSLETTER_DIGEST, NEWSLETTER_NOTICE);
+  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE);
 }
 
 /**
@@ -531,15 +544,18 @@ function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void
  * render honest-empty states or DEV samples only behind `?demo=sample`.
  */
 function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const requestedAccess = query.get('access');
+  const access = requestedAccess ?? CARD_FEED.access;
   renderHome(mount, {
-    cardFeed: CARD_FEED,
-    board: BOARD_PROJECTION,
-    newsletter: NEWSLETTER_DIGEST,
+    access,
+    cardFeed: requestedAccess ? { ...CARD_FEED, access: requestedAccess } : CARD_FEED,
+    board: requestedAccess ? { ...BOARD_PROJECTION, access: requestedAccess } : BOARD_PROJECTION,
+    newsletter: requestedAccess ? { ...NEWSLETTER_DIGEST, access: requestedAccess } : NEWSLETTER_DIGEST,
     // `demo=design` enters the shared handoff-preview session. Home reuses its
     // existing visibly labelled sample widgets while the dedicated handoff
     // routes render their richer synthetic design fixtures.
     demo: query.get('demo') === 'sample' || designPreviewActive(query),
-    sampleBoard: BOARD_SAMPLE,
+    sampleBoard: requestedAccess ? { ...BOARD_SAMPLE, access: requestedAccess } : BOARD_SAMPLE,
   });
 }
 
@@ -555,45 +571,40 @@ function designPageOptions(query: URLSearchParams): DesignPageOptions {
 
 function renderPowerRoute(mount: HTMLElement, query: URLSearchParams): void {
   const options = designPageOptions(query);
-  if (options.fixture) {
-    renderDesignPowerTracker(mount, options);
-    return;
-  }
   const access = query.get('access');
   const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderReviewedPowerTracker(mount, data, query, GRAPH_REAL_NOTICE);
+  renderDesignPowerTracker(mount, options, data, GRAPH_REAL_NOTICE);
 }
 
 function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
   const options = designPageOptions(query);
-  if (options.fixture) {
-    renderDesignWatchlist(mount, options);
-    return;
-  }
   const access = query.get('access');
   const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderReviewedWatchlist(mount, data, query, GRAPH_REAL_NOTICE);
+  renderDesignWatchlist(mount, options, data, GRAPH_REAL_NOTICE);
 }
 
 function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
   const options = designPageOptions(query);
-  if (options.fixture) {
-    renderDesignLocation(mount, options);
-    return;
-  }
   const access = query.get('access');
   const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderReviewedLocation(mount, data, query, GRAPH_REAL_NOTICE);
+  renderDesignLocation(mount, options, data, GRAPH_REAL_NOTICE);
 }
 
 function renderAlertsRoute(mount: HTMLElement, query: URLSearchParams): void {
-  renderDesignAlerts(mount, designPageOptions(query));
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderDesignAlerts(mount, designPageOptions(query), data, GRAPH_REAL_NOTICE);
 }
 
 /**
- * Reviewer / local bypass (GOV-419 acceptance #3) — lets Isaac SEE the full app
- * behind the gate for a local walkthrough WITHOUT shipping public access. Three
- * impure sources, all LOCAL-only (this build is reviewer-internal + noindex):
+ * Reviewer admission + local bypass (GOV-419 acceptance #3).
+ *
+ * The production Sites worker is the security boundary. It authorizes the
+ * forwarded authenticated-user email before serving any app asset, then injects
+ * only a boolean approval marker into the HTML. The browser uses that marker to
+ * skip the obsolete duplicate login form; it never receives the email address.
+ *
+ * Three additional impure sources remain for LOCAL reviewer walkthroughs:
  *   - `VITE_REVIEWER_BYPASS=true` in `.env` — the persistent local-walkthrough
  *     switch (set once, every full-app route opens). Primary path for Isaac.
  *   - `?reviewer=1` on any route — a per-URL bypass; sticky for the session so
@@ -626,10 +637,10 @@ function persistBypass(): void {
     /* storage unavailable (private mode / non-browser) — per-URL bypass still works */
   }
 }
-function reviewerBypassActive(query: URLSearchParams): boolean {
+function reviewerAccessActive(query: URLSearchParams): boolean {
   const urlBypass = query.get('reviewer') === '1';
   if (urlBypass) persistBypass();
-  return ENV_BYPASS || urlBypass || sessionBypass();
+  return hostedReviewerAccessActive() || ENV_BYPASS || urlBypass || sessionBypass();
 }
 
 /**
@@ -659,12 +670,6 @@ const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/app',
   '/agenda-boards',
   '/agenda',
-  '/timeline',
-  '/boards',
-  '/power',
-  '/watchlist',
-  '/location',
-  '/issue',
   '/vault',
   '/sources',
 ]);
@@ -689,7 +694,21 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
 
 /** Resolve the access state for a request from its query + the live bypass. */
 function accessFor(query: URLSearchParams) {
-  return resolveAccess(query.get('gate'), reviewerBypassActive(query));
+  return resolveAccess(query.get('gate'), reviewerAccessActive(query));
+}
+
+/**
+ * The hosted owner has already signed in at the Sites boundary, so the root and
+ * unknown routes enter the reviewed app directly. Explicit gate states still
+ * render the requested access panel for QA and screenshots.
+ */
+function renderEntry(query: URLSearchParams): void {
+  const access = accessFor(query);
+  if (hostedReviewerAccessActive() && access === 'approved') {
+    window.location.hash = '/home';
+    return;
+  }
+  renderLanding(root!, access);
 }
 
 /** A gated surface handler: renders civic content into the shell's content slot. */
@@ -714,8 +733,8 @@ function gated(handler: ShellHandler): RouteHandler {
 
 // Preview-launch landing is the DEFAULT entry (and the fallback). The full
 // reviewer-internal app lives at `/app` (+ the other surfaces), each gated.
-const router = createRouter(({ query }) => renderLanding(root!, accessFor(query)));
-router.register('/', ({ query }) => renderLanding(root!, accessFor(query)));
+const router = createRouter(({ query }) => renderEntry(query));
+router.register('/', ({ query }) => renderEntry(query));
 // GOV-600 — `#/app` is now the agenda Kanban surface (default: Agendas by
 // meeting), the owner-confirmed primary UX that replaces the long card list. The
 // prior chronological long-list timeline stays reachable at `#/timeline` (and the

@@ -26,14 +26,15 @@
  *  4. **Web-safe on load (§1).** {@link assertDigestWebSafe} re-sweeps the digest for
  *     raw paths / forbidden keys; `localSourcePath` is always null and never shown.
  *
- * Gated-beta enforcement (§5) lives in `main.ts` via the existing `gated()` wrapper
- * (reuses `resolveAccess`/`isApproved`, 0-diff) — this module renders civic data
- * ONLY once that wrapper has admitted an approved request.
+ * The outer beta gate lives in `main.ts` via the existing `gated()` wrapper. This
+ * module also checks the response access lane before resolving any row, so the
+ * explicit public-lane leak-verification path remains fail-closed in isolation.
  */
 
 import { GW_TOKENS } from './tokens';
-import { statusTone, uiStatusLabel, AI_LABEL_TEXT, FIXTURE_BANNER_TEXT } from './state-view';
+import { statusTone, uiStatusLabel, AI_LABEL_TEXT } from './state-view';
 import type { TrustTone } from './state-view';
+import { readMode } from './shell';
 import { assertDigestWebSafe } from '../data/web-safe';
 import type { UiStatus } from '../types/read-api';
 import {
@@ -348,6 +349,11 @@ function sourceTrailEntryRow(entry: SourceTrailEntry): HTMLElement {
   ];
   if (entry.sourceType) parts.push(el('span', { class: 'gw-nl-chip' }, [entry.sourceType]));
   if (entry.authorityLevel) parts.push(el('span', { class: 'gw-nl-chip' }, [entry.authorityLevel]));
+  if (entry.verificationStatus) {
+    parts.push(el('span', { class: 'gw-nl-chip', 'data-test': 'source-verification-status' }, [
+      `Verification: ${entry.verificationStatus}`,
+    ]));
+  }
   const links: (Node | string)[] = [];
   if (entry.originalUrl) {
     links.push(el('a', { class: 'gw-nl-deeplink', href: entry.originalUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-original' }, ['View original']));
@@ -356,6 +362,14 @@ function sourceTrailEntryRow(entry: SourceTrailEntry): HTMLElement {
     links.push(el('a', { class: 'gw-nl-deeplink', href: entry.archiveUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-archive' }, ['View archive']));
   }
   const children: (Node | string)[] = [el('div', { class: 'gw-nl-item-head' }, parts)];
+  const receiptDetails: HTMLElement[] = [];
+  if (entry.scanDate) receiptDetails.push(el('span', { 'data-test': 'source-scan-date' }, [`Scanned: ${entry.scanDate}`]));
+  if (entry.page != null) receiptDetails.push(el('span', { 'data-test': 'source-page' }, [`Page: ${entry.page}`]));
+  if (entry.section) receiptDetails.push(el('span', { 'data-test': 'source-section' }, [`Section: ${entry.section}`]));
+  if (entry.timestampSeconds != null) {
+    receiptDetails.push(el('span', { 'data-test': 'source-timestamp' }, [`Timestamp: ${entry.timestampSeconds}s`]));
+  }
+  if (receiptDetails.length) children.push(el('div', { class: 'gw-nl-receipt-meta' }, receiptDetails));
   if (links.length) children.push(el('div', { class: 'gw-nl-item-links' }, links));
   // localSourcePath is null and intentionally never rendered (§3).
   return el('div', { class: 'gw-nl-item', 'data-test': 'source-trail-entry' }, children);
@@ -364,6 +378,207 @@ function sourceTrailEntryRow(entry: SourceTrailEntry): HTMLElement {
 function sourceTrailSection(digest: NewsletterDigest): HTMLElement {
   const trail = digest.sections.sourceTrail ?? [];
   return section('sourceTrail', 'Source trail', trail.map(sourceTrailEntryRow), trail.length === 0);
+}
+
+// ---------------------------------------------------------------------------
+// Baseline newsletter information architecture
+// ---------------------------------------------------------------------------
+
+/**
+ * The handoff reserves richer newsletter modules than NewsletterDigestResponse
+ * currently supplies. Keep those modules in the real route as explicit designed
+ * gaps so the page does not silently collapse to a thinner layout. Populated
+ * prose, debate, agenda diffs, lenses, and meeting states require a typed backend
+ * value; this renderer never derives them from summaries or ids.
+ */
+function designedGap(testId: string, title: string, message: string): HTMLElement {
+  return el('div', {
+    class: 'gw-nl-designed-gap',
+    'data-test': testId,
+    'data-state': 'unavailable',
+    'data-origin': 'designed-gap',
+    role: 'status',
+  }, [
+    el('strong', { class: 'gw-nl-gap-title' }, [title]),
+    el('p', { class: 'gw-nl-gap-copy' }, [message]),
+  ]);
+}
+
+function meetingPairBoard(digest: NewsletterDigest): HTMLElement {
+  const meetingCount = digest.sections.keyMeetings?.length ?? 0;
+  const meetingCopy = meetingCount === 0
+    ? 'No meeting references are supplied in this digest, so no pre/post pair can be shown.'
+    : `${meetingCount} meeting reference${meetingCount === 1 ? ' is' : 's are'} supplied, but the digest does not provide a pre/post relationship.`;
+  return el('section', {
+    class: 'gw-nl-baseline-card gw-nl-meeting-pairs',
+    'data-test': 'newsletter-meeting-pair-board',
+    'data-state': 'unavailable',
+  }, [
+    el('div', { class: 'gw-nl-baseline-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-nl-baseline-kicker' }, ['NEWS BY MEETING']),
+        el('h2', { class: 'gw-nl-baseline-title' }, ['Pre-meeting / post-meeting pairs']),
+      ]),
+      el('span', { class: 'gw-nl-unavailable-chip' }, ['UNAVAILABLE IN DIGEST']),
+    ]),
+    el('p', { class: 'gw-nl-baseline-intro' }, [meetingCopy]),
+    el('div', { class: 'gw-nl-pair-grid' }, [
+      designedGap(
+        'newsletter-pre-meeting-slot',
+        'Pre-meeting brief',
+        'No typed pre-meeting edition, agenda link, or publication state is supplied.',
+      ),
+      designedGap(
+        'newsletter-post-meeting-slot',
+        'Post-meeting analysis',
+        'No typed post-meeting edition, result, transcript state, or pair link is supplied.',
+      ),
+    ]),
+  ]);
+}
+
+function roundtableSlot(): HTMLElement {
+  return el('section', {
+    class: 'gw-nl-baseline-card gw-nl-roundtable',
+    'data-test': 'newsletter-roundtable',
+    'data-state': 'unavailable',
+    'data-origin': 'designed-gap',
+  }, [
+    el('div', { class: 'gw-nl-baseline-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-nl-baseline-kicker' }, ['THE ROUNDTABLE']),
+        el('h2', { class: 'gw-nl-baseline-title' }, ['Record-supplied debate and player']),
+      ]),
+      el('span', { class: 'gw-nl-unavailable-chip' }, ['NOT SUPPLIED']),
+    ]),
+    el('p', { class: 'gw-nl-baseline-intro' }, [
+      'This reviewed digest supplies no debate script, speaker turns, runtime, audio, or transcript. Player controls stay disabled until those values have a reviewed data contract.',
+    ]),
+    el('div', { class: 'gw-nl-player', 'aria-label': 'Roundtable player unavailable' }, [
+      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['‹']),
+      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true', class: 'gw-nl-player-main' }, ['Debate unavailable']),
+      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['›']),
+      el('span', { class: 'gw-nl-player-status' }, ['No supplied lines · no playback state']),
+    ]),
+  ]);
+}
+
+function agendaFeatureSlot(): HTMLElement {
+  return el('section', {
+    class: 'gw-nl-baseline-card gw-nl-agenda-feature',
+    'data-test': 'newsletter-agenda-feature',
+    'data-state': 'unavailable',
+  }, [
+    el('div', { class: 'gw-nl-baseline-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-nl-baseline-kicker' }, ['FEATURED AGENDA']),
+        el('h2', { class: 'gw-nl-baseline-title' }, ['Agenda analysis workspace']),
+      ]),
+      el('span', { class: 'gw-nl-unavailable-chip' }, ['DESIGNED GAP']),
+    ]),
+    el('p', { class: 'gw-nl-baseline-intro' }, [
+      'Digest records remain available below. The richer agenda feature requires typed agenda structure and reviewed analysis fields that are not present here.',
+    ]),
+    el('div', { class: 'gw-nl-agenda-grid' }, [
+      designedGap(
+        'newsletter-agenda-full',
+        'Full agenda and per-item analysis',
+        'No agenda numbering, motions, attachment mapping, or per-item analysis is supplied.',
+      ),
+      designedGap(
+        'newsletter-agenda-diffs',
+        'Document changes and side-by-side diffs',
+        'No document versions, changed spans, or before/after values are supplied.',
+      ),
+      designedGap(
+        'newsletter-language-watch',
+        'Language watch',
+        'No reviewed language flags or source-linked wording callouts are supplied.',
+      ),
+      designedGap(
+        'newsletter-question-checklist',
+        'Public questions and outcome checklist',
+        'No question list, asked/not-asked state, vote, or post-meeting outcome is supplied.',
+      ),
+    ]),
+  ]);
+}
+
+const LENS_SLOT_LABELS = [
+  'Conservative — current platform',
+  'Conservative — founding / drift check',
+  'Progressive — current platform',
+  'Progressive — founding / drift check',
+  'Libertarian',
+  'Constitutional / founding documents',
+] as const;
+
+function lensGridSlot(): HTMLElement {
+  return el('section', {
+    class: 'gw-nl-baseline-card gw-nl-lenses',
+    'data-test': 'newsletter-six-lens-grid',
+    'data-state': 'unavailable',
+  }, [
+    el('div', { class: 'gw-nl-baseline-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-nl-baseline-kicker' }, ['SIX-LENS GRID']),
+        el('h2', { class: 'gw-nl-baseline-title' }, ['Perspective checks']),
+      ]),
+      el('span', { class: 'gw-nl-unavailable-chip' }, ['NO REVIEWED CONCLUSIONS']),
+    ]),
+    el('p', { class: 'gw-nl-baseline-intro' }, [
+      'The layout is reserved, but NewsletterDigestResponse supplies no lens claims or citations. No perspective is inferred from the record summaries.',
+    ]),
+    el('div', { class: 'gw-nl-lens-grid' }, LENS_SLOT_LABELS.map((label, index) =>
+      el('div', {
+        class: `gw-nl-lens-slot gw-nl-lens-${index + 1}`,
+        'data-test': 'newsletter-lens-slot',
+        'data-state': 'unavailable',
+        'data-origin': 'designed-gap',
+      }, [
+        el('strong', {}, [label]),
+        el('span', {}, ['No reviewed lens conclusion supplied.']),
+      ]),
+    )),
+  ]);
+}
+
+function meetingLedgerSlot(): HTMLElement {
+  return el('section', {
+    class: 'gw-nl-baseline-card gw-nl-ledger',
+    'data-test': 'newsletter-meeting-ledger',
+    'data-state': 'unavailable',
+    'data-origin': 'designed-gap',
+  }, [
+    el('div', { class: 'gw-nl-baseline-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-nl-baseline-kicker' }, ['MEETING LEDGER']),
+        el('h2', { class: 'gw-nl-baseline-title' }, ['Agenda → pre → post status']),
+      ]),
+      el('span', { class: 'gw-nl-unavailable-chip' }, ['NO STATUS ROWS']),
+    ]),
+    el('p', { class: 'gw-nl-baseline-intro' }, [
+      'No meeting dates or agenda/pre/post completion states are supplied by this digest.',
+    ]),
+    el('div', { class: 'gw-nl-ledger-grid', role: 'table', 'aria-label': 'Meeting ledger unavailable' }, [
+      ...['Agenda', 'Pre-meeting', 'Post-meeting'].map((label) =>
+        el('div', { class: 'gw-nl-ledger-cell', role: 'columnheader' }, [
+          el('strong', {}, [label]),
+          el('span', {}, ['Unavailable']),
+        ]),
+      ),
+    ]),
+  ]);
+}
+
+function baselineSlots(digest: NewsletterDigest): HTMLElement {
+  return el('div', { class: 'gw-nl-baseline-stack', 'data-test': 'newsletter-baseline-structure' }, [
+    meetingPairBoard(digest),
+    roundtableSlot(),
+    agendaFeatureSlot(),
+    lensGridSlot(),
+    meetingLedgerSlot(),
+  ]);
 }
 
 /** Render EVERY required section, in contract order. */
@@ -386,11 +601,33 @@ function renderSections(host: HTMLElement, digest: NewsletterDigest): void {
 // Public render entry points
 // ---------------------------------------------------------------------------
 
-function fixtureBanner(notice?: string): HTMLElement {
-  return el('div', { class: 'gw-fixture-banner', 'data-test': 'fixture-banner' }, [
-    FIXTURE_BANNER_TEXT,
+function reviewedOrigin(notice?: string): HTMLElement {
+  return el('div', { class: 'gw-nl-reviewed-origin', 'data-test': 'newsletter-reviewed-origin', role: 'status' }, [
+    el('strong', {}, ['REVIEWER-INTERNAL DIGEST CAPTURE — trust labels shown per record']),
     ...(notice ? [el('div', { class: 'gw-notice' }, [notice])] : []),
   ]);
+}
+
+function prepareNewsletterRoot(root: HTMLElement): void {
+  ensureNewsletterStyle();
+  root.className = 'gw-nl-root';
+  root.setAttribute('data-mode', readMode());
+  root.replaceChildren();
+}
+
+/** Fail closed before resolving or rendering any digest row. */
+function admitReviewerLane(root: HTMLElement, access: string): boolean {
+  if (access === 'reviewer_internal') return true;
+  root.append(el('section', {
+    class: 'gw-state',
+    'data-state': 'empty',
+    'data-test': 'state-reviewer-gated',
+    role: 'status',
+  }, [
+    el('h1', { class: 'gw-nl-h1' }, ['Reviewer-internal only']),
+    el('p', {}, ['The Alpine newsletter archive is gated to the reviewer-internal lane. The public lane renders no civic records.']),
+  ]));
+  return false;
 }
 
 /** `#/newsletter` — archive list of digests by Alpine coverage period. */
@@ -399,13 +636,12 @@ export function renderNewsletterArchive(
   response: NewsletterDigestResponse,
   notice?: string,
 ): void {
-  ensureNewsletterStyle();
-  root.className = 'gw-nl-root';
-  root.replaceChildren();
+  prepareNewsletterRoot(root);
+  if (!admitReviewerLane(root, response.access)) return;
   const rows = archiveRows(response);
 
   root.append(
-    fixtureBanner(notice),
+    reviewedOrigin(notice),
     el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-archive' }, [
       el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
       el('h1', { class: 'gw-nl-h1' }, ['Alpine Weekly broadsheet archive']),
@@ -453,12 +689,11 @@ export function renderNewsletterDetail(
   newsletterId: string,
   notice?: string,
 ): void {
-  ensureNewsletterStyle();
-  root.className = 'gw-nl-root';
-  root.replaceChildren();
+  prepareNewsletterRoot(root);
+  if (!admitReviewerLane(root, response.access)) return;
   const digest = resolveDigest(response, newsletterId);
 
-  root.append(fixtureBanner(notice));
+  root.append(reviewedOrigin(notice));
 
   if (!digest) {
     root.append(
@@ -481,7 +716,15 @@ export function renderNewsletterDetail(
     ]),
   );
 
-  const sections = el('div', { class: 'gw-nl-sections' });
+  root.append(baselineSlots(digest));
+
+  const sections = el('div', { class: 'gw-nl-sections', 'data-test': 'newsletter-digest-sections' }, [
+    el('div', { class: 'gw-nl-sections-heading' }, [
+      el('p', { class: 'gw-nl-baseline-kicker' }, ['SUPPLIED DIGEST']),
+      el('h2', { class: 'gw-nl-baseline-title' }, ['Reviewed data contract']),
+      el('p', { class: 'gw-muted' }, ['Every typed section is retained below, including explicit empty states.']),
+    ]),
+  ]);
   renderSections(sections, digest);
   root.append(sections);
 }
@@ -490,10 +733,13 @@ export function renderNewsletterDetail(
 export type NewsletterStateKind = 'loading' | 'empty' | 'error';
 
 /** `?state=loading|empty|error` over the data binding (screenshot override, §2). */
-export function renderNewsletterState(root: HTMLElement, kind: NewsletterStateKind): void {
-  ensureNewsletterStyle();
-  root.className = 'gw-nl-root';
-  root.replaceChildren();
+export function renderNewsletterState(
+  root: HTMLElement,
+  kind: NewsletterStateKind,
+  access = 'reviewer_internal',
+): void {
+  prepareNewsletterRoot(root);
+  if (!admitReviewerLane(root, access)) return;
   const copy: Record<NewsletterStateKind, { heading: string; message: string }> = {
     loading: { heading: 'Loading…', message: 'Fetching the reviewer-internal Alpine newsletter archive.' },
     empty: { heading: 'No digests for Alpine yet', message: 'No reviewed digests are available for this view.' },
@@ -501,7 +747,7 @@ export function renderNewsletterState(root: HTMLElement, kind: NewsletterStateKi
   };
   const c = copy[kind];
   root.append(
-    fixtureBanner(),
+    reviewedOrigin(),
     el('section', { class: 'gw-state', 'data-test': 'newsletter-state', 'data-state': kind }, [
       el('h1', { class: 'gw-nl-h1' }, [c.heading]),
       el('p', { class: 'gw-muted' }, [c.message]),
@@ -515,9 +761,13 @@ export function renderNewsletterState(root: HTMLElement, kind: NewsletterStateKi
 // ---------------------------------------------------------------------------
 
 export const NEWSLETTER_STYLE = `${GW_TOKENS}
-.gw-nl-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:60rem;margin:0 auto;padding:1.5rem var(--gw-space-5);background:linear-gradient(180deg,var(--gw-surface),var(--gw-bg))}
+.gw-nl-root{font-family:var(--gw-font);line-height:1.55;color:var(--gw-text);max-width:76rem;margin:0 auto;padding:var(--gw-space-6);background:linear-gradient(180deg,var(--gw-surface),var(--gw-page-bg))}
+.gw-nl-root *{box-sizing:border-box}
+.gw-nl-root[data-mode="simple"]{font-family:var(--gw-font-serif);max-width:64rem;background:var(--gw-surface)}
+.gw-nl-root[data-mode="simple"] .gw-nl-baseline-kicker,.gw-nl-root[data-mode="simple"] .gw-nl-unavailable-chip,.gw-nl-root[data-mode="simple"] .gw-nl-player,.gw-nl-root[data-mode="simple"] .gw-nl-count,.gw-nl-root[data-mode="simple"] .gw-badge{font-family:var(--gw-font)}
 .gw-nl-h1{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-2);line-height:var(--gw-leading-tight)}
-.gw-nl-header{margin-bottom:var(--gw-space-4);border-bottom:var(--gw-border-w) double var(--gw-border);padding-bottom:var(--gw-space-3);text-align:center}
+.gw-nl-root[data-mode="simple"] .gw-nl-h1{font-size:var(--gw-text-display);font-weight:600}
+.gw-nl-header{margin-bottom:var(--gw-space-5);border-top:3px solid var(--gw-rule-strong);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);padding:var(--gw-space-5) 0;text-align:center}
 .gw-muted{color:var(--gw-text-muted)}
 .gw-meta-key{color:var(--gw-text-muted);font-weight:600}
 .gw-badge{font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;background:var(--gw-surface-accent-tint);color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-neutral-border);border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:nowrap}
@@ -526,8 +776,8 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-tone-stop{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
 .gw-tone-neutral{background:var(--gw-surface-accent-tint);color:var(--gw-accent);border-color:var(--gw-accent)}
 .gw-badge-ai{background:var(--gw-caution-bg);color:var(--gw-caution-text);border-color:var(--gw-caution-text)}
-.gw-fixture-banner{background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);color:var(--gw-caution-text-strong);padding:var(--gw-space-3) var(--gw-space-4);border-radius:var(--gw-radius);font-weight:600;margin-bottom:.75rem}
-.gw-notice{font-size:.85rem;color:var(--gw-caution-text-strong);margin-top:var(--gw-space-1);font-weight:400}
+.gw-nl-reviewed-origin{background:var(--gw-tone-info-well);border:var(--gw-border-w) solid var(--gw-info-text);color:var(--gw-info-text);padding:var(--gw-space-3) var(--gw-space-4);border-radius:var(--gw-radius);font:600 var(--gw-text-sm)/1.45 var(--gw-font);margin-bottom:var(--gw-space-5)}
+.gw-notice{font-size:var(--gw-text-sm);color:var(--gw-text-secondary);margin-top:var(--gw-space-1);font-weight:400}
 .gw-state{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-5);background:var(--gw-surface)}
 .gw-state[data-state="error"]{border-color:var(--gw-stop-border);color:var(--gw-stop-text);background:var(--gw-stop-bg)}
 .gw-nl-archive-list{display:flex;flex-direction:column;gap:var(--gw-space-3)}
@@ -536,7 +786,38 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-archive-id{font-weight:700;margin-right:var(--gw-space-3)}
 .gw-nl-archive-meta{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);align-items:center}
 .gw-nl-count{font-size:var(--gw-text-sm);font-weight:700;color:var(--gw-text-secondary)}
-.gw-nl-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:var(--gw-space-4)}
+.gw-nl-baseline-stack{display:flex;flex-direction:column;gap:var(--gw-space-5);margin-bottom:var(--gw-space-6)}
+.gw-nl-baseline-card{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);background:var(--gw-surface-subtle);box-shadow:0 8px 24px color-mix(in srgb,var(--gw-page-bg) 75%,transparent)}
+.gw-nl-baseline-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--gw-space-4);flex-wrap:wrap}
+.gw-nl-baseline-kicker{margin:0 0 var(--gw-space-1);font:800 var(--gw-text-kicker)/1.2 var(--gw-font);letter-spacing:1.4px;color:var(--gw-accent);text-transform:uppercase}
+.gw-nl-baseline-title{margin:0;font-size:var(--gw-text-lg);line-height:var(--gw-leading-tight)}
+.gw-nl-root[data-mode="simple"] .gw-nl-baseline-title{font-size:1.35rem;font-weight:600}
+.gw-nl-baseline-intro{margin:var(--gw-space-3) 0;color:var(--gw-text-secondary)}
+.gw-nl-unavailable-chip{display:inline-flex;align-items:center;min-height:1.8rem;padding:.15rem .55rem;border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-sm);background:var(--gw-caution-bg);color:var(--gw-caution-text-strong);font:800 var(--gw-text-xs)/1.2 var(--gw-font);letter-spacing:.55px}
+.gw-nl-pair-grid,.gw-nl-agenda-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-3)}
+.gw-nl-designed-gap{min-width:0;border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);padding:var(--gw-space-4);background:var(--gw-surface-well)}
+.gw-nl-gap-title{display:block;color:var(--gw-text);font-size:var(--gw-text-body)}
+.gw-nl-gap-copy{margin:var(--gw-space-2) 0 0;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
+.gw-nl-roundtable{border-width:2px;border-color:var(--gw-rule-strong)}
+.gw-nl-player{display:flex;gap:var(--gw-space-2);align-items:center;flex-wrap:wrap;margin-top:var(--gw-space-4)}
+.gw-nl-player button{min-width:var(--gw-tap-min);min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-surface-well);color:var(--gw-text-muted);font:800 var(--gw-text-body)/1 var(--gw-font)}
+.gw-nl-player button:disabled{cursor:not-allowed;opacity:.8}
+.gw-nl-player .gw-nl-player-main{min-width:12rem;background:var(--gw-rule-strong);color:var(--gw-surface)}
+.gw-nl-player-status{color:var(--gw-text-muted);font-size:var(--gw-text-sm);margin-left:auto}
+.gw-nl-lens-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-3);margin-top:var(--gw-space-4)}
+.gw-nl-lens-slot{display:flex;flex-direction:column;gap:var(--gw-space-2);min-height:7rem;border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);padding:var(--gw-space-4);background:var(--gw-surface-well)}
+.gw-nl-lens-slot strong{font-size:var(--gw-text-sm);color:var(--gw-text-secondary)}
+.gw-nl-lens-slot span{font-size:var(--gw-text-sm);color:var(--gw-text-muted)}
+.gw-nl-lens-1,.gw-nl-lens-2{border-left:3px solid var(--gw-stop-border)}
+.gw-nl-lens-3,.gw-nl-lens-4{border-left:3px solid var(--gw-level-state)}
+.gw-nl-lens-5,.gw-nl-lens-6{border-left:3px solid var(--gw-caution-line)}
+.gw-nl-ledger-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);margin-top:var(--gw-space-3)}
+.gw-nl-ledger-cell{display:flex;flex-direction:column;gap:var(--gw-space-1);padding:var(--gw-space-3);border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius-sm);background:var(--gw-surface-well)}
+.gw-nl-ledger-cell strong{font-size:var(--gw-text-sm)}
+.gw-nl-ledger-cell span{color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
+.gw-nl-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:var(--gw-space-4);padding-top:var(--gw-space-6);border-top:2px solid var(--gw-rule-strong)}
+.gw-nl-sections-heading{grid-column:1/-1}
+.gw-nl-sections-heading p:last-child{margin:var(--gw-space-2) 0 0}
 .gw-nl-section{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:.8rem 1rem;background:var(--gw-surface)}
 .gw-nl-section-title{font-size:var(--gw-text-lg);margin:0 0 var(--gw-space-3)}
 .gw-nl-none{font-style:italic;margin:var(--gw-space-1) 0}
@@ -547,12 +828,14 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-item-date{font-size:var(--gw-text-sm)}
 .gw-nl-item-summary{margin:var(--gw-space-1) 0}
 .gw-nl-item-links{display:flex;gap:var(--gw-space-3);margin-top:var(--gw-space-1)}
+.gw-nl-receipt-meta{display:flex;flex-wrap:wrap;gap:var(--gw-space-2) var(--gw-space-4);margin-top:var(--gw-space-2);color:var(--gw-text-muted);font-family:var(--gw-font-mono);font-size:var(--gw-text-xs)}
 .gw-nl-deeplink{color:var(--gw-accent);font-size:var(--gw-text-sm);text-decoration:none;font-weight:600}
 .gw-nl-deeplink:hover{text-decoration:underline}
 .gw-nl-chips{display:flex;flex-wrap:wrap;gap:var(--gw-space-2)}
 .gw-nl-chip{font-size:var(--gw-text-sm);background:var(--gw-surface-accent-tint);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-sm);padding:.1rem .45rem}
 .gw-nl-kv{margin:var(--gw-space-1) 0}
 .gw-nl-framing{background:var(--gw-caution-bg-soft);border-left:3px solid var(--gw-caution-line);padding:var(--gw-space-1) var(--gw-space-3);border-radius:var(--gw-radius-sm);margin:var(--gw-space-2) 0}
+@media(max-width:760px){.gw-nl-root{padding:var(--gw-space-4)}.gw-nl-pair-grid,.gw-nl-agenda-grid,.gw-nl-lens-grid{grid-template-columns:1fr}.gw-nl-ledger-grid{grid-template-columns:1fr}.gw-nl-player-status{width:100%;margin-left:0}.gw-nl-baseline-card{padding:var(--gw-space-4)}}
 `;
 
 let styleInjected = false;
