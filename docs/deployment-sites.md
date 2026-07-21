@@ -28,17 +28,20 @@ Sites bypass tokens are short-lived secrets and must never be committed.
 
 The hosted beta does **not** implement its own email magic-link service. Sites
 is the authentication boundary. Its `custom` access policy admits the approved
-owner account, then `dist/server/index.js` performs the app-specific
-authorization check before serving any HTML, JavaScript, CSS, image, or route
-fallback.
+owner account before the owner-only static root and assets are available. The
+static build contains a `gw-sites-private-beta=owner-only` marker; browser code
+accepts it only on the exact production hostname and uses it solely to route an
+already-admitted owner past the obsolete duplicate login panel.
 
-The worker reads the platform-provided `oai-authenticated-user-email` header
-only on the server and compares it with the comma-separated hosted runtime value
-`GW_APPROVED_REVIEWER_EMAILS`. It injects only a boolean `approved` marker into
-authorized HTML; the email address is never added to the page or browser
-bundle. Missing configuration returns `503`; missing or non-allowlisted identity
-returns the same non-enumerating `403`; all responses are private/no-store and
-noindex.
+For requests Sites dispatches through `dist/server/index.js`, the worker adds a
+second fail-closed check: it reads the platform-provided
+`oai-authenticated-user-email` header only on the server and compares it with
+the comma-separated hosted runtime value `GW_APPROVED_REVIEWER_EMAILS`. It can
+inject only a boolean `approved` marker; the email address is never added to the
+page or browser bundle. Missing configuration returns `503`; missing or
+non-allowlisted identity returns the same non-enumerating `403`; worker
+responses are private/no-store and noindex. The worker check is defense in
+depth; the Sites `custom` access policy remains the static-asset boundary.
 
 For the current owner-only beta:
 
@@ -90,14 +93,15 @@ npm run build
 contain all three Sites pieces:
 
 - `dist/client/index.html` and static assets;
-- `dist/server/index.js`, the fail-closed owner-authorization and
-  assets/fallback worker; and
+- `dist/server/index.js`, the fail-closed owner-authorization fallback worker;
+  and
 - `dist/.openai/hosting.json`, copied from the existing project binding.
 
-The build script copies the reviewed worker source, and the worker rewrites the
-document's runtime origin so metadata and route fallbacks use the deployed host
-rather than localhost. Release verification must also prove that unauthorized
-requests cannot fetch the app assets.
+The build script copies the reviewed worker source. When Sites dispatches an
+HTML fallback through it, the worker rewrites the document's runtime origin so
+metadata uses the deployed host rather than localhost. Release verification
+must also confirm that Sites access is still custom/owner-only and that an
+unauthorized browser cannot fetch the app assets.
 
 ## Save and deploy with Sites
 
@@ -141,6 +145,7 @@ true:
 - a separately reviewed public authorization/data path replaces the private
   owner-only worker policy;
 - production builds cannot enable `?reviewer=1` or `VITE_REVIEWER_BYPASS`;
+- the private-beta host marker and its automatic Home entry are removed;
 - reviewer-only and synthetic data are excluded from public assets, not merely
   hidden in the DOM;
 - the backend exposes a separately authorized, web-safe public projection;

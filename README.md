@@ -59,11 +59,13 @@ with private/custom access. It is not public yet. The exact site name, main-bran
 release rule, update steps, rollback procedure, and public-release blockers are
 recorded in [`docs/deployment-sites.md`](docs/deployment-sites.md).
 
-For the hosted beta, Sites authentication is the login. After Sites admits an
-approved owner, the server worker verifies that identity against the managed
-reviewer allowlist before serving any HTML or JavaScript, and the root URL opens
-Home directly. The email-address/magic-link panel is development scaffolding;
-it is not the hosted login path and does not send email.
+For the hosted beta, Sites custom access is the login and the security boundary
+for the static root and assets. After Sites admits the approved owner, the exact
+production host plus a private-beta build marker opens Home directly; this is a
+UI-routing acknowledgement, not a second authentication system. The server
+worker also checks the managed reviewer allowlist on requests Sites dispatches
+through it. The email-address/magic-link panel is development scaffolding; it
+is not the hosted login path and does not send email.
 
 The minimum standard for any civic content shown in the beta is recorded in
 [`docs/content-quality-baseline.md`](docs/content-quality-baseline.md). Evidence,
@@ -121,9 +123,10 @@ The frontend/backend boundary and required production endpoints are recorded in
 For local development, the default entry is a **preview-launch landing**, not
 the app. The full reviewer-internal app is revealed only past a **gated-beta**
 entry. The landing's magic-link form is non-functional UI scaffolding. On the
-hosted beta, Sites provides the real authentication boundary and the app's
-server worker authorizes the forwarded identity; an approved owner opens Home
-without going through the duplicate form.
+hosted beta, Sites custom access provides the real authentication boundary. On
+the exact owner-only production host, the private-beta build opens Home without
+going through the duplicate form; the server worker retains an additional
+allowlist check for requests dispatched through it.
 
 **Default route**
 
