@@ -46,7 +46,9 @@ describe('GOV-668 Issue Detail', () => {
     expect(root.querySelector('[data-test="issue-provenance"]')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="proof-source"]').length).toBe(record.evidence.length);
 
-    root.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')!.click();
+    expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
+    localStorage.setItem('gw_home_mode', 'advanced');
+    renderIssueDetail(root, GRAPH_REAL, new URLSearchParams(`id=${record.statement_id}`), 'real');
     expect(localStorage.getItem('gw_home_mode')).toBe('advanced');
     expect(root.querySelectorAll('[data-test="proof-source"]').length).toBe(record.evidence.length);
     expect(root.querySelector('[data-test="issue-confidence"]')?.textContent).toContain(String(record.confidence));
@@ -76,6 +78,7 @@ describe('GOV-668 Issue Detail', () => {
 describe('GOV-668 Source Vault', () => {
   it('dedupes real source metadata and keeps ledger/alerts honest-empty', () => {
     renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
     expect(root.querySelector('[data-test="source-vault-advanced-workbench"]')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="source-vault-row"]').length).toBeGreaterThan(0);
     expect(root.querySelector('[data-test="source-reviewed-count"]')).not.toBeNull();
@@ -93,11 +96,56 @@ describe('GOV-668 Source Vault', () => {
   it('keeps the source rows and every verification gap in the Simple reading composition', () => {
     localStorage.setItem('gw_home_mode', 'simple');
     renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
 
     expect(root.querySelector('[data-test="source-vault-simple-edition"]')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="source-vault-row"]').length).toBeGreaterThan(0);
     expect(root.querySelector('[data-test="source-version-compare-empty"]')).not.toBeNull();
     expect(root.querySelector('[data-test="source-third-party-verification-empty"]')).not.toBeNull();
+  });
+
+  it('preserves the search, compare, ledger, video, manifest, and verification geometry in both modes', () => {
+    const contractGapIds = [
+      'source-vault-filter-gap',
+      'source-hash-gap',
+      'source-flags-gap',
+      'source-version-compare-empty',
+      'source-ledger-empty',
+      'source-video-status-empty',
+      'source-alerts-empty',
+      'source-third-party-verification-empty',
+      'source-manifest-empty',
+    ];
+    const contractSnapshot = () => ({
+      sourceRows: [...root.querySelectorAll<HTMLElement>('[data-test="source-vault-row"]')]
+        .map((node) => `${node.dataset.sourceId}:${node.textContent}`),
+      stats: [...root.querySelectorAll<HTMLElement>('[data-test="source-vault-overview"] > article')]
+        .map((node) => node.textContent),
+      tools: [...root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>(
+        '[data-test="source-vault-tools"] :disabled, [data-test="source-version-compare-empty"] :disabled, [data-test="source-ledger-empty"] :disabled, [data-test="source-alerts-empty"] :disabled, [data-test="source-verification-tools"] :disabled',
+      )].map((node) => `${node.tagName}:${node.getAttribute('placeholder') ?? node.textContent}`).sort(),
+      gaps: contractGapIds.map((id) => root.querySelector(`[data-test="${id}"]`)?.textContent),
+    });
+
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    expect(root.querySelector('[data-test="source-vault-advanced-workbench"] .gw-vault-contract-advanced-layout')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="source-vault-tools"] :disabled')).toHaveLength(3);
+    expect(root.querySelectorAll('[data-test="source-stat-explainer"]')).toHaveLength(3);
+    expect(root.querySelectorAll('[data-test="source-version-selectors"] select:disabled')).toHaveLength(2);
+    expect(root.querySelector('[data-test="source-word-diff-tool"]:disabled')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="source-diff-panes"] > article')).toHaveLength(2);
+    expect(root.querySelectorAll('[data-test="source-diff-tools"] button:disabled')).toHaveLength(3);
+    expect(root.querySelectorAll('[data-test="source-video-ladder"] > span')).toHaveLength(3);
+    expect(root.querySelector('[data-test="source-ledger-tool"]:disabled')).not.toBeNull();
+    expect(root.querySelector('[data-test="source-manifest-tool"]:disabled')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="source-verification-tools"] button:disabled')).toHaveLength(3);
+    const advanced = contractSnapshot();
+
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    expect(root.querySelector('[data-test="source-vault-simple-edition"]')).not.toBeNull();
+    expect(root.querySelector('.gw-vault-contract-advanced-layout')).toBeNull();
+    expect(contractSnapshot()).toEqual(advanced);
   });
 
   it('shows packet diff only behind explicit demo/sample fixture banner', () => {
@@ -185,12 +233,27 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
       'newsletter-question-checklist',
       'newsletter-six-lens-grid',
       'newsletter-meeting-ledger',
+      'newsletter-history-lookback',
+      'newsletter-publication-honesty',
+      'newsletter-delivery-unavailable',
     ]) {
       expect(root.querySelector(`[data-test="${testId}"]`), testId).not.toBeNull();
       expect(root.querySelector(`[data-test="${testId}"]`)?.getAttribute('data-state'), testId).toBe('unavailable');
     }
+    const referenceRail = root.querySelector('[data-test="newsletter-reference-rail"]');
+    expect(referenceRail?.getAttribute('data-state')).toBe('supplied');
+    expect(referenceRail?.getAttribute('data-origin')).toBe('reviewed-response');
+    expect(referenceRail?.querySelectorAll('[data-test="newsletter-reference"]')).toHaveLength(
+      digest.sections.sourceTrail.length,
+    );
     expect(root.querySelectorAll('[data-test="newsletter-lens-slot"]')).toHaveLength(6);
-    expect(root.querySelectorAll('[data-test="newsletter-roundtable"] button:disabled')).toHaveLength(3);
+    expect(root.querySelectorAll('[data-test="newsletter-roundtable"] button:disabled')).toHaveLength(6);
+    expect(root.querySelector('[data-test="newsletter-roundtable-progress"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="newsletter-agenda-tools"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="newsletter-detail-archive"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-test="newsletter-detail-archive-row"]')).toHaveLength(DIGEST.digests.length);
+    expect(root.querySelector(`[data-test="newsletter-${mode === 'simple' ? 'simple-edition' : 'advanced-workbench'}"]`)).not.toBeNull();
+    expect(root.querySelector(`[data-test="newsletter-${mode === 'simple' ? 'advanced-workbench' : 'simple-edition'}"]`)).toBeNull();
 
     // The baseline slots are additive: all supplied digest rows and typed empty
     // states remain rendered verbatim beneath them.

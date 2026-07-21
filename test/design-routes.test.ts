@@ -27,6 +27,31 @@ beforeEach(() => {
 });
 
 describe('MOTY design-handoff route integration', () => {
+  it('returns to the top when primary pages change without resetting same-page controls', async () => {
+    window.location.hash = '#/home?reviewer=1';
+    await import('../src/main');
+    document.documentElement.scrollTop = 620;
+
+    window.location.hash = '#/alerts?reviewer=1';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+    expect(document.documentElement.scrollTop).toBe(0);
+    expect(document.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Alerts');
+  });
+
+  it('keeps the shared shell as the sole main landmark on every canonical page', async () => {
+    window.location.hash = '#/home?reviewer=1';
+    await import('../src/main');
+    const canonicalRoutes = ['/home', '/agenda', '/timeline', '/boards', '/power', '/vault', '/newsletter', '/watchlist', '/alerts'];
+
+    for (const route of canonicalRoutes) {
+      window.location.hash = `#${route}?reviewer=1`;
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      expect(document.querySelectorAll('main'), route).toHaveLength(1);
+      expect(document.querySelector('main main'), route).toBeNull();
+    }
+  });
+
   it('keeps the explicit design preview active while navigating every new route', async () => {
     window.location.hash = '#/agenda?reviewer=1&demo=design';
     await import('../src/main');
@@ -100,6 +125,23 @@ describe('MOTY design-handoff route integration', () => {
       expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), route)
         .toBe('reviewed_snapshot');
     }
+  });
+
+  it('opens the reviewed newsletter archive without guessing a current edition and keeps explicit detail links', async () => {
+    window.location.hash = '#/newsletter?reviewer=1';
+    await import('../src/main');
+
+    const app = document.querySelector('#app')!;
+    expect(app.querySelector('[data-test="newsletter-archive"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="newsletter-current-edition-unavailable"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="newsletter-baseline-structure"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
+
+    window.location.hash = '#/newsletter?reviewer=1&id=alpine-historical-2026-18';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(app.querySelector('[data-test="newsletter-detail"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="newsletter-detail-archive"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="newsletter-archive"]')).toBeNull();
   });
 
   it('classifies explicit demos only on routes that actually render those fixtures', async () => {

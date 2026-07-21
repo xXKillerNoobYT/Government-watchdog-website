@@ -129,6 +129,22 @@ describe('GOV-301 gap card — render', () => {
     expect(root.querySelector('[data-test="gap-detail"]')?.textContent).toBe('only derived material');
   });
 
+  it('keeps a detailed row for every supplied gap type instead of reducing non-primary gaps to totals', () => {
+    ready(resp([
+      gap({ gap_id: 'n1', subject_id: '2023-04-26' }),
+      gap({ gap_id: 'p1', subject_id: 'packet-1', gap_type: 'pdf_text_unextracted' }),
+      gap({ gap_id: 'v1', subject_id: 'video-1', gap_type: 'video_unavailable' }),
+    ]));
+
+    const rows = [...root.querySelectorAll<HTMLElement>('[data-gap-detail-row]')];
+    expect(rows).toHaveLength(3);
+    expect(rows.map((row) => row.dataset.gapType)).toEqual([
+      'no_primary_source',
+      'pdf_text_unextracted',
+      'video_unavailable',
+    ]);
+  });
+
   it('omits the gap detail row when the backend omitted it (no fabrication)', () => {
     ready(resp([gap({ gap_id: 'n1', subject_id: '2023-04-26', detail: undefined })]));
     expect(root.querySelector('[data-test="gap-meeting"]')).not.toBeNull();

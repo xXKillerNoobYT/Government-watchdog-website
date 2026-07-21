@@ -87,6 +87,7 @@ describe('GOV-658 shell — approved primary navigation', () => {
     'Source Vault',
     'Newsletter',
     'Watchlist',
+    'Alerts',
   ];
   const approvedRoutes = [
     '/home',
@@ -97,9 +98,10 @@ describe('GOV-658 shell — approved primary navigation', () => {
     '/vault',
     '/newsletter',
     '/watchlist',
+    '/alerts',
   ];
 
-  it('renders the eight approved tabs in exact design order', () => {
+  it('renders the nine approved tabs in exact design order', () => {
     renderShell(root, { active: '/agenda' });
     const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
       (anchor) => anchor.textContent,
@@ -134,6 +136,7 @@ describe('GOV-658 shell — active tab highlights canonical and contextual route
     { path: '/sources', expected: 'Source Vault' },
     { path: '/newsletter', expected: 'Newsletter' },
     { path: '/watchlist', expected: 'Watchlist' },
+    { path: '/alerts', expected: 'Alerts' },
   ];
 
   for (const { path, expected } of cases) {
@@ -205,8 +208,14 @@ describe('GOV-658 shell — functional shared controls with honest preview label
       renderShell(root, { active: '/home', mode });
       const account = root.querySelector('[data-test="shell-account"]');
       const bell = root.querySelector('[data-test="notification-bell"]');
-      expect(account?.textContent).toContain('PREVIEW ACCOUNT');
+      expect(account?.textContent).toContain('REVIEWER ACCESS');
+      expect(account?.textContent).toContain('private beta');
       expect(account?.textContent).not.toMatch(/✓\s*ID|ID-verified/i);
+      expect(account?.getAttribute('role')).toBe('note');
+      expect(account?.getAttribute('tabindex')).toBe('0');
+      const descriptionId = account?.getAttribute('aria-describedby');
+      expect(descriptionId).toBe('gw-reviewer-access-description');
+      expect(root.querySelector(`#${descriptionId}`)?.textContent).toMatch(/does not expose or verify/i);
       expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
       expect(bell?.getAttribute('aria-haspopup')).toBe('dialog');
       expect(bell?.getAttribute('aria-expanded')).toBe('false');
@@ -214,6 +223,19 @@ describe('GOV-658 shell — functional shared controls with honest preview label
       expect(root.querySelector('[data-test="shell-alert-count"]')).toBeNull();
     });
   }
+
+  it('reveals the active final navigation tab when Alerts is selected', () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    renderShell(root, { active: '/alerts' });
+
+    expect(root.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Alerts');
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+  });
 
   for (const mode of ['advanced', 'simple'] as const) {
     it(`keeps the shared logo and AI limitation line visible in ${mode} mode`, () => {

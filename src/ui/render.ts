@@ -322,15 +322,21 @@ export function gapCardSection(view: GapSummaryView): HTMLElement {
     breakdown,
   ];
 
-  // The per-meeting no_primary_source list, behind a tap-reachable disclosure
-  // (≥44px summary, reusing the drawer tap floor). Collapsed by default so the
-  // long list does not dominate, but every meeting is present and countable.
-  if (view.noPrimarySource.length) {
-    const meetings = el(
+  // Every served gap row remains tap-reachable, not just no_primary_source.
+  // Grouped disclosures keep the 224-row fixture readable without reducing the
+  // backend's subject/severity/status/detail evidence to aggregate counts.
+  for (const group of view.groups) {
+    const rows = el(
       'ul',
-      { class: 'gw-gap-meeting-list', 'data-test': 'gap-meetings' },
-      view.noPrimarySource.map((c) =>
-        el('li', { class: 'gw-gap-meeting', 'data-test': 'gap-meeting', 'data-subject': c.subject_id }, [
+      { class: 'gw-gap-meeting-list', 'data-test': `gap-rows-${group.gapType}` },
+      group.cards.map((c) =>
+        el('li', {
+          class: 'gw-gap-meeting',
+          'data-test': group.gapType === 'no_primary_source' ? 'gap-meeting' : 'gap-card-detail',
+          'data-gap-detail-row': 'true',
+          'data-gap-type': group.gapType,
+          'data-subject': c.subject_id,
+        }, [
           el('span', { class: 'gw-gap-subject', 'data-test': 'gap-subject' }, [c.subject_id]),
           el(
             'span',
@@ -342,14 +348,16 @@ export function gapCardSection(view: GapSummaryView): HTMLElement {
         ]),
       ),
     );
-    children.push(
-      el('details', { class: 'gw-drawer gw-gap-drawer', 'data-test': 'gap-meeting-drawer' }, [
-        el('summary', { 'data-test': 'gap-meeting-summary' }, [
-          `Meetings lacking a primary source (${view.noPrimarySourceCount})`,
-        ]),
-        meetings,
-      ]),
-    );
+    children.push(el('details', {
+      class: 'gw-drawer gw-gap-drawer',
+      'data-test': group.gapType === 'no_primary_source' ? 'gap-meeting-drawer' : 'gap-group-drawer',
+      'data-gap-type': group.gapType,
+    }, [
+      el('summary', {
+        'data-test': group.gapType === 'no_primary_source' ? 'gap-meeting-summary' : 'gap-group-summary',
+      }, [`${group.label} (${group.count})`]),
+      rows,
+    ]));
   }
 
   return el('section', { class: 'gw-gapcard', 'data-test': 'completeness-gap-card', 'data-no-primary-source-count': String(view.noPrimarySourceCount), 'data-total-gaps': String(view.total) }, children);

@@ -23,9 +23,16 @@ function parseHash(): { path: string; query: URLSearchParams } {
 
 export function createRouter(fallback: RouteHandler): Router {
   const routes = new Map<string, RouteHandler>();
+  let previousPath: string | null = null;
   const dispatch = (): void => {
     const { path, query } = parseHash();
     (routes.get(path) ?? fallback)({ path, query });
+    if (previousPath !== null && previousPath !== path) {
+      const scrollingElement = document.scrollingElement ?? document.documentElement;
+      scrollingElement.scrollTop = 0;
+      scrollingElement.scrollLeft = 0;
+    }
+    previousPath = path;
   };
   return {
     register: (path, handler) => routes.set(path, handler),

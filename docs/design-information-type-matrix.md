@@ -51,14 +51,14 @@ and the backend-supplied trust vocabulary.
 
 | Major information group | Class | Current binding | Backend contract needed |
 | --- | --- | --- | --- |
-| Brand, primary navigation, footer disclosure, responsive tool placement | **DG** | The approved shell structure and AI caution are present on every admitted page; they contain no civic facts. | No data API. Any deliberate navigation or hierarchy departure needs owner approval. |
-| Simple/Advanced mode, theme, print | **DL** | `gw_home_mode` and theme preference change presentation only; print invokes the browser. Both modes must preserve the same facts and gaps. | Optional account preference sync only; local mode must continue to work without it. |
+| Brand, primary navigation, footer disclosure, responsive tool placement | **DG** | The approved shell structure and AI caution are present on every admitted page; they contain no civic facts. Its nine-tab order is Home, Fast Agenda, Timeline, Boards, Power Tracker, Source Vault, Newsletter, Watchlist, and Alerts. | No data API. Any deliberate navigation or hierarchy departure needs owner approval. |
+| Simple/Advanced mode, theme, print | **DL** | The shell owns the single `gw_home_mode` control; pages do not render duplicate mode switches. Theme and mode change presentation only, and print invokes the browser. Both modes preserve the same facts and gaps. | Optional account preference sync only; local mode must continue to work without it. |
 | Location chip | **DL** | Shows the saved browser label, with Alpine as the design fallback. It does not prove identity or official coverage. | `GET /v1/locations`, `GET /v1/coverage`, and `PATCH /v1/me/location` before claiming an account-locked or covered place. |
 | Global search | **DL** | Routes the entered query to the current reviewed Timeline filter. It is not a full archive search. | A reviewed cross-record search contract with scope, type, range, result count, and receipts. |
-| Reviewer identity/account management | **DG** | The chip says `PREVIEW ACCOUNT`; the shell does not certify a person or manage identity. | Server-authoritative `GET /v1/session` and the approved access-request/account-management flow. |
+| Reviewer identity/account management | **DG** | The chip says `REVIEWER ACCESS / private beta`; it represents the protected lane, not a person, email address, or browser-verified identity. Sites custom access and the server-side allowlist remain the hosted authentication boundary. | Server-authoritative `GET /v1/session` and the approved access-request/account-management flow. |
 | Snapshot origin label | **RV** | The shell distinguishes a reviewed snapshot from a synthetic fixture without calling either one live. | Every view response should provide exact `access`, `scope`, and `origin`. |
 | Exact freshness | **DG** | A generation time renders only when supplied; otherwise the timestamp stays absent. | Every view response should provide `asOf`/`generatedAt` and per-source freshness. |
-| Header notification bell | **GS** | `NotificationResponse` currently falls back to a labelled DEV sample of account-workflow messages. | Session-scoped `GET /api/notifications`. This contract remains separate from civic `GET /v1/me/alerts`. |
+| Header notification bell | **GS** | `NotificationResponse` currently falls back to a labelled DEV sample of account-workflow messages. The bell is account workflow only; the ninth Alerts tab is the separate civic-alert product surface. | Session-scoped `GET /api/notifications`. This contract remains separate from civic `GET /v1/me/alerts`. |
 
 ## 1. Home — `#/home`
 
@@ -142,7 +142,7 @@ and the backend-supplied trust vocabulary.
 
 | Major information group | Class | Current binding | Backend contract needed |
 | --- | --- | --- | --- |
-| Archive list, digest identity, coverage period | **RV** | Exact archived `NewsletterDigestResponse` values; the capture is not called a current publication or delivery. | `GET /v1/newsletters` with origin, edition status, freshness, and pagination. |
+| Archive list, digest identity, coverage period | **RV** | Exact archived `NewsletterDigestResponse` values. The default route shows the full baseline structure plus an explicit current-edition gap and archive; it does not infer “current” from response order. A supplied ID opens detail. | `GET /v1/newsletters` with origin, edition status, freshness, featured/current markers, and pagination. |
 | Digest sections, items, claim labels, gaps, source trail | **RV** | All required sections render, including explicit empty sections, and trust/AI labels stay verbatim. | `GET /v1/newsletters/:id`; preserve the frozen claim vocabulary and web-safe source trail. |
 | Pre/post meeting pairs and edition versions | **DG** | A coverage period or newsletter ID is not treated as version history or a paired edition. | Reviewed edition IDs, pair relationship, status, generation/publication times, and receipts. |
 | Full agenda story, motions, diffs, public comment, checklist, Language Watch | **DG** | Digest items are not expanded into unsupported agenda detail or procedural judgments. | Agenda-item editorial projection with backend-supplied blocks, states, labels, and locators. |

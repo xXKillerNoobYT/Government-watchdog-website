@@ -47,6 +47,12 @@ The production binding rule is deliberately small:
 Device-local preview state is allowed only where it is labelled as such.
 Synthetic values require the fixture gate described above.
 
+The admitted app has one shared shell on every page. Its canonical nine-tab
+order is Home, Fast Agenda, Timeline, Boards, Power Tracker, Source Vault,
+Newsletter, Watchlist, and Alerts. The shell owns the only Simple/Advanced
+switch. Individual pages read that preference and must not add a second mode
+control, including on Timeline.
+
 ## Existing safe data that can be reused
 
 - `ReadApiResponse` reviewed statements and their backend-supplied trust,
@@ -125,6 +131,10 @@ introduce an explicitly web-safe `publicContentDigest`; never expose
 Extend the existing digest contract with pre/post editions, meeting pairs,
 agenda sections, debate lines, lenses, checklists, and source trails. A browser
 may read a supplied script aloud, but it may not author or silently relabel it.
+Until a reviewed response supplies an explicit current, featured, or latest
+marker, the default Newsletter route shows the baseline layout as designed
+gaps followed by the reviewed archive. It never selects the first response row
+as a current edition. A supplied newsletter ID may open its detail view.
 
 ### Watchlist, alerts, and location
 

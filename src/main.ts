@@ -514,8 +514,10 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
 }
 
 /**
- * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
- * digest detail. `?state=loading|empty|error` forces the async states for
+ * GOV-462 newsletter route (gated): `#/newsletter` opens the archive plus the
+ * honest-empty current-edition baseline, and `?id=` deep-links a digest. The
+ * response has no current/featured marker, so the client never guesses one.
+ * `?state=loading|empty|error` forces the async states for
  * screenshots. Both surfaces are full-app civic surfaces → gated identically to
  * `#/app` via the shared `gated()` wrapper (§5); this handler only runs once an
  * approved request has been admitted.

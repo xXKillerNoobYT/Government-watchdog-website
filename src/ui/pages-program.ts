@@ -8,10 +8,9 @@
 
 import type { AgendaBoard, AgendaBoardCard, AgendaLane } from '../types/agenda-board';
 import type { EvidenceLink, ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
-import { ensureStyle, recordCard } from './render';
+import { ensureStyle, gapCardSection, recordCard } from './render';
 import { FIXTURE_BANNER_TEXT, trustLabel } from './state-view';
-import { applyThemePref, readThemePref } from './theme-toggle';
-import { buildTimeline, recordTimelineDate } from './timeline';
+import { buildGapSummary, buildTimeline, recordTimelineDate } from './timeline';
 import {
   confidenceLabel,
   correctionStatusLabel,
@@ -48,14 +47,6 @@ export function readPageMode(): PageMode {
   return 'advanced';
 }
 
-function persistPageMode(mode: PageMode): void {
-  try {
-    localStorage.setItem(MODE_KEY, mode);
-  } catch {
-    /* non-fatal */
-  }
-}
-
 function fixtureBanner(notice?: string): HTMLElement {
   return el('div', { class: 'gw-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, [
     FIXTURE_BANNER_TEXT,
@@ -83,7 +74,7 @@ function pageShell(root: HTMLElement, testId: string, title: string, options: Pa
     if (options.fixture) root.append(fixtureBanner(options.notice));
     else if (options.notice) root.append(sourceNotice(options.notice));
   }
-  const shell = el('main', { class: 'gw-boards', 'data-test': testId }, [el('h1', { class: 'gw-h1' }, [title])]);
+  const shell = el('div', { class: 'gw-boards', 'data-test': testId }, [el('h1', { class: 'gw-h1' }, [title])]);
   root.append(shell);
   return shell;
 }
@@ -112,36 +103,6 @@ function ensureBaselinePageStyle(): void {
   if (baselinePageStyleInjected) return;
   document.head.append(el('style', { 'data-test': 'baseline-page-style' }, [BASELINE_PAGE_STYLE]));
   baselinePageStyleInjected = true;
-}
-
-function applyModeThemeDefault(mode: PageMode): void {
-  if (readThemePref() !== 'system') return;
-  applyThemePref(mode === 'advanced' ? 'dark' : 'system');
-}
-
-function modeToggle(onChange: (mode: PageMode) => void): HTMLElement {
-  const mount = el('div', { 'data-test': 'mode-mount' });
-  const simple = el('button', { type: 'button', class: 'gw-view-tab', 'data-test': 'mode-simple', role: 'tab' }, ['Simple']);
-  const advanced = el('button', { type: 'button', class: 'gw-view-tab', 'data-test': 'mode-advanced', role: 'tab' }, ['Advanced']);
-  const show = (mode: PageMode) => {
-    simple.setAttribute('aria-selected', String(mode === 'simple'));
-    advanced.setAttribute('aria-selected', String(mode === 'advanced'));
-    persistPageMode(mode);
-    applyModeThemeDefault(mode);
-    onChange(mode);
-  };
-  const choose = (mode: PageMode): void => {
-    show(mode);
-    // The persistent shell owns the same gw_home_mode preference. Re-route so
-    // its chrome changes with this in-page control instead of leaving (for
-    // example) an Advanced timeline inside a Simple newspaper shell.
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-  };
-  simple.addEventListener('click', () => choose('simple'));
-  advanced.addEventListener('click', () => choose('advanced'));
-  mount.append(el('div', { class: 'gw-view-toggle', role: 'tablist', 'aria-label': 'Page mode', 'data-test': 'mode-toggle' }, [simple, advanced]));
-  show(readPageMode());
-  return mount;
 }
 
 function allCards(board: AgendaBoard): AgendaBoardCard[] {
@@ -204,7 +165,7 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
   }
 
   const mount = el('div', { 'data-test': 'fast-agenda-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.replaceChildren();
     const cards = allCards(board);
     if (!cards.length) {
@@ -222,15 +183,16 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
         ...board.lanes.map(agendaLaneSummary),
       ]),
     ]));
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 export type TimelineLevel = 'year' | 'month' | 'day';
-export type TimelineEventType = 'all' | 'agenda' | 'source' | 'undated';
+export type TimelineEventType = 'all' | 'agenda' | 'ordering' | 'undated';
 
 function eventType(record: StatementRecord): Exclude<TimelineEventType, 'all'> {
-  if (record.agenda_item_id) return 'agenda';
-  if (recordTimelineDate(record)) return 'source';
+  if (isoDate(record.agenda_item_id)) return 'agenda';
+  if (recordTimelineDate(record)) return 'ordering';
   return 'undated';
 }
 
@@ -285,8 +247,8 @@ function timelineFilterBar(
     'data-test': 'timeline-type-select',
   }, [
     filterOption('all', 'All reviewed records', type),
-    filterOption('agenda', 'Agenda-linked', type),
-    filterOption('source', 'Source-dated', type),
+    filterOption('agenda', 'Agenda-id ordering date (not event)', type),
+    filterOption('ordering', 'Evidence/capture ordering date (not event)', type),
     filterOption('undated', 'Undated', type),
   ]);
   const submit = el('button', { type: 'submit', class: 'gw-timeline-filter-submit' }, ['Apply filters']);
@@ -321,13 +283,20 @@ function timelineFilterBar(
   return form;
 }
 
-/**
- * Preserve the handoff's issue-run and archive-window tools as visible,
- * non-operational slots. The current admitted response has neither typed issue
- * edges nor archive completeness metadata, so enabling these controls would
- * manufacture both relationship and coverage claims.
- */
+/** Preserve the full handoff tool geometry without enabling unsupported claims. */
 function timelineUnavailableTools(): HTMLElement {
+  const unavailable = (testId: string, label: string): HTMLButtonElement => el('button', {
+    type: 'button',
+    disabled: '',
+    'aria-disabled': 'true',
+    'data-test': testId,
+  }, [label]);
+  const toolGroup = (label: string, children: HTMLElement[]): HTMLElement => el('div', {
+    class: 'gw-timeline-tool-group',
+    role: 'group',
+    'aria-label': label,
+  }, [el('span', { class: 'gw-timeline-tool-label' }, [label]), ...children]);
+
   return el('section', {
     class: 'gw-timeline-tool-gaps',
     role: 'note',
@@ -336,14 +305,30 @@ function timelineUnavailableTools(): HTMLElement {
   }, [
     el('div', {}, [
       el('p', { class: 'gw-timeline-kicker' }, ['DESIGNED TIMELINE TOOLS']),
-      el('strong', {}, ['Issue runs and complete archive windows are not connected']),
-      el('p', {}, ['These controls stay visible for the baseline layout but remain disabled until typed issue edges and archive-completeness metadata are supplied.']),
+      el('strong', {}, ['Only the reviewed Town ordering projection is connected']),
+      el('p', {}, ['Unsupported jurisdiction, event-kind, issue, event-window, and event-sort controls stay visible but disabled until typed backend fields are supplied.']),
     ]),
-    el('div', { class: 'gw-timeline-tool-gap-controls', role: 'group', 'aria-label': 'Unavailable timeline tools' }, [
-      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true', 'data-test': 'timeline-issue-preset-unavailable' }, ['Issue preset · unavailable']),
-      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true', 'data-test': 'timeline-window-90-unavailable' }, ['Past 90 days · unavailable']),
-      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true', 'data-test': 'timeline-window-year-unavailable' }, ['Past year · unavailable']),
-      el('button', { type: 'button', disabled: '', 'aria-disabled': 'true', 'data-test': 'timeline-window-all-unavailable' }, ['Complete archive · unavailable']),
+    el('div', { class: 'gw-timeline-tool-gap-controls' }, [
+      toolGroup('Government level', [
+        el('span', { class: 'gw-timeline-tool-status', 'data-state': 'supplied', 'data-test': 'timeline-level-town' }, ['Town · supplied']),
+        unavailable('timeline-level-county-unavailable', 'County · unavailable'),
+        unavailable('timeline-level-state-unavailable', 'State · unavailable'),
+      ]),
+      toolGroup('Event category', [
+        unavailable('timeline-type-meeting-unavailable', 'Meeting'),
+        unavailable('timeline-type-document-unavailable', 'Document'),
+        unavailable('timeline-type-change-unavailable', 'Change'),
+        unavailable('timeline-type-deadline-unavailable', 'Deadline'),
+        unavailable('timeline-type-vote-unavailable', 'Vote'),
+      ]),
+      toolGroup('Issue run', [unavailable('timeline-issue-preset-unavailable', 'Issue preset · unavailable')]),
+      toolGroup('Event window', [
+        unavailable('timeline-window-next-unavailable', 'Next 3 weeks · unavailable'),
+        unavailable('timeline-window-90-unavailable', 'Past 90 days · unavailable'),
+        unavailable('timeline-window-year-unavailable', 'Past year · unavailable'),
+        unavailable('timeline-window-all-unavailable', 'Complete archive · unavailable'),
+      ]),
+      toolGroup('Sort', [unavailable('timeline-sort-unavailable', 'Event chronology · unavailable')]),
     ]),
   ]);
 }
@@ -351,6 +336,50 @@ function timelineUnavailableTools(): HTMLElement {
 interface TimelineMapRecord {
   record: StatementRecord;
   timelineDate?: string;
+}
+
+type TimelineDateBasis = 'agenda-reference' | 'source-date' | 'capture' | 'validation' | 'evidence-date' | 'undated';
+
+interface TimelineDateBasisView {
+  kind: TimelineDateBasis;
+  label: string;
+  isEventDate: boolean;
+}
+
+const TIMELINE_DATE_BASIS: Record<TimelineDateBasis, TimelineDateBasisView> = {
+  'agenda-reference': { kind: 'agenda-reference', label: 'Agenda-id ordering date · not event', isEventDate: false },
+  'source-date': { kind: 'source-date', label: 'Source ordering date · meaning not typed', isEventDate: false },
+  capture: { kind: 'capture', label: 'Capture/scan date · not event', isEventDate: false },
+  validation: { kind: 'validation', label: 'Validation date · not event', isEventDate: false },
+  'evidence-date': { kind: 'evidence-date', label: 'Evidence ordering date · multiple fields match', isEventDate: false },
+  undated: { kind: 'undated', label: 'Undated', isEventDate: false },
+};
+
+function isoDate(value: string | null | undefined): string | undefined {
+  return value?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+}
+
+/** Describe the exact field that supplied recordTimelineDate; never promote it to an event date. */
+function timelineDateBasis(record: StatementRecord, timelineDate: string | undefined): TimelineDateBasisView {
+  if (!timelineDate) return TIMELINE_DATE_BASIS.undated;
+  if (isoDate(record.agenda_item_id) === timelineDate) return TIMELINE_DATE_BASIS['agenda-reference'];
+  const evidence = record.evidence ?? [];
+  const matches = new Set<TimelineDateBasis>();
+  if (evidence.some((row) => isoDate(row.last_validated_utc) === timelineDate)) matches.add('validation');
+  if (evidence.some((row) => isoDate(row.scan_date) === timelineDate)) matches.add('capture');
+  if (evidence.some((row) => isoDate(row.source_date) === timelineDate)) matches.add('source-date');
+  if (matches.size > 1) return TIMELINE_DATE_BASIS['evidence-date'];
+  const [match] = matches;
+  if (match) return TIMELINE_DATE_BASIS[match];
+  return TIMELINE_DATE_BASIS.undated;
+}
+
+function timelinePosition(date: string, firstDate: string, lastDate: string): number {
+  const dateMs = Date.parse(`${date}T00:00:00Z`);
+  const firstMs = Date.parse(`${firstDate}T00:00:00Z`);
+  const lastMs = Date.parse(`${lastDate}T00:00:00Z`);
+  if (![dateMs, firstMs, lastMs].every(Number.isFinite) || firstMs === lastMs) return 50;
+  return Math.round(((dateMs - firstMs) / (lastMs - firstMs)) * 10_000) / 100;
 }
 
 function timelineRecordAnchor(index: number): string {
@@ -378,20 +407,65 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
   const lastDate = dates.at(-1);
   const undatedCount = records.length - dated.length;
 
+  const clustersByKey = new Map<string, {
+    date: string;
+    basis: TimelineDateBasisView;
+    entries: typeof dated;
+  }>();
+  for (const entry of dated) {
+    const basis = timelineDateBasis(entry.record, entry.timelineDate);
+    const key = `${entry.timelineDate}:${basis.kind}`;
+    const cluster = clustersByKey.get(key) ?? { date: entry.timelineDate, basis, entries: [] };
+    cluster.entries.push(entry);
+    clustersByKey.set(key, cluster);
+  }
+  // Allocate the first row whose prior card is far enough away on the axis.
+  // Unlike index % 4, this never reuses a row for nearby dates and the map
+  // height grows with the allocation, so dense/mobile clusters stay tappable.
+  const minimumPositionGap = typeof window !== 'undefined' && window.innerWidth <= 640 ? 50 : 42;
+  const rowEndPositions: number[] = [];
+  const clusters = [...clustersByKey.values()].map((cluster) => {
+    const position = timelinePosition(cluster.date, firstDate!, lastDate!);
+    let row = rowEndPositions.findIndex((prior) => position - prior >= minimumPositionGap);
+    if (row === -1) row = rowEndPositions.length;
+    rowEndPositions[row] = position;
+    return { ...cluster, position, row };
+  });
+  const rowCount = Math.max(1, rowEndPositions.length);
+
   const townEvents = dated.length
-    ? el('ol', { class: 'gw-timeline-map-events', 'data-test': 'timeline-map-town-events' }, dated.map((entry) => {
-      const targetId = timelineRecordAnchor(entry.index);
+    ? el('ol', {
+      class: 'gw-timeline-map-events',
+      'data-test': 'timeline-map-town-events',
+      'aria-label': 'Proportionally positioned reviewed ordering-date markers',
+      style: `--gw-timeline-rows:${rowCount}`,
+    }, clusters.map((cluster) => {
+      const position = cluster.position;
+      const targetId = timelineRecordAnchor(cluster.entries[0].index);
+      const rowCountForCluster = cluster.entries.length;
+      const receiptCount = cluster.entries.reduce((count, entry) => count + (entry.record.evidence?.length ?? 0), 0);
+      const firstLabel = timelineMapLabel(cluster.entries[0].record);
+      const copy = rowCountForCluster === 1 ? firstLabel : `${firstLabel} · +${rowCountForCluster - 1} more`;
       const marker = el('button', {
           type: 'button',
-          class: `gw-timeline-map-event gw-timeline-map-event-${eventType(entry.record)}`,
-          title: timelineMapLabel(entry.record),
+          class: `gw-timeline-map-event gw-timeline-map-event-${cluster.basis.kind}`,
+          title: `${cluster.basis.label}: ${copy}`,
           'data-test': 'timeline-map-event',
-          'data-date': entry.timelineDate,
+          'data-date': cluster.date,
+          'data-date-basis': cluster.basis.kind,
+          'data-is-event-date': String(cluster.basis.isEventDate),
+          'data-position': String(position),
+          'data-record-count': String(rowCountForCluster),
+          'data-receipt-count': String(receiptCount),
+          'data-target-id': targetId,
         }, [
           el('span', { class: 'gw-timeline-map-dot', 'aria-hidden': 'true' }, []),
-          el('time', { datetime: entry.timelineDate }, [entry.timelineDate]),
-          el('span', { class: 'gw-timeline-map-event-copy' }, [timelineMapLabel(entry.record)]),
-          el('span', { class: 'gw-timeline-map-status' }, [entry.record.ui_status ?? 'status unavailable']),
+          el('time', { datetime: cluster.date }, [cluster.date]),
+          el('span', { class: 'gw-timeline-map-event-copy' }, [copy]),
+          el('span', { class: 'gw-timeline-map-basis' }, [cluster.basis.label]),
+          el('span', { class: 'gw-timeline-map-status', 'data-test': 'timeline-map-receipt-count' }, [
+            `${rowCountForCluster} reviewed row${rowCountForCluster === 1 ? '' : 's'} · ${receiptCount} source receipt${receiptCount === 1 ? '' : 's'}`,
+          ]),
         ]);
       marker.addEventListener('click', () => {
         const target = document.getElementById(targetId);
@@ -399,7 +473,10 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
         target.focus({ preventScroll: true });
         if (typeof target.scrollIntoView === 'function') target.scrollIntoView({ block: 'start' });
       });
-      return el('li', {}, [marker]);
+      return el('li', {
+        style: `--gw-timeline-position:${position}%;--gw-timeline-row:${cluster.row}`,
+        'data-edge': position === 0 ? 'start' : position === 100 ? 'end' : 'middle',
+      }, [marker]);
     }))
     : el('div', { class: 'gw-timeline-map-gap', role: 'status', 'data-test': 'timeline-map-date-gap' }, [
       el('strong', {}, ['No web-safe timeline date available']),
@@ -412,7 +489,7 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
     'data-test': testId,
   }, [
     el('strong', {}, [`${level} projection unavailable`]),
-    el('span', {}, [`No reviewed ${level.toLocaleLowerCase()} events are supplied to this route; no markers were invented.`]),
+    el('span', {}, [`No reviewed ${level.toLocaleLowerCase()} date records are supplied to this route; no markers were invented.`]),
   ]);
 
   return el('section', {
@@ -422,12 +499,13 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
   }, [
     el('header', { class: 'gw-timeline-map-head' }, [
       el('div', {}, [
-        el('p', { class: 'gw-timeline-kicker' }, ['CROSS-GOVERNMENT EVENT BAR']),
-        el('h2', {}, ['Town, County, and State in one view']),
+        el('p', { class: 'gw-timeline-kicker' }, ['CROSS-GOVERNMENT DATE-ORDER BAR']),
+        el('h2', {}, ['Town supplied; County and State reserved']),
       ]),
       el('div', { class: 'gw-timeline-map-legend', 'aria-label': 'Timeline marker legend' }, [
-        el('span', { class: 'is-agenda' }, ['● Agenda-linked']),
-        el('span', { class: 'is-source' }, ['● Source-dated']),
+        el('span', { class: 'is-agenda' }, ['● Agenda-id ordering date · not event']),
+        el('span', { class: 'is-source' }, ['● Source ordering date · meaning not typed']),
+        el('span', { class: 'is-capture' }, ['● Capture/validation · not event']),
         el('span', { class: 'is-undated' }, ['● Undated below']),
       ]),
     ]),
@@ -451,8 +529,8 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
       ]),
     ]),
     el('footer', { class: 'gw-timeline-map-foot' }, [
-      el('p', {}, [
-        'Date basis: agenda-item date or latest web-safe source/scan/validation date. It is a display-order date, not an inferred event date.',
+      el('p', { 'data-test': 'timeline-date-disclosure' }, [
+        'Every plotted value is an ordering date, not a typed civic event date. Agenda ids, source date fields, capture/scan dates, and validation dates retain their exact basis without inferring publication or event meaning.',
       ]),
       el('p', { 'data-test': 'timeline-connector-gap' }, [
         'Issue-run highlighting and connector lines are unavailable until the backend supplies typed cross-record issue edges.',
@@ -475,9 +553,13 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
   }
 
   const level = selectValue(query, 'level', 'month', ['year', 'month', 'day']) as TimelineLevel;
-  const type = selectValue(query, 'type', 'all', ['all', 'agenda', 'source', 'undated']) as TimelineEventType;
+  const requestedType = query.get('type') === 'source' ? 'ordering' : query.get('type');
+  const type = (requestedType && ['all', 'agenda', 'ordering', 'undated'].includes(requestedType)
+    ? requestedType
+    : 'all') as TimelineEventType;
   const search = (query.get('search') ?? '').trim().toLocaleLowerCase();
   const timeline = buildTimeline(data);
+  const gapSummary = buildGapSummary(data);
   const filtered = timeline.ordered.filter(({ record }) => {
     if (type !== 'all' && eventType(record) !== type) return false;
     if (!search) return true;
@@ -510,7 +592,7 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
         el('p', { class: 'gw-timeline-kicker' }, ['REVIEWED RECORD TIMELINE']),
         el('h2', {}, ['What the current Alpine record actually supports']),
         el('p', { class: 'gw-muted' }, [
-          'The handoff’s cleaner timeline framing, backed by the existing fail-closed record cards and source-reveal behavior.',
+          'The handoff’s timeline framing, backed by fail-closed record cards, source receipts, explicit missing-data gaps, and truthful date semantics.',
         ]),
       ]),
       el('aside', { class: 'gw-timeline-scope', role: 'note' }, [
@@ -529,8 +611,9 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
   );
 
   const mount = el('div', { 'data-test': 'timeline-mode-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.replaceChildren();
+    if (gapSummary) mount.append(gapCardSection(gapSummary));
     if (filtered.length === 0) {
       mount.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'timeline-empty', role: 'status' }, [
         el('h2', {}, ['No reviewed records match this timeline filter']),
@@ -564,7 +647,8 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
       ]),
     );
     mount.append(el('div', { class: 'gw-timeline-lanes', 'data-test': 'timeline-advanced-lanes' }, lanes));
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 export const TIMELINE_HYBRID_STYLE = `
@@ -587,30 +671,29 @@ export const TIMELINE_HYBRID_STYLE = `
 .gw-timeline-filter-submit{border:var(--gw-border-w) solid var(--gw-accent);background:var(--gw-accent);color:var(--gw-accent-text-on)}
 .gw-timeline-filter-reset{border:var(--gw-border-w) solid var(--gw-border);background:transparent;color:var(--gw-text-secondary);text-decoration:none}
 .gw-timeline-result-count{align-self:center;color:var(--gw-text-muted);font:600 11px/1.25 var(--gw-font-mono);white-space:nowrap}
-.gw-timeline-tool-gaps{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--gw-surface-well);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius-lg);padding:12px 14px;color:var(--gw-text-secondary)}
+.gw-timeline-tool-gaps{display:grid;grid-template-columns:minmax(210px,.55fr) minmax(0,1.45fr);align-items:start;gap:16px;background:var(--gw-surface-well);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius-lg);padding:12px 14px;color:var(--gw-text-secondary)}
 .gw-timeline-tool-gaps p{margin:3px 0 0;font-size:var(--gw-text-sm)}.gw-timeline-tool-gaps strong{color:var(--gw-text)}
-.gw-timeline-tool-gap-controls{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}.gw-timeline-tool-gap-controls button{min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);background:var(--gw-surface);color:var(--gw-text-muted);padding:7px 11px;font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:not-allowed}
-.gw-timeline-hybrid>[data-test="mode-mount"]{margin:0}
+.gw-timeline-tool-gap-controls{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px}.gw-timeline-tool-group{display:flex;flex-wrap:wrap;align-items:center;gap:5px;border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:9px;padding:6px}.gw-timeline-tool-label{width:100%;color:var(--gw-text-muted);font:800 9px/1.2 var(--gw-font);letter-spacing:.7px;text-transform:uppercase}.gw-timeline-tool-gap-controls button,.gw-timeline-tool-status{min-height:var(--gw-tap-min);display:inline-flex;align-items:center;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);background:var(--gw-surface);color:var(--gw-text-muted);padding:7px 11px;font:700 var(--gw-text-badge)/1 var(--gw-font)}.gw-timeline-tool-gap-controls button{cursor:not-allowed}.gw-timeline-tool-status[data-state="supplied"]{border-color:var(--gw-level-town);background:var(--gw-tone-mint-well);color:var(--gw-level-town);cursor:default}
 .gw-timeline-hybrid .gw-view-toggle{width:max-content;background:var(--gw-surface-well);border-radius:var(--gw-radius-pill)}
 .gw-timeline-map{display:grid;gap:12px;margin:14px 0;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:16px;overflow:hidden}
 .gw-timeline-map-head{display:flex;align-items:end;justify-content:space-between;gap:16px}
 .gw-timeline-map-head h2{margin:3px 0 0;font-size:var(--gw-text-lg)}
 .gw-timeline-map-legend{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px 12px;color:var(--gw-text-muted);font:600 11px/1.3 var(--gw-font-mono)}
-.gw-timeline-map-legend .is-agenda{color:var(--gw-caution-text)}.gw-timeline-map-legend .is-source{color:var(--gw-ok-text)}
+.gw-timeline-map-legend .is-agenda{color:var(--gw-caution-text)}.gw-timeline-map-legend .is-source{color:var(--gw-ok-text)}.gw-timeline-map-legend .is-capture{color:var(--gw-info-text)}
 .gw-timeline-map-axis{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;gap:10px;align-items:center;color:var(--gw-text-muted);font:600 11px/1.2 var(--gw-font-mono)}
 .gw-timeline-map-axis i{height:1px;background:var(--gw-border-strong)}
 .gw-timeline-map-lanes{display:grid;gap:8px}
 .gw-timeline-map-lane{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;align-items:stretch;min-height:64px;border:var(--gw-border-w) solid var(--gw-border);border-left-width:4px;border-radius:10px;background:var(--gw-surface-well);padding:8px}
 .gw-timeline-map-lane h3{display:flex;flex-direction:column;justify-content:center;gap:3px;margin:0;font:800 11px/1.2 var(--gw-font);letter-spacing:1px}.gw-timeline-map-lane h3 small{color:var(--gw-text-muted);font-size:10px;letter-spacing:0}
 .gw-timeline-map-town{border-left-color:var(--gw-level-town)}.gw-timeline-map-county{border-left-color:var(--gw-level-county)}.gw-timeline-map-state{border-left-color:var(--gw-level-state)}
-.gw-timeline-map-events{display:flex;gap:8px;align-items:stretch;margin:0;padding:0;list-style:none;overflow-x:auto;scroll-snap-type:x proximity}
-.gw-timeline-map-events li{display:flex;min-width:min(280px,76vw);scroll-snap-align:start}
-.gw-timeline-map-event{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;width:100%;min-height:var(--gw-tap-min);padding:8px 10px;border:var(--gw-border-w) solid var(--gw-border);border-radius:8px;background:var(--gw-surface);color:var(--gw-text);font:inherit;text-align:left;cursor:pointer}
+.gw-timeline-map-events{position:relative;min-height:max(76px,calc(var(--gw-timeline-rows,1) * 70px + 12px));margin:0 8px;padding:0;list-style:none;background:linear-gradient(to right,var(--gw-border-subtle) 1px,transparent 1px) 0 0/25% 100%;overflow:hidden}
+.gw-timeline-map-events li{position:absolute;top:calc(var(--gw-timeline-row) * 70px);left:var(--gw-timeline-position);width:clamp(142px,20vw,230px);transform:translateX(-50%)}.gw-timeline-map-events li[data-edge="start"]{transform:none}.gw-timeline-map-events li[data-edge="end"]{transform:translateX(-100%)}
+.gw-timeline-map-event{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;width:100%;min-height:62px;padding:7px 9px;border:var(--gw-border-w) solid var(--gw-border);border-radius:8px;background:var(--gw-surface);color:var(--gw-text);font:inherit;text-align:left;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--gw-bg) 55%,transparent)}
 .gw-timeline-map-event:hover,.gw-timeline-map-event:focus-visible{border-color:var(--gw-accent);outline:2px solid var(--gw-accent);outline-offset:1px}
 .gw-timeline-map-dot{grid-row:1/3;width:11px;height:11px;border-radius:50%;background:var(--gw-ok-text);box-shadow:0 0 0 3px var(--gw-tone-ok-well)}
-.gw-timeline-map-event-agenda .gw-timeline-map-dot{background:var(--gw-caution-text);box-shadow:0 0 0 3px var(--gw-tone-caution-well)}
+.gw-timeline-map-event-agenda-reference .gw-timeline-map-dot{background:var(--gw-caution-text);box-shadow:0 0 0 3px var(--gw-tone-caution-well)}.gw-timeline-map-event-capture .gw-timeline-map-dot,.gw-timeline-map-event-validation .gw-timeline-map-dot,.gw-timeline-map-event-evidence-date .gw-timeline-map-dot{background:var(--gw-info-text);box-shadow:0 0 0 3px var(--gw-tone-info-well)}
 .gw-timeline-map-event time{font:600 10px/1.2 var(--gw-font-mono);color:var(--gw-text-muted)}
-.gw-timeline-map-event-copy{grid-column:2/4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700}
+.gw-timeline-map-event-copy{grid-column:2/4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}.gw-timeline-map-basis{grid-column:2/4;color:var(--gw-text-muted);font:700 9px/1.2 var(--gw-font-mono)}
 .gw-timeline-map-status{font:700 9px/1 var(--gw-font);color:var(--gw-text-secondary);text-transform:uppercase}
 .gw-timeline-map-gap{display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;border:var(--gw-border-w) dashed var(--gw-border);border-radius:8px;padding:8px 10px;color:var(--gw-text-muted);font-size:11px}.gw-timeline-map-gap strong{color:var(--gw-text-secondary)}
 .gw-timeline-map-foot{display:flex;flex-wrap:wrap;gap:5px 18px;border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:9px;color:var(--gw-text-muted);font:500 10.5px/1.4 var(--gw-font-mono)}.gw-timeline-map-foot p{margin:0}
@@ -625,13 +708,14 @@ export const TIMELINE_HYBRID_STYLE = `
   .gw-timeline-intro{grid-template-columns:1fr}
   .gw-timeline-filterbar{grid-template-columns:1fr 1fr}
   .gw-timeline-search-field,.gw-timeline-result-count{grid-column:1/-1}
-  .gw-timeline-tool-gaps{align-items:stretch;flex-direction:column}.gw-timeline-tool-gap-controls{justify-content:flex-start}
+  .gw-timeline-tool-gaps{grid-template-columns:1fr}.gw-timeline-tool-gap-controls{justify-content:flex-start}
 }
 @media (max-width:640px){
   .gw-timeline-filterbar{grid-template-columns:1fr}
   .gw-timeline-search-field,.gw-timeline-result-count{grid-column:auto}
   .gw-timeline-map-head{align-items:start;flex-direction:column}.gw-timeline-map-legend{justify-content:flex-start}
   .gw-timeline-map-lane{grid-template-columns:1fr}.gw-timeline-map-lane h3{display:block}
+  .gw-timeline-map-events{min-height:max(70px,calc(var(--gw-timeline-rows,1) * 62px + 8px));margin:0}.gw-timeline-map-events li{top:calc(var(--gw-timeline-row) * 62px);width:clamp(112px,34vw,160px)}.gw-timeline-map-event{min-height:54px}.gw-timeline-map-event-copy{font-size:10px}
   .gw-timeline-lanes .gw-lane-body{grid-template-columns:1fr}
 }
 `;
@@ -649,6 +733,56 @@ function topicLabel(node: TopicTreeNode): string {
 
 function flattenTopics(node: TopicTreeNode): TopicTreeNode[] {
   return [node, ...node.children.flatMap(flattenTopics)];
+}
+
+const BOARDS_VAULT_FIDELITY_STYLE = `
+.gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-boards-contract-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);padding:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius)}
+.gw-boards-contract-tab,.gw-boards-contract-tool,.gw-vault-contract-tool{min-height:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.2 var(--gw-font);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
+.gw-boards-contract-tab:disabled,.gw-boards-contract-tool:disabled,.gw-vault-contract-tool:disabled{cursor:not-allowed;opacity:.78}
+.gw-boards-contract-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-3)}
+.gw-boards-contract-card{display:grid;gap:var(--gw-space-3);min-height:12rem;background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-boards-contract-card h3,.gw-boards-contract-detail h3,.gw-vault-contract-panel h3{margin:0}
+.gw-boards-contract-card-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);margin-top:auto}
+.gw-boards-contract-card-metrics span{min-width:0;border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-2);text-align:center;font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
+.gw-boards-contract-detail-head{display:flex;gap:var(--gw-space-3);align-items:center;flex-wrap:wrap}
+.gw-boards-contract-detail-head .gw-muted{margin-left:auto}
+.gw-boards-contract-tools,.gw-vault-contract-tools{display:flex;gap:var(--gw-space-2);flex-wrap:wrap}
+.gw-boards-contract-slots{display:grid;grid-template-columns:1.05fr 1.25fr 1fr;gap:var(--gw-space-3);align-items:start}
+.gw-boards-contract-slot-stack,.gw-vault-contract-stack{display:grid;gap:var(--gw-space-3)}
+.gw-boards-contract-gap{text-align:left;min-height:8.5rem;background:var(--gw-card-bg)}
+.gw-boards-contract-advanced-layout{display:grid;gap:var(--gw-space-4);align-items:start}
+.gw-vault-contract-toolbar{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.75fr) minmax(160px,.75fr);gap:var(--gw-space-3);align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-vault-contract-field{display:grid;gap:var(--gw-space-1);font:700 var(--gw-text-badge)/1.2 var(--gw-font);color:var(--gw-text-secondary)}
+.gw-vault-contract-field input,.gw-vault-contract-field select{min-height:var(--gw-tap-min);width:100%;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
+.gw-vault-contract-toolbar-note{grid-column:1/-1;margin:0;color:var(--gw-text-muted);font-size:var(--gw-text-xs)}
+.gw-vault-contract-stat-explainer{border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:var(--gw-space-2);font-size:var(--gw-text-xs);color:var(--gw-text-secondary)}
+.gw-vault-contract-stat-explainer summary{cursor:pointer;font-weight:700;color:var(--gw-accent)}
+.gw-vault-contract-advanced-layout{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(340px,1.45fr) minmax(240px,.83fr);gap:var(--gw-space-4);align-items:start}
+.gw-vault-contract-receipts{display:grid;gap:var(--gw-space-3)}
+.gw-vault-contract-receipts[data-test="source-vault-list"]{grid-auto-flow:row;grid-auto-columns:auto;overflow-x:visible}
+.gw-vault-contract-version-controls{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:var(--gw-space-2);align-items:end}
+.gw-vault-contract-version-controls .gw-vault-contract-field{text-align:left}
+.gw-vault-contract-diff-summary{display:flex;gap:var(--gw-space-2);align-items:center;flex-wrap:wrap;border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-3)}
+.gw-vault-contract-diff{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-3)}
+.gw-vault-contract-diff-pane{min-height:12rem;text-align:left;background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-vault-contract-ledger-row{display:flex;justify-content:space-between;gap:var(--gw-space-3);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle);padding:var(--gw-space-2) 0;color:var(--gw-text-secondary)}
+.gw-vault-contract-video-ladder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2)}
+.gw-vault-contract-video-ladder span{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-2);text-align:center;font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
+.gw-vault-contract-manifest{display:grid;gap:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3);background:var(--gw-card-bg)}
+.gw-vault-contract-manifest code{overflow-wrap:anywhere;color:var(--gw-text-muted)}
+[data-test="boards-simple-edition"] .gw-boards-contract-cards,[data-test="boards-simple-edition"] .gw-boards-contract-slots{grid-template-columns:1fr}
+[data-test="boards-simple-edition"] .gw-boards-contract-card{min-height:0;border-radius:0;border-left:0;border-right:0}
+[data-test="boards-simple-edition"] .gw-boards-contract-directory,[data-test="boards-simple-edition"] .gw-boards-contract-detail,[data-test="source-vault-simple-edition"] .gw-vault-contract-panel,[data-test="source-vault-simple-edition"] .gw-vault-contract-toolbar{border-radius:0;border-left:0;border-right:0;background:transparent}
+[data-test="source-vault-simple-edition"] .gw-vault-contract-toolbar,[data-test="source-vault-simple-edition"] .gw-vault-contract-version-controls,[data-test="source-vault-simple-edition"] .gw-vault-contract-diff{grid-template-columns:1fr}
+[data-test="source-vault-simple-edition"] .gw-vault-contract-toolbar-note{grid-column:auto}
+@media(max-width:1000px){.gw-vault-contract-advanced-layout{grid-template-columns:1fr}.gw-boards-contract-slots{grid-template-columns:1fr 1fr}.gw-vault-contract-toolbar{grid-template-columns:1fr 1fr}.gw-vault-contract-toolbar-note{grid-column:1/-1}}
+@media(max-width:640px){.gw-boards-contract-tabs,.gw-boards-contract-cards,.gw-boards-contract-slots,.gw-vault-contract-toolbar,.gw-vault-contract-version-controls,.gw-vault-contract-diff{grid-template-columns:1fr}.gw-vault-contract-toolbar-note{grid-column:auto}.gw-boards-contract-detail-head .gw-muted{margin-left:0;width:100%}.gw-vault-contract-video-ladder{grid-template-columns:1fr}}
+`;
+
+function ensureBoardsVaultFidelityStyle(): void {
+  if (document.head.querySelector('[data-test="boards-vault-fidelity-style"]')) return;
+  document.head.append(el('style', { 'data-test': 'boards-vault-fidelity-style' }, [BOARDS_VAULT_FIDELITY_STYLE]));
 }
 
 function topicContextCard(node: TopicTreeNode): HTMLElement {
@@ -680,7 +814,7 @@ function topicContextCard(node: TopicTreeNode): HTMLElement {
 }
 
 function boardContractGap(title: string, body: string, testId: string): HTMLElement {
-  return el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': testId, role: 'status' }, [
+  return el('section', { class: 'gw-state gw-boards-contract-gap', 'data-state': 'empty', 'data-test': testId, role: 'status' }, [
     el('h2', {}, [title]),
     el('p', {}, [body]),
   ]);
@@ -706,28 +840,102 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
         'The reviewed payload contains civic topics, not policy-cleared government body records. Topics are never relabelled as boards, and no cadence, member, or official-link value is inferred.',
       ]),
     ]);
-  const baselineSlots = (): HTMLElement => el('div', { class: 'gw-board', 'data-test': 'boards-baseline-slots' }, [
-      boardContractGap(
-        'Tracked government bodies unavailable',
-        'A dedicated bodies projection must supply each policy-cleared body name before directory cards can be populated.',
-        'boards-bodies-gap',
-      ),
-      boardContractGap(
-        'Meeting cadence unavailable',
-        'No schedule or cadence fields are present in the reviewed concept graph.',
-        'boards-cadence-gap',
-      ),
+  const jurisdictionLanes = [
+    { level: 'town', label: 'Town boards', place: 'Alpine' },
+    { level: 'county', label: 'County boards', place: 'Lincoln' },
+    { level: 'state', label: 'State bodies', place: 'Wyoming' },
+  ];
+  const directoryGeometry = (): HTMLElement => el('section', {
+    class: 'gw-boards-contract-directory',
+    'data-test': 'boards-directory-geometry',
+    'aria-label': 'Government body directory contract gaps',
+  }, [
+    el('div', { class: 'gw-boards-contract-tabs', role: 'group', 'aria-label': 'Unavailable government-level directory filters' },
+      jurisdictionLanes.map((lane) => el('button', {
+        type: 'button',
+        class: 'gw-boards-contract-tab',
+        'data-test': 'boards-jurisdiction-tab',
+        'data-level': lane.level,
+        'aria-disabled': 'true',
+        disabled: '',
+      }, [`${lane.label} · ${lane.place}`]))),
+    el('section', {
+      class: 'gw-boards-contract-cards',
+      'data-state': 'empty',
+      'data-test': 'boards-bodies-gap',
+      role: 'status',
+    }, jurisdictionLanes.map((lane) => el('article', {
+      class: 'gw-boards-contract-card',
+      'data-test': 'boards-body-card-gap',
+      'data-level': lane.level,
+    }, [
+      el('p', { class: 'gw-muted' }, [`${lane.label.toLocaleUpperCase()} · ${lane.place}`]),
+      el('h3', {}, ['Body record unavailable']),
+      el('p', {}, ['A policy-cleared bodies projection must supply the official name before this directory card can be populated.']),
+      el('div', { class: 'gw-boards-contract-card-metrics', 'aria-label': 'Unavailable body facts' }, [
+        el('span', {}, ['Next meeting\nNot supplied']),
+        el('span', {}, ['Active issues\nNot supplied']),
+        el('span', {}, ['Changed docs\nNot supplied']),
+      ]),
+    ]))),
+    boardContractGap(
+      'Meeting cadence unavailable',
+      'No body schedule, next-meeting, or cadence fields are present in the reviewed concept graph.',
+      'boards-cadence-gap',
+    ),
+  ]);
+
+  const detailGeometry = (): HTMLElement => el('section', {
+    class: 'gw-boards-contract-detail',
+    'data-test': 'boards-detail-geometry',
+    'aria-label': 'Government body detail contract gaps',
+  }, [
+    el('header', { class: 'gw-boards-contract-detail-head' }, [
+      el('p', { class: 'gw-muted' }, ['BOARD DETAIL']),
+      el('h2', {}, ['No policy-cleared body selected']),
+      el('span', { class: 'gw-muted' }, ['Town · County · State']),
+    ]),
+    el('section', { 'data-state': 'empty', 'data-test': 'boards-links-gap', role: 'status' }, [
+      el('h3', {}, ['Body action tools unavailable']),
+      el('p', {}, ['No body-level identifier, official link, meeting route, or document route is supplied by the current contract.']),
+      el('div', { class: 'gw-boards-contract-tools', 'data-test': 'boards-detail-tools' }, [
+        el('button', { type: 'button', class: 'gw-boards-contract-tool', 'data-test': 'boards-detail-tool-fast-agenda', disabled: '' }, ['Fast agenda ›']),
+        el('button', { type: 'button', class: 'gw-boards-contract-tool', 'data-test': 'boards-detail-tool-timeline', disabled: '' }, ['Board timeline ›']),
+        el('button', { type: 'button', class: 'gw-boards-contract-tool', 'data-test': 'boards-detail-tool-documents', disabled: '' }, ['Documents ›']),
+      ]),
+    ]),
+    el('div', { class: 'gw-boards-contract-slots' }, [
       boardContractGap(
         'Members and roles unavailable',
-        'No policy-cleared member-name or role rows are present in the reviewed payload.',
+        'No policy-cleared member-name, role, term, or score rows are present in the reviewed payload.',
         'boards-members-gap',
       ),
-      boardContractGap(
-        'Official links unavailable',
-        'No body-level official URL or meeting-calendar URL is supplied by the current contract.',
-        'boards-links-gap',
-      ),
-    ]);
+      el('div', { class: 'gw-boards-contract-slot-stack' }, [
+        boardContractGap(
+          'Recent actions and votes unavailable',
+          'No body-scoped action or vote records are connected to a reviewed government body.',
+          'boards-actions-gap',
+        ),
+        boardContractGap(
+          'Active issues before this body unavailable',
+          'Reviewed civic topics remain separate below; none is inferred to be before a particular body.',
+          'boards-issues-gap',
+        ),
+      ]),
+      el('div', { class: 'gw-boards-contract-slot-stack' }, [
+        boardContractGap(
+          'Documents and proof unavailable',
+          'Reviewed receipt metadata is not joined to a policy-cleared government body record.',
+          'boards-proof-gap',
+        ),
+        boardContractGap(
+          'Watch flags unavailable',
+          'No body-scoped transparency-alert projection is connected, so no watch status is inferred.',
+          'boards-watch-gap',
+        ),
+      ]),
+    ]),
+  ]);
 
   const requestedTopicId = query.get('id');
   const requestedTopicNotice = (): HTMLElement | null => {
@@ -755,13 +963,11 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
   ]);
 
   ensureBaselinePageStyle();
+  ensureBoardsVaultFidelityStyle();
   const mount = el('div', { class: 'gw-baseline-mode-mount', 'data-test': 'boards-mode-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.setAttribute('data-mode', mode);
     const selectedNotice = requestedTopicNotice();
-    const content: HTMLElement[] = [directoryNote(), baselineSlots()];
-    if (selectedNotice) content.push(selectedNotice);
-    content.push(topicContext());
     if (mode === 'simple') {
       mount.replaceChildren(el('section', { class: 'gw-baseline-simple-sheet', 'data-test': 'boards-simple-edition' }, [
         el('header', { class: 'gw-baseline-simple-head' }, [
@@ -769,7 +975,11 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
           el('h2', {}, ['Who meets, what is missing, and where topic records live']),
           el('p', {}, ['Plain-English directory status first; reviewed topic context follows without being relabelled as a government body.']),
         ]),
-        ...content,
+        directoryNote(),
+        directoryGeometry(),
+        ...(selectedNotice ? [selectedNotice] : []),
+        topicContext(),
+        detailGeometry(),
       ]));
       return;
     }
@@ -778,9 +988,16 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
         el('p', {}, ['BOARDS DIRECTORY · EVIDENCE WORKBENCH']),
         el('h2', {}, ['Body-contract gaps beside reviewed civic-topic context']),
       ]),
-      ...content,
+      directoryNote(),
+      el('div', { class: 'gw-boards-contract-advanced-layout' }, [
+        directoryGeometry(),
+        detailGeometry(),
+      ]),
+      ...(selectedNotice ? [selectedNotice] : []),
+      topicContext(),
     ]));
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 function statementTitle(record: StatementRecord): string {
@@ -856,7 +1073,7 @@ export function renderPowerTracker(root: HTMLElement, data: ReadApiResponse, _qu
 
   const records = data.records ?? [];
   const mount = el('div', { 'data-test': 'power-mode-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.replaceChildren();
     if (!records.length) {
       mount.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'power-records-empty', role: 'status' }, [
@@ -878,7 +1095,8 @@ export function renderPowerTracker(root: HTMLElement, data: ReadApiResponse, _qu
       ...(mode === 'advanced' ? [evidenceMetaRows(record.evidence ?? [])] : []),
     ]));
     mount.append(el('div', { class: 'gw-board', 'data-test': mode === 'advanced' ? 'power-advanced-list' : 'power-simple-list' }, cards));
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 export function renderWatchlist(root: HTMLElement, data: ReadApiResponse, _query: URLSearchParams, notice?: string): void {
@@ -926,10 +1144,11 @@ export function renderWatchlist(root: HTMLElement, data: ReadApiResponse, _query
       )),
     ]));
   };
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.setAttribute('data-mode', mode);
     renderList();
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 const COVERAGE = {
@@ -1074,13 +1293,14 @@ export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, quer
     return;
   }
   const mount = el('div', { 'data-test': 'issue-mode-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.setAttribute('data-mode', mode);
     mount.replaceChildren(
       renderIssueDossierCard(record),
       evidenceMetaRows(record.evidence ?? []),
     );
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }
 
 function collectSources(data: ReadApiResponse): EvidenceLink[] {
@@ -1110,23 +1330,64 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
   const sources = collectSources(data);
   const originalLinkCount = sources.filter((source) => Boolean(source.original_url)).length;
   const archiveLinkCount = sources.filter((source) => Boolean(source.archive_url)).length;
+  const statExplainer = (body: string): HTMLElement => el('details', {
+    class: 'gw-vault-contract-stat-explainer',
+    'data-test': 'source-stat-explainer',
+  }, [
+    el('summary', {}, ['What this stat means']),
+    el('p', {}, [body]),
+  ]);
   const overview = (): HTMLElement => el('section', { class: 'gw-board', 'data-test': 'source-vault-overview', 'aria-label': 'Source Vault overview' }, [
       el('article', { class: 'gw-card', 'data-test': 'source-reviewed-count' }, [
         el('p', { class: 'gw-muted' }, ['REVIEWED SOURCE METADATA']),
         el('h2', {}, [String(sources.length)]),
         el('p', {}, [`Unique source row${sources.length === 1 ? '' : 's'} exposed by the current reviewed statement receipts.`]),
+        statExplainer('This is a deduplicated count of source metadata linked by the reviewed statement receipts on this page. It is not a count of every file in a full source registry.'),
       ]),
       el('article', { class: 'gw-card', 'data-test': 'source-hash-gap' }, [
         el('p', { class: 'gw-muted' }, ['HASH VERIFICATION']),
         el('h2', {}, ['Unavailable']),
         el('p', {}, ['The web-safe payload supplies no source-registry hash status or reviewed verification percentage.']),
+        statExplainer('A reviewed registry would need to supply both the manifest population and verification results before a percentage could be shown.'),
       ]),
       el('article', { class: 'gw-card', 'data-test': 'source-flags-gap' }, [
         el('p', { class: 'gw-muted' }, ['OPEN TRANSPARENCY FLAGS']),
         el('h2', {}, ['Unavailable']),
         el('p', {}, ['No transparency-alert projection is connected, so no flag count is inferred from statement status.']),
+        statExplainer('This slot counts only policy-cleared transparency flags when an alert projection is connected; statement status is not used as a substitute.'),
       ]),
     ]);
+
+  const vaultToolbar = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-toolbar',
+    'data-test': 'source-vault-tools',
+    'aria-label': 'Source Vault search and filters',
+  }, [
+    el('label', { class: 'gw-vault-contract-field' }, [
+      'Search vault',
+      el('input', {
+        type: 'search',
+        placeholder: 'Search reviewed source registry',
+        'data-test': 'source-vault-search',
+        disabled: '',
+      }),
+    ]),
+    el('label', { class: 'gw-vault-contract-field' }, [
+      'Source type',
+      el('select', { 'data-test': 'source-vault-type-filter', disabled: '' }, [
+        el('option', { value: '' }, ['All source types']),
+      ]),
+    ]),
+    el('label', { class: 'gw-vault-contract-field' }, [
+      'Government level',
+      el('select', { 'data-test': 'source-vault-level-filter', disabled: '' }, [
+        el('option', { value: '' }, ['Town · County · State']),
+      ]),
+    ]),
+    el('p', { class: 'gw-vault-contract-toolbar-note', 'data-test': 'source-vault-filter-gap', role: 'status' }, [
+      'Full-vault search and registry filters stay disabled until a reviewed source-registry index defines the searchable population and filter facets.',
+    ]),
+  ]);
 
   const sourceContent = (): HTMLElement => {
     if (!sources.length) {
@@ -1135,7 +1396,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         el('p', {}, ['No rows were invented for the vault.']),
       ]);
     }
-    return el('div', { class: 'gw-board', 'data-test': 'source-vault-list' }, sources.map((source, index) =>
+    return el('div', { class: 'gw-board gw-vault-contract-receipts', 'data-test': 'source-vault-list' }, sources.map((source, index) =>
       el('article', { class: 'gw-card', 'data-test': 'source-vault-row', 'data-source-id': source.to_source_id ?? `source-${index + 1}` }, [
         el('h2', {}, [source.to_source_id ?? `Source ${index + 1}`]),
         el('p', { class: 'gw-muted' }, [[source.source_type, source.published_by, source.jurisdiction].filter(Boolean).join(' · ') || 'Metadata not present']),
@@ -1147,26 +1408,106 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     ));
   };
 
-  const gapCards = (): HTMLElement[] => [
-    el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-version-compare-empty', role: 'status' }, [
+  const versionCompare = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-state': 'empty',
+    'data-test': 'source-version-compare-empty',
+  }, [
+    el('header', {}, [
+      el('p', { class: 'gw-muted' }, ['DOCUMENT VERSION COMPARE · DETERMINISTIC DIFF SLOT']),
       el('h2', {}, ['Document version compare not wired yet']),
       el('p', {}, ['The baseline deterministic v1/v2 comparison stays unavailable until a reviewed source-versions projection supplies both document versions and a web-safe diff.']),
     ]),
-    el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-ledger-empty', role: 'status' }, [
-      el('h2', {}, ['Ledger history not wired yet']),
-      el('p', {}, ['The current reviewed payload has source metadata, but no ledger-change projection.']),
+    el('div', { class: 'gw-vault-contract-version-controls', 'data-test': 'source-version-selectors' }, [
+      el('label', { class: 'gw-vault-contract-field' }, [
+        'First reviewed version',
+        el('select', { 'data-test': 'source-version-select-first', disabled: '' }, [
+          el('option', { value: '' }, ['No reviewed version supplied']),
+        ]),
+      ]),
+      el('strong', { class: 'gw-muted' }, ['vs']),
+      el('label', { class: 'gw-vault-contract-field' }, [
+        'Second reviewed version',
+        el('select', { 'data-test': 'source-version-select-second', disabled: '' }, [
+          el('option', { value: '' }, ['No reviewed version supplied']),
+        ]),
+      ]),
     ]),
-    el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-video-status-empty', role: 'status' }, [
-      el('h2', {}, ['Video release and transcript status not wired yet']),
-      el('p', {}, ['No reviewed video-status ladder is supplied. Pending release, pending transcript, and missing-video states are not inferred from a source date.']),
+    el('div', { class: 'gw-vault-contract-diff-summary', 'data-test': 'source-diff-summary-gap' }, [
+      el('strong', {}, ['DIFF SUMMARY']),
+      el('span', { class: 'gw-muted' }, ['Added text: unavailable']),
+      el('span', { class: 'gw-muted' }, ['Updated tables: unavailable']),
+      el('button', {
+        type: 'button',
+        class: 'gw-vault-contract-tool',
+        'data-test': 'source-word-diff-tool',
+        'aria-pressed': 'false',
+        disabled: '',
+      }, ['Word-level diff']),
     ]),
-    el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-alerts-empty', role: 'status' }, [
-      el('h2', {}, ['Transparency alerts not wired yet']),
-      el('p', {}, ['No live alert generation is performed on this page.']),
+    el('div', { class: 'gw-vault-contract-diff', 'data-test': 'source-diff-panes' }, [
+      el('article', { class: 'gw-vault-contract-diff-pane', 'data-test': 'source-version-pane-first' }, [
+        el('p', { class: 'gw-muted' }, ['VERSION 1 · AS FIRST POSTED']),
+        el('h3', {}, ['Reviewed document copy unavailable']),
+        el('p', {}, ['No first-version document text or page locator is supplied.']),
+      ]),
+      el('article', { class: 'gw-vault-contract-diff-pane', 'data-test': 'source-version-pane-second' }, [
+        el('p', { class: 'gw-muted' }, ['VERSION 2 · CURRENT']),
+        el('h3', {}, ['Reviewed document copy unavailable']),
+        el('p', {}, ['No second-version document text or page locator is supplied.']),
+      ]),
     ]),
-  ];
+    el('div', { class: 'gw-vault-contract-tools', 'data-test': 'source-diff-tools' }, [
+      el('button', { type: 'button', class: 'gw-vault-contract-tool', disabled: '' }, ['View copy · v1 ↗']),
+      el('button', { type: 'button', class: 'gw-vault-contract-tool', disabled: '' }, ['View copy · v2 ↗']),
+      el('button', { type: 'button', class: 'gw-vault-contract-tool', disabled: '' }, ['View change log']),
+    ]),
+  ]);
 
-  const verificationDetails = (): HTMLElement => el('section', { class: 'gw-card', 'data-test': 'source-verification-details' }, [
+  const ledgerPanel = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-state': 'empty',
+    'data-test': 'source-ledger-empty',
+  }, [
+    el('p', { class: 'gw-muted' }, ['VAULT LEDGER · LATEST']),
+    el('h2', {}, ['Ledger history not wired yet']),
+    el('p', {}, ['The current reviewed payload has source metadata, but no ledger-change projection.']),
+    el('div', { 'data-test': 'source-ledger-geometry' }, [
+      el('div', { class: 'gw-vault-contract-ledger-row' }, [el('strong', {}, ['First seen']), el('span', {}, ['Not supplied'])]),
+      el('div', { class: 'gw-vault-contract-ledger-row' }, [el('strong', {}, ['Version history']), el('span', {}, ['Not supplied'])]),
+      el('div', { class: 'gw-vault-contract-ledger-row' }, [el('strong', {}, ['Manifest hash']), el('span', {}, ['Not supplied'])]),
+    ]),
+    el('button', { type: 'button', class: 'gw-vault-contract-tool', 'data-test': 'source-ledger-tool', disabled: '' }, ['Browse full ledger']),
+  ]);
+
+  const videoPanel = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-state': 'empty',
+    'data-test': 'source-video-status-empty',
+  }, [
+    el('p', { class: 'gw-muted' }, ['VIDEO RELEASE · TRANSCRIPT STATUS']),
+    el('h2', {}, ['Video release and transcript status not wired yet']),
+    el('div', { class: 'gw-vault-contract-video-ladder', 'data-test': 'source-video-ladder' }, [
+      el('span', {}, ['Pending release']),
+      el('span', {}, ['Pending transcript']),
+      el('span', {}, ['Missing video']),
+    ]),
+    el('p', {}, ['No reviewed video-status ladder is supplied. These states are geometry only and are not inferred from a source date.']),
+  ]);
+
+  const alertsPanel = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-state': 'empty',
+    'data-test': 'source-alerts-empty',
+  }, [
+    el('p', { class: 'gw-muted' }, ['TRANSPARENCY ALERTS']),
+    el('h2', {}, ['Transparency alerts not wired yet']),
+    el('p', {}, ['No live alert generation is performed on this page.']),
+    el('button', { type: 'button', class: 'gw-vault-contract-tool', 'data-test': 'source-alerts-tool', disabled: '' }, ['Browse open and cleared flags']),
+  ]);
+
+  const verificationDetails = (): HTMLElement => el('section', { class: 'gw-vault-contract-panel', 'data-test': 'source-verification-details' }, [
+      el('p', { class: 'gw-muted' }, ['VERIFICATION DETAILS']),
       el('h2', {}, ['Verification details']),
       el('p', {}, [
         `${originalLinkCount} original link${originalLinkCount === 1 ? '' : 's'} and ${archiveLinkCount} archive link${archiveLinkCount === 1 ? '' : 's'} are present in the reviewed receipt metadata. Link presence alone does not establish freshness, third-party preservation, or hash verification.`,
@@ -1174,6 +1515,16 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
       el('div', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-third-party-verification-empty', role: 'status' }, [
         el('h3', {}, ['Third-party verification unavailable']),
         el('p', {}, ['A source-registry verification contract must supply archive-provider and validation results before this slot can make a verification claim.']),
+      ]),
+      el('div', { class: 'gw-vault-contract-manifest', 'data-state': 'empty', 'data-test': 'source-manifest-empty' }, [
+        el('strong', {}, ['MANIFEST HASH · SHA-256']),
+        el('code', {}, ['Unavailable — no reviewed manifest hash is supplied']),
+        el('p', {}, ['A full manifest cannot be offered until its reviewed file population and hashes are present in the source-registry contract.']),
+      ]),
+      el('div', { class: 'gw-vault-contract-tools', 'data-test': 'source-verification-tools' }, [
+        el('button', { type: 'button', class: 'gw-vault-contract-tool', disabled: '' }, ['Verify archive snapshot']),
+        el('button', { type: 'button', class: 'gw-vault-contract-tool', disabled: '' }, ['Recompute SHA-256']),
+        el('button', { type: 'button', class: 'gw-vault-contract-tool', 'data-test': 'source-manifest-tool', disabled: '' }, ['View full manifest ↗']),
       ]),
     ]);
 
@@ -1185,8 +1536,9 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     : null;
 
   ensureBaselinePageStyle();
+  ensureBoardsVaultFidelityStyle();
   const mount = el('div', { class: 'gw-baseline-mode-mount', 'data-test': 'source-vault-mode-mount' });
-  shell.append(modeToggle((mode) => {
+  ((mode: PageMode) => {
     mount.setAttribute('data-mode', mode);
     const demo = packetDiff();
     if (mode === 'simple') {
@@ -1196,9 +1548,13 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
           el('h2', {}, ['What the reviewed record can prove—and what still needs a source contract']),
           el('p', {}, ['Source rows and honest verification gaps in a single reading column.']),
         ]),
+        vaultToolbar(),
         overview(),
         sourceContent(),
-        ...gapCards(),
+        versionCompare(),
+        ledgerPanel(),
+        videoPanel(),
+        alertsPanel(),
         verificationDetails(),
         ...(demo ? [demo] : []),
       ]));
@@ -1209,13 +1565,24 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         el('p', {}, ['SOURCE VAULT · EVIDENCE WORKBENCH']),
         el('h2', {}, ['Reviewed receipt inventory with contract gaps kept separate']),
       ]),
+      vaultToolbar(),
       overview(),
-      el('div', { class: 'gw-source-vault-advanced-grid' }, [
-        sourceContent(),
-        el('div', { class: 'gw-source-vault-gap-stack' }, gapCards()),
+      el('div', { class: 'gw-vault-contract-advanced-layout' }, [
+        el('aside', { class: 'gw-vault-contract-stack', 'aria-label': 'Transparency and video status gaps' }, [
+          alertsPanel(),
+          videoPanel(),
+        ]),
+        el('div', { class: 'gw-vault-contract-stack' }, [
+          sourceContent(),
+          versionCompare(),
+        ]),
+        el('aside', { class: 'gw-vault-contract-stack', 'aria-label': 'Ledger and verification gaps' }, [
+          ledgerPanel(),
+          verificationDetails(),
+        ]),
       ]),
-      verificationDetails(),
       ...(demo ? [demo] : []),
     ]));
-  }), mount);
+  })(readPageMode());
+  shell.append(mount);
 }

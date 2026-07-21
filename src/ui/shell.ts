@@ -50,6 +50,7 @@ export const NAV_TABS: readonly NavTab[] = [
   { route: '/vault', label: 'Source Vault', also: ['/sources'] },
   { route: '/newsletter', label: 'Newsletter' },
   { route: '/watchlist', label: 'Watchlist' },
+  { route: '/alerts', label: 'Alerts' },
 ];
 
 const BRAND_ROUTE = NAV_TABS[0].route;
@@ -224,18 +225,24 @@ function installSearchShortcut(): void {
   searchShortcutInstalled = true;
 }
 
-/** Preview identity label only; no auth, verification, or security claim. */
+/** Reviewer-lane label only; no person, email, or identity verification claim. */
 function accountChip(): HTMLSpanElement {
+  const descriptionId = 'gw-reviewer-access-description';
   return el('span', {
     class: 'gw-shell-account',
     'data-test': 'shell-account',
-    title: 'Interface preview only. No verified identity is represented.',
-    'aria-label': 'Preview account. Interface demo only; no verified identity is represented.',
+    role: 'note',
+    tabindex: '0',
+    title: 'Private reviewer beta access. No person, email address, or verified identity is represented in the browser.',
+    'aria-describedby': descriptionId,
   }, [
     el('span', { class: 'gw-shell-account-dot', 'aria-hidden': 'true' }, []),
     el('span', { class: 'gw-shell-account-copy' }, [
-      el('b', {}, ['PREVIEW ACCOUNT']),
-      el('small', {}, ['demo only']),
+      el('b', {}, ['REVIEWER ACCESS']),
+      el('small', {}, ['private beta']),
+    ]),
+    el('span', { id: descriptionId, class: 'gw-shell-sr-only' }, [
+      'Private reviewer beta access. This browser chip does not expose or verify a person, email address, or identity.',
     ]),
   ]);
 }
@@ -466,6 +473,11 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
     footer(mode, opts.refreshedAt),
   );
 
+  const activeTab = root.querySelector<HTMLElement>('.gw-shell-tab[aria-current="page"]');
+  if (activeTab && typeof activeTab.scrollIntoView === 'function') {
+    activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
   return slot;
 }
 
@@ -504,7 +516,8 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-search-shortcut{flex:none;border:var(--gw-border-w) solid var(--gw-border);border-radius:5px;padding:2px 6px;background:transparent;color:var(--gw-text-muted);font:500 10.5px/1.2 var(--gw-font-mono)}
 .gw-shell-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
 .gw-shell-account{display:inline-flex;align-items:center;gap:8px;min-height:var(--gw-tap-min);padding:5px 10px;border:var(--gw-border-w) solid var(--gw-border);border-radius:9px;color:var(--gw-text-secondary);font-family:var(--gw-font);cursor:help}
-.gw-shell-account-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-caution-text);flex:none}
+.gw-shell-account:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
+.gw-shell-account-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-accent);flex:none}
 .gw-shell-account-copy{display:flex;flex-direction:column;line-height:1.1}
 .gw-shell-account-copy b{font-size:11px;letter-spacing:.65px}
 .gw-shell-account-copy small{margin-top:2px;color:var(--gw-text-muted);font-size:10.5px}
@@ -597,7 +610,6 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-account-copy b{font-size:10px}
   .gw-shell-search-shortcut{display:none}
   .gw-shell-simple-place time{font-size:10.5px}
-  .gw-shell-simple-utility .gw-shell-account{display:none}
 }
 `;
 

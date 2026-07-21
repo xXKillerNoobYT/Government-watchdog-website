@@ -125,7 +125,20 @@ operator should:
 10. confirm the hosted runtime allowlist and the Sites custom access list still
    agree; and
 11. open the stable production URL as the approved owner and smoke-test direct
-   Home entry, Fast Agenda, Timeline, both modes, and a mobile-width view.
+   Home entry, the nine-tab navigation through Alerts, Fast Agenda, Timeline,
+   both modes, the single shell-owned mode switch, and a mobile-width view;
+12. confirm Newsletter opens the reviewed archive with an explicit unavailable
+   current-edition slot, and that a supplied digest ID opens detail; and
+13. confirm the reviewer chip says `REVIEWER ACCESS / private beta` without an
+   email or identity claim, while the account-notification bell remains
+   distinct from the civic Alerts page.
+
+For owner-login smoke testing, read the exact approved address from the Sites
+custom access list and confirm the same address is represented in the hosted
+`GW_APPROVED_REVIEWER_EMAILS` runtime setting. Do not print or commit that
+runtime value. An approved session must enter Home directly and must not render
+the obsolete local magic-link scaffold. Test a signed-out/incognito request
+separately and confirm the protected app and static assets remain unavailable.
 
 For the current owner-only/private beta, use the private deployment action. If
 the access policy is shared or public, Sites requires the open-world deployment
