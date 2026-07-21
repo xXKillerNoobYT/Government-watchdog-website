@@ -1,16 +1,32 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderFastAgendaDesign } from '../src/ui/fast-agenda-design';
 
 let root: HTMLElement;
 
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    removeItem: (key: string) => void values.delete(key),
+    setItem: (key: string, value: string) => void values.set(key, String(value)),
+  };
+}
+
 beforeEach(() => {
+  vi.stubGlobal('localStorage', memoryStorage());
   document.head.replaceChildren();
   document.body.replaceChildren();
-  localStorage.clear();
   root = document.createElement('main');
   document.body.append(root);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 function renderFixture(): void {
