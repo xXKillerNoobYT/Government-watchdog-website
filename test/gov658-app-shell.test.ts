@@ -1,22 +1,8 @@
 // @vitest-environment jsdom
 //
-// GOV-658 (GOV-654 leg 2/5) — persistent app shell + navigation (spec §5).
-// Proves the §5/§11 acceptance for the shell sub-leg:
-//
-//   - the shell wraps a surface and returns an inner content slot the surface
-//     renders into (§5 — "everything inherits"; surfaces stay untouched, §7),
-//   - the tab row lists ONLY shipped routes — no dead nav (§5.1 / §10 failure
-//     list): Home is present with the shipped dashboard; Fast Agenda / Power
-//     Power Tracker / Watchlist are NOT rendered as tabs,
-//   - the active tab (incl. `/boards` alias + `/body`,`/meeting` context pages)
-//     highlights via aria-current (§5.1),
-//   - NO fake controls: no Search, no Alerts, and the jurisdiction pill is a
-//     STATIC `Alpine, WY` label with no dropdown affordance (§5.1),
-//   - the Simple|Advanced mode control drives the ONE palette authority
-//     (advanced→dark / simple→light via `data-theme`) and persists `gw_home_mode`
-//     (§1 / §1.4),
-//   - the footer carries the tagline and OMITS the `data refreshed` stamp unless
-//     a real timestamp is supplied — never a fake clock (§5.2).
+// GOV-658 — persistent gated-app shell contract. These tests deliberately guard
+// the approved high-fidelity IA and functional shared controls while preserving
+// the original slot, mode, active-parent, and honest-timestamp invariants.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   renderShell,
@@ -26,19 +12,15 @@ import {
   type ShellMode,
 } from '../src/ui/shell';
 
-// Hermetic in-memory localStorage. The CI runner launches vitest with a broken
-// `--localstorage-file` stub where `localStorage.getItem` is not a function;
-// these tests assert persistence, so they must own their storage rather than
-// borrow the ambient (environment-flaky) one. Production code wraps every
-// localStorage access in try/catch, so this only affects the tests.
+/** Hermetic storage because shell mode persistence is part of the contract. */
 function installMemoryLocalStorage(): void {
   const store = new Map<string, string>();
   vi.stubGlobal('localStorage', {
-    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
-    setItem: (k: string, v: string) => void store.set(k, String(v)),
-    removeItem: (k: string) => void store.delete(k),
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => void store.set(key, String(value)),
+    removeItem: (key: string) => void store.delete(key),
     clear: () => store.clear(),
-    key: (i: number) => [...store.keys()][i] ?? null,
+    key: (index: number) => [...store.keys()][index] ?? null,
     get length() {
       return store.size;
     },
@@ -48,6 +30,7 @@ function installMemoryLocalStorage(): void {
 let root: HTMLElement;
 beforeEach(() => {
   installMemoryLocalStorage();
+  window.history.replaceState({}, '', '/');
   document.head.replaceChildren();
   document.body.replaceChildren();
   document.documentElement.removeAttribute('data-theme');
@@ -59,181 +42,241 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('GOV-658 shell — content slot (surfaces inherit, stay untouched)', () => {
-  it('returns an inner content slot and lets the surface render into it', () => {
-    const slot = renderShell(root, { active: '/app' });
+describe('GOV-658 shell — content slot and persistent chrome', () => {
+  it('returns an inner content slot and lets a surface render without replacing the shell', () => {
+    const slot = renderShell(root, { active: '/agenda' });
     expect(slot.getAttribute('data-test')).toBe('shell-content');
-    // A surface renderer may freely reset the slot — the shell layout survives.
     slot.className = 'gw-root';
     slot.replaceChildren(document.createElement('section'));
     expect(root.querySelector('.gw-shell-content')).not.toBeNull();
     expect(root.querySelector('[data-test="app-shell"]')).not.toBeNull();
   });
 
-  it('re-rendering the shell replaces prior chrome (no duplicate headers)', () => {
-    renderShell(root, { active: '/app' });
+  it('re-rendering replaces prior chrome rather than duplicating it', () => {
+    renderShell(root, { active: '/agenda' });
     renderShell(root, { active: '/timeline' });
-    expect(root.querySelectorAll('[data-test="app-shell"]').length).toBe(1);
-    expect(root.querySelectorAll('[data-test="shell-tabs"]').length).toBe(1);
+    expect(root.querySelectorAll('[data-test="app-shell"]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-test="shell-tabs"]')).toHaveLength(1);
   });
 });
 
-describe('GOV-658 shell — tab row lists ONLY shipped routes (no dead nav §5.1/§10)', () => {
-  it('renders exactly the seven shipped tabs, in order', () => {
-    renderShell(root, { active: '/app' });
-    const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
-      (a) => a.textContent,
-    );
-    expect(labels).toEqual(['Home', 'Boards', 'Timeline', 'Cards', 'Topics', 'Source Vault', 'Newsletter']);
-  });
-
-  it('does NOT render tabs for unshipped surfaces', () => {
-    renderShell(root, { active: '/app' });
-    const labels = [...root.querySelectorAll('.gw-shell-tab')].map((a) => a.textContent);
-    for (const dead of ['Fast Agenda', 'Power Tracker', 'Watchlist']) {
-      expect(labels, `${dead} must not be a dead nav tab this sub-leg`).not.toContain(dead);
-    }
-  });
-
-  it('every tab points at a real hash route', () => {
-    renderShell(root, { active: '/app' });
-    for (const a of root.querySelectorAll('.gw-shell-tab')) {
-      expect(a.getAttribute('href')).toMatch(/^#\/[a-z]+$/);
-    }
-    // The NAV_TABS contract routes are the shipped, registered ones.
-    expect(NAV_TABS.map((t) => t.route)).toEqual(['/home', '/app', '/timeline', '/cards', '/topics', '/vault', '/newsletter']);
-  });
-});
-
-describe('GOV-658 shell — active tab highlighting (§5.1)', () => {
-  const cases: { path: string; expected: string }[] = [
-    { path: '/app', expected: 'Boards' },
-    { path: '/home', expected: 'Home' },
-    { path: '/boards', expected: 'Boards' }, // alias
-    { path: '/timeline', expected: 'Timeline' },
-    { path: '/cards', expected: 'Cards' },
-    { path: '/topics', expected: 'Topics' },
-    { path: '/vault', expected: 'Source Vault' },
-    { path: '/sources', expected: 'Source Vault' }, // legacy alias
-    { path: '/newsletter', expected: 'Newsletter' },
-    { path: '/body', expected: 'Boards' }, // context page → parent tab
-    { path: '/meeting', expected: 'Boards' }, // context page → parent tab
+describe('GOV-658 shell — approved primary navigation', () => {
+  const approvedLabels = [
+    'Home',
+    'Fast Agenda',
+    'Timeline',
+    'Boards',
+    'Power Tracker',
+    'Source Vault',
+    'Newsletter',
+    'Watchlist',
   ];
+  const approvedRoutes = [
+    '/home',
+    '/agenda',
+    '/timeline',
+    '/boards',
+    '/power',
+    '/vault',
+    '/newsletter',
+    '/watchlist',
+  ];
+
+  it('renders the eight approved tabs in exact design order', () => {
+    renderShell(root, { active: '/agenda' });
+    const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
+      (anchor) => anchor.textContent,
+    );
+    expect(labels).toEqual(approvedLabels);
+  });
+
+  it('exports canonical routes and every rendered href matches them', () => {
+    renderShell(root, { active: '/agenda' });
+    expect(NAV_TABS.map((tab) => tab.route)).toEqual(approvedRoutes);
+    expect([...root.querySelectorAll('.gw-shell-tab')].map((anchor) => anchor.getAttribute('href')))
+      .toEqual(approvedRoutes.map((route) => `#${route}`));
+  });
+});
+
+describe('GOV-658 shell — active tab highlights canonical and contextual routes', () => {
+  const cases: { path: string; expected: string }[] = [
+    { path: '/home', expected: 'Home' },
+    { path: '/agenda', expected: 'Fast Agenda' },
+    { path: '/app', expected: 'Fast Agenda' },
+    { path: '/agenda-boards', expected: 'Fast Agenda' },
+    { path: '/meeting', expected: 'Fast Agenda' },
+    { path: '/timeline', expected: 'Timeline' },
+    { path: '/timeline-legacy', expected: 'Timeline' },
+    { path: '/cards', expected: 'Timeline' },
+    { path: '/topics', expected: 'Timeline' },
+    { path: '/issue', expected: 'Timeline' },
+    { path: '/boards', expected: 'Boards' },
+    { path: '/body', expected: 'Boards' },
+    { path: '/power', expected: 'Power Tracker' },
+    { path: '/vault', expected: 'Source Vault' },
+    { path: '/sources', expected: 'Source Vault' },
+    { path: '/newsletter', expected: 'Newsletter' },
+    { path: '/watchlist', expected: 'Watchlist' },
+  ];
+
   for (const { path, expected } of cases) {
     it(`highlights ${expected} for ${path}`, () => {
       renderShell(root, { active: path });
       const current = root.querySelector('.gw-shell-tab[aria-current="page"]');
       expect(current?.textContent).toBe(expected);
-      // Exactly one tab is current.
-      expect(root.querySelectorAll('.gw-shell-tab[aria-current="page"]').length).toBe(1);
+      expect(root.querySelectorAll('.gw-shell-tab[aria-current="page"]')).toHaveLength(1);
     });
   }
 
-  it('marks no tab current for an unknown route (no false highlight)', () => {
+  it('marks no tab current for an unknown route', () => {
     renderShell(root, { active: '/unknown' });
-    expect(root.querySelectorAll('.gw-shell-tab[aria-current="page"]').length).toBe(0);
+    expect(root.querySelectorAll('.gw-shell-tab[aria-current="page"]')).toHaveLength(0);
   });
 });
 
-describe('GOV-658 shell — no fake controls, static jurisdiction (§5.1)', () => {
-  it('renders a static Alpine, WY pill with no dropdown affordance', () => {
-    renderShell(root, { active: '/app' });
-    const pill = root.querySelector('[data-test="shell-jurisdiction"]');
-    expect(pill?.textContent).toContain('Alpine, WY');
-    // No dropdown chevron / no interactive control inside the pill (Alpine-only stage).
-    expect(pill?.textContent).not.toContain('▾');
-    expect(pill?.tagName).toBe('SPAN');
-    expect(pill?.querySelector('button, select, [role="button"]')).toBeNull();
+describe('GOV-658 shell — functional shared controls with honest preview labels', () => {
+  it('links the current location to the location route', () => {
+    renderShell(root, { active: '/home' });
+    const location = root.querySelector('[data-test="shell-jurisdiction"]');
+    expect(location?.tagName).toBe('A');
+    expect(location?.getAttribute('href')).toBe('#/location');
+    expect(location?.textContent).toContain('Alpine, WY');
+    expect(location?.getAttribute('aria-label')).toMatch(/change location/i);
   });
 
-  it('renders NO search and NO alerts controls (no honest surface exists yet)', () => {
-    renderShell(root, { active: '/app' });
-    expect(root.querySelector('[data-test="shell-search"]')).toBeNull();
-    expect(root.querySelector('[data-test="shell-alerts"]')).toBeNull();
-    expect(root.textContent).not.toContain('⌘K');
+  it('renders an accessible search input and submits an encoded timeline search', () => {
+    renderShell(root, { active: '/home' });
+    const input = root.querySelector('[data-test="shell-search"]') as HTMLInputElement;
+    const form = root.querySelector('[data-test="shell-search-form"]') as HTMLFormElement;
+    expect(input.tagName).toBe('INPUT');
+    expect(input.type).toBe('search');
+    expect(input.labels?.[0]?.textContent).toMatch(/search agendas/i);
+
+    input.value = 'water rates & fees';
+    form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true }));
+    expect(window.location.hash).toBe('#/timeline?search=water%20rates%20%26%20fees&reviewer=1');
+  });
+
+  it('focuses the current search input with Meta+K or Ctrl+K', () => {
+    renderShell(root, { active: '/home' });
+    const input = root.querySelector('[data-test="shell-search"]') as HTMLInputElement;
+
+    const metaEvent = new KeyboardEvent('keydown', {
+      key: 'k',
+      metaKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(metaEvent);
+    expect(metaEvent.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(input);
+
+    input.blur();
+    const ctrlEvent = new KeyboardEvent('keydown', {
+      key: 'K',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(ctrlEvent);
+    expect(ctrlEvent.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('shows preview account and preview alerts without claiming verified identity or live data', () => {
+    renderShell(root, { active: '/home' });
+    const account = root.querySelector('[data-test="shell-account"]');
+    const alerts = root.querySelector('[data-test="shell-alerts"]');
+    expect(account?.textContent).toContain('PREVIEW ACCOUNT');
+    expect(account?.textContent).not.toMatch(/✓\s*ID|ID-verified/i);
+    expect(alerts?.getAttribute('href')).toBe('#/alerts');
+    expect(root.querySelector('[data-test="shell-alert-count"]')?.textContent).toBe('3 preview');
+    expect(alerts?.getAttribute('aria-label')).toMatch(/not a live count/i);
+  });
+
+  it('discloses the limitations of AI analysis', () => {
+    renderShell(root, { active: '/home' });
+    const chip = root.querySelector('[data-test="shell-ai-disclosure"]');
+    expect(chip?.textContent).toBe('AI ANALYSIS');
+    expect(chip?.getAttribute('title')).toMatch(/can be wrong/i);
+    expect(chip?.getAttribute('title')).toMatch(/primary records/i);
   });
 });
 
-describe('GOV-658 shell — mode control drives the one palette authority (§1/§1.4)', () => {
-  it('renders Simple + Advanced buttons with the active one pressed', () => {
-    renderShell(root, { active: '/app', mode: 'advanced' });
-    const simple = root.querySelector('[data-test="mode-simple"]');
-    const advanced = root.querySelector('[data-test="mode-advanced"]');
-    expect(simple?.getAttribute('aria-pressed')).toBe('false');
-    expect(advanced?.getAttribute('aria-pressed')).toBe('true');
+describe('GOV-658 shell — mode control and the single palette authority', () => {
+  it('renders Simple and Advanced buttons with the active one pressed', () => {
+    renderShell(root, { active: '/agenda', mode: 'advanced' });
+    expect(root.querySelector('[data-test="mode-simple"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelector('[data-test="mode-advanced"]')?.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('applyMode persists gw_home_mode and sets the palette (advanced→dark, simple→light)', () => {
+  it('applyMode persists gw_home_mode and maps Advanced to dark, Simple to light', () => {
     applyMode('advanced');
+    expect(localStorage.getItem('gw_home_mode')).toBe('advanced');
     expect(readMode()).toBe('advanced');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
     applyMode('simple');
+    expect(localStorage.getItem('gw_home_mode')).toBe('simple');
     expect(readMode()).toBe('simple');
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('clicking a mode button applies + persists that mode', () => {
-    renderShell(root, { active: '/app', mode: 'advanced' });
-    const simpleBtn = root.querySelector('[data-test="mode-simple"]') as HTMLButtonElement;
-    simpleBtn.click();
+  it('clicking a mode applies and persists it', () => {
+    renderShell(root, { active: '/agenda', mode: 'advanced' });
+    (root.querySelector('[data-test="mode-simple"]') as HTMLButtonElement).click();
     expect(readMode()).toBe('simple');
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('defaults to Advanced when nothing is persisted (§1)', () => {
+  it('defaults to Advanced and syncs its dark palette when no theme is pinned', () => {
     expect(readMode()).toBe('advanced');
-    renderShell(root, { active: '/app' });
-    expect(
-      (root.querySelector('[data-test="mode-advanced"]') as HTMLElement).getAttribute('aria-pressed'),
-    ).toBe('true');
-  });
-
-  it('renderShell syncs palette to the default mode when no theme is pinned (§1/§10)', () => {
-    // No explicit theme pin → Advanced default drives the palette to dark.
     expect(localStorage.getItem('gw-theme')).toBeNull();
-    renderShell(root, { active: '/app' });
+    renderShell(root, { active: '/agenda' });
+    expect(root.getAttribute('data-mode')).toBe('advanced');
+    expect(root.querySelector('[data-test="mode-advanced"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
-  it('an explicit theme pin WINS over the mode auto-sync (§1.4)', () => {
-    // User explicitly pins light via the standalone control...
+  it('does not override an explicit standalone theme pin', () => {
     localStorage.setItem('gw-theme', 'light');
     document.documentElement.setAttribute('data-theme', 'light');
-    // ...rendering the shell in Advanced must NOT override that pin.
-    renderShell(root, { active: '/app', mode: 'advanced' });
+    renderShell(root, { active: '/agenda', mode: 'advanced' });
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 });
 
-describe('GOV-658 shell — footer honesty (§5.2)', () => {
-  it('carries the brand tagline', () => {
-    renderShell(root, { active: '/app' });
+describe('GOV-658 shell — footer honesty', () => {
+  it('carries the brand tagline and source-verification reminder', () => {
+    renderShell(root, { active: '/home' });
     expect(root.querySelector('[data-test="shell-tagline"]')?.textContent).toMatch(
       /Holding power accountable/i,
     );
+    expect(root.querySelector('[data-test="shell-preview-note"]')?.textContent).toMatch(
+      /verify AI analysis against primary records/i,
+    );
   });
 
-  it('OMITS the data-refreshed stamp when no real timestamp is supplied (never faked)', () => {
-    renderShell(root, { active: '/app' });
+  it('omits a refreshed stamp when the caller has no real timestamp', () => {
+    renderShell(root, { active: '/home' });
     expect(root.querySelector('[data-test="shell-refreshed"]')).toBeNull();
   });
 
-  it('renders the data-refreshed stamp verbatim when a real timestamp is supplied', () => {
-    renderShell(root, { active: '/app', refreshedAt: '2026-07-07T22:00:00Z' });
-    const stamp = root.querySelector('[data-test="shell-refreshed"]');
-    expect(stamp?.textContent).toBe('data refreshed 2026-07-07T22:00:00Z');
+  it('renders a supplied real timestamp verbatim', () => {
+    renderShell(root, { active: '/home', refreshedAt: '2026-07-07T22:00:00Z' });
+    expect(root.querySelector('[data-test="shell-refreshed"]')?.textContent)
+      .toBe('data refreshed 2026-07-07T22:00:00Z');
   });
 });
 
-describe('GOV-658 shell — brand links to the primary route', () => {
-  it('brand href targets the first shipped tab', () => {
+describe('GOV-658 shell — brand route', () => {
+  it('targets the first approved primary tab', () => {
     renderShell(root, { active: '/timeline' });
-    const brand = root.querySelector('[data-test="shell-brand"]');
-    expect(brand?.getAttribute('href')).toBe(`#${NAV_TABS[0].route}`);
+    expect(root.querySelector('[data-test="shell-brand"]')?.getAttribute('href'))
+      .toBe(`#${NAV_TABS[0].route}`);
   });
 });
 
-// Type-level guard: ShellMode stays the two-value union the palette mapping assumes.
+// Type-level guard: the palette mapping assumes exactly these two values.
 const _modes: ShellMode[] = ['simple', 'advanced'];
 void _modes;

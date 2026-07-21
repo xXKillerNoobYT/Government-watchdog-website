@@ -68,6 +68,28 @@ npm run preview        # serve the production build locally
 Force the full-app data state for review/screenshots: `#/app?state=loading|empty|error`
 (see "Preview launch vs full app" below for how to reach the gated app).
 
+### MOTY visual handoff preview
+
+The owner-approved July 2026 design handoff is integrated as a reviewer-only,
+tab-scoped preview. Start at:
+
+`/#/agenda?reviewer=1&demo=design`
+
+Normal shell navigation then keeps the design preview active for that browser
+tab. Use `?demo=live` on a route to leave it. July 21 agenda content, placeholder
+officials, coverage figures, alerts, and delivery settings are always labelled
+`SYNTHETIC DESIGN FIXTURE — not a live read`; they are visual/interaction
+examples, not reviewed civic facts.
+
+The Timeline is intentionally hybrid: it keeps the existing reviewed-record
+cards, trust/provenance labels, protected reveal behavior, and safe data adapter,
+while adopting the handoff's denser header, search/filter bar, grouped layout,
+and responsive visual language. It does not substitute a synthetic timeline for
+the reviewed projection.
+
+The frontend/backend boundary and required production endpoints are recorded in
+[`docs/design-handoff-integration.md`](docs/design-handoff-integration.md).
+
 ## Preview launch vs full app (GOV-419)
 
 The default entry is a **preview-launch landing**, not the app. The full
