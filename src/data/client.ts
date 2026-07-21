@@ -10,6 +10,7 @@
 
 import type { ReadApiResponse } from '../types/read-api';
 import { assertWebSafe } from './web-safe';
+import { isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
 import { type AsyncState, resolved } from '../state/async-state';
 import fixtureData from '../fixtures/alpine-sample.json';
 
@@ -59,12 +60,19 @@ export interface LoadOptions {
   fetchImpl?: typeof fetch;
 }
 
+/** An honest-empty read model — the landing-only surface (§6) shows zero civic data. */
+const LANDING_ONLY_EMPTY: ReadApiResponse = { scope: 'alpine', access: 'reviewer_internal', records: [] };
+
 async function fetchReadApi(url: string, fetchImpl: typeof fetch): Promise<ReadApiResponse> {
   const res = await fetchImpl(url, { headers: { accept: 'application/json' } });
   if (!res.ok) throw new Error(`read-API responded ${res.status} ${res.statusText}`.trim());
-  const body = (await res.json()) as ReadApiResponse;
+  const body = (await res.json()) as unknown;
+  // The same-origin service (GOV-1527 §5) returns the gated lane as
+  // `{reviewer_internal_records:[...]}`; adapt it to the read model the UI
+  // consumes. A full read-model envelope passes through unchanged.
+  const model = isReviewerInternalEnvelope(body) ? toReadModel(body) : (body as ReadApiResponse);
   // Trust nothing on the wire: re-sweep before it can reach the UI.
-  return assertWebSafe(body);
+  return assertWebSafe(model);
 }
 
 const FIXTURE_NOTICE =
@@ -79,6 +87,15 @@ export async function loadReadModel(opts: LoadOptions = {}): Promise<LoadResult>
   const config = opts.config ?? readConfig();
   const fetchImpl =
     opts.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined);
+
+  // LANDING_ONLY (§6): an explicit, fail-closed build with zero /api surface —
+  // never touch the network, render honest-empty civic data.
+  if (isLandingOnly()) {
+    return {
+      state: resolved(LANDING_ONLY_EMPTY, 'live', isEmptyResponse),
+      notice: 'LANDING_ONLY build — public landing only, no gated data surface.',
+    };
+  }
 
   if (config.useFixtures || !config.readApiUrl || !fetchImpl) {
     return { state: resolved(FIXTURE, 'fixture', isEmptyResponse), notice: FIXTURE_NOTICE };
