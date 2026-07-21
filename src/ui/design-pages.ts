@@ -132,7 +132,7 @@ function beginPage(
   syncUnpinnedPalette(mode);
 
   if (options.access !== 'reviewer_internal') {
-    root.append(el('main', {
+    root.append(el('div', {
       class: 'gw-dp-page gw-dp-gated',
       'data-mode': mode,
       'data-test': `${pageId}-gated`,
@@ -158,7 +158,7 @@ function beginPage(
 
   const fixture = hasFixtureAccess(options);
   const content = el('div', { class: 'gw-dp-content' });
-  const page = el('main', {
+  const page = el('div', {
     class: 'gw-dp-page',
     'data-mode': mode,
     'data-test': `${pageId}-page`,
@@ -541,27 +541,141 @@ function openPowerDetailModal(page: HTMLElement, opener: HTMLButtonElement, offi
   closeButton.focus();
 }
 
+function reviewedPowerLevelFilterGap(): HTMLElement {
+  return panel('Jurisdiction level', 'LEVEL FILTER · UNAVAILABLE', [
+    el('div', {
+      class: 'gw-dp-toolbox',
+      role: 'group',
+      'aria-label': 'Unavailable power level filters',
+    }, ['All', 'Town', 'County', 'State'].map((level) => el('button', {
+      type: 'button',
+      class: 'gw-dp-tool-pill',
+      disabled: '',
+      'data-test': 'power-level-filter-option',
+      'data-level': level.toLowerCase(),
+    }, [`${level} · unavailable`]))),
+    el('p', { class: 'gw-dp-muted' }, ['Level filtering requires a reviewed official roster with stable jurisdiction identifiers.']),
+  ], { 'data-test': 'power-level-filter-unavailable', 'aria-disabled': 'true' });
+}
+
+function reviewedPowerRosterGap(): HTMLElement {
+  return panel('Official roster', 'OFFICIALS · UNAVAILABLE', [
+    el('div', { class: 'gw-dp-official-list' }, [
+      el('button', {
+        type: 'button',
+        class: 'gw-dp-official',
+        disabled: '',
+        'data-test': 'power-roster-row-unavailable',
+      }, [
+        el('span', { class: 'gw-dp-avatar', 'aria-hidden': 'true' }, ['—']),
+        el('span', { class: 'gw-dp-official-copy' }, [
+          el('strong', {}, ['Official profile unavailable']),
+          el('small', {}, ['No policy-cleared roster row was supplied']),
+        ]),
+        el('span', { class: 'gw-dp-muted' }, ['—']),
+      ]),
+    ]),
+    el('p', { class: 'gw-dp-muted' }, ['No name, office, level, ranking, or promise count is inferred from statement evidence.']),
+  ], { 'data-test': 'power-roster-unavailable', 'aria-disabled': 'true' });
+}
+
+function reviewedPowerProfileGap(): HTMLElement {
+  return panel('Official profile and scorecard', 'PROFILE · UNAVAILABLE', [
+    el('div', { class: 'gw-dp-profile-head', 'data-test': 'power-profile-geometry' }, [
+      el('span', { class: 'gw-dp-avatar gw-dp-avatar-large', 'aria-hidden': 'true' }, ['—']),
+      el('div', {}, [
+        el('h3', {}, ['Official profile unavailable']),
+        el('p', { class: 'gw-dp-muted' }, ['Name, role, term, board, and profile actions require a reviewed official record.']),
+      ]),
+    ]),
+    el('div', { class: 'gw-dp-coverage-grid', 'data-test': 'power-scorecard-geometry' }, [
+      ...['Score', 'Kept', 'Broken', 'Pending'].map((label) => el('article', {
+        class: 'gw-dp-stat',
+        'data-test': 'power-scorecard-stat',
+      }, [
+        el('strong', {}, ['—']),
+        el('span', {}, [`${label} unavailable`]),
+      ])),
+    ]),
+    unavailableSlot(
+      'Scores and rankings unavailable',
+      'The reviewed statement projection does not contain a policy-cleared official roster or backend score product. No score, ranking, or comparison was inferred.',
+      'power-score-unavailable',
+    ),
+  ], { 'data-test': 'power-profile-unavailable', 'aria-disabled': 'true' });
+}
+
+function reviewedPowerPromiseActionGap(): HTMLElement {
+  return panel('Promise versus action', 'LATEST VERDICT · CONSENT GATED', [
+    unavailableSlot(
+      'Promise/action verdict unavailable',
+      'A reviewed power-profile contract with backend-supplied promises, actions, typed matches, verdict labels, and receipts is required before this slot can open.',
+      'power-verdict-unavailable',
+    ),
+    el('div', {
+      class: 'gw-dp-toolbox',
+      role: 'group',
+      'aria-label': 'Unavailable promise and action review controls',
+    }, [
+      el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', 'data-test': 'power-consent-control-unavailable' }, ['Review AI disclosure · unavailable']),
+      el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Show match · unavailable']),
+      el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', 'data-test': 'power-challenge-control-unavailable' }, ['Challenge verdict · unavailable']),
+    ]),
+    el('p', { class: 'gw-dp-muted' }, ['Consent and challenge controls remain visible, but cannot operate without an actual reviewed match and receipt chain.']),
+  ], { 'data-test': 'power-promise-action-consent-unavailable', 'aria-disabled': 'true' });
+}
+
+function reviewedPowerLedgerGap(
+  title: string,
+  kicker: string,
+  testId: string,
+  columns: readonly string[],
+  body: string,
+): HTMLElement {
+  return panel(title, kicker, [
+    el('table', {
+      class: 'gw-dp-ledger-table',
+      'aria-label': `${title} columns`,
+      'data-test': `${testId}-columns`,
+    }, [
+      el('thead', {}, [
+        el('tr', {}, columns.map((column) => el('th', { scope: 'col' }, [column]))),
+      ]),
+      el('tbody', {}, [
+        el('tr', {}, [
+          el('td', { colspan: String(columns.length) }, [body]),
+        ]),
+      ]),
+    ]),
+  ], { 'data-test': testId, 'aria-disabled': 'true' });
+}
+
 function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
   const records = reviewedRecords(data);
-  const scoreGap = unavailableSlot(
-    'Scores and rankings unavailable',
-    'The reviewed statement projection does not contain a policy-cleared official roster or a backend score product. No person, score, ranking, or comparison was inferred.',
-    'power-score-unavailable',
-  );
-  const verdictGap = unavailableSlot(
-    'Promise/action verdicts unavailable',
-    'A reviewed power-profile contract with backend-supplied promises, actions, verdict labels, and receipts is required before this slot can open.',
-    'power-verdict-unavailable',
-  );
-  const quoteLedgerGap = unavailableSlot(
-    'Quote ledger unavailable',
-    'No reviewed, speaker-safe quote ledger with exact-source anchors was supplied. Statement rows are not relabeled as official quotes.',
+  const levelFilterGap = reviewedPowerLevelFilterGap();
+  const rosterGap = reviewedPowerRosterGap();
+  const profileGap = reviewedPowerProfileGap();
+  const promiseActionGap = reviewedPowerPromiseActionGap();
+  const quoteLedgerGap = reviewedPowerLedgerGap(
+    'Quote ledger',
+    'SOURCE-ANCHORED QUOTES · UNAVAILABLE',
     'power-quote-ledger-unavailable',
+    ['Quote', 'Source', 'Date', 'Review status'],
+    'No reviewed, speaker-safe quote ledger with exact-source anchors was supplied. Statement rows are not relabeled as official quotes.',
   );
-  const voteActionGap = unavailableSlot(
-    'Vote and action table unavailable',
-    'No reviewed vote, motion, attendance, or official-action table was supplied. Evidence statements are not converted into votes or actions.',
+  const promiseLedgerGap = reviewedPowerLedgerGap(
+    'Promise ledger',
+    'PROMISES AND OUTCOMES · UNAVAILABLE',
+    'power-promise-ledger-unavailable',
+    ['Promise', 'Action', 'Status', 'Receipts'],
+    'No reviewed promise ledger or action linkage was supplied. No statement is classified as kept, broken, partial, or pending.',
+  );
+  const voteActionGap = reviewedPowerLedgerGap(
+    'Vote and action record',
+    'RECORDED ACTIONS · UNAVAILABLE',
     'power-vote-action-unavailable',
+    ['Date', 'Action', 'Vote', 'Promise alignment', 'Receipts'],
+    'No reviewed vote, motion, attendance, or official-action table was supplied. Evidence statements are not converted into votes or actions.',
   );
   const recordList = records.length
     ? el('div', { class: 'gw-dp-stack', 'data-test': 'power-real-records' }, records.map((record) => reviewedRecordCard(record, 'power')))
@@ -581,10 +695,13 @@ function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
         el('span', {}, ['REVIEWED EVIDENCE EDITION']),
       ]),
       el('p', { class: 'gw-dp-newspaper-deck' }, ['Reviewed statements and their receipt trails are shown below. They are evidence records, not official profiles or performance judgments.']),
-      recordList,
-      scoreGap,
-      verdictGap,
+      levelFilterGap,
+      rosterGap,
+      profileGap,
+      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
+      promiseActionGap,
       quoteLedgerGap,
+      promiseLedgerGap,
       voteActionGap,
     ]));
     return;
@@ -594,19 +711,16 @@ function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
     class: 'gw-dp-workbench-grid',
     'data-test': 'power-real-advanced-workbench',
   }, [
-    panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
     el('div', { class: 'gw-dp-stack' }, [
-      panel('Power tools', 'BACKEND PRODUCTS', [
-        el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Unavailable power tools' }, [
-          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
-          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Scores · unavailable']),
-          el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Verdicts · unavailable']),
-        ]),
-        el('p', { class: 'gw-dp-muted' }, ['These controls remain in the baseline workbench but stay disabled until the reviewed power-profile API supplies their data.']),
-      ]),
-      scoreGap,
-      verdictGap,
+      levelFilterGap,
+      rosterGap,
+      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
+    ]),
+    el('div', { class: 'gw-dp-stack' }, [
+      profileGap,
+      promiseActionGap,
       quoteLedgerGap,
+      promiseLedgerGap,
       voteActionGap,
     ]),
   ]));
@@ -816,6 +930,97 @@ function trackedMeta(key: string): TrackedMeta {
   };
 }
 
+function reviewedWatchlistItemStatusGap(): HTMLElement {
+  return el('section', {
+    class: 'gw-dp-coverage-grid',
+    'data-test': 'watchlist-item-status-geometry',
+    'aria-label': 'Unavailable watch item timing and alert details',
+  }, [
+    el('article', { class: 'gw-dp-stat', 'data-test': 'watchlist-item-next-unavailable' }, [
+      el('strong', {}, ['Next']),
+      el('span', {}, ['Unavailable']),
+      el('small', { class: 'gw-dp-muted' }, ['No reviewed next-event field']),
+    ]),
+    el('article', { class: 'gw-dp-stat', 'data-test': 'watchlist-item-deadline-unavailable' }, [
+      el('strong', {}, ['Deadline']),
+      el('span', {}, ['Unavailable']),
+      el('small', { class: 'gw-dp-muted' }, ['No reviewed deadline field']),
+    ]),
+    el('article', { class: 'gw-dp-stat', 'data-test': 'watchlist-item-alert-unavailable' }, [
+      el('strong', {}, ['Alert']),
+      el('button', {
+        type: 'button',
+        class: 'gw-dp-switch',
+        disabled: '',
+        'data-test': 'watchlist-item-alert-control-unavailable',
+        'aria-label': 'Alert control unavailable',
+      }, [
+        el('span', { class: 'gw-dp-switch-track', 'aria-hidden': 'true' }, [el('span')]),
+        el('span', { class: 'gw-dp-switch-copy' }, [
+          el('b', {}, ['Unavailable']),
+          el('small', {}, ['No reviewed alert or delivery contract']),
+        ]),
+      ]),
+    ]),
+  ]);
+}
+
+function reviewedWatchlistRecentHistoryGap(): HTMLElement {
+  return panel('Recent alert and change history', 'RECENT HISTORY · UNAVAILABLE', [
+    unavailableSlot(
+      'No reviewed history supplied',
+      'The statement projection does not include reviewed change, vote, deadline, or delivery events. No recent alert is inferred.',
+      'watchlist-recent-history-unavailable',
+    ),
+  ], { 'data-test': 'watchlist-history-unavailable', 'aria-disabled': 'true' });
+}
+
+function reviewedWatchlistDeliverySettingsGap(): HTMLElement {
+  const settings = [
+    ['Agenda and meeting changes', 'Requires reviewed change events'],
+    ['Deadlines', 'Requires reviewed deadline fields'],
+    ['Votes and official actions', 'Requires reviewed vote or action records'],
+    ['Document changes', 'Requires reviewed source-version events'],
+  ];
+  return panel('Alert settings and delivery', 'DELIVERY / SETTINGS · UNAVAILABLE', [
+    unavailableSlot(
+      'Delivery settings unavailable',
+      'No account, verified destination, subscription state, cadence, or delivery policy was supplied. Watching locally does not send a message.',
+      'watchlist-delivery-settings-unavailable',
+    ),
+    el('div', { class: 'gw-dp-stack', 'data-test': 'watchlist-settings-geometry' }, settings.map(([name, detail]) => el('button', {
+      type: 'button',
+      class: 'gw-dp-switch',
+      disabled: '',
+      'data-test': 'watchlist-setting-control-unavailable',
+    }, [
+      el('span', { class: 'gw-dp-switch-track', 'aria-hidden': 'true' }, [el('span')]),
+      el('span', { class: 'gw-dp-switch-copy' }, [el('b', {}, [name]), el('small', {}, [detail])]),
+      el('b', {}, ['Unavailable']),
+    ]))),
+  ], { 'data-test': 'watchlist-delivery-settings-panel', 'aria-disabled': 'true' });
+}
+
+function reviewedWatchlistDeadlinesGap(): HTMLElement {
+  return panel('Deadlines on your list', 'DEADLINES · UNAVAILABLE', [
+    unavailableSlot(
+      'No reviewed deadlines supplied',
+      'The statement projection has no reviewed deadline, meeting date, countdown, place, or action window. No due date is inferred.',
+      'watchlist-deadlines-unavailable',
+    ),
+    el('article', { class: 'gw-dp-stat', 'data-test': 'watchlist-deadline-row-unavailable' }, [
+      el('strong', {}, ['Deadline row unavailable']),
+      el('span', {}, ['Date · time · place · countdown unavailable']),
+    ]),
+    el('button', {
+      type: 'button',
+      class: 'gw-dp-button gw-dp-secondary',
+      disabled: '',
+      'data-test': 'watchlist-deadlines-control-unavailable',
+    }, ['See all deadlines · unavailable']),
+  ], { 'data-test': 'watchlist-deadlines-panel', 'aria-disabled': 'true' });
+}
+
 function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void {
   const records = reviewedRecords(data);
   const recordsById = new Map(records.map((record) => [record.statement_id, record]));
@@ -854,7 +1059,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         });
         const card = reviewedRecordCard(record, 'watchlist');
         card.setAttribute('data-test', 'watchlist-real-item');
-        card.append(remove);
+        card.append(reviewedWatchlistItemStatusGap(), remove);
         return card;
       }))
       : unavailableSlot(
@@ -935,17 +1140,15 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
         panel('Watch controls', 'UNAVAILABLE RECORD TYPES', [
           el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Unavailable watchlist record types' }, [
-            el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Reviewed statements']),
+            el('span', { class: 'gw-dp-tool-pill', 'data-test': 'watchlist-selected-record-type', 'data-selected': 'true' }, ['Reviewed statements · selected']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Boards · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
           ]),
         ]),
-        unavailableSlot(
-          'Watch history unavailable',
-          'The statement projection does not include reviewed change, vote, deadline, or delivery history.',
-          'watchlist-history-unavailable',
-        ),
+        reviewedWatchlistRecentHistoryGap(),
+        reviewedWatchlistDeliverySettingsGap(),
+        reviewedWatchlistDeadlinesGap(),
       ]));
       return;
     }
@@ -959,17 +1162,15 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
         panel('Watch controls', 'ADVANCED TOOLS', [
           el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Watchlist record types' }, [
-            el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Reviewed statements']),
+            el('span', { class: 'gw-dp-tool-pill', 'data-test': 'watchlist-selected-record-type', 'data-selected': 'true' }, ['Reviewed statements · selected']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Boards · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
           ]),
         ]),
-        unavailableSlot(
-          'Watch history unavailable',
-          'The statement projection does not include reviewed change, vote, deadline, or delivery history.',
-          'watchlist-history-unavailable',
-        ),
+        reviewedWatchlistRecentHistoryGap(),
+        reviewedWatchlistDeliverySettingsGap(),
+        reviewedWatchlistDeadlinesGap(),
       ]),
     ]));
   };
@@ -1255,6 +1456,46 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
     ]),
     el('p', { class: 'gw-dp-muted' }, ['The baseline picker stays visible, but unsupported geography controls remain disabled instead of implying coverage.']),
   ]);
+  const coverageDiagnostics = (): HTMLElement => panel('Coverage diagnostics', 'REVIEWED COVERAGE CONTRACT', [
+    el('p', { class: 'gw-dp-muted' }, [
+      'The three government-level positions remain visible, but no percentage, availability state, or service-health conclusion is available.',
+    ]),
+    el('div', { class: 'gw-dp-coverage-grid', 'data-test': 'location-real-coverage-grid' }, [
+      ...['Town', 'County', 'State'].map((level) => el('article', {
+        class: 'gw-dp-stat gw-dp-stat-unavailable',
+        'data-test': 'location-real-coverage-stat',
+      }, [
+        el('strong', {}, [level]),
+        el('span', {}, ['Coverage unavailable']),
+        el('small', { class: 'gw-dp-muted' }, ['No reviewed denominator or freshness value']),
+      ])),
+    ]),
+  ]);
+  const disabledDirectoryTiles = (): HTMLElement => {
+    const tileGroup = (title: string, step: string, count: number): HTMLElement => panel(title, step, [
+      el('p', { class: 'gw-dp-muted' }, [`${title} entries require stable reviewed location identifiers.`]),
+      el('div', {
+        class: title === 'State directory'
+          ? 'gw-dp-state-grid gw-dp-disabled-tile-grid'
+          : title === 'County directory'
+            ? 'gw-dp-county-grid gw-dp-disabled-tile-grid'
+            : 'gw-dp-town-grid gw-dp-disabled-tile-grid',
+        'data-test': `location-real-${title.split(' ')[0].toLowerCase()}-tiles`,
+      }, Array.from({ length: count }, (_, index) => el('button', {
+        type: 'button',
+        class: 'gw-dp-place-tile',
+        disabled: '',
+        'aria-label': `${title} slot ${index + 1} unavailable`,
+      }, ['—']))),
+    ]);
+    return el('section', { class: 'gw-dp-location-directory-workbench', 'data-test': 'location-real-directory-workbench' }, [
+      tileGroup('State directory', 'STEP 1 · DIRECTORY UNAVAILABLE', 11),
+      el('div', { class: 'gw-dp-location-grid' }, [
+        tileGroup('County directory', 'STEP 2 · DIRECTORY UNAVAILABLE', 8),
+        tileGroup('Town directory', 'STEP 3 · DIRECTORY UNAVAILABLE', 6),
+      ]),
+    ]);
+  };
   const locationHistoryGap = (): HTMLElement => unavailableSlot(
     'Coverage history and backlog unavailable',
     'No reviewed per-level freshness, backlog, funding, or processing-speed contract was supplied.',
@@ -1273,6 +1514,8 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
       selection,
       recordsSlot,
       disabledPlaceControls(),
+      coverageDiagnostics(),
+      disabledDirectoryTiles(),
       coverageGap,
       identityPolicyGap,
       locationHistoryGap(),
@@ -1287,6 +1530,8 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
     el('div', { class: 'gw-dp-stack' }, [selection, panel('Reviewed records in scope', 'BACKEND STATEMENT PROJECTION', [recordsSlot])]),
     el('div', { class: 'gw-dp-stack' }, [
       disabledPlaceControls(),
+      coverageDiagnostics(),
+      disabledDirectoryTiles(),
       coverageGap,
       identityPolicyGap,
       locationHistoryGap(),
@@ -1441,17 +1686,44 @@ export function renderLocation(
           el('h2', {}, ['Your local edition']),
           el('p', { class: 'gw-dp-newspaper-deck' }, ['Choose the place whose public records you want to read.']),
           locationSelects,
-          savedNotice,
-          el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
-            el('strong', {}, ['Coverage details stay out of the reading view.']),
-            el('span', {}, [' Advanced contains the state and county workbench, coverage diagnostics, and backlog tools.']),
+          notice(
+            'Fixture coverage figures',
+            'Every percentage and coverage state below is a synthetic design fixture, not a measurement of service or processed public records.',
+            'caution',
+            { 'data-test': 'location-coverage-disclaimer' },
+          ),
+          el('div', { class: 'gw-dp-coverage-grid' }, [
+            el('article', { class: 'gw-dp-stat', 'data-test': 'location-coverage-figure' }, [
+              el('strong', {}, ['Town 62%']),
+              el('span', {}, ['Fixture estimate']),
+            ]),
+            el('article', { class: 'gw-dp-stat', 'data-test': 'location-coverage-figure' }, [
+              el('strong', {}, ['County 38%']),
+              el('span', {}, ['Fixture estimate']),
+            ]),
+            el('article', { class: 'gw-dp-stat', 'data-test': 'location-coverage-figure' }, [
+              el('strong', {}, ['State 21%']),
+              el('span', {}, ['Fixture estimate']),
+            ]),
           ]),
+          panel('Pick your state', 'STEP 1 · SYNTHETIC COVERAGE MAP', [
+            el('p', { class: 'gw-dp-muted' }, ['The tiles demonstrate selection behavior. They do not represent voting patterns, availability, or current coverage.']),
+            stateGrid,
+          ]),
+          el('div', { class: 'gw-dp-location-grid' }, [
+            panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid]),
+            panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid]),
+          ]),
+          savedNotice,
         ]),
       );
       return;
     }
 
-    mount.replaceChildren(
+    mount.replaceChildren(el('div', {
+      class: 'gw-dp-location-advanced',
+      'data-test': 'location-advanced-workbench',
+    }, [
       breadcrumbs,
       locationSelects,
       notice(
@@ -1483,7 +1755,7 @@ export function renderLocation(
         panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid]),
       ]),
       savedNotice,
-    );
+    ]));
   };
 
   renderPicker();
@@ -1612,6 +1884,11 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
     'No reviewed alert-trigger contract was supplied, so the page does not infer agenda, document-change, deadline, or meeting events.',
     'alerts-triggers-unavailable',
   );
+  const freshnessGap = unavailableSlot(
+    'Alert freshness unavailable',
+    'No civic-alert response supplied a generated-at value, event timestamp, source freshness, or delivery receipt timestamp.',
+    'alerts-freshness-unavailable',
+  );
   const trackingNote = notice(
     'Device-local watch diagnostics only',
     `${watchedIds.length} locally stored key${watchedIds.length === 1 ? '' : 's'} match reviewed records in this response. This does not mean monitoring or delivery is active.`,
@@ -1619,12 +1896,10 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
     { 'data-test': 'alerts-real-tracked-count' },
   );
   const disabledDelivery = el('div', { class: 'gw-dp-delivery-list', 'data-test': 'alerts-real-delivery-controls' });
-  for (const label of ['Email', 'Text', 'Meeting-eve reminder', 'Daily digest']) {
+  for (const label of ['Email', 'Text', 'Push', 'Meeting-eve reminder', 'Daily digest']) {
     disabledDelivery.append(el('button', {
       type: 'button',
       class: 'gw-dp-switch',
-      role: 'switch',
-      'aria-checked': 'false',
       'aria-label': `${label} unavailable`,
       disabled: '',
     }, [
@@ -1633,9 +1908,68 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
         el('strong', {}, [label]),
         el('small', {}, ['Backend preference contract unavailable']),
       ]),
-      el('b', {}, ['OFF']),
+      el('b', {}, ['UNAVAILABLE']),
     ]));
   }
+  const emptyAlertSchema = (): HTMLElement => el('section', {
+    class: 'gw-dp-alert-row gw-dp-alert-schema',
+    'data-test': 'alerts-real-row-schema',
+    'data-origin': 'designed-gap',
+    role: 'status',
+  }, [
+    el('span', { class: 'gw-dp-alert-icon', 'aria-hidden': 'true' }, ['◌']),
+    el('div', { class: 'gw-dp-alert-copy' }, [
+      el('span', { class: 'gw-dp-chip' }, ['SEVERITY / LEVEL UNAVAILABLE']),
+      el('h3', {}, ['Alert row schema — no civic event supplied']),
+      el('p', {}, ['A reviewed alert row will require an event type, explanation, source receipt, stable id, and read state.']),
+      el('time', {}, ['Event time and freshness unavailable']),
+      el('span', { class: 'gw-dp-muted' }, ['Receipt link unavailable']),
+    ]),
+    el('button', { type: 'button', class: 'gw-dp-button gw-dp-mark-read', disabled: '' }, ['Read state unavailable']),
+  ]);
+  const triggerChecklist = (): HTMLElement => panel('Trigger checklist', 'DESIGNED TARGETS · ALL DISABLED', [
+    el('p', { class: 'gw-dp-muted' }, ['These event categories describe the baseline layout only. None is registered or monitored.']),
+    el('ul', { class: 'gw-dp-alert-trigger-checklist', 'data-test': 'alerts-real-trigger-checklist' }, [
+      ...[
+        'Agenda posted',
+        'Document changed',
+        'Public-comment or filing deadline',
+        'Meeting-eve reminder',
+        'Missing record or video ladder',
+        'Vote or official action',
+        'Reviewed promise/action verdict',
+        'Split-follow or cross-government handoff',
+      ].map((label) => el('li', {}, [
+        el('label', {}, [
+          el('input', { type: 'checkbox', disabled: '', 'aria-label': `${label} trigger unavailable` }),
+          label,
+        ]),
+      ])),
+    ]),
+    triggerGap,
+  ]);
+  const receiptPolicy = (): HTMLElement => notice(
+    'No alert without a receipt',
+    'A future civic alert must carry a reviewed event id, exact source receipt, event time, and freshness before it can appear here. Statement rows and account notifications are never substituted.',
+    'caution',
+    { 'data-test': 'alerts-real-receipt-policy' },
+  );
+  const deliveryPolicy = (): HTMLElement => notice(
+    'Delivery policy is not active',
+    'No recipient is verified and no speed, meeting-eve, digest, retry, or delivery-time target is promised by this beta.',
+    'info',
+    { 'data-test': 'alerts-real-delivery-policy' },
+  );
+  const feedConnectionGap = (): HTMLElement => unavailableSlot(
+    'Civic alert feed not connected',
+    'No civic-alert response is connected. Statement records and account-workflow notifications are not converted into alert events.',
+    'alerts-feed-unavailable',
+  );
+  const unreadStateGap = (): HTMLElement => unavailableSlot(
+    'Unread count and read state unavailable',
+    'Without reviewed alert ids and a read-state contract, the page cannot claim zero unread events or offer a working mark-all action.',
+    'alerts-unread-unavailable',
+  );
 
   if (frame.mode === 'simple') {
     frame.content.append(el('section', {
@@ -1646,15 +1980,15 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
         el('span', {}, ['NEW SINCE YOU LAST READ']),
         el('span', {}, ['REVIEWED ALERT FEED']),
       ]),
-      unavailableSlot(
-        'No reviewed alert feed is connected',
-        'No alert cards are rendered from statement records. The page keeps this reading slot empty until the alerts API supplies reviewed events.',
-        'alerts-feed-unavailable',
-      ),
+      feedConnectionGap(),
+      unreadStateGap(),
+      emptyAlertSchema(),
       trackingNote,
       historyGap,
-      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryGap]),
-      triggerGap,
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap]),
+      triggerChecklist(),
+      receiptPolicy(),
+      freshnessGap,
     ]));
     return;
   }
@@ -1665,23 +1999,27 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
   }, [
     el('div', { class: 'gw-dp-stack' }, [
       panel('Unread', 'REVIEWED ALERT EVENTS', [
-        unavailableSlot(
-          'No reviewed unread events',
-          'Statement records are not converted into alerts on the client.',
-          'alerts-unread-unavailable',
-        ),
+        el('div', { class: 'gw-dp-panel-actions' }, [
+          el('span', { class: 'gw-dp-chip', 'data-test': 'alerts-real-unread-count' }, ['Unread count unavailable']),
+          el('button', { type: 'button', class: 'gw-dp-button gw-dp-secondary', disabled: '', 'data-test': 'alerts-real-mark-all' }, ['Mark all read · unavailable']),
+        ]),
+        feedConnectionGap(),
+        unreadStateGap(),
+        emptyAlertSchema(),
       ]),
       panel('Earlier', 'REVIEWED ALERT HISTORY', [historyGap]),
     ]),
     el('div', { class: 'gw-dp-stack' }, [
-      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryGap]),
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap]),
       panel('Tracked-item diagnostics', 'DEVICE LOCAL', [
         trackingNote,
         ...(watchedIds.length ? [el('ul', { class: 'gw-dp-trigger-list', 'data-test': 'alerts-real-watched-ids' }, watchedIds.map((id) => el('li', {
           'data-record-id': id,
         }, [`Reviewed record ${id}`])))] : []),
       ]),
-      triggerGap,
+      triggerChecklist(),
+      receiptPolicy(),
+      freshnessGap,
     ]),
   ]));
 }
@@ -1882,10 +2220,13 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-subtitle{max-width:52rem;margin:0;color:var(--gw-text-secondary)}
 .gw-dp-kicker{margin:0;color:var(--gw-accent);font:800 var(--gw-text-kicker)/1.35 var(--gw-font);letter-spacing:1.4px;text-transform:uppercase}
 .gw-dp-button,.gw-dp-icon-button,.gw-dp-official,.gw-dp-place-tile,.gw-dp-switch,.gw-dp-select,.gw-dp-tool-pill{min-height:var(--gw-tap-min);min-width:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.25 var(--gw-font)}
-.gw-dp-content,.gw-dp-stack{display:grid;gap:var(--gw-space-5)}
+.gw-dp-page button:disabled,.gw-dp-page select:disabled{cursor:not-allowed;opacity:.62}
+.gw-dp-content,.gw-dp-stack{display:grid;min-width:0;gap:var(--gw-space-5)}
+.gw-dp-stack>*{min-width:0}
 .gw-dp-toolbox{display:flex;align-items:center;gap:var(--gw-space-2);flex-wrap:wrap;padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-well)}
 .gw-dp-tool-pill{appearance:none;padding:.45rem .85rem;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);background:var(--gw-surface);color:var(--gw-text-secondary);cursor:pointer}
-.gw-dp-tool-pill[aria-pressed="true"]{border-color:var(--gw-accent);background:var(--gw-tone-mint-well);color:var(--gw-accent)}
+.gw-dp-tool-pill[aria-pressed="true"],.gw-dp-tool-pill[data-selected="true"]{border-color:var(--gw-accent);background:var(--gw-tone-mint-well);color:var(--gw-accent)}
+.gw-dp-tool-pill[data-selected="true"]{cursor:default}
 .gw-dp-tool-pill:disabled{cursor:not-allowed;opacity:.58}
 .gw-dp-workbench-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(18rem,.75fr);gap:var(--gw-space-5);align-items:start}
 .gw-dp-newspaper-section{display:grid;gap:0;border-top:3px double var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);padding:var(--gw-space-4) 0}
@@ -1942,6 +2283,7 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-compare{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-4)}
 .gw-dp-compare article{padding:var(--gw-space-4);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-subtle)}
 .gw-dp-receipts{margin:0;padding-left:1.25rem;color:var(--gw-text-secondary)}
+.gw-dp-ledger-table{width:100%;border-collapse:separate;border-spacing:0;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);overflow:hidden;background:var(--gw-surface-well);font-size:var(--gw-text-sm)}.gw-dp-ledger-table th,.gw-dp-ledger-table td{padding:var(--gw-space-3);text-align:left;border-right:var(--gw-border-w) solid var(--gw-border)}.gw-dp-ledger-table th:last-child,.gw-dp-ledger-table td:last-child{border-right:0}.gw-dp-ledger-table th{background:var(--gw-surface-subtle);color:var(--gw-text-secondary);font-weight:800}.gw-dp-ledger-table td{border-top:var(--gw-border-w) solid var(--gw-border);color:var(--gw-text-muted)}
 .gw-dp-count-line,.gw-dp-panel-actions{display:flex;align-items:center;justify-content:space-between;gap:var(--gw-space-3);margin-bottom:var(--gw-space-4)}
 .gw-dp-watch-list{display:grid;gap:var(--gw-space-3)}
 .gw-dp-watch-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:var(--gw-space-4);padding:var(--gw-space-4);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-subtle)}
@@ -1959,8 +2301,10 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-place-tile{padding:.35rem;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-sm);color:var(--gw-text-secondary);background:var(--gw-surface-subtle);cursor:pointer}
 .gw-dp-place-tile[aria-pressed="true"]{color:var(--gw-accent-text-on);background:var(--gw-accent);border-color:var(--gw-accent)}
 .gw-dp-location-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5);margin-top:var(--gw-space-5)}
+.gw-dp-location-directory-workbench .gw-dp-location-grid{grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr))}
 .gw-dp-county-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gw-space-2)}
 .gw-dp-town-grid{display:flex;flex-wrap:wrap;gap:var(--gw-space-2)}
+.gw-dp-disabled-tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--gw-tap-min),1fr));gap:var(--gw-space-2)}
 .gw-dp-county-tile,.gw-dp-town-tile{padding:.5rem .65rem}
 .gw-dp-alert-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(18rem,.8fr);gap:var(--gw-space-5);align-items:start}
 .gw-dp-alert-list,.gw-dp-delivery-list{display:grid;gap:var(--gw-space-3)}
@@ -1978,9 +2322,10 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-switch-copy{display:grid}.gw-dp-switch-copy small{color:var(--gw-text-muted)}
 .gw-dp-switch[aria-checked="true"]>b{color:var(--gw-accent)}.gw-dp-switch[aria-checked="false"]>b{color:var(--gw-text-muted)}
 .gw-dp-trigger-list{margin:.3rem 0;padding-left:1.25rem;color:var(--gw-text-secondary)}
+.gw-dp-alert-trigger-checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-2);margin:var(--gw-space-3) 0;padding:0;list-style:none}.gw-dp-alert-trigger-checklist label{display:flex;align-items:center;gap:var(--gw-space-2);min-height:var(--gw-tap-min);padding:var(--gw-space-2) var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-sm);background:var(--gw-surface-subtle);color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-dp-alert-trigger-checklist input{width:1rem;height:1rem}.gw-dp-alert-schema{border-style:dashed;opacity:.9}
 .gw-dp-page button:focus-visible,.gw-dp-page select:focus-visible,.gw-dp-page a:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
 @media (max-width:860px){.gw-dp-power-grid,.gw-dp-alert-grid,.gw-dp-location-grid,.gw-dp-workbench-grid{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:640px){.gw-dp-inner,.gw-dp-gated,.gw-dp-page[data-mode="simple"] .gw-dp-inner{width:100%;padding:var(--gw-space-4)}.gw-dp-page-head{display:grid}.gw-dp-watch-row,.gw-dp-alert-row{grid-template-columns:auto minmax(0,1fr)}.gw-dp-watch-row .gw-dp-remove,.gw-dp-alert-row .gw-dp-mark-read{grid-column:1/-1;width:100%}.gw-dp-location-selects,.gw-dp-coverage-grid,.gw-dp-compare{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-dp-panel{padding:var(--gw-space-4)}.gw-dp-newspaper-story{column-count:1}.gw-dp-newspaper-rule{align-items:flex-start;flex-direction:column;gap:var(--gw-space-1)}}
+@media (max-width:640px){.gw-dp-inner,.gw-dp-gated,.gw-dp-page[data-mode="simple"] .gw-dp-inner{width:100%;padding:var(--gw-space-4)}.gw-dp-page-head{display:grid}.gw-dp-watch-row,.gw-dp-alert-row{grid-template-columns:auto minmax(0,1fr)}.gw-dp-watch-row .gw-dp-remove,.gw-dp-alert-row .gw-dp-mark-read{grid-column:1/-1;width:100%}.gw-dp-location-selects,.gw-dp-coverage-grid,.gw-dp-compare,.gw-dp-alert-trigger-checklist{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-dp-ledger-table{display:block;overflow-x:auto}.gw-dp-panel{padding:var(--gw-space-4)}.gw-dp-newspaper-story{column-count:1}.gw-dp-newspaper-rule{align-items:flex-start;flex-direction:column;gap:var(--gw-space-1)}}
 @media (prefers-reduced-motion:reduce){.gw-dp-page *{scroll-behavior:auto!important;transition:none!important}}
 `;
 
