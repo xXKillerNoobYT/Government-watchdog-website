@@ -104,22 +104,25 @@ describe('GOV-419 gatePanelContent — four distinct, correctly-framed states', 
   });
 });
 
-describe('GOV-419 renderLanding — preview teaser, no civic evidence (AC#1)', () => {
-  it('renders mission teaser + Alpine scope + gated messaging, and zero civic data', () => {
+describe('GOV-419 renderLanding — minimal landing, no civic evidence (AC#1)', () => {
+  it('renders product name + In Beta badge + Login + Sign up CTAs, zero civic data (GOV-799)', () => {
     renderLanding(root, 'anonymous');
     expect(root.querySelector('[data-test="landing"]')).not.toBeNull();
-    expect(root.querySelector('[data-test="landing-mission"]')?.textContent).toMatch(/traceable civic timeline/i);
-    expect(root.querySelector('[data-test="landing-scope"]')?.textContent).toMatch(/Town of Alpine/i);
-    expect(root.querySelector('[data-test="landing-gated"]')?.textContent).toMatch(/gated beta/i);
-    // The request-access affordance is present (AC#2: a clear access affordance).
-    expect(root.querySelector('[data-test="gate-request"]')).not.toBeNull();
+    // GOV-799: minimal — just the name, beta badge, and two CTAs. No explanatory copy.
+    expect(root.querySelector('[data-test="beta-badge"]')?.textContent).toMatch(/in beta/i);
+    expect(root.querySelector('[data-test="login-btn"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="signup-btn"]')).not.toBeNull();
+    // Access affordances: magic-link form + waitlist form are in DOM (expand on click).
+    expect(root.querySelector('[data-test="ml-form"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="waitlist-form"]')).not.toBeNull();
     // Scaffolding is clearly labeled non-functional (AC#4).
     expect(root.querySelector('[data-test="scaffolding-note"]')?.textContent).toMatch(/non-functional beta scaffolding/i);
     assertNoCivicData(root);
   });
 
-  it('shows a visibly distinct panel for each access state and never leaks civic data', () => {
-    for (const state of ACCESS_STATES) {
+  it('shows a visibly distinct panel for each non-anonymous state and never leaks civic data', () => {
+    const nonAnonymous = ACCESS_STATES.filter(s => s !== 'anonymous');
+    for (const state of nonAnonymous) {
       renderLanding(root, state);
       const badge = root.querySelector('[data-test="gate-badge"]');
       expect(badge?.getAttribute('data-state'), `badge tagged for ${state}`).toBe(state);
@@ -127,6 +130,13 @@ describe('GOV-419 renderLanding — preview teaser, no civic evidence (AC#1)', (
       expect(panel?.getAttribute('data-state')).toBe(state);
       assertNoCivicData(root);
     }
+  });
+
+  it('anonymous state gate panel carries data-state="anonymous"', () => {
+    renderLanding(root, 'anonymous');
+    const panel = root.querySelector('[data-test="gate-panel"]');
+    expect(panel?.getAttribute('data-state')).toBe('anonymous');
+    assertNoCivicData(root);
   });
 });
 

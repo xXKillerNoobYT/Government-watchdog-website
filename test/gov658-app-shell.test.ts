@@ -57,6 +57,7 @@ describe('GOV-658 shell — content slot and persistent chrome', () => {
     renderShell(root, { active: '/timeline' });
     expect(root.querySelectorAll('[data-test="app-shell"]')).toHaveLength(1);
     expect(root.querySelectorAll('[data-test="shell-tabs"]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
   });
 });
 
@@ -183,15 +184,17 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     expect(document.activeElement).toBe(input);
   });
 
-  it('shows preview account and preview alerts without claiming verified identity or live data', () => {
+  it('shows the honest preview account and the gated notification panel', () => {
     renderShell(root, { active: '/home' });
     const account = root.querySelector('[data-test="shell-account"]');
-    const alerts = root.querySelector('[data-test="shell-alerts"]');
+    const bell = root.querySelector('[data-test="notification-bell"]');
     expect(account?.textContent).toContain('PREVIEW ACCOUNT');
     expect(account?.textContent).not.toMatch(/✓\s*ID|ID-verified/i);
-    expect(alerts?.getAttribute('href')).toBe('#/alerts');
-    expect(root.querySelector('[data-test="shell-alert-count"]')?.textContent).toBe('3 preview');
-    expect(alerts?.getAttribute('aria-label')).toMatch(/not a live count/i);
+    expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
+    expect(bell?.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(bell?.getAttribute('aria-expanded')).toBe('false');
+    expect(root.querySelector('[data-test="shell-alerts"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-alert-count"]')).toBeNull();
   });
 
   it('discloses the limitations of AI analysis', () => {

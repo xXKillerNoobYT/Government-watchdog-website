@@ -8,7 +8,9 @@
  *
  * Trust boundaries stay explicit:
  *  - `main.ts` remains the beta-gate authority; this module never authenticates.
- *  - the account and alert chrome are visibly labelled as previews.
+ *  - the account chrome is visibly labelled as a preview.
+ *  - notifications mount only inside the approved gated shell and consume the
+ *    server/fixture response contract without recomputing unread state.
  *  - AI analysis is disclosed as machine-generated and source-verification is
  *    repeated in the footer.
  *  - a refreshed timestamp is shown only when the caller supplies a real one.
@@ -16,14 +18,12 @@
 
 import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
+import { mountNotificationPanel } from './notification-panel';
 
 export type ShellMode = 'simple' | 'advanced';
 
 /** Shared per-user reading mode used by the approved page designs. */
 const MODE_KEY = 'gw_home_mode';
-
-/** Preview-only count from the design handoff, never represented as live data. */
-const PREVIEW_ALERT_COUNT = 3;
 
 /** One primary navigation destination. `route` omits the leading hash. */
 interface NavTab {
@@ -237,31 +237,6 @@ function accountChip(): HTMLSpanElement {
   ]);
 }
 
-/** Preview count is labelled in both visible and accessible copy. */
-function alertsLink(): HTMLAnchorElement {
-  let unread = PREVIEW_ALERT_COUNT;
-  try {
-    const readIds = JSON.parse(localStorage.getItem('gw_alerts_read') ?? '[]') as unknown;
-    if (Array.isArray(readIds)) unread = Math.max(0, PREVIEW_ALERT_COUNT - new Set(readIds.filter((id) => typeof id === 'string')).size);
-  } catch {
-    /* Invalid preview storage leaves the full synthetic count visible. */
-  }
-  return el('a', {
-    class: 'gw-shell-alerts',
-    href: '#/alerts',
-    'data-test': 'shell-alerts',
-    title: 'Preview fixture count, not a live alert total.',
-    'aria-label': `Alerts. ${unread} unread preview alert${unread === 1 ? '' : 's'}; not a live count.`,
-  }, [
-    el('span', {}, ['Alerts']),
-    el('span', {
-      class: 'gw-shell-alert-count',
-      'data-test': 'shell-alert-count',
-      'aria-hidden': 'true',
-    }, [`${unread} preview`]),
-  ]);
-}
-
 function modeToggle(mode: ShellMode): HTMLDivElement {
   const group = el('div', {
     class: 'gw-shell-mode',
@@ -361,11 +336,11 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   root.replaceChildren();
 
   const slot = el('div', { class: 'gw-shell-slot', 'data-test': 'shell-content' });
-  const actions = el('div', { class: 'gw-shell-actions' }, [
-    accountChip(),
-    alertsLink(),
-    modeToggle(mode),
-  ]);
+  // The server-authoritative notification panel replaces the handoff's synthetic
+  // alert count while keeping the Account → Alerts → Mode action order.
+  const actions = el('div', { class: 'gw-shell-actions' }, [accountChip()]);
+  mountNotificationPanel(actions);
+  actions.append(modeToggle(mode));
 
   root.append(
     el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' }, []),
@@ -421,14 +396,11 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-account-copy{display:flex;flex-direction:column;line-height:1.1}
 .gw-shell-account-copy b{font-size:11px;letter-spacing:.65px}
 .gw-shell-account-copy small{margin-top:2px;color:var(--gw-text-muted);font-size:10.5px}
-.gw-shell-alerts{position:relative;display:inline-flex;align-items:center;gap:7px;min-height:var(--gw-tap-min);padding:6px 10px;color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-border);border-radius:9px;font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none}
-.gw-shell-alerts:hover{color:var(--gw-text);border-color:var(--gw-stop-border)}
-.gw-shell-alert-count{display:inline-flex;align-items:center;min-height:20px;padding:2px 6px;border-radius:var(--gw-radius-pill);background:var(--gw-stop-text);color:var(--gw-stop-bg);font-size:10px;font-weight:800;white-space:nowrap}
 .gw-shell-mode{display:inline-flex;flex:none;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:2px}
 .gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:calc(var(--gw-tap-min) - 4px);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn:hover{color:var(--gw-text)}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
-.gw-shell-mode-btn:focus-visible,.gw-shell-location:focus-visible,.gw-shell-alerts:focus-visible,.gw-shell-brand:focus-visible,.gw-shell-tab:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
+.gw-shell-mode-btn:focus-visible,.gw-shell-location:focus-visible,.gw-shell-brand:focus-visible,.gw-shell-tab:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
 .gw-shell-simple-masthead{display:none}
 .gw-shell-tabs{display:flex;align-items:stretch;gap:30px;max-width:1460px;margin:0 auto;padding:0 28px;overflow-x:auto;scrollbar-width:none;font-family:var(--gw-font)}
 .gw-shell-tabs::-webkit-scrollbar{display:none}
@@ -443,7 +415,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-root[data-mode="simple"] .gw-shell-header{position:relative;border-top:2px solid var(--gw-rule-strong);border-bottom:2px solid var(--gw-rule-strong)}
 .gw-shell-root[data-mode="simple"] .gw-shell-bar{padding-top:10px;padding-bottom:10px;border-bottom:var(--gw-border-w) solid var(--gw-border)}
 .gw-shell-root[data-mode="simple"] .gw-shell-logo{background:var(--gw-accent);color:var(--gw-accent-text-on)}
-.gw-shell-root[data-mode="simple"] .gw-shell-ai,.gw-shell-root[data-mode="simple"] .gw-shell-location,.gw-shell-root[data-mode="simple"] .gw-shell-search,.gw-shell-root[data-mode="simple"] .gw-shell-account,.gw-shell-root[data-mode="simple"] .gw-shell-alerts,.gw-shell-root[data-mode="simple"] .gw-shell-mode{font-family:var(--gw-font)}
+.gw-shell-root[data-mode="simple"] .gw-shell-ai,.gw-shell-root[data-mode="simple"] .gw-shell-location,.gw-shell-root[data-mode="simple"] .gw-shell-search,.gw-shell-root[data-mode="simple"] .gw-shell-account,.gw-shell-root[data-mode="simple"] .gw-shell-mode{font-family:var(--gw-font)}
 .gw-shell-root[data-mode="simple"] .gw-shell-simple-masthead{display:block;max-width:1404px;margin:0 auto;padding:12px 0 10px;text-align:center;border-bottom:var(--gw-border-w) solid var(--gw-rule-strong)}
 .gw-shell-simple-title{font:600 var(--gw-text-display)/1 var(--gw-font-serif);letter-spacing:-.5px}
 .gw-shell-simple-deck{margin-top:8px;color:var(--gw-text-secondary);font:700 12px/1.4 var(--gw-font);letter-spacing:1.2px}
@@ -468,7 +440,6 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-actions{order:3;width:100%;margin-left:0;justify-content:space-between;gap:6px}
   .gw-shell-account{padding:4px 8px}
   .gw-shell-account-copy small{display:none}
-  .gw-shell-alerts{padding:5px 8px}
   .gw-shell-mode-btn{padding-left:10px;padding-right:10px}
   .gw-shell-simple-masthead{display:none!important}
   .gw-shell-tabs,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{position:fixed;bottom:0;left:0;right:0;z-index:60;justify-content:flex-start;max-width:none;margin:0;padding:0 8px env(safe-area-inset-bottom);gap:0;background:var(--gw-header-bg);border-top:var(--gw-border-w) solid var(--gw-border);border-bottom:0;overflow-x:auto}
@@ -483,7 +454,6 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-ai{font-size:10px;padding:4px 6px}
   .gw-shell-location{font-size:12px}
   .gw-shell-account-copy b{font-size:10px}
-  .gw-shell-alert-count{font-size:9px}
   .gw-shell-search-shortcut{display:none}
 }
 `;

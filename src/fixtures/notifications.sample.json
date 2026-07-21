@@ -1,0 +1,46 @@
+{
+  "_provenance": "GOV-758 DEV SAMPLE — not real data. Shape mirrors the proposed leg-2 (GOV-754) notification query endpoint so the bell/drawer can render all five notification kinds before the backend endpoint is merged. Swept by assertWebSafe at load.",
+  "unread_count": 2,
+  "notifications": [
+    {
+      "id": "ntf_sample_approved",
+      "kind": "account_approved",
+      "title": "Beta access approved",
+      "body": "Your Government Watchdog beta access is approved. The full app is now open to you.",
+      "created_utc": "2026-07-16T15:40:00Z",
+      "read": false
+    },
+    {
+      "id": "ntf_sample_cohort",
+      "kind": "cohort_advanced",
+      "title": "You've moved into the next beta cohort",
+      "body": "Your access cohort advanced. More of the reviewed Alpine surface is available to you now.",
+      "created_utc": "2026-07-16T14:05:00Z",
+      "read": false
+    },
+    {
+      "id": "ntf_sample_consent",
+      "kind": "consent_recorded",
+      "title": "Email preference saved",
+      "body": "We recorded your email consent preference. You can change it any time from your account.",
+      "created_utc": "2026-07-15T09:12:00Z",
+      "read": true
+    },
+    {
+      "id": "ntf_sample_unsub",
+      "kind": "unsubscribe_confirmed",
+      "title": "Unsubscribe confirmed",
+      "body": "You're unsubscribed from beta emails. You'll still see updates here in the app.",
+      "created_utc": "2026-07-14T18:30:00Z",
+      "read": true
+    },
+    {
+      "id": "ntf_sample_revoked",
+      "kind": "account_revoked",
+      "title": "Beta access ended",
+      "body": "Your beta access was turned off. This is an access-process change and says nothing about you. You can request access again.",
+      "created_utc": "2026-07-13T11:00:00Z",
+      "read": true
+    }
+  ]
+}

@@ -57,9 +57,10 @@ describe('MOTY design-handoff route integration', () => {
     await import('../src/main');
 
     const app = document.querySelector('#app')!;
-    expect(app.querySelector('[data-test="power-tracker-gated"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="power-tracker-page"]')).toBeNull();
+    expect(app.querySelector('[data-test="power-tracker-page"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="power-tracker-gated"]')).toBeNull();
     expect(app.querySelector('[data-test="design-fixture-banner"]')).toBeNull();
+    expect(app.querySelector('[data-fixture="true"]')).toBeNull();
   });
 
   it('keeps the explicit public verification lane empty even during preview', async () => {

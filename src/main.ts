@@ -30,13 +30,22 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderHome } from './ui/home';
-import { renderBoardsDirectory, renderFastAgenda, renderIssueDetail, renderSourceVault, renderTimelineLevels } from './ui/pages-program';
+import {
+  renderBoardsDirectory,
+  renderFastAgenda,
+  renderIssueDetail,
+  renderLocation as renderReviewedLocation,
+  renderPowerTracker as renderReviewedPowerTracker,
+  renderSourceVault,
+  renderTimelineLevels,
+  renderWatchlist as renderReviewedWatchlist,
+} from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
 import {
-  renderAlerts,
-  renderLocation,
-  renderPowerTracker,
-  renderWatchlist,
+  renderAlerts as renderDesignAlerts,
+  renderLocation as renderDesignLocation,
+  renderPowerTracker as renderDesignPowerTracker,
+  renderWatchlist as renderDesignWatchlist,
   type DesignPageOptions,
 } from './ui/design-pages';
 import { renderTopicTreeView } from './ui/topic-tree-view';
@@ -545,19 +554,40 @@ function designPageOptions(query: URLSearchParams): DesignPageOptions {
 }
 
 function renderPowerRoute(mount: HTMLElement, query: URLSearchParams): void {
-  renderPowerTracker(mount, designPageOptions(query));
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignPowerTracker(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedPowerTracker(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
 function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
-  renderWatchlist(mount, designPageOptions(query));
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignWatchlist(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedWatchlist(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
 function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
-  renderLocation(mount, designPageOptions(query));
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignLocation(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedLocation(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
 function renderAlertsRoute(mount: HTMLElement, query: URLSearchParams): void {
-  renderAlerts(mount, designPageOptions(query));
+  renderDesignAlerts(mount, designPageOptions(query));
 }
 
 /**
