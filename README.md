@@ -206,3 +206,7 @@ The client reads **only** the reviewer-internal read-API (backend
 
 `test/read-api-sample.json` is a real `read_api.build_response(...)` capture used
 by the adapter test.
+
+## Licensing
+
+This repository is proprietary and private. All rights reserved. See [LICENSE](LICENSE) for terms; no use, copying, or distribution is permitted without the owner's prior written permission.
