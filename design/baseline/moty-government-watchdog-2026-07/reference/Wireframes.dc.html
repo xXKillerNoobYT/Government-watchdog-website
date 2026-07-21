@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Patrick+Hand+SC&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f0eee9;font-family:system-ui,sans-serif}
+a{color:#2a5fd0}a:hover{color:#1a3f9d}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.dv-row{font-family:'Patrick Hand SC',cursive;font-size:15px;letter-spacing:2px;color:#6b675e;margin:26px 0 12px;border-bottom:2px dashed rgba(0,0,0,.15);padding-bottom:4px}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Explainer video — what the looping demo shows · storyboard of <a class="dv-oid" href="Explainer Video.dc.html">Explainer&nbsp;Video.dc.html</a> · Cedar St. sidewalk / eminent-domain case</span></div>
+  <div class="dv-opts">
+    <div class="dv-opt" id="4a" data-screen-label="4a Explainer video storyboard">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>8-scene loop · ~73s · no audio — guided by flashing boxes, arrows &amp; captions · runs Simple → Advanced</div>
+      <div class="dv-card" style="width:1140px;padding:18px;background:#fbfaf7;font-family:'Patrick Hand',cursive">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 16px">
+
+          <!-- 1 HOOK -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:8px 4px 7px 5px/5px 7px 4px 8px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">1</span>
+              <div style="font-family:'Patrick Hand SC',cursive;font-size:11px;text-align:center;margin-top:2px">YOUR TOWN IS ABOUT TO DECIDE</div>
+              <div style="font-size:9px;letter-spacing:2px;line-height:1.5;color:#3a424e;text-align:center;margin-top:8px">••••••••••••<br>•••••<span style="color:#e57368">••••</span>•••<br>••••••••••••</div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;text-align:center;font-size:10px;color:#e57368">a few push it — most never hear</div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">1 · THE HOOK</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">A few decide; most residents never even hear about it.</div>
+          </div>
+
+          <!-- 2 AGENDA -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:5px 8px 4px 7px/7px 4px 8px 5px;background:#f5f1e6;color:#1e1c17;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">2</span>
+              <div style="font-size:9px;letter-spacing:1px;color:#8a806c;border-bottom:1px solid #cabfa4;padding-bottom:2px">COUNCIL AGENDA · SEPT 3</div>
+              <div style="font-size:10px;color:#9a9078;line-height:1.45;margin-top:4px">1 · 2 · 3 · 5 · Public Works…<br>7 · New Business</div>
+              <div style="border:1.5px dashed #c0392b;border-radius:4px;padding:3px 5px;margin-top:3px;font-size:9.5px;background:#faeae7">7.a acquire real property by condemnation…</div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;font-size:10px;color:#c0392b">▲ one buried line, no plain summary</div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">2 · HOW IT'S FILED</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">The real legalese, buried at item 7.a.</div>
+          </div>
+
+          <!-- 3 QUESTION FRAME -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:7px 5px 8px 4px/4px 8px 5px 7px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">3</span>
+              <div style="font-family:'Patrick Hand SC',cursive;font-size:10px;color:#4dd6c1">GW → 6 PLAIN QUESTIONS</div>
+              <div style="font-size:10px;line-height:1.55;margin-top:5px">WHAT? <span style="color:#e57368">→</span> take front-yard strips<br>HOW? <span style="color:#e57368">→</span> eminent domain<br>WHY? <span style="color:#4dd6c1">→</span> a sidewalk<br>$? <span style="color:#e2a92c">→</span> $480K · WHEN? <span style="color:#6ea8fe">→</span> Sept 3</div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;font-size:9.5px;color:#7fd49a">✓ every answer links to the record</div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">3 · QUESTION FRAME</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">Confusing words replaced with what really happens.</div>
+          </div>
+
+          <!-- 4 WHO KNOWS -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:5px 7px 5px 8px/8px 5px 7px 5px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">4</span>
+              <div style="font-family:'Patrick Hand SC',cursive;font-size:10px">WHO ACTUALLY KNOWS?</div>
+              <div style="font-size:9px;margin-top:6px;display:flex;flex-direction:column;gap:4px">
+                <div>know <span style="display:inline-block;height:6px;width:60%;background:#6ea8fe;border-radius:3px;vertical-align:middle"></span> 61%</div>
+                <div>informed <span style="display:inline-block;height:6px;width:34%;background:#e2a92c;border-radius:3px;vertical-align:middle"></span> 34%</div>
+                <div>weighed in <span style="display:inline-block;height:6px;width:12%;background:#e57368;border-radius:3px;vertical-align:middle"></span> 12%</div>
+              </div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;font-size:12px;letter-spacing:1px">🏠🏠🏠🏠<span style="color:#e57368">🏠🏠🏠🏠🏠🏠</span></div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">4 · THE AWARENESS GAP</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">14 homes' stance; most affected are least told.</div>
+          </div>
+
+          <!-- 5 SIMPLE -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:8px 5px 7px 4px/5px 7px 4px 8px;background:#fbf7eb;color:#1e1c17;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">5</span>
+              <div style="text-align:center;font-family:'Patrick Hand SC',cursive;font-size:10px;border-bottom:1.5px solid #1e1c17;padding-bottom:2px">GOVERNMENT WATCHDOG WEEKLY</div>
+              <div style="font-size:11px;font-weight:700;line-height:1.15;margin-top:4px">Town May Take Cedar St. Land for a Sidewalk</div>
+              <div style="display:flex;gap:3px;margin-top:4px;font-size:8px;color:#6b675e"><span style="border-top:1.5px solid #1e1c17;flex:1">plain english</span><span style="border-top:1.5px solid #1e1c17;flex:1">why it matters</span><span style="border-top:1.5px solid #1e1c17;flex:1">next step</span></div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;border:1.5px solid #1a4d8f;border-radius:4px;padding:2px 5px;font-size:9px;color:#1a4d8f;background:#ebf0f8">comment by Aug 20 · speak Sept 3</div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">5 · SIMPLE VIEW</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">Big type, plain words, one clear next step.</div>
+          </div>
+
+          <!-- 6 ADVANCED -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:5px 8px 4px 7px/7px 4px 8px 5px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">6</span>
+              <div style="font-family:'Patrick Hand SC',cursive;font-size:9.5px;color:#4dd6c1">ADVANCED DASHBOARD</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;font-size:9px">
+                <div style="border:1px solid #3a424e;border-radius:4px;padding:3px">💲 costs $480K</div>
+                <div style="border:1px solid #4dd6c1;border-radius:4px;padding:3px;color:#4dd6c1">💬 comments (emails+letters)</div>
+                <div style="border:1px solid #7a4038;border-radius:4px;padding:3px;color:#e57368">▲ hidden change</div>
+                <div style="border:1px solid #3a424e;border-radius:4px;padding:3px;color:#7fd49a">✓ receipts + timeline</div>
+              </div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">6 · ADVANCED VIEW</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">Costs, public comments, hidden-change flag, receipts.</div>
+          </div>
+
+          <!-- 7 REACH -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:7px 5px 8px 4px/4px 8px 5px 7px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">7</span>
+              <div style="border:1.5px solid #3a424e;border-radius:4px;padding:4px 5px;font-size:9px;margin-top:2px">🔔 GW ALERT — town may take your yard <span style="color:#7fd49a">·&lt;1 day</span></div>
+              <div style="font-size:9px;letter-spacing:2px;line-height:1.4;color:#7fd49a;text-align:center;margin-top:6px">••••••••••••<br>••••••••••••</div>
+              <div style="position:absolute;bottom:6px;left:9px;right:9px;text-align:center;font-size:11px">informed <b style="color:#e2a92c">34%</b> → <b style="color:#7fd49a">96%</b></div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">7 · IT REACHES PEOPLE</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">Alerts within a day — the whole street knows before the vote.</div>
+          </div>
+
+          <!-- 8 TAG -->
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="position:relative;aspect-ratio:16/9;border:1.5px solid #26241f;border-radius:5px 7px 5px 8px/8px 5px 7px 5px;background:#0d1117;color:#dfe5ee;overflow:hidden;padding:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+              <span style="position:absolute;top:-9px;left:9px;background:#1a1a1a;color:#fff;font:600 10px ui-monospace,monospace;border-radius:4px;padding:2px 6px">8</span>
+              <div style="width:26px;height:26px;border:1.5px solid #dfe5ee;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700">GW</div>
+              <div style="font-family:'Patrick Hand SC',cursive;font-size:11px;color:#4dd6c1;text-align:center">We Watch. We Report.<br>You Decide.</div>
+            </div>
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:13px;letter-spacing:1px;color:#26241f">8 · TAGLINE → LOOP</div>
+            <div style="font-size:12px;color:#6b675e;line-height:1.3">Loops back to the hook.</div>
+          </div>
+
+        </div>
+      </div>
+      <p class="dv-next">Built as <a href="Explainer Video.dc.html">Explainer Video.dc.html</a> — plays &amp; loops on open; scrub with space / ← →; exportable to video. Same Cedar St. case runs through both skins so viewers see Simple and Advanced side by side.</p>
+    </div>
+  </div>
+</section>
+
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Advanced Mode = dark detail dashboards (per your mockups) — dark twins of <a class="dv-oid" href="#1a">1a</a> / <a class="dv-oid" href="#1h">1h</a>, Alpine data</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="3a" data-screen-label="3a Advanced Home — dark">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Advanced Home — your homepage mockup's widget set, wireframed</div>
+      <div class="dv-card" style="width:680px;background:#0d1117;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#dfe5ee">
+        <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #3a424e;border-radius:6px;padding:5px 10px;background:#161c24">
+          <span style="width:20px;height:20px;border:1.5px solid #4dd6c1;border-radius:50%;display:grid;place-items:center;font-size:11px">🏛</span>
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">GOVERNMENT WATCHDOG</b>
+          <span style="flex:1;border:1.5px solid #3a424e;border-radius:999px;padding:1px 10px;font-size:11px;color:#97a1af">🔍 search agendas, officials, documents… ⌘K</span>
+          <span style="font-size:11px;color:#97a1af">☀ · 🔔<b style="color:#e57368">3</b> · JD</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#97a1af">
+          <span>Home · Fast Agenda · Timeline · Boards · Power · Vault · News · Watchlist</span>
+          <span style="margin-left:auto;display:flex;border:1.5px solid #4dd6c1;border-radius:999px;overflow:hidden;font-size:11px"><span style="padding:1px 8px;color:#4dd6c1">SIMPLE</span><span style="padding:1px 8px;background:#4dd6c1;color:#0d1117;font-weight:700">ADVANCED</span></span>
+        </div>
+        <div style="display:flex;gap:6px;justify-content:center;font-size:12px">
+          <span style="border:1.5px solid #dfe5ee;border-radius:6px;padding:1px 14px;background:#dfe5ee;color:#0d1117;font-weight:700">All</span><span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:6px;padding:1px 14px">🏛 Town</span><span style="border:1.5px solid #e2a92c;color:#e2a92c;border-radius:6px;padding:1px 14px">🏛 County</span><span style="border:1.5px solid #6ea8fe;color:#6ea8fe;border-radius:6px;padding:1px 14px">🏔 State</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;border:1.5px solid #3a424e;border-radius:6px;padding:5px 10px;background:#161c24;font-size:12px">
+          <span>⛅ <b>CIVIC WEATHER</b></span><span style="color:#97a1af">Active week · Jul 6–12</span>
+          <span style="color:#97a1af">2 meetings · 4 new docs · <b style="color:#e57368">1 packet changed</b> · <b style="color:#e2a92c">1 vote soon</b></span>
+          <span style="margin-left:auto;border:1.5px solid #3a424e;border-radius:6px;padding:1px 8px;font-size:11px">View all activity ›</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:8px">
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;display:flex;flex-direction:column;gap:5px">
+            <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">⚡ FAST AGENDA <span style="float:right;border:1px solid #4dd6c1;border-radius:3px;padding:0 4px;font-size:9px">UPCOMING</span></b>
+            <div style="font-size:14px"><b>Alpine Town Council</b></div>
+            <div style="font-size:11px;color:#97a1af">📅 Tue Jul 7 · 🕕 6:00 PM · 📍 Town Hall</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;font-size:10px">
+              <span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 4px">✓ Agenda Jul 3</span>
+              <span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 4px">✓ Packet Jul 3</span>
+              <span style="border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 4px">! Vote possible · 2 items</span>
+            </div>
+            <div style="display:flex;gap:5px;font-size:11px"><span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:1px 7px">View agenda ›</span><span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:1px 7px">Packet ›</span><span style="border:1.5px solid #3a424e;border-radius:4px;padding:1px 7px;color:#97a1af">Timeline ›</span></div>
+          </div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;display:flex;flex-direction:column;gap:5px">
+            <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">⚖ ACTIVE ISSUES <span style="float:right;color:#6ea8fe;font-size:10px"><u>view all</u></span></b>
+            <div style="border-left:3px solid #e57368;padding-left:5px;font-size:11px"><b>Building &amp; annexation moratorium</b> <span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:3px;padding:0 3px;font-size:9px">TOWN</span><br><span style="color:#97a1af">P&amp;Z · zoning · vote soon · impact <b style="color:#e57368">75</b> · conf HIGH</span></div>
+            <div style="border-left:3px solid #e2a92c;padding-left:5px;font-size:11px"><b>Admin-fee ordinance 2026-0055</b> <span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:3px;padding:0 3px;font-size:9px">TOWN</span><br><span style="color:#97a1af">Council · fees · 2nd reading · impact 65 · conf MED</span></div>
+            <div style="border-left:3px solid #6ea8fe;padding-left:5px;font-size:11px"><b>STR bill draft</b> <span style="border:1px solid #6ea8fe;color:#6ea8fe;border-radius:3px;padding:0 3px;font-size:9px">STATE</span><br><span style="color:#97a1af">Interim comm. · comment closes Jul 10 · impact <b style="color:#e57368">80</b></span></div>
+          </div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;display:flex;flex-direction:column;gap:6px">
+            <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">👥 PROMISE CONFLICTS</b>
+            <div style="display:flex;gap:6px;align-items:center;font-size:11px"><span style="width:22px;height:22px;border:1.5px solid #3a424e;border-radius:50%;background:repeating-linear-gradient(45deg,#242c37 0 3px,#2e3844 3px 6px)"></span><span><b>Councilor R. Roe</b><br><span style="color:#97a1af">Town Council</span></span><span style="margin-left:auto"><b style="color:#7fd49a">4</b>/<b style="color:#e57368">3</b>/<b style="color:#e2a92c">1</b> ›</span></div>
+            <div style="display:flex;gap:6px;align-items:center;font-size:11px"><span style="width:22px;height:22px;border:1.5px solid #3a424e;border-radius:50%;background:repeating-linear-gradient(45deg,#242c37 0 3px,#2e3844 3px 6px)"></span><span><b>Mayor J. Doe</b><br><span style="color:#97a1af">Town of Alpine</span></span><span style="margin-left:auto"><b style="color:#7fd49a">6</b>/<b style="color:#e57368">3</b>/<b style="color:#e2a92c">2</b> ›</span></div>
+            <span style="font-size:10px;color:#6ea8fe"><u>what do these scores mean? ⓘ</u></span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:8px">
+          <div style="border:1.5px solid #7a4038;border-radius:6px;padding:8px;background:#1d1512;display:flex;flex-direction:column;gap:4px">
+            <b style="font-size:11px;letter-spacing:1px;color:#e57368">🛡 HIDDEN THINGS / TRANSPARENCY</b>
+            <div style="font-size:11px;border:1px solid #7a4038;border-radius:4px;padding:4px;background:#241713"><b style="color:#e57368">⚠ Packet changed after posting</b> <span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:3px;padding:0 3px;font-size:9px;float:right">TOWN</span><br><span style="color:#97a1af">fee language added p.3 · Jul 5, 10:42 AM</span></div>
+            <div style="font-size:11px;color:#97a1af">● video missing — Council Jun 26 <span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:3px;padding:0 3px;font-size:9px;float:right">TOWN</span></div>
+            <div style="font-size:11px;color:#97a1af">● minutes late &gt;30d — P&amp;Z May <span style="border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 3px;font-size:9px;float:right">COUNTY</span></div>
+          </div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24">
+            <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">🕒 TIMELINE PREVIEW</b> <span style="float:right;font-size:10px;color:#97a1af">Town | County | State</span>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:5px;font-size:11px">
+              <div style="display:flex;gap:6px"><span style="color:#97a1af;width:36px">Jul 3</span><span style="width:9px;height:9px;border-radius:50%;background:#7fd49a;margin-top:3px"></span><span>Agenda posted ✓</span></div>
+              <div style="display:flex;gap:6px"><span style="color:#97a1af;width:36px">Jul 5</span><span style="width:9px;height:9px;border-radius:50%;background:#e57368;margin-top:3px"></span><span style="color:#e57368">Packet changed ▲</span></div>
+              <div style="display:flex;gap:6px"><span style="color:#97a1af;width:36px">Jul 7</span><span style="width:9px;height:9px;border-radius:50%;background:#4dd6c1;margin-top:3px"></span><span>Meeting · 6 PM · vote?</span></div>
+              <div style="display:flex;gap:6px"><span style="color:#97a1af;width:36px">Jul 10</span><span style="width:9px;height:9px;border-radius:50%;background:#6ea8fe;margin-top:3px"></span><span>STR comment closes</span></div>
+            </div>
+          </div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;display:flex;flex-direction:column;gap:4px">
+            <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">🗄 SOURCE VAULT</b>
+            <div style="font-size:15px"><b>1,248</b> <span style="font-size:11px;color:#97a1af">sources</span> · <b style="color:#7fd49a">98.6%</b> <span style="font-size:11px;color:#97a1af">hash ✓</span></div>
+            <div style="font-size:10px;color:#97a1af">latest: Council packet v2 · Jul 5</div>
+            <span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:1px 7px;font-size:11px;align-self:start">⚖ Compare versions ›</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#97a1af;border-top:1px solid #3a424e;padding-top:5px"><span>🛡 Holding power accountable. Amplifying transparency.</span><span>Data refreshed: Jul 6, 10:45 AM ⟳ · Tip us something · Help</span></div>
+      </div>
+      <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;max-width:680px">same skeleton as <a class="dv-oid" href="#1a">1a</a>, dark tokens from your repo's GOV-438 spec — mint accent, level colors teal/amber/blue</div>
+    </div>
+
+    <div class="dv-opt" id="3b" data-screen-label="3b Advanced Issue Detail — dark">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Advanced Issue Detail — metadata pill bar + right proof rail (your issue mockup)</div>
+      <div class="dv-card" style="width:680px;background:#0d1117;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#dfe5ee">
+        <div style="font-size:11px;color:#97a1af">Issues › Building &amp; Annexation Moratorium <span style="float:right"><span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:0 6px;font-size:10px">☆ Follow issue</span> <span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 5px;font-size:10px">ACTIVE</span></span></div>
+        <div style="display:flex;align-items:center;gap:8px"><b style="font-size:19px">Building &amp; Annexation Moratorium</b><span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:3px;padding:0 5px;font-size:10px;font-weight:700">TOWN</span><span style="font-size:10px;color:#97a1af;margin-left:auto">ISS-2026-0333 · updated Jul 5, 10:45 AM</span></div>
+        <div style="display:flex;gap:5px;font-size:10px;flex-wrap:wrap">
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">🏛 Level <b>Town</b> ›</span>
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">📋 Board <b>Town Council</b> ›</span>
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">🗺 Area <b>Zoning / Land Use</b> ›</span>
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">✎ Stage <b style="color:#e2a92c">Vote Soon</b> ›</span>
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">📈 Impact <b style="color:#e57368">High</b></span>
+          <span style="border:1.5px solid #3a424e;border-radius:6px;padding:3px 8px;background:#161c24">✦ Confidence <b style="color:#7fd49a">91%</b> ▬▬▬</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:8px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24">
+              <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">ISSUE OVERVIEW</b>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px;font-size:10px">
+                <div style="border-right:1px solid #3a424e;padding-right:6px"><b>💬 Plain-English Summary</b> <span style="border:1px solid #e2a92c;color:#e2a92c;background:#241f10;border-radius:3px;padding:0 3px;font-size:9px">AI</span><br><span style="color:#97a1af">Six-month pause on permits &amp; annexations in 6 zoning categories while the sewer capacity study lands. Single-family exempt.</span></div>
+                <div><b>🛡 Why It Matters</b><br><span style="color:#97a1af">Build-out = 92% of max-day sewer capacity. Freeze stalls Alpine Flats bldgs 3–4 and pending annexations.</span></div>
+                <div style="border-right:1px solid #3a424e;padding-right:6px;border-top:1px solid #3a424e;padding-top:5px"><b>👥 Who Is Affected</b><br><span style="color:#97a1af">• builders &amp; permit holders · • annexation petitioners · • water/sewer ratepayers</span></div>
+                <div style="border-top:1px solid #3a424e;padding-top:5px"><b>➜ Next Action</b><br><span style="color:#97a1af">Comment + possible vote Jul 7, 6 PM.</span><br><span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:1px 8px;font-size:10px;display:inline-block;margin-top:3px">Take action</span></div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24">
+              <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">ISSUE TIMELINE</b> <span style="float:right;font-size:10px;border:1.5px solid #3a424e;border-radius:4px;padding:0 6px;color:#97a1af">View full timeline</span>
+              <div style="display:flex;flex-direction:column;gap:5px;margin-top:6px;font-size:11px">
+                <div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#7fd49a"></span><span style="flex:1"><b>Agenda posted</b> <span style="color:#97a1af">— Jul 3, 9:12 AM</span></span><span style="border:1px solid #3a424e;border-radius:4px;padding:0 6px;font-size:10px;color:#97a1af">View ↗</span></div>
+                <div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#7fd49a"></span><span style="flex:1"><b>Packet posted</b> <span style="color:#97a1af">— Jul 3, 10:15 AM</span></span><span style="border:1px solid #3a424e;border-radius:4px;padding:0 6px;font-size:10px;color:#97a1af">View ↗</span></div>
+                <div style="display:flex;gap:7px;align-items:center;border:1px solid #7a4038;border-radius:4px;padding:2px 4px;background:#241713"><span style="width:10px;height:10px;border-radius:50%;background:#e57368"></span><span style="flex:1"><b style="color:#e57368">Packet changed</b> <span style="color:#97a1af">— fee language added p.3 · Jul 5</span></span><span style="border:1px solid #e57368;color:#e57368;border-radius:4px;padding:0 6px;font-size:10px">Diff ↗</span></div>
+                <div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#4dd6c1"></span><span style="flex:1"><b>Meeting scheduled</b> <span style="color:#97a1af">— Jul 7, 6:00 PM</span></span><span style="border:1px solid #3a424e;border-radius:4px;padding:0 6px;font-size:10px;color:#97a1af">View ↗</span></div>
+                <div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;border:1.5px dashed #97a1af"></span><span style="flex:1;color:#97a1af">Vote possible — on agenda for action · Jul 7</span><span style="border:1px solid #3a424e;border-radius:4px;padding:0 6px;font-size:10px;color:#97a1af">Details</span></div>
+                <div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;border:1.5px dashed #97a1af"></span><span style="flex:1;color:#97a1af">Minutes pending — TBD</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;font-size:11px">
+              <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">PEOPLE INVOLVED &amp; PROMISES</b>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><span style="width:24px;height:24px;border:1.5px solid #3a424e;border-radius:50%;background:repeating-linear-gradient(45deg,#242c37 0 3px,#2e3844 3px 6px)"></span><span style="flex:1"><b>Mayor J. Doe</b><br><span style="color:#97a1af;font-size:10px">Town of Alpine</span></span><span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:4px;padding:0 5px;font-size:9px">Promise<br>made</span></div>
+              <div style="font-size:10px;color:#97a1af;font-style:italic;margin:2px 0 0 30px">"keep government lean &amp; transparent" · Apr 2025</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><span style="width:24px;height:24px;border:1.5px solid #3a424e;border-radius:50%;background:repeating-linear-gradient(45deg,#242c37 0 3px,#2e3844 3px 6px)"></span><span style="flex:1"><b>Councilor R. Roe</b><br><span style="color:#97a1af;font-size:10px">Town Council</span></span><span style="border:1px solid #e57368;color:#e57368;border-radius:4px;padding:0 5px;font-size:9px">Conflict<br>watch</span></div>
+              <div style="font-size:10px;color:#97a1af;font-style:italic;margin:2px 0 0 30px">"no unnecessary fees" · 2024 forum</div>
+            </div>
+            <div style="border:1.5px solid #3a424e;border-radius:6px;padding:8px;background:#161c24;font-size:11px">
+              <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">SOURCES &amp; DOCUMENTS</b>
+              <div style="display:flex;justify-content:space-between;margin-top:5px;border-bottom:1px solid #3a424e;padding-bottom:3px"><span>📄 Staff report — moratorium<br><span style="color:#97a1af;font-size:10px">Jul 3 · 64 pages</span></span><span style="color:#7fd49a;font-size:10px">✓ hash<br><span style="border:1px solid #3a424e;border-radius:4px;padding:0 5px;color:#97a1af">View ↗</span></span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px;border-bottom:1px solid #3a424e;padding-bottom:3px"><span>📄 Packet v2 (current)<br><span style="color:#e57368;font-size:10px">changed Jul 5 ▲</span></span><span style="color:#7fd49a;font-size:10px">✓ hash<br><span style="border:1px solid #3a424e;border-radius:4px;padding:0 5px;color:#97a1af">View ↗</span></span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span>📄 Packet v1 (first posting)<br><span style="color:#97a1af;font-size:10px">Jul 3 · 98 pages</span></span><span style="color:#7fd49a;font-size:10px">✓ hash<br><span style="border:1px solid #3a424e;border-radius:4px;padding:0 5px;color:#97a1af">View ↗</span></span></div>
+              <span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:4px;padding:2px 8px;font-size:10px;display:block;text-align:center;margin-top:6px">⚖ Compare versions ›</span>
+            </div>
+            <div style="border:1.5px solid #7a5a1e;border-radius:6px;padding:8px;background:#241f10;font-size:11px">
+              <b style="color:#e2a92c">⚠ TRANSPARENCY ALERT</b><br><span style="color:#97a1af">New fee language added after first posting. Changes detected between 10:15 AM Jul 3 and 10:42 AM Jul 5.</span><br><span style="border:1.5px solid #e2a92c;color:#e2a92c;border-radius:4px;padding:1px 7px;font-size:10px;display:inline-block;margin-top:3px">View changes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="3c" data-screen-label="3c Advanced Fast Agenda — dark">
+      <div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Advanced Fast Agenda — level-grouped meetings + deadline countdowns</div>
+      <div class="dv-card" style="width:640px;background:#0d1117;padding:12px;display:flex;gap:8px;font-family:'Patrick Hand',cursive;color:#dfe5ee">
+        <div style="width:118px;display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">QUICK FILTERS</b>
+          <span style="border:1.5px solid #3a424e;border-radius:5px;padding:2px 6px;background:#161c24">📅 Today <span style="float:right;color:#97a1af">1</span></span>
+          <span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:5px;padding:2px 6px;background:#12211f">📅 This week <span style="float:right">4</span></span>
+          <span style="border:1.5px solid #3a424e;border-radius:5px;padding:2px 6px;background:#161c24">✓ Vote soon <span style="float:right;color:#97a1af">2</span></span>
+          <span style="border:1.5px solid #3a424e;border-radius:5px;padding:2px 6px;background:#161c24">💬 Comment deadline <span style="float:right;color:#97a1af">1</span></span>
+          <span style="border:1.5px solid #3a424e;border-radius:5px;padding:2px 6px;background:#161c24">▲ Packet changed <span style="float:right;color:#e57368">1</span></span>
+          <div style="border-top:1px solid #3a424e;padding-top:5px;color:#97a1af">MORE FILTERS<br>Topics ▾ · Location ▾<br>Meeting type ▾ · Bodies ▾</div>
+          <span style="border:1.5px solid #4dd6c1;color:#4dd6c1;border-radius:5px;padding:2px 6px;text-align:center;margin-top:4px">🔖 Save view</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b>Upcoming meetings <span style="font-size:11px;color:#97a1af">· 4 this week</span></b><span style="font-size:10px;color:#97a1af">Sort: soonest ↓</span></div>
+          <div style="font-size:11px;color:#4dd6c1;font-weight:700">🏛 TOWN <span style="color:#97a1af;font-weight:400">2 meetings</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:7px;background:#161c24;font-size:11px">
+            <div style="display:flex;gap:8px"><span style="border:1.5px solid #4dd6c1;border-radius:5px;padding:2px 7px;text-align:center;color:#4dd6c1"><b style="font-size:14px">JUL<br>7</b></span>
+            <span style="flex:1"><b style="font-size:13px">Town Council Meeting</b><br><span style="color:#97a1af;font-size:10px">📍 Town Hall, 250 River Cir · 🕕 6:00–8:00 PM</span><br><span style="font-size:9px;color:#97a1af">zoning · budget · fees +2</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px;font-size:9px"><span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 4px;text-align:center">AGENDA POSTED</span><span style="border:1px solid #e57368;color:#e57368;border-radius:3px;padding:0 4px;text-align:center">PACKET CHANGED ▲</span><span style="border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 4px;text-align:center">VOTE POSSIBLE</span></span></div>
+            <div style="display:flex;gap:5px;margin-top:5px;font-size:10px"><span style="border:1px solid #3a424e;border-radius:4px;padding:1px 8px;color:#97a1af">📄 Agenda</span><span style="border:1px solid #3a424e;border-radius:4px;padding:1px 8px;color:#97a1af">📁 Packet</span><span style="border:1px solid #3a424e;border-radius:4px;padding:1px 8px;color:#97a1af">🕒 Timeline</span><span style="border:1px solid #3a424e;border-radius:4px;padding:1px 8px;color:#97a1af">🔔 Remind</span></div>
+          </div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:7px;background:#161c24;font-size:11px;color:#97a1af">JUL 14 · <b style="color:#dfe5ee">Planning &amp; Zoning</b> · agenda pending <span style="border:1px solid #97a1af;border-radius:3px;padding:0 4px;font-size:9px;float:right">AGENDA DUE JUL 10</span></div>
+          <div style="font-size:11px;color:#e2a92c;font-weight:700">🏛 COUNTY <span style="color:#97a1af;font-weight:400">1 meeting</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:7px;background:#161c24;font-size:11px;color:#97a1af">JUL 15 · <b style="color:#dfe5ee">Lincoln Co. Commission</b> · Kemmerer · 9 AM <span style="border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 4px;font-size:9px;float:right">AGENDA POSTED</span></div>
+          <div style="font-size:11px;color:#6ea8fe;font-weight:700">🏔 STATE <span style="color:#97a1af;font-weight:400">1 hearing</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:6px;padding:7px;background:#161c24;font-size:11px;color:#97a1af">JUL 13 · <b style="color:#dfe5ee">Interim Committee — STR bill</b> · Cheyenne + Zoom <span style="border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 4px;font-size:9px;float:right">COMMENT OPEN</span></div>
+        </div>
+        <div style="width:130px;display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <b style="font-size:11px;letter-spacing:1px;color:#4dd6c1">UPCOMING DEADLINES</b>
+          <div style="border:1.5px solid #3a424e;border-radius:5px;padding:5px;background:#161c24">💬 STR bill comment<br><span style="color:#97a1af">Jul 10 · 5 PM</span><span style="float:right;border:1px solid #e57368;color:#e57368;border-radius:3px;padding:0 4px"><b>3</b> DAYS</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:5px;padding:5px;background:#161c24">📦 P&amp;Z packet cutoff<br><span style="color:#97a1af">Jul 10 · noon</span><span style="float:right;border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 4px"><b>3</b> DAYS</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:5px;padding:5px;background:#161c24">💬 Budget comment<br><span style="color:#97a1af">Jul 20 · 5 PM</span><span style="float:right;border:1px solid #7fd49a;color:#7fd49a;border-radius:3px;padding:0 4px"><b>13</b> DAYS</span></div>
+          <div style="border:1.5px solid #3a424e;border-radius:5px;padding:5px;background:#12211f;border-color:#4dd6c1">🔔 <b style="color:#4dd6c1">Never miss a meeting</b><br><span style="color:#97a1af">connect calendar ›</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go hi-fi: <a class="dv-oid" href="#2a">2a</a> light Simple home + <a class="dv-oid" href="#3a">3a</a> dark Advanced home" · "wireframe the dark Boards grid &amp; Power Tracker too" · "riff on <a class="dv-oid" href="#3b">3b</a> with the receipts drawer from <a class="dv-oid" href="#1j">1j</a>"</p>
+</section>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Simple Mode = light newspaper (per your Weekly mockup) — riffs on <a class="dv-oid" href="#1b">1b</a> + <a class="dv-oid" href="#1p">1p</a></span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="2a" data-screen-label="2a Simple Home — Weekly Front Page">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Simple Home — full broadsheet structure from your mockup, Alpine content</div>
+      <div class="dv-card" style="width:680px;padding:14px;display:flex;flex-direction:column;gap:9px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf6">
+        <div style="display:grid;grid-template-columns:1fr 2.2fr 1fr;gap:8px;align-items:center;border-bottom:3px double #26241f;padding-bottom:8px">
+          <div style="display:flex;gap:6px;align-items:center"><span style="width:34px;height:34px;border:1.5px solid #26241f;border-radius:6px;display:grid;place-items:center;background:#eef2f8;font-size:15px">🏛</span><b style="font-size:12px;line-height:1.1">GOVERNMENT<br>WATCHDOG</b></div>
+          <div style="text-align:center">
+            <div style="font-family:'Patrick Hand SC',cursive;font-size:29px;letter-spacing:1px;line-height:1">Government Watchdog Weekly</div>
+            <div style="font-size:11px;letter-spacing:3px;margin-top:2px">TOWN / COUNTY / STATE</div>
+            <div style="font-size:10px;color:#6b675e;border-top:1px solid #26241f;margin-top:4px;padding-top:3px">July 7, 2026 · Issue #20 · Your nonpartisan guide to what government is doing</div>
+          </div>
+          <div style="font-size:10px;color:#6b675e;text-align:right;font-style:italic">"A government of laws<br>and not of men."<br>— John Adams</div>
+        </div>
+        <div style="display:grid;grid-template-columns:0.8fr 1.1fr 1.1fr 1.1fr;gap:8px;border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:10px">
+          <div style="border-right:1px solid #cfccc2"><b style="font-size:12px">💡 3 THINGS<br>TO KNOW</b><br><span style="color:#6b675e">the big picture, at a glance</span></div>
+          <div><b>① Building moratorium vote</b><br>Council decides Tue on a 6-month permit pause in 6 zones. Comment open until the vote.</div>
+          <div><b>② Alpine Lakes annexation</b><br>61 acres joined town by a 4–1 vote; will-serve letters now count against sewer capacity.</div>
+          <div><b>③ STR bill moves at state</b><br>Interim committee draft would limit local rental rules. Comment closes Jul 10.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:0.75fr 1.9fr 1fr;gap:9px">
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:10px">
+            <div style="border-top:2.5px solid #0e8a7d;padding-top:3px"><b style="font-size:13px;color:#0e8a7d">🏘 LOCAL</b></div>
+            <div><b>AGENDA</b><br>Town Council<br>Tue Jul 7, 6:00 PM · Town Hall<br><u style="color:#2a5fd0">View agenda</u></div>
+            <div><b>NEWS</b><br>Water main break review; system restored May 23.<br><u style="color:#2a5fd0">Read more</u></div>
+            <div><b>AREAS OF INTEREST</b><br>• Zoning &amp; Land Use<br>• Water / Sewer<br>• Taxes &amp; Fees</div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:9px;background:#fffdf4;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:10px;color:#c9442e;font-weight:700;letter-spacing:1px">FEATURED STORY</div>
+            <div style="display:flex;gap:8px">
+              <div style="width:120px;height:86px;background:repeating-linear-gradient(45deg,#eae7df 0 6px,#f4f2ec 6px 12px);border:1.5px solid #26241f;border-radius:4px;display:grid;place-items:center;font-family:ui-monospace,monospace;font-size:9px;color:#6b675e">alpine photo</div>
+              <div style="flex:1"><div style="font-size:21px;font-weight:700;line-height:1.05">Six-Month Building Pause Goes to a Vote</div><div style="font-size:10px;color:#6b675e;margin-top:3px">Resolution 2024-033 · Alpine Town Council · <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:9px">✓ 4 sources</span></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px">
+              <div style="border-top:1.5px solid #26241f;padding-top:3px"><b>📖 PLAIN-ENGLISH SUMMARY</b><br>Pause on permits &amp; annexations in 6 zoning categories while the sewer study lands. Single-family exempt.</div>
+              <div style="border-top:1.5px solid #26241f;padding-top:3px"><b>❓ WHY IT MATTERS</b><br>Build-out would hit 92% of max-day sewer capacity; freeze also stalls Alpine Flats bldgs 3–4.</div>
+              <div style="border-top:1.5px solid #26241f;padding-top:3px"><b>➜ NEXT ACTION</b><br>Public comment + possible vote Tue 6 PM, Town Hall. You can speak or write in.</div>
+            </div>
+            <u style="font-size:11px;color:#2a5fd0">Read the full story and background →</u>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:10px">
+            <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff">
+              <b>🧾 SOURCES / RECEIPTS</b> · 15 this week
+              <div style="margin-top:3px;color:#2a5fd0"><u>Council agenda (Jul 7)</u><br><u>Packet v1 → v2 (changed ▲)</u><br><u>Sewer capacity study</u><br><u>Res. 2024-033 text</u></div>
+              <div style="color:#6b675e">+ 11 more sources</div>
+              <u style="color:#2a5fd0">View all sources and receipts →</u>
+            </div>
+            <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff">
+              <b>⌛ HISTORY LOOKS BACK</b><br>Alpine's 2019 sewer review also paused hookups — for 14 months. Today's debate echoes it.
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;font-size:10px;background:#fff">
+            <div style="border-top:2.5px solid #c07a10;padding-top:3px"><b style="font-size:13px;color:#c07a10">🏛 COUNTY — Lincoln</b></div>
+            <div style="display:flex;gap:8px;margin-top:3px"><span style="flex:1"><b>AGENDA</b><br>Commission · Jul 15, 9 AM<br><u style="color:#2a5fd0">View agenda</u></span><span style="flex:1"><b>NEWS</b><br>Road &amp; Bridge summer bids opened.<br><u style="color:#2a5fd0">Read more</u></span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;font-size:10px;background:#fff">
+            <div style="border-top:2.5px solid #2a66c9;padding-top:3px"><b style="font-size:13px;color:#2a66c9">🏔 STATE — Wyoming</b></div>
+            <div style="display:flex;gap:8px;margin-top:3px"><span style="flex:1"><b>AGENDA</b><br>Interim committee · Jul 13<br><u style="color:#2a5fd0">View agenda</u></span><span style="flex:1"><b>NEWS</b><br>STR bill draft posted; comment closes Jul 10.<br><u style="color:#2a5fd0">Read more</u></span></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;font-size:10px">
+          <div style="border:1.5px solid #b0392b;border-radius:6px;padding:7px;background:#fdf5f4"><b style="color:#b0392b">🐘 CONSERVATIVE LENS</b><br>A short pause protects existing owners &amp; infrastructure — keep it narrow, sunset it on schedule.</div>
+          <div style="border:1.5px solid #2a66c9;border-radius:6px;padding:7px;background:#f2f6fd"><b style="color:#2a66c9">🫏 PROGRESSIVE LENS</b><br>Housing is tight — exempt workforce housing so the freeze doesn't push workers out of the valley.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:9px;font-size:10px">
+          <div style="border:1.5px solid #6b675e;border-radius:6px;padding:7px;background:#fff"><b>🗽 LIBERTARIAN / CONSTITUTIONAL LENS</b><br>Vested-rights and takings questions if the pause extends; watch for quiet renewals.</div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff"><b>✅ PUBLICATION HONESTY TRACKER</b><br>SOURCED 15/15 · BALANCED 3 lenses · CLEAR plain language · UPDATED Jul 7, 9:15 AM</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;border-top:2px solid #26241f;padding-top:5px;font-size:10px;color:#6b675e">
+          <span>★ <b>We Watch. We Report. You Decide.</b> Government Watchdog is nonpartisan and reader-supported.</span>
+          <span><u>Have a tip?</u> · <u>Contact us</u> · <span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px;background:#fff">🖨 Print</span></span>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">↑ your mockup's structure, 1:1 — masthead · 3 things · local/county/state · lenses · honesty tracker. Real serif (e.g. old-style) in hi-fi.</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="2b" data-screen-label="2b Simple Home — Big Print Edition">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Big Print Edition — extra-simple: one column, huge type, 3 stories max</div>
+      <div class="dv-card" style="width:430px;padding:16px;display:flex;flex-direction:column;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf6">
+        <div style="text-align:center;border-bottom:3px double #26241f;padding-bottom:6px">
+          <div style="font-family:'Patrick Hand SC',cursive;font-size:24px;letter-spacing:1px">Government Watchdog</div>
+          <div style="font-size:12px;color:#6b675e">Alpine, Wyoming · Tuesday, July 7</div>
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:5px;font-size:12px"><span style="border:1.5px solid #26241f;border-radius:999px;padding:2px 12px;background:#26241f;color:#fff">Aa Large</span><span style="border:1.5px solid #26241f;border-radius:999px;padding:2px 12px">Aa Larger</span><span style="border:1.5px solid #26241f;border-radius:999px;padding:2px 12px">🔊 Read aloud</span></div>
+        </div>
+        <div style="border:2.5px solid #26241f;border-radius:8px;padding:12px;background:#fff7e6">
+          <b style="font-size:14px">HAPPENING TUESDAY</b>
+          <div style="font-size:22px;font-weight:700;line-height:1.15;margin-top:4px">Town Council may vote on the building pause</div>
+          <div style="font-size:14px;margin-top:5px;line-height:1.35">6:00 PM at Town Hall. You can speak during public comment. The pause would stop most new building permits for six months.</div>
+          <div style="display:flex;gap:8px;margin-top:9px"><span style="flex:1;border:2px solid #26241f;border-radius:7px;padding:7px 0;text-align:center;font-size:14px;background:#fff;box-shadow:3px 3px 0 #26241f">📄 Read the agenda</span><span style="flex:1;border:2px solid #26241f;border-radius:7px;padding:7px 0;text-align:center;font-size:14px;background:#fff;box-shadow:3px 3px 0 #26241f">🔔 Remind me</span></div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:10px;background:#fff">
+          <div style="font-size:17px;font-weight:700;line-height:1.2">Something changed quietly ▲</div>
+          <div style="font-size:13px;margin-top:3px;line-height:1.35">The meeting packet was edited two days after it was posted. New fee wording was added on page 3.</div>
+          <u style="font-size:13px;color:#2a5fd0">See what changed →</u>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:10px;background:#fff">
+          <div style="font-size:17px;font-weight:700;line-height:1.2">Where every story comes from</div>
+          <div style="font-size:13px;margin-top:3px;line-height:1.35">Every claim links to the official document — agendas, minutes, and recordings. <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:11px">✓ 15 sources this week</span></div>
+        </div>
+        <div style="text-align:center;font-size:13px;color:#6b675e"><u>See this as the full dashboard instead</u></div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">for the 75+ crowd: nothing smaller than newspaper body type, max 3 cards, giant buttons</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="2c" data-screen-label="2c Simple↔Advanced toggle concept">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>The mode switch — same content, two skins (light paper ⇄ dark panel)</div>
+      <div class="dv-card" style="width:560px;padding:14px;display:flex;flex-direction:column;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;justify-content:center"><span style="display:flex;border:2px solid #26241f;border-radius:999px;overflow:hidden;font-size:13px"><span style="padding:3px 16px;background:#fdfcf6">📰 SIMPLE — light paper</span><span style="padding:3px 16px;background:#26241f;color:#fff">📊 ADVANCED — dark panels</span></span></div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fdfcf6;font-size:10px">
+            <div style="text-align:center;font-family:'Patrick Hand SC',cursive;font-size:13px;border-bottom:2px double #26241f;padding-bottom:2px">Watchdog Weekly</div>
+            <div style="font-size:13px;font-weight:700;margin-top:4px;line-height:1.15">Building pause goes to a vote Tuesday</div>
+            <div style="margin-top:3px;line-height:1.3">The council decides whether to pause most permits for six months…</div>
+            <div style="margin-top:4px"><u style="color:#2a5fd0">4 sources ✓</u> · what happens next: comment Tue 6 PM</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:18px">⇄</span><span style="font-size:9px;color:#6b675e">same record,<br>same receipts</span></div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#20242b;color:#e8eaf0;font-size:10px">
+            <div style="display:flex;gap:4px;font-size:9px"><span style="border:1px solid #4dd6c1;color:#4dd6c1;border-radius:999px;padding:0 5px;font-weight:700">TOWN</span><span style="border:1px solid #e2a92c;color:#e2a92c;border-radius:3px;padding:0 4px">! vote soon</span><span style="border:1px solid #e57368;color:#e57368;border-radius:3px;padding:0 4px">▲ packet v2</span></div>
+            <div style="font-size:13px;font-weight:700;margin-top:4px;line-height:1.15">Building &amp; annexation moratorium</div>
+            <div style="margin-top:3px;color:#a8b0bd">Stage: vote soon · impact HIGH · confidence 91%</div>
+            <div style="display:flex;gap:4px;margin-top:5px;font-size:9px"><span style="border:1px solid #8ab4f8;color:#8ab4f8;border-radius:4px;padding:0 5px">timeline</span><span style="border:1px solid #8ab4f8;color:#8ab4f8;border-radius:4px;padding:0 5px">receipts</span><span style="border:1px solid #8ab4f8;color:#8ab4f8;border-radius:4px;padding:0 5px">promises</span></div>
+          </div>
+        </div>
+        <div style="border:1.5px dashed #26241f;border-radius:6px;padding:6px 9px;font-size:11px;background:#f7f5ef">rules: the toggle lives top-right on every page · Simple = light paper, serif, plain English, big type, few controls · Advanced = dark panels, dense data, filters &amp; scores · both share ONE url per record, mode is remembered per user</div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">grandma and the data nerd read the same truth — just dressed differently</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="2d" data-screen-label="2d Simple Issue Page — article style">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Simple Issue Page — the dossier (<a class="dv-oid" href="#1h">1h</a>) re-dressed as a newspaper article</div>
+      <div class="dv-card" style="width:460px;padding:16px;display:flex;flex-direction:column;gap:9px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf6">
+        <div style="font-size:11px;color:#6b675e;text-align:center;border-bottom:1.5px solid #26241f;padding-bottom:4px">GOVERNMENT WATCHDOG · <span style="color:#0e8a7d;font-weight:700">TOWN</span> · Zoning &amp; Land Use</div>
+        <div style="font-size:23px;font-weight:700;line-height:1.1;text-align:center">The Six-Month Building Pause, Explained</div>
+        <div style="font-size:11px;color:#6b675e;text-align:center">Alpine Town Council · Resolution 2024-033 · updated July 5 <span style="border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 4px;font-size:10px">▲ packet changed</span></div>
+        <div style="font-size:13px;line-height:1.4">The council is deciding whether to pause new building permits and annexation petitions in six zoning categories for six months. Homes for single families would still be processed. The pause waits on a sewer study that says full build-out would use <b>92% of the system's worst-day capacity</b>.</div>
+        <div style="border:2px solid #26241f;border-radius:8px;padding:9px;background:#fff7e6;font-size:13px"><b>➜ WHAT HAPPENS NEXT</b><br>Public comment and a possible vote: <b>Tuesday 6 PM, Town Hall.</b> Anyone can speak.<div style="display:flex;gap:6px;margin-top:6px"><span style="border:2px solid #26241f;border-radius:6px;padding:4px 12px;font-size:12px;background:#fff;box-shadow:2.5px 2.5px 0 #26241f">🔔 Remind me</span><span style="border:2px solid #26241f;border-radius:6px;padding:4px 12px;font-size:12px;background:#fff;box-shadow:2.5px 2.5px 0 #26241f">✍ How to comment</span></div></div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:9px;background:#fff;font-size:12px">
+          <b>THE STORY SO FAR</b>
+          <div style="margin-top:4px;line-height:1.5">1. Agenda posted — Jul 3 <u style="color:#2a5fd0">source</u><br>2. Packet posted — Jul 3 <u style="color:#2a5fd0">source</u><br>3. <span style="color:#c9442e;font-weight:700">Packet quietly changed — Jul 5</span> <u style="color:#2a5fd0">see the difference</u><br>4. Meeting &amp; possible vote — Jul 7<br>5. Minutes &amp; video — <span style="color:#6b675e">expected within 30 days</span></div>
+        </div>
+        <div style="font-size:12px;border-top:1.5px solid #26241f;padding-top:5px"><b>WHO'S INVOLVED:</b> Mayor J. Doe · Councilor R. Roe <span style="border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 3px;font-size:10px">promise conflict</span> · P&amp;Z Board</div>
+        <div style="font-size:12px"><b>SOURCES:</b> <u style="color:#2a5fd0">agenda</u> · <u style="color:#2a5fd0">packet v1</u> · <u style="color:#2a5fd0">packet v2</u> · <u style="color:#2a5fd0">sewer study</u> <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:10px">✓ all archived</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b675e;border-top:1.5px solid #26241f;padding-top:5px"><span><u>🖨 Print this page</u> · <u>Challenge or correct</u></span><span><u>switch to Advanced view</u></span></div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">numbered "story so far" replaces the timeline widget — same data, article voice</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go hi-fi on <a class="dv-oid" href="#2a">2a</a> as the real Simple home" · "hi-fi the dark Advanced home from <a class="dv-oid" href="#1a">1a</a>" · "riff on <a class="dv-oid" href="#2b">2b</a> with even fewer boxes"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Wireframe round 1 — Government Watchdog · Alpine, WY · 7 page families, 20 layouts</span></div>
+
+  <div style="font-family:'Patrick Hand',cursive;display:flex;flex-wrap:wrap;gap:14px;align-items:center;border:1.5px solid #26241f;border-radius:12px 5px 10px 6px/6px 10px 5px 12px;background:#fbfaf7;padding:8px 14px;margin-bottom:8px;font-size:13px;color:#26241f">
+    <span style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">LEGEND:</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #2a66c9;color:#2a66c9;border-radius:999px;font-weight:700">STATE</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px">✓ VERIFIED</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px">AI</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #9a6b00;color:#9a6b00;border-radius:3px">⚠ UNVERIFIED</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #2a66c9;color:#2a66c9;border-radius:3px">↺ CORRECTED</span>
+    <span style="font-size:11px;padding:0 7px;border:1.5px solid #c9442e;color:#c9442e;border-radius:3px">▲ HIDDEN CHANGE</span>
+    <span style="color:#6b675e">· every design has the Simple ↔ Advanced switch · content = real Alpine record (moratorium, annexations, water main, mill levy)</span>
+  </div>
+
+  <div class="dv-row">A · HOME — 4 approaches</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1a" data-screen-label="1a Home — Mission Control">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Mission Control — dense dashboard, closest to your mockups</div>
+      <div class="dv-card" style="width:660px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;align-items:center;gap:10px;border:1.5px solid #26241f;border-radius:6px;padding:5px 10px;background:#fff">
+          <span style="width:20px;height:20px;border:1.5px solid #26241f;border-radius:50%;display:grid;place-items:center;font-size:11px">🏛</span>
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">GOVERNMENT WATCHDOG</b>
+          <span style="font-size:12px;color:#6b675e">Home · Fast Agenda · Timeline · Boards · Power · Vault · News</span>
+          <span style="margin-left:auto;display:flex;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;font-size:11px"><span style="padding:1px 8px;background:#26241f;color:#fff">SIMPLE</span><span style="padding:1px 8px">ADVANCED</span></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="display:flex;border:1.5px solid #26241f;border-radius:6px;overflow:hidden;font-size:12px"><span style="padding:2px 10px;background:#26241f;color:#fff">ALL</span><span style="padding:2px 10px;color:#0e8a7d">TOWN</span><span style="padding:2px 10px;color:#c07a10">COUNTY</span><span style="padding:2px 10px;color:#2a66c9">STATE</span></span>
+          <span style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:2px 8px;font-size:12px;color:#6b675e">🔍 search agendas, officials, documents…</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;border:1.5px solid #26241f;border-radius:6px;padding:4px 10px;background:#fff;font-size:12px">
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">CIVIC WEATHER</b>
+          <span style="width:10px;height:10px;border-radius:50%;background:#e2a92c;border:1px solid #26241f"></span><span>Active week</span>
+          <span style="color:#6b675e">2 meetings · 4 new docs · <b style="color:#c9442e">1 packet changed</b> · <b style="color:#c07a10">1 vote soon</b> · 2 promises affected</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;display:flex;flex-direction:column;gap:5px">
+            <b style="font-size:12px;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">⚡ FAST AGENDA</b>
+            <div style="font-size:13px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> <b>Alpine Town Council</b></div>
+            <div style="font-size:12px;color:#6b675e">Tue Jul 7 · 6:00 PM · Town Hall</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;font-size:10px">
+              <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px">✓ agenda</span>
+              <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px">✓ packet</span>
+              <span style="border:1.5px solid #c07a10;color:#c07a10;border-radius:3px;padding:0 4px">! vote possible</span>
+            </div>
+            <div style="display:flex;gap:5px;font-size:11px">
+              <span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff;box-shadow:2px 2px 0 #26241f">View agenda</span>
+              <span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff;box-shadow:2px 2px 0 #26241f">Packet</span>
+            </div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;display:flex;flex-direction:column;gap:5px">
+            <b style="font-size:12px;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">ACTIVE ISSUES</b>
+            <div style="font-size:12px;border-bottom:1px dashed #cfccc2;padding-bottom:3px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> Building &amp; annexation moratorium <b style="color:#c9442e">HIGH</b></div>
+            <div style="font-size:12px;border-bottom:1px dashed #cfccc2;padding-bottom:3px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> Alpine Lakes annexation (61 ac) <span style="color:#c07a10">MED</span></div>
+            <div style="font-size:12px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px">AI</span> Sewer capacity at 92% of max <span style="color:#c07a10">MED</span></div>
+            <div style="font-size:11px;color:#2a5fd0;text-decoration:underline">all 12 issues →</div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;display:flex;flex-direction:column;gap:5px">
+            <b style="font-size:12px;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">POWER WATCH</b>
+            <div style="font-size:12px">Mayor J. Doe <span style="color:#2e7d3a">6 kept</span> · <span style="color:#c9442e">3 broken</span></div>
+            <div style="height:7px;border:1.5px solid #26241f;border-radius:999px;overflow:hidden"><span style="display:block;width:63%;height:100%;background:repeating-linear-gradient(45deg,#8fc79b 0 5px,#cfe6d4 5px 10px)"></span></div>
+            <div style="font-size:12px">Councilor R. Roe <span style="color:#2e7d3a">4 kept</span> · <span style="color:#c9442e">1 broken</span></div>
+            <div style="height:7px;border:1.5px solid #26241f;border-radius:999px;overflow:hidden"><span style="display:block;width:80%;height:100%;background:repeating-linear-gradient(45deg,#8fc79b 0 5px,#cfe6d4 5px 10px)"></span></div>
+            <div style="font-size:11px;color:#2a5fd0;text-decoration:underline">Power Tracker →</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 0.9fr;gap:8px">
+          <div style="border:1.5px solid #c9442e;border-radius:6px;padding:8px;background:#fdf3f1;display:flex;flex-direction:column;gap:4px">
+            <b style="font-size:12px;color:#c9442e;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">▲ HIDDEN THINGS</b>
+            <div style="font-size:12px">Council packet <b>changed after posting</b> — new fee language, p.3 <span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span></div>
+            <div style="display:flex;gap:5px;font-size:11px"><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff;box-shadow:2px 2px 0 #26241f">Compare versions</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff">All alerts (5)</span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff">
+            <b style="font-size:12px;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">TIMELINE</b>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:6px"><span style="font-size:10px;color:#0e8a7d;width:44px">TOWN</span><span style="flex:1;height:2px;background:#26241f;position:relative"><span style="position:absolute;left:20%;top:-3px;width:8px;height:8px;border-radius:50%;background:#0e8a7d"></span><span style="position:absolute;left:60%;top:-3px;width:8px;height:8px;border-radius:50%;background:#0e8a7d"></span></span></div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:8px"><span style="font-size:10px;color:#c07a10;width:44px">COUNTY</span><span style="flex:1;height:2px;background:#26241f;position:relative"><span style="position:absolute;left:45%;top:-3px;width:8px;height:8px;border-radius:50%;background:#c07a10"></span></span></div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:8px"><span style="font-size:10px;color:#2a66c9;width:44px">STATE</span><span style="flex:1;height:2px;background:#26241f;position:relative"><span style="position:absolute;left:75%;top:-3px;width:8px;height:8px;border-radius:50%;background:#2a66c9"></span></span></div>
+            <div style="font-size:11px;color:#2a5fd0;text-decoration:underline;margin-top:6px">full timeline →</div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;display:flex;flex-direction:column;gap:4px">
+            <b style="font-size:12px;letter-spacing:1px;font-family:'Patrick Hand SC',cursive">SOURCE VAULT</b>
+            <div style="font-size:16px"><b>1,248</b> <span style="font-size:11px;color:#6b675e">sources</span></div>
+            <div style="font-size:11px;border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;align-self:start">✓ 98.6% hash-verified</div>
+          </div>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1.5deg)">↑ answers "what's next / what changed / who's involved" without a single click</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1b" data-screen-label="1b Home — Front Page">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Front Page — newspaper-first, dashboard one click away (Simple default)</div>
+      <div class="dv-card" style="width:620px;padding:14px;display:flex;flex-direction:column;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf8">
+        <div style="text-align:center;border-bottom:2.5px solid #26241f;padding-bottom:8px">
+          <div style="font-family:'Patrick Hand SC',cursive;font-size:30px;letter-spacing:2px">GOVERNMENT WATCHDOG</div>
+          <div style="font-size:12px;color:#6b675e">Alpine, Wyoming — Tuesday, July 7, 2026 · <u style="color:#2a5fd0">switch to Advanced dashboard</u></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:22px;line-height:1.15;font-weight:700">Town weighs six-month building &amp; annexation moratorium</div>
+            <div style="font-size:13px;color:#4a463d">Planning &amp; Zoning's Resolution 2024-033 would pause permits in six zoning categories while a water &amp; sewer capacity study lands. Single-family homes exempt.</div>
+            <div style="height:70px;background:repeating-linear-gradient(45deg,#eae7df 0 6px,#f4f2ec 6px 12px);border:1.5px solid #26241f;border-radius:4px;display:grid;place-items:center;font-family:ui-monospace,monospace;font-size:10px;color:#6b675e">town hall photo</div>
+            <div style="display:flex;gap:6px;font-size:11px">
+              <span style="border:1.5px solid #26241f;border-radius:3px;padding:0 6px;background:#f1efe8">WHY IT MATTERS</span>
+              <span style="border:1.5px solid #26241f;border-radius:3px;padding:0 6px;background:#f1efe8">WHAT'S NEXT</span>
+              <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 6px">✓ 4 sources</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="border:2px solid #26241f;border-radius:8px 4px 8px 4px/4px 8px 4px 8px;padding:8px;background:#fff">
+              <b style="font-size:12px;font-family:'Patrick Hand SC',cursive;letter-spacing:1px">⚡ FAST AGENDA</b>
+              <div style="font-size:12px;margin-top:4px"><b>Town Council</b> — Tue 6 PM</div>
+              <div style="font-size:12px">Planning &amp; Zoning — Jul 14</div>
+              <div style="font-size:12px">County Commission — Jul 15</div>
+              <div style="font-size:11px;color:#2a5fd0;text-decoration:underline;margin-top:3px">all meetings →</div>
+            </div>
+            <div style="border:1.5px solid #c9442e;border-radius:6px;padding:8px;background:#fdf3f1;font-size:12px">
+              <b style="color:#c9442e">▲ 1 hidden change</b><br>Packet edited after posting
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-top:1.5px solid #26241f;padding-top:8px">
+          <div><span style="font-size:10px;padding:0 6px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span><div style="font-size:12px;margin-top:3px;line-height:1.3">Water main break shut system May 21 · Admin-fee ordinance 2026-0055 on 2nd reading</div></div>
+          <div><span style="font-size:10px;padding:0 6px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span><div style="font-size:12px;margin-top:3px;line-height:1.3">Lincoln Co. planning hears rural land-use update · Road &amp; Bridge bids opened</div></div>
+          <div><span style="font-size:10px;padding:0 6px;border:1.5px solid #2a66c9;color:#2a66c9;border-radius:999px;font-weight:700">STATE</span><div style="font-size:12px;margin-top:3px;line-height:1.3">WY interim committee takes up short-term rental bill · comment closes Jul 10</div></div>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">↑ grandma-friendly: reads like a paper, zero dashboard chrome until asked</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1c" data-screen-label="1c Home — Radar Tiles">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Radar — three level tiles are the front door</div>
+      <div class="dv-card" style="width:560px;padding:12px;display:flex;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="flex:1.4;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">GOVERNMENT WATCHDOG</b><span style="display:flex;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;font-size:10px"><span style="padding:1px 7px;background:#26241f;color:#fff">SIMPLE</span><span style="padding:1px 7px">ADV</span></span></div>
+          <div style="border:2px solid #0e8a7d;border-radius:8px;padding:8px;background:#fff">
+            <div style="display:flex;justify-content:space-between"><b style="color:#0e8a7d;font-family:'Patrick Hand SC',cursive">TOWN OF ALPINE</b><span style="font-size:11px;color:#c9442e">▲1 change</span></div>
+            <div style="font-size:12px;color:#6b675e">1 meeting · 3 agenda items · 2 promises affected</div>
+            <div style="font-size:12px">Next: <b>Council, Tue 6 PM</b> — moratorium vote possible</div>
+          </div>
+          <div style="border:2px solid #c07a10;border-radius:8px;padding:8px;background:#fff">
+            <div style="display:flex;justify-content:space-between"><b style="color:#c07a10;font-family:'Patrick Hand SC',cursive">LINCOLN COUNTY</b><span style="font-size:11px;color:#6b675e">quiet</span></div>
+            <div style="font-size:12px;color:#6b675e">2 meetings · 5 new documents</div>
+            <div style="font-size:12px">Next: <b>Commission, Jul 15</b></div>
+          </div>
+          <div style="border:2px solid #2a66c9;border-radius:8px;padding:8px;background:#fff">
+            <div style="display:flex;justify-content:space-between"><b style="color:#2a66c9;font-family:'Patrick Hand SC',cursive">STATE OF WYOMING</b><span style="font-size:11px;color:#c07a10">1 deadline</span></div>
+            <div style="font-size:12px;color:#6b675e">4 active bills · 1 comment deadline Jul 10</div>
+            <div style="font-size:12px">Next: <b>Interim committee, Jul 13</b></div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;flex:1">
+            <b style="font-size:12px;font-family:'Patrick Hand SC',cursive;letter-spacing:1px">THIS WEEK</b>
+            <div style="display:flex;gap:6px;margin-top:6px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#0e8a7d;margin-top:3px"></span><span style="font-size:11px">Jul 7 — Council meeting, vote possible</span></div>
+            <div style="display:flex;gap:6px;margin-top:5px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#c9442e;margin-top:3px"></span><span style="font-size:11px">Jul 5 — packet changed <b style="color:#c9442e">▲</b></span></div>
+            <div style="display:flex;gap:6px;margin-top:5px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#2a66c9;margin-top:3px"></span><span style="font-size:11px">Jul 10 — STR bill comment closes</span></div>
+            <div style="display:flex;gap:6px;margin-top:5px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#c07a10;margin-top:3px"></span><span style="font-size:11px">Jul 15 — County Commission</span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:11px">
+            <b style="font-size:12px;font-family:'Patrick Hand SC',cursive;letter-spacing:1px">WATCHLIST</b><br>Moratorium 🔔 · Mayor J. Doe 🔔
+          </div>
+        </div>
+      </div>
+      <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;max-width:560px">the State/County/Town split IS the homepage — each tile deep-links to its level dashboard</div>
+    </div>
+
+    <div class="dv-opt" id="1d" data-screen-label="1d Home — Receipt Stream">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Receipt Stream — the whole site as one filterable evidence feed</div>
+      <div class="dv-card" style="width:620px;padding:12px;display:flex;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="width:110px;border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:11px;display:flex;flex-direction:column;gap:6px">
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:11px">FILTERS</b>
+          <div>LEVEL<br>☑ Town ☑ County<br>☑ State</div>
+          <div>BOARD<br>☑ Council ☐ P&amp;Z<br>☐ Commission</div>
+          <div>FLAGS<br>☑ ▲ changed<br>☐ vote soon<br>☐ AI only</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">TODAY</b><span style="display:flex;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;font-size:10px"><span style="padding:1px 7px">SIMPLE</span><span style="padding:1px 7px;background:#26241f;color:#fff">ADV</span></span></div>
+          <div style="border:1.5px solid #c9442e;border-radius:6px;padding:7px;background:#fdf3f1;font-size:12px">
+            <span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> <b style="color:#c9442e">▲ Packet changed after posting</b> — fee language added p.3 · 10:42 AM
+            <div style="font-size:11px;margin-top:3px"><u style="color:#2a5fd0">receipts ▾</u> · compare versions</div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:12px">
+            <span style="font-size:10px;padding:0 5px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px">AI</span> Sewer would hit <b>92% of max-day capacity</b> if annexed lots build out
+            <div style="border-top:1px dashed #cfccc2;margin-top:4px;padding-top:4px;font-size:11px;background:#f7f5ef">
+              <b>RECEIPTS (open)</b><br>↳ capacity study PDF · first seen Jun 12 · hash a3f2… <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px">✓</span><br>↳ council minutes 6/26 · <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px">✓</span>
+            </div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:12px">
+            <span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> Alpine Lakes annexation (61 ac) passed <b>4–1</b> <span style="font-size:10px;border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px">✓ VERIFIED</span>
+            <div style="font-size:11px;margin-top:2px"><u style="color:#2a5fd0">receipts ▾</u> · who voted how · promise impact (2)</div>
+          </div>
+        </div>
+        <div style="width:120px;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px"><b style="font-family:'Patrick Hand SC',cursive;font-size:11px">WATCHLIST</b><br>Moratorium 🔔<br>Water rates 🔔</div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px"><b style="font-family:'Patrick Hand SC',cursive;font-size:11px">PROMISE CONFLICTS</b><br>Councilor R. Roe — fee vote vs "no new fees" quote</div>
+        </div>
+      </div>
+      <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;max-width:620px;transform:rotate(-1deg)">novel: every row is a timeline event with a receipts drawer — home, timeline &amp; vault become one surface</div>
+    </div>
+
+  </div>
+  <div class="dv-row">B · MASTER TIMELINE — 3 approaches</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1e" data-screen-label="1e Timeline — Three Lanes">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Three Lanes — horizontal swim-lanes per level, cross-links between lanes</div>
+      <div class="dv-card" style="width:660px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;gap:8px;align-items:center">
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">ALL GOVERNMENT TIMELINE</b>
+          <span style="display:flex;border:1.5px solid #26241f;border-radius:6px;overflow:hidden;font-size:11px"><span style="padding:1px 8px;background:#26241f;color:#fff">WEEK</span><span style="padding:1px 8px">MONTH</span><span style="padding:1px 8px">QUARTER</span></span>
+          <span style="font-size:11px;color:#6b675e;margin-left:auto">filter: all boards · all areas</span>
+        </div>
+        <div style="display:flex;font-size:11px;color:#6b675e;padding-left:64px;justify-content:space-between"><span>Jul 3</span><span>Jul 5</span><span>Jul 7</span><span>Jul 10</span><span>Jul 13</span><span>Jul 15</span></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:58px;font-size:11px;color:#0e8a7d;font-weight:700">TOWN</span>
+          <div style="flex:1;height:44px;border:1.5px solid #26241f;border-radius:6px;background:#fff;position:relative">
+            <span style="position:absolute;left:6%;top:8px;font-size:10px;border:1.5px solid #0e8a7d;border-radius:3px;padding:0 4px;background:#e9f5f3">agenda posted</span>
+            <span style="position:absolute;left:30%;top:8px;font-size:10px;border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 4px;background:#fdf3f1">▲ packet changed</span>
+            <span id="tl-vote-dot" style="position:absolute;left:56%;top:8px;font-size:10px;border:1.5px solid #0e8a7d;border-radius:3px;padding:0 4px;background:#e9f5f3">council mtg · vote</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:58px;font-size:11px;color:#c07a10;font-weight:700">COUNTY</span>
+          <div style="flex:1;height:44px;border:1.5px solid #26241f;border-radius:6px;background:#fff;position:relative">
+            <span style="position:absolute;left:42%;top:8px;font-size:10px;border:1.5px solid #c07a10;border-radius:3px;padding:0 4px;background:#faf3e6">planning packet</span>
+            <span style="position:absolute;left:88%;top:8px;font-size:10px;border:1.5px solid #c07a10;border-radius:3px;padding:0 4px;background:#faf3e6">hearing</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:58px;font-size:11px;color:#2a66c9;font-weight:700">STATE</span>
+          <div style="flex:1;height:44px;border:1.5px solid #26241f;border-radius:6px;background:#fff;position:relative">
+            <span style="position:absolute;left:66%;top:8px;font-size:10px;border:1.5px solid #2a66c9;border-radius:3px;padding:0 4px;background:#ecf2fc">comment deadline</span>
+            <span style="position:absolute;left:88%;top:22px;font-size:10px;border:1.5px solid #2a66c9;border-radius:3px;padding:0 4px;background:#ecf2fc">rule hearing</span>
+          </div>
+        </div>
+        <div style="border:1.5px dashed #26241f;border-radius:6px;padding:6px 8px;font-size:11px;background:#f7f5ef">⌇ dotted thread = one issue crossing lanes: STR bill (STATE) → county land-use rule (COUNTY) → moratorium item (TOWN). Click a thread to open the <b>Issue Timeline</b>.</div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">hover any dot → mini receipt card (source, first-seen, trust chip)</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1f" data-screen-label="1f Timeline — River">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>River — one vertical stream, day-grouped, level color on the spine</div>
+      <div class="dv-card" style="width:400px;padding:12px;display:flex;flex-direction:column;gap:6px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">TIMELINE</b><span style="font-size:11px;border:1.5px solid #26241f;border-radius:999px;padding:0 8px">All levels ▾</span><span style="font-size:11px;border:1.5px solid #26241f;border-radius:999px;padding:0 8px">All areas ▾</span></div>
+        <div style="font-size:11px;background:#efede6;border-radius:3px;padding:1px 8px;font-weight:700">SAT · JUL 5 <span style="float:right;color:#6b675e">sticky day header</span></div>
+        <div style="display:flex;gap:8px"><span style="width:5px;border-radius:3px;background:#0e8a7d"></span><div style="flex:1;border:1.5px solid #c9442e;border-radius:6px;padding:6px;background:#fdf3f1;font-size:12px"><b style="color:#c9442e">▲ Packet changed after posting</b> — Town Council Jul 7 packet, fee language added p.3<br><span style="font-size:11px"><u style="color:#2a5fd0">receipts ▾</u> · compare</span></div></div>
+        <div style="font-size:11px;background:#efede6;border-radius:3px;padding:1px 8px;font-weight:700">MON · JUL 7</div>
+        <div style="display:flex;gap:8px"><span style="width:5px;border-radius:3px;background:#0e8a7d"></span><div style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:12px"><b>Town Council meeting 6 PM</b> — moratorium 2nd reading, vote possible <span style="font-size:10px;border:1.5px solid #c07a10;color:#c07a10;border-radius:3px;padding:0 3px">! vote</span></div></div>
+        <div style="display:flex;gap:8px"><span style="width:5px;border-radius:3px;background:#2a66c9"></span><div style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:12px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #2a66c9;color:#2a66c9;border-radius:999px;font-weight:700">STATE</span> Interim committee posts STR bill draft <span style="font-size:10px;padding:0 4px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px">AI summary</span></div></div>
+        <div style="font-size:11px;background:#efede6;border-radius:3px;padding:1px 8px;font-weight:700">TUE · JUL 15</div>
+        <div style="display:flex;gap:8px"><span style="width:5px;border-radius:3px;background:#c07a10"></span><div style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:12px"><span style="font-size:10px;padding:0 5px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span> Commission — rural land-use update on agenda</div></div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">phone-friendly: same component as mobile; infinite scroll into the past</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1g" data-screen-label="1g Timeline — Subway Map">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Subway Map — issues are lines, meetings are stations (novel)</div>
+      <div class="dv-card" style="width:520px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">ISSUE LINES · Q3 2026</b>
+        <div style="position:relative;height:190px;border:1.5px solid #26241f;border-radius:6px;background:#fff;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;width:100%;height:56px;background:#f0faf8;border-bottom:1.5px dashed #b9d8d2"></div>
+          <div style="position:absolute;left:0;top:56px;width:100%;height:56px;background:#fdf7ec;border-bottom:1.5px dashed #ecd9b7"></div>
+          <div style="position:absolute;left:6px;top:4px;font-size:10px;color:#0e8a7d;font-weight:700">TOWN ZONE</div>
+          <div style="position:absolute;left:6px;top:60px;font-size:10px;color:#c07a10;font-weight:700">COUNTY ZONE</div>
+          <div style="position:absolute;left:6px;top:116px;font-size:10px;color:#2a66c9;font-weight:700">STATE ZONE</div>
+          <div style="position:absolute;left:30px;top:140px;width:200px;height:4px;background:#7a4dd6"></div>
+          <div style="position:absolute;left:230px;top:84px;width:4px;height:60px;background:#7a4dd6"></div>
+          <div style="position:absolute;left:230px;top:84px;width:130px;height:4px;background:#7a4dd6"></div>
+          <div style="position:absolute;left:360px;top:28px;width:4px;height:60px;background:#7a4dd6"></div>
+          <div style="position:absolute;left:360px;top:28px;width:120px;height:4px;background:#7a4dd6"></div>
+          <div style="position:absolute;left:60px;top:135px;width:13px;height:13px;border:2.5px solid #26241f;border-radius:50%;background:#fff"></div>
+          <div style="position:absolute;left:78px;top:150px;font-size:10px">bill draft</div>
+          <div style="position:absolute;left:224px;top:79px;width:13px;height:13px;border:2.5px solid #26241f;border-radius:50%;background:#fff"></div>
+          <div style="position:absolute;left:242px;top:92px;font-size:10px">co. land-use rule</div>
+          <div style="position:absolute;left:354px;top:23px;width:13px;height:13px;border:2.5px solid #26241f;border-radius:50%;background:#fff"></div>
+          <div style="position:absolute;left:372px;top:8px;font-size:10px">council vote ⚑</div>
+          <div style="position:absolute;left:30px;top:30px;width:330px;height:4px;background:#0e8a7d"></div>
+          <div style="position:absolute;left:120px;top:25px;width:13px;height:13px;border:2.5px solid #26241f;border-radius:50%;background:#fff"></div>
+          <div style="position:absolute;left:96px;top:42px;font-size:10px">moratorium 1st reading</div>
+          <div style="position:absolute;left:250px;top:25px;width:13px;height:13px;border:2.5px solid #c9442e;border-radius:50%;background:#fdf3f1"></div>
+          <div style="position:absolute;left:236px;top:42px;font-size:10px;color:#c9442e">▲ packet changed</div>
+        </div>
+        <div style="display:flex;gap:10px;font-size:11px"><span><span style="display:inline-block;width:14px;height:4px;background:#7a4dd6;vertical-align:middle"></span> STR rules issue</span><span><span style="display:inline-block;width:14px;height:4px;background:#0e8a7d;vertical-align:middle"></span> moratorium issue</span><span>○ = meeting/action station</span></div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1.2deg)">shows power flowing State → County → Town on one picture; tap a line to ride it</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dv-row">C · ISSUE DETAIL — 3 approaches</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1h" data-screen-label="1h Issue — Dossier">
+      <div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Dossier — plain-English left, evidence spine right</div>
+      <div class="dv-card" style="width:640px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="font-size:11px;color:#6b675e">Issues › <span style="color:#0e8a7d;font-weight:700">TOWN</span> › Town Council › Zoning / Land Use</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <b style="font-size:19px">Building &amp; Annexation Moratorium (Res. 2024-033)</b>
+          <span style="font-size:10px;border:1.5px solid #c07a10;color:#c07a10;border-radius:3px;padding:0 5px">STAGE: VOTE SOON</span>
+          <span style="font-size:10px;border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 5px">▲ PACKET CHANGED</span>
+          <span style="font-size:10px;border:1.5px solid #26241f;border-radius:3px;padding:0 5px">IMPACT: HIGH</span>
+          <span style="font-size:10px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px;padding:0 5px">AI CONFIDENCE 91%</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:12px"><b style="font-family:'Patrick Hand SC',cursive;font-size:12px;letter-spacing:1px">PLAIN ENGLISH</b> <span style="font-size:10px;float:right;border:1.5px solid #26241f;border-radius:999px;padding:0 6px">official text ⇄</span><br>Six-month pause on building permits &amp; annexation petitions in 6 zoning categories (R2, MRC, C, LI, PCF, RC). Single-family homes still processed.</div>
+            <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:12px"><b style="font-family:'Patrick Hand SC',cursive;font-size:12px;letter-spacing:1px">WHY IT MATTERS</b><br>Sewer study says build-out = 92% of max-day capacity; pause buys time but freezes projects like Alpine Flats bldgs 3–4.</div>
+            <div style="border:2px solid #26241f;border-radius:6px;padding:8px;background:#fff7e6;font-size:12px"><b style="font-family:'Patrick Hand SC',cursive;font-size:12px;letter-spacing:1px">➜ WHAT HAPPENS NEXT</b><br><b>Public comment + possible vote — Tue Jul 7, 6 PM, Town Hall.</b> <span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px;font-size:11px;background:#fff;box-shadow:2px 2px 0 #26241f">Take action</span></div>
+            <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:12px"><b style="font-family:'Patrick Hand SC',cursive;font-size:12px;letter-spacing:1px">PEOPLE &amp; PROMISES</b><br>Mayor J. Doe — <span style="font-size:10px;border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px">promise: lean govt</span><br>Councilor R. Roe — <span style="font-size:10px;border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 4px">conflict: "no new fees"</span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff">
+            <b style="font-family:'Patrick Hand SC',cursive;font-size:12px;letter-spacing:1px">ISSUE TIMELINE</b>
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:5px;font-size:11px">
+              <div style="display:flex;gap:7px"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#2e7d3a;border:1.5px solid #26241f"></span><span style="width:2px;flex:1;background:#26241f"></span></span><span style="padding-bottom:8px">Jul 3 — agenda posted <u style="color:#2a5fd0">rcpt</u></span></div>
+              <div style="display:flex;gap:7px"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#2e7d3a;border:1.5px solid #26241f"></span><span style="width:2px;flex:1;background:#26241f"></span></span><span style="padding-bottom:8px">Jul 3 — packet posted <u style="color:#2a5fd0">rcpt</u></span></div>
+              <div style="display:flex;gap:7px"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#c9442e;border:1.5px solid #26241f"></span><span style="width:2px;flex:1;background:#26241f"></span></span><span style="padding-bottom:8px;color:#c9442e"><b>Jul 5 — ▲ packet changed</b> <u style="color:#2a5fd0">diff</u></span></div>
+              <div style="display:flex;gap:7px"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#fff;border:1.5px solid #26241f"></span><span style="width:2px;flex:1;background:#cfccc2"></span></span><span style="padding-bottom:8px">Jul 7 — meeting + vote?</span></div>
+              <div style="display:flex;gap:7px"><span style="width:10px;height:10px;border-radius:50%;background:#fff;border:1.5px dashed #6b675e"></span><span style="color:#6b675e">minutes pending · video pending</span></div>
+            </div>
+            <div style="border-top:1px dashed #cfccc2;margin-top:8px;padding-top:6px;font-size:11px"><b>SOURCES (4)</b> <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:10px">✓ hash ok</span><br>agenda · packet v1 · packet v2 · study</div>
+          </div>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">the "what happens next" box is the loudest thing on the page — per your accessibility rule</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1i" data-screen-label="1i Issue — Timeline Spine">
+      <div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Timeline Spine — the story IS the page; receipts slide in</div>
+      <div class="dv-card" style="width:440px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="text-align:center"><b style="font-size:17px">Short-Term Rental Rules, Alpine</b><br><span style="font-size:11px;color:#6b675e">followed across <span style="color:#2a66c9;font-weight:700">STATE</span> → <span style="color:#c07a10;font-weight:700">COUNTY</span> → <span style="color:#0e8a7d;font-weight:700">TOWN</span></span></div>
+        <div style="position:relative;display:flex;flex-direction:column;gap:10px;padding:4px 0">
+          <span style="position:absolute;left:50%;top:0;bottom:0;width:2.5px;background:#26241f;transform:translateX(-50%)"></span>
+          <div style="width:47%;border:1.5px solid #2a66c9;border-radius:6px;padding:6px;background:#fff;font-size:11px;align-self:flex-start"><b style="color:#2a66c9">STATE · Mar</b> — legislature drafts STR bill <span style="font-size:9px;border:1.5px solid #9a6b00;background:#f6ecc8;border-radius:3px;padding:0 3px">AI</span></div>
+          <div style="width:47%;border:1.5px solid #c07a10;border-radius:6px;padding:6px;background:#fff;font-size:11px;align-self:flex-end"><b style="color:#c07a10">COUNTY · May</b> — planning updates land-use rule <span style="font-size:9px;border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px">✓</span></div>
+          <div style="width:47%;border:1.5px solid #c9442e;border-radius:6px;padding:6px;background:#fdf3f1;font-size:11px;align-self:flex-start"><b style="color:#c9442e">TOWN · Jul 5 ▲</b> — packet changed after posting <u style="color:#2a5fd0">diff</u></div>
+          <div style="width:47%;border:2px solid #26241f;border-radius:6px;padding:6px;background:#fff7e6;font-size:11px;align-self:flex-end"><b>TOWN · Jul 7</b> — council vote possible ⚑</div>
+        </div>
+        <div style="border-top:2px solid #26241f;padding-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px;background:#fff;border:1.5px solid #26241f;border-radius:6px;padding:6px 8px">
+          <span><b>NEXT:</b> comment at Jul 7 meeting</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 8px;font-size:11px;box-shadow:2px 2px 0 #26241f">Remind me</span>
+        </div>
+        <div style="border:1.5px dashed #26241f;border-radius:6px;padding:6px;background:#f7f5ef;font-size:11px">↗ tapping any card slides a <b>receipts drawer</b> from the right: source URL, archive copy, first-seen, hash, trust chip, "challenge this"</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1j" data-screen-label="1j Issue — Receipts First">
+      <div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Receipts First — proof panel open by default (novel)</div>
+      <div class="dv-card" style="width:460px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <b style="font-size:16px">Admin-fee ordinance 2026-0055 <span style="font-size:10px;border:1.5px solid #c07a10;color:#c07a10;border-radius:3px;padding:0 4px;vertical-align:middle">2nd READING</span></b>
+        <div style="font-size:12px">New fees for administrative services, returned payments &amp; staff reimbursements. <span style="font-size:10px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px;padding:0 4px">AI summary</span></div>
+        <div style="border:2px solid #26241f;border-radius:6px;background:#fff">
+          <div style="display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1.5px solid #26241f;background:#f1efe8;font-size:12px"><b>🧾 RECEIPTS — open by default</b><span>▴ collapse</span></div>
+          <div style="padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #cfccc2;padding-bottom:4px"><span>ordinance text v2 (PDF)</span><span>first seen Jun 26 · hash 8f3c… <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px">✓</span></span></div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #cfccc2;padding-bottom:4px"><span>council minutes Jun 26</span><span>archived · <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px">✓</span></span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#c9442e">meeting video</span><span style="color:#c9442e">MISSING — flagged ▲</span></div>
+            <div style="display:flex;gap:5px;font-size:11px;margin-top:2px"><span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px">open original</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px">archive</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px">compare</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:0 6px">challenge</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;font-size:11px">
+          <div style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff"><b>WHY FLAGGED</b><br>fee language buried in packet p.3, added after posting</div>
+          <div style="flex:1;border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff"><b>PROMISE HIT</b><br>Councilor R. Roe: "I oppose unnecessary fees" (2024) → <span style="color:#c9442e;font-weight:700">conflict</span></div>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">for skeptics: evidence outranks narrative — nothing is claimed above the receipts</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="dv-row">D · POWER TRACKER &amp; PROMISES — 3 approaches</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1k" data-screen-label="1k Power Tracker — Scoreboard">
+      <div class="dv-olabel"><a class="dv-oid" href="#1k">1k</a>Scoreboard — all officials ranked by Keeping-Promises score</div>
+      <div class="dv-card" style="width:600px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;gap:8px;align-items:center">
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">POWER TRACKER</b>
+          <span style="display:flex;border:1.5px solid #26241f;border-radius:6px;overflow:hidden;font-size:11px"><span style="padding:1px 8px;background:#26241f;color:#fff">ALL</span><span style="padding:1px 8px;color:#0e8a7d">TOWN</span><span style="padding:1px 8px;color:#c07a10">COUNTY</span><span style="padding:1px 8px;color:#2a66c9">STATE</span></span>
+          <span style="font-size:11px;border:1.5px solid #26241f;border-radius:999px;padding:0 8px">⚠ broken first ▾</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 2fr 1fr 1fr;gap:6px;font-size:10px;color:#6b675e;border-bottom:1.5px solid #26241f;padding-bottom:2px"><span>OFFICIAL</span><span>KEEPING PROMISES</span><span>LAST ACTION</span><span></span></div>
+        <div style="display:grid;grid-template-columns:1.5fr 2fr 1fr 1fr;gap:6px;font-size:12px;align-items:center;border-bottom:1px dashed #cfccc2;padding-bottom:5px">
+          <span><span style="display:inline-block;width:20px;height:20px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 3px,#f4f2ec 3px 6px);vertical-align:middle"></span> Mayor J. Doe <span style="font-size:9px;padding:0 4px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span></span>
+          <span><span style="display:inline-flex;height:10px;width:100%;border:1.5px solid #26241f;border-radius:999px;overflow:hidden"><span style="width:46%;background:#8fc79b"></span><span style="width:23%;background:#e79b8e"></span><span style="width:15%;background:#ecd487"></span><span style="width:16%;background:#d9d5cb"></span></span><span style="font-size:10px;color:#6b675e">6 kept · 3 broken · 2 partial · 2 no-action → <b>63%</b></span></span>
+          <span style="font-size:11px">voted YES, fees</span>
+          <span style="font-size:11px;color:#2a5fd0;text-decoration:underline">profile →</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 2fr 1fr 1fr;gap:6px;font-size:12px;align-items:center;border-bottom:1px dashed #cfccc2;padding-bottom:5px">
+          <span><span style="display:inline-block;width:20px;height:20px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 3px,#f4f2ec 3px 6px);vertical-align:middle"></span> Councilor R. Roe <span style="font-size:9px;padding:0 4px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> <span style="font-size:9px;border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 3px">▲ new broken</span></span>
+          <span><span style="display:inline-flex;height:10px;width:100%;border:1.5px solid #26241f;border-radius:999px;overflow:hidden"><span style="width:40%;background:#8fc79b"></span><span style="width:35%;background:#e79b8e"></span><span style="width:10%;background:#ecd487"></span><span style="width:15%;background:#d9d5cb"></span></span><span style="font-size:10px;color:#6b675e">4 kept · 3 broken · 1 partial → <b>48%</b></span></span>
+          <span style="font-size:11px">sponsored 2026-0055</span>
+          <span style="font-size:11px;color:#2a5fd0;text-decoration:underline">profile →</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 2fr 1fr 1fr;gap:6px;font-size:12px;align-items:center">
+          <span><span style="display:inline-block;width:20px;height:20px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 3px,#f4f2ec 3px 6px);vertical-align:middle"></span> Comm. P. Poe <span style="font-size:9px;padding:0 4px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span></span>
+          <span><span style="display:inline-flex;height:10px;width:100%;border:1.5px solid #26241f;border-radius:999px;overflow:hidden"><span style="width:70%;background:#8fc79b"></span><span style="width:10%;background:#e79b8e"></span><span style="width:20%;background:#d9d5cb"></span></span><span style="font-size:10px;color:#6b675e">7 kept · 1 broken → <b>88%</b></span></span>
+          <span style="font-size:11px">road bond hearing</span>
+          <span style="font-size:11px;color:#2a5fd0;text-decoration:underline">profile →</span>
+        </div>
+        <div style="border:1.5px dashed #26241f;border-radius:6px;padding:5px 8px;font-size:11px;background:#f7f5ef">every verdict shows its receipts before the label — "no broken-promise badge without a saved quote + a recorded action + sources" (your safety rule, enforced in UI)</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1l" data-screen-label="1l Official Profile — Ledger Split">
+      <div class="dv-olabel"><a class="dv-oid" href="#1l">1l</a>Official Profile — quote / promise / vote ledgers side-by-side</div>
+      <div class="dv-card" style="width:620px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;gap:10px;align-items:center;border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff">
+          <span style="width:40px;height:40px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 4px,#f4f2ec 4px 8px)"></span>
+          <div><b style="font-size:16px">Councilor R. Roe</b> <span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span><br><span style="font-size:11px;color:#6b675e">Alpine Town Council · term ends Dec 2026</span></div>
+          <div style="margin-left:auto;text-align:center;border:2px solid #26241f;border-radius:8px;padding:4px 10px;background:#fff7e6"><b style="font-size:19px">48%</b><br><span style="font-size:10px">KEEPING PROMISES</span><br><span style="font-size:9px;color:#6b675e"><u>how is this scored?</u></span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px">
+            <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:11px">💬 QUOTE LEDGER</b>
+            <div style="border-left:3px solid #26241f;padding-left:5px;margin-top:5px">"I oppose unnecessary fees on residents."<br><span style="color:#6b675e">candidate forum · 2024 · <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:9px">✓ archived</span></span></div>
+            <div style="border-left:3px solid #26241f;padding-left:5px;margin-top:6px">"Keep government lean."<br><span style="color:#6b675e">campaign site · <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:9px">✓</span></span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px">
+            <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:11px">🤝 PROMISE LEDGER</b>
+            <div style="margin-top:5px"><span style="border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 4px;font-size:10px;font-weight:700">BROKEN</span> no new fees</div>
+            <div style="margin-top:5px"><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:10px;font-weight:700">KEPT</span> post budgets online</div>
+            <div style="margin-top:5px"><span style="border:1.5px solid #ecd487;color:#9a6b00;border-radius:3px;padding:0 4px;font-size:10px;font-weight:700">PARTIAL</span> lean government</div>
+            <div style="margin-top:5px"><span style="border:1.5px solid #6b675e;color:#6b675e;border-radius:3px;padding:0 4px;font-size:10px;font-weight:700">NO ACTION</span> sidewalk plan</div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px">
+            <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:11px">🗳 VOTE RECORD</b>
+            <div style="margin-top:5px;border-bottom:1px dashed #cfccc2;padding-bottom:3px">Jun 26 · YES — fee ordinance <span style="color:#c9442e">↘ -15</span></div>
+            <div style="margin-top:4px;border-bottom:1px dashed #cfccc2;padding-bottom:3px">Jun 12 · YES — Alpine Lakes annex <span style="color:#6b675e">·</span></div>
+            <div style="margin-top:4px">May 21 · YES — budget 2nd reading <span style="color:#2e7d3a">↗ +8</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;border:1.5px solid #26241f;border-radius:6px;padding:6px 8px;background:#fff;font-size:11px">
+          <b>PERSON TIMELINE</b>
+          <span style="flex:1;height:2px;background:#26241f;position:relative;margin:0 6px"><span style="position:absolute;left:10%;top:-4px;width:9px;height:9px;border-radius:50%;background:#8fc79b;border:1.5px solid #26241f"></span><span style="position:absolute;left:38%;top:-4px;width:9px;height:9px;border-radius:50%;background:#8fc79b;border:1.5px solid #26241f"></span><span style="position:absolute;left:66%;top:-4px;width:9px;height:9px;border-radius:50%;background:#e79b8e;border:1.5px solid #26241f"></span><span style="position:absolute;left:88%;top:-4px;width:9px;height:9px;border-radius:50%;background:#e79b8e;border:1.5px solid #26241f"></span></span>
+          <span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 8px;box-shadow:2px 2px 0 #26241f">Challenge this score</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1m" data-screen-label="1m Promise vs Action — Courtroom">
+      <div class="dv-olabel"><a class="dv-oid" href="#1m">1m</a>Promise vs Action — said/did split with verdict stamp (novel)</div>
+      <div class="dv-card" style="width:520px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">PROMISE vs ACTION · Councilor R. Roe</b>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch">
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:12px">
+            <b style="font-size:11px;color:#6b675e">WHAT THEY SAID</b>
+            <div style="border-left:3px solid #26241f;padding-left:6px;margin-top:5px;font-size:13px">"I oppose unnecessary fees that burden our residents."</div>
+            <div style="font-size:10px;color:#6b675e;margin-top:5px">candidate forum · Apr 2024<br><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:9px">✓ archive + video 12:41</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+            <span style="border:3px double #c9442e;color:#c9442e;border-radius:6px;padding:3px 8px;font-weight:700;transform:rotate(-6deg);font-size:15px;background:#fdf3f1">BROKEN</span>
+            <span style="font-size:9px;color:#6b675e">confidence HIGH</span>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff;font-size:12px">
+            <b style="font-size:11px;color:#6b675e">WHAT THEY DID</b>
+            <div style="margin-top:5px;font-size:13px">Voted <b>YES</b> on Ordinance 2026-0055 creating new admin &amp; service fees.</div>
+            <div style="font-size:10px;color:#6b675e;margin-top:5px">Town Council · Jun 26, 2026<br><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 4px;font-size:9px">✓ minutes + ordinance text</span></div>
+          </div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:6px;padding:6px 8px;background:#fff;font-size:11px"><b>EVIDENCE CHAIN:</b> quote archive → topic match (fees) → roll-call vote → ordinance text. <u style="color:#2a5fd0">view all 4 receipts</u> · <u style="color:#2a5fd0">challenge this verdict</u></div>
+        <div style="display:flex;gap:6px;font-size:10px;color:#6b675e"><span style="border:1.5px solid #6b675e;border-radius:3px;padding:0 5px">verdicts need: saved quote ✓</span><span style="border:1.5px solid #6b675e;border-radius:3px;padding:0 5px">recorded action ✓</span><span style="border:1.5px solid #6b675e;border-radius:3px;padding:0 5px">topic match ✓</span><span style="border:1.5px solid #6b675e;border-radius:3px;padding:0 5px">sources ✓</span></div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">this card is the shareable unit — print / link / embed in newsletter</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dv-row">E · HIDDEN THINGS &amp; SOURCE VAULT — 2 approaches</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1n" data-screen-label="1n Hidden Things — Alerts + Diff">
+      <div class="dv-olabel"><a class="dv-oid" href="#1n">1n</a>Alerts + Diff — alert list drives a side-by-side document compare</div>
+      <div class="dv-card" style="width:660px;padding:12px;display:flex;gap:10px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="width:170px;display:flex;flex-direction:column;gap:6px">
+          <b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:12px">▲ TRANSPARENCY ALERTS</b>
+          <div style="border:2px solid #c9442e;border-radius:6px;padding:6px;background:#fdf3f1;font-size:11px"><b style="color:#c9442e">Packet changed after posting</b><br><span style="color:#6b675e">Council · Jul 5 <span style="font-size:9px;padding:0 4px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span></span></div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:11px">Meeting video missing<br><span style="color:#6b675e">Council · Jun 26</span></div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:11px">Minutes late &gt;30 days<br><span style="color:#6b675e">P&amp;Z · May <span style="font-size:9px;padding:0 4px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span></span></div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:6px;background:#fff;font-size:11px">Fireworks ordinances contradict<br><span style="color:#6b675e">Clerk report · Jun</span></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><b>DOCUMENT COMPARE — Council packet</b><span style="font-size:11px;color:#6b675e">v1 Jul 3 ⇄ v2 Jul 5</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1">
+            <div style="border:1.5px solid #26241f;border-radius:4px;background:#fff;padding:6px;font-size:10px;color:#6b675e">p.3 · v1<br><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px"></span><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px;width:80%"></span><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px;width:90%"></span><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px;width:60%"></span></div>
+            <div style="border:1.5px solid #c9442e;border-radius:4px;background:#fff;padding:6px;font-size:10px;color:#6b675e">p.3 · v2 (current)<br><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px"></span><span style="display:block;height:5px;background:#e5e2d9;margin:4px 0;border-radius:2px;width:80%"></span><span style="display:block;height:8px;background:#f6d2cb;border:1px solid #c9442e;margin:4px 0;border-radius:2px"></span><span style="display:block;height:8px;background:#f6d2cb;border:1px solid #c9442e;margin:4px 0;border-radius:2px;width:85%"></span></div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:5px 8px;background:#fff;font-size:11px"><b>DIFF:</b> +2 paragraphs — new admin-fee language added to item 3.1 · <span style="color:#6b675e">why it matters: public saw a different packet before the meeting</span></div>
+          <div style="display:flex;gap:5px;font-size:11px"><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;box-shadow:2px 2px 0 #26241f;background:#fff">Open v1</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;box-shadow:2px 2px 0 #26241f;background:#fff">Open v2</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff">word-level diff</span><span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff">view hashes</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1o" data-screen-label="1o Source Vault — Ledger Table">
+      <div class="dv-olabel"><a class="dv-oid" href="#1o">1o</a>Vault Ledger — every document as a custody-chain row</div>
+      <div class="dv-card" style="width:600px;padding:12px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="display:flex;gap:10px;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px">SOURCE VAULT</b><span style="font-size:11px;color:#6b675e">1,248 sources · 98.6% hash-verified · 12 flagged</span><span style="margin-left:auto;font-size:11px;border:1.5px solid #26241f;border-radius:999px;padding:0 8px">🔍 filter</span></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.7fr;gap:6px;font-size:10px;color:#6b675e;border-bottom:1.5px solid #26241f;padding-bottom:2px"><span>DOCUMENT</span><span>FIRST SEEN</span><span>LAST CHANGED</span><span>HASH</span><span>STATUS</span></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.7fr;gap:6px;font-size:11px;align-items:center;background:#fdf3f1;border:1.5px solid #c9442e;border-radius:4px;padding:4px 6px">
+          <span>Council packet Jul 7 <span style="font-size:9px;padding:0 4px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span></span><span>Jul 3</span><span style="color:#c9442e;font-weight:700">Jul 5 ▲</span><span>8f3c…2d</span><span style="border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 3px;font-size:10px;text-align:center">2 versions</span>
+        </div>
+        <div style="border:1.5px dashed #c9442e;border-left:4px solid #c9442e;border-radius:4px;margin-left:14px;padding:5px 8px;font-size:10px;background:#fff">
+          <b>VERSION HISTORY (expanded)</b>  v1 Jul 3 9:12 AM hash a1b2… ✓ → v2 Jul 5 10:42 AM hash 8f3c… ✓ · diff: +2 ¶ fee language · <u style="color:#2a5fd0">compare</u> · <u style="color:#2a5fd0">verification manifest</u>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.7fr;gap:6px;font-size:11px;align-items:center;border-bottom:1px dashed #cfccc2;padding-bottom:3px">
+          <span>Sewer capacity study</span><span>Jun 12</span><span>—</span><span>a3f2…9c</span><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px;text-align:center">✓ ok</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.7fr;gap:6px;font-size:11px;align-items:center;border-bottom:1px dashed #cfccc2;padding-bottom:3px">
+          <span>Minutes Jun 26 <span style="font-size:9px;padding:0 4px;border:1.5px solid #9a6b00;color:#7a5500;background:#f6ecc8;border-radius:3px">AI text</span></span><span>Jun 30</span><span>—</span><span>77ab…41</span><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:10px;text-align:center">✓ ok</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.7fr;gap:6px;font-size:11px;align-items:center">
+          <span style="color:#6b675e">Council video Jun 26</span><span>—</span><span>—</span><span>—</span><span style="border:1.5px solid #6b675e;color:#6b675e;border-radius:3px;padding:0 3px;font-size:10px;text-align:center">missing</span>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#2a5fd0;transform:rotate(-1deg)">reads like a bank statement for public records — boring on purpose, trustworthy by design</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="dv-row">F · NEWSLETTER READER MODE — 2 approaches (light / print-friendly)</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1p" data-screen-label="1p Newsletter — Weekly Front Page">
+      <div class="dv-olabel"><a class="dv-oid" href="#1p">1p</a>Weekly Front Page — classic broadsheet with perspective lenses</div>
+      <div class="dv-card" style="width:620px;padding:14px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf6">
+        <div style="text-align:center;border-bottom:3px double #26241f;padding-bottom:6px">
+          <div style="font-family:'Patrick Hand SC',cursive;font-size:26px;letter-spacing:2px">GOVERNMENT WATCHDOG WEEKLY</div>
+          <div style="font-size:11px;color:#6b675e">TOWN / COUNTY / STATE · July 7, 2026 · Issue #20 · a 15-minute read</div>
+        </div>
+        <div style="display:flex;gap:8px;border:1.5px solid #26241f;border-radius:6px;padding:6px 8px;background:#fff;font-size:11px">
+          <b>3 THINGS TO KNOW:</b><span>① Moratorium vote Tue</span><span>② County budget hearing May 20</span><span>③ STR bill comment closes Jul 10</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;color:#c9442e;font-weight:700">FEATURED · <span style="color:#0e8a7d">TOWN</span></div>
+            <div style="font-size:19px;font-weight:700;line-height:1.15">Six-month building pause heads to a vote</div>
+            <div style="display:flex;gap:6px;margin-top:5px">
+              <div style="flex:1;border:1.5px solid #26241f;border-radius:4px;padding:5px;font-size:10px;background:#fff"><b>PLAIN ENGLISH</b><br>Pause on permits in 6 zones while sewer study lands</div>
+              <div style="flex:1;border:1.5px solid #26241f;border-radius:4px;padding:5px;font-size:10px;background:#fff"><b>WHY IT MATTERS</b><br>build-out = 92% sewer capacity</div>
+              <div style="flex:1;border:1.5px solid #26241f;border-radius:4px;padding:5px;font-size:10px;background:#fff"><b>NEXT</b><br>comment Tue 6 PM, Town Hall</div>
+            </div>
+          </div>
+          <div style="border:1.5px solid #26241f;border-radius:6px;padding:7px;background:#fff;font-size:11px">
+            <b>SOURCES / RECEIPTS</b> <span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px;font-size:9px">15/15 ✓</b></span>
+            <div style="margin-top:4px;color:#2a5fd0;text-decoration:underline">Council agenda Jul 7</div>
+            <div style="color:#2a5fd0;text-decoration:underline">Packet v2 (changed ▲)</div>
+            <div style="color:#2a5fd0;text-decoration:underline">Capacity study</div>
+            <div style="color:#6b675e">+ 12 more…</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="border:1.5px solid #b0392b;border-radius:6px;padding:6px;font-size:10px;background:#fdf5f4"><b style="color:#b0392b">CONSERVATIVE LENS</b><br>Pause protects infrastructure &amp; existing owners; keep it short and sunset it.</div>
+          <div style="border:1.5px solid #2a66c9;border-radius:6px;padding:6px;font-size:10px;background:#f2f6fd"><b style="color:#2a66c9">PROGRESSIVE LENS</b><br>Housing supply is tight — exempting workforce housing would soften the freeze.</div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:6px;padding:6px;font-size:10px;background:#f7f5ef"><b>⌛ HISTORY LOOKS BACK</b> — Alpine's 2019 sewer moratorium lasted 14 months and reshaped two subdivisions.</div>
+        <div style="border:1.5px solid #6b675e;border-radius:6px;padding:6px;font-size:10px;background:#fff"><b>LIBERTARIAN / CONSTITUTIONAL LENS</b> — property owners' vested rights and takings questions if the pause extends.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #26241f;padding-top:5px;font-size:10px;color:#6b675e">
+          <span><b>PUBLICATION HONESTY TRACKER:</b> sourced 100% · 3 perspectives · plain language ✓ · updated Jul 7</span>
+          <span style="border:1.5px solid #26241f;border-radius:4px;padding:1px 7px;background:#fff">🖨 print</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1q" data-screen-label="1q Newsletter — 15-Minute Read">
+      <div class="dv-olabel"><a class="dv-oid" href="#1q">1q</a>15-Minute Read — single column, lenses toggle inline per story (novel)</div>
+      <div class="dv-card" style="width:400px;padding:14px;display:flex;flex-direction:column;gap:8px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fdfcf6">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;letter-spacing:1px;font-size:16px">THE WEEKLY WATCH</b><span style="font-size:10px;color:#6b675e">min 3 of 15 ▓▓▓░░░░░░░</span></div>
+        <div style="font-size:11px;color:#6b675e">Large type · one column · reads top to bottom, no menus</div>
+        <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff">
+          <span style="font-size:10px;padding:0 5px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span>
+          <div style="font-size:16px;font-weight:700;line-height:1.2;margin-top:3px">Building pause goes to a vote Tuesday</div>
+          <div style="font-size:12px;margin-top:3px">The council decides whether to pause most new building permits for six months…</div>
+          <div style="display:flex;gap:4px;margin-top:6px;font-size:10px">
+            <span style="border:1.5px solid #26241f;border-radius:999px;padding:0 7px;background:#26241f;color:#fff">summary</span>
+            <span style="border:1.5px solid #b0392b;color:#b0392b;border-radius:999px;padding:0 7px">🐘 lens</span>
+            <span style="border:1.5px solid #2a66c9;color:#2a66c9;border-radius:999px;padding:0 7px">🫏 lens</span>
+            <span style="border:1.5px solid #6b675e;color:#6b675e;border-radius:999px;padding:0 7px">🗽 lens</span>
+            <span style="border:1.5px solid #26241f;border-radius:999px;padding:0 7px">⌛ history</span>
+          </div>
+          <div style="font-size:10px;margin-top:6px;border-top:1px dashed #cfccc2;padding-top:4px"><u style="color:#2a5fd0">4 sources ✓</u> · what happens next: comment Tue 6 PM</div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:6px;padding:8px;background:#fff">
+          <span style="font-size:10px;padding:0 5px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span>
+          <div style="font-size:16px;font-weight:700;line-height:1.2;margin-top:3px">Road &amp; Bridge opens summer bids</div>
+          <div style="display:flex;gap:4px;margin-top:6px;font-size:10px"><span style="border:1.5px solid #26241f;border-radius:999px;padding:0 7px;background:#26241f;color:#fff">summary</span><span style="border:1.5px solid #26241f;border-radius:999px;padding:0 7px">lenses ▾</span></div>
+        </div>
+        <div style="font-family:Caveat,cursive;font-size:15px;color:#b3432b;transform:rotate(-1deg)">lenses live INSIDE each story — no separate opinion section to scroll past</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dv-row">G · MOBILE — 3 key screens</div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1r" data-screen-label="1r Mobile — Home Simple">
+      <div class="dv-olabel"><a class="dv-oid" href="#1r">1r</a>Mobile Home (Simple mode)</div>
+      <div class="dv-card" style="width:250px;padding:10px;border-radius:22px;border:2px solid #26241f;display:flex;flex-direction:column;gap:7px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="width:60px;height:5px;border-radius:3px;background:#26241f;align-self:center"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:'Patrick Hand SC',cursive;font-size:13px">WATCHDOG</b><span style="display:flex;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;font-size:9px"><span style="padding:0 6px;background:#26241f;color:#fff">SIMPLE</span><span style="padding:0 6px">ADV</span></span></div>
+        <div style="display:flex;gap:4px;font-size:10px"><span style="border:1.5px solid #26241f;border-radius:6px;padding:1px 8px;background:#26241f;color:#fff">ALL</span><span style="border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:6px;padding:1px 8px">TOWN</span><span style="border:1.5px solid #c07a10;color:#c07a10;border-radius:6px;padding:1px 8px">CO.</span><span style="border:1.5px solid #2a66c9;color:#2a66c9;border-radius:6px;padding:1px 8px">STATE</span></div>
+        <div style="border:2px solid #26241f;border-radius:8px;padding:8px;background:#fff7e6;font-size:12px"><b>NEXT MEETING</b><br>Town Council — <b>Tue 6 PM</b><br>Town Hall · vote possible<div style="display:flex;gap:4px;margin-top:5px"><span style="flex:1;border:1.5px solid #26241f;border-radius:5px;padding:3px 0;text-align:center;font-size:11px;background:#fff;box-shadow:2px 2px 0 #26241f">Agenda</span><span style="flex:1;border:1.5px solid #26241f;border-radius:5px;padding:3px 0;text-align:center;font-size:11px;background:#fff;box-shadow:2px 2px 0 #26241f">Remind me</span></div></div>
+        <div style="border:1.5px solid #c9442e;border-radius:8px;padding:6px;background:#fdf3f1;font-size:11px"><b style="color:#c9442e">▲ 1 hidden change</b> — packet edited after posting · <u>see what changed</u></div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:6px;background:#fff;font-size:11px"><b>TOP ISSUES</b><br>• Building moratorium <span style="color:#c9442e">HIGH</span><br>• Alpine Lakes annexation<br>• Water rates <span style="font-size:9px;border:1.5px solid #9a6b00;background:#f6ecc8;border-radius:3px;padding:0 3px">AI</span></div>
+        <div style="display:flex;justify-content:space-between;border-top:1.5px solid #26241f;padding-top:5px;font-size:9px;color:#6b675e;text-align:center"><span>🏠<br>Home</span><span>⚡<br>Agenda</span><span>═<br>Timeline</span><span>👁<br>Power</span><span>≡<br>More</span></div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1s" data-screen-label="1s Mobile — Fast Agenda">
+      <div class="dv-olabel"><a class="dv-oid" href="#1s">1s</a>Mobile Fast Agenda — one card per meeting</div>
+      <div class="dv-card" style="width:250px;padding:10px;border-radius:22px;border:2px solid #26241f;display:flex;flex-direction:column;gap:7px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="width:60px;height:5px;border-radius:3px;background:#26241f;align-self:center"></div>
+        <b style="font-family:'Patrick Hand SC',cursive;font-size:13px">⚡ FAST AGENDA</b>
+        <div style="font-size:10px;background:#efede6;border-radius:3px;padding:1px 7px;font-weight:700">TUE · JUL 7</div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:7px;background:#fff;font-size:11px">
+          <span style="font-size:9px;padding:0 4px;border:1.5px solid #0e8a7d;color:#0e8a7d;border-radius:999px;font-weight:700">TOWN</span> <b>Town Council</b> · 6 PM
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;font-size:9px"><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px">✓ agenda</span><span style="border:1.5px solid #c9442e;color:#c9442e;border-radius:3px;padding:0 3px">▲ packet v2</span><span style="border:1.5px solid #c07a10;color:#c07a10;border-radius:3px;padding:0 3px">! vote</span></div>
+          <div style="display:flex;gap:4px;margin-top:5px"><span style="flex:1;border:1.5px solid #26241f;border-radius:5px;padding:3px 0;text-align:center;font-size:10px;box-shadow:2px 2px 0 #26241f;background:#fff">Agenda</span><span style="flex:1;border:1.5px solid #26241f;border-radius:5px;padding:3px 0;text-align:center;font-size:10px;box-shadow:2px 2px 0 #26241f;background:#fff">Packet</span><span style="flex:1;border:1.5px solid #26241f;border-radius:5px;padding:3px 0;text-align:center;font-size:10px;box-shadow:2px 2px 0 #26241f;background:#fff">🔔</span></div>
+        </div>
+        <div style="font-size:10px;background:#efede6;border-radius:3px;padding:1px 7px;font-weight:700">WED · JUL 15</div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:7px;background:#fff;font-size:11px">
+          <span style="font-size:9px;padding:0 4px;border:1.5px solid #c07a10;color:#c07a10;border-radius:999px;font-weight:700">COUNTY</span> <b>Commission</b> · 9 AM
+          <div style="display:flex;gap:3px;margin-top:4px;font-size:9px"><span style="border:1.5px solid #2e7d3a;color:#2e7d3a;border-radius:3px;padding:0 3px">✓ agenda</span><span style="border:1.5px solid #6b675e;color:#6b675e;border-radius:3px;padding:0 3px">packet pending</span></div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:7px;background:#fff;font-size:11px">
+          <span style="font-size:9px;padding:0 4px;border:1.5px solid #2a66c9;color:#2a66c9;border-radius:999px;font-weight:700">STATE</span> <b>Interim committee</b> · Jul 13
+          <div style="font-size:10px;color:#c07a10;margin-top:2px">STR bill comment closes Jul 10 ⏰</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;border-top:1.5px solid #26241f;padding-top:5px;font-size:9px;color:#6b675e;text-align:center"><span>🏠</span><span style="color:#26241f;font-weight:700">⚡</span><span>═</span><span>👁</span><span>≡</span></div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1t" data-screen-label="1t Mobile — Power Tracker">
+      <div class="dv-olabel"><a class="dv-oid" href="#1t">1t</a>Mobile Power Tracker</div>
+      <div class="dv-card" style="width:250px;padding:10px;border-radius:22px;border:2px solid #26241f;display:flex;flex-direction:column;gap:7px;font-family:'Patrick Hand',cursive;color:#26241f;background:#fbfaf7">
+        <div style="width:60px;height:5px;border-radius:3px;background:#26241f;align-self:center"></div>
+        <b style="font-family:'Patrick Hand SC',cursive;font-size:13px">👁 POWER TRACKER</b>
+        <div style="display:flex;gap:4px;font-size:10px"><span style="border:1.5px solid #26241f;border-radius:999px;padding:0 8px;background:#26241f;color:#fff">All</span><span style="border:1.5px solid #26241f;border-radius:999px;padding:0 8px">Broken first</span></div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:7px;background:#fff;font-size:11px">
+          <div style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:26px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 3px,#f4f2ec 3px 6px)"></span><span><b>Councilor R. Roe</b><br><span style="font-size:9px;color:#6b675e">Alpine Town Council</span></span><b style="margin-left:auto;font-size:15px">48%</b></div>
+          <div style="display:flex;height:8px;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;margin-top:4px"><span style="width:40%;background:#8fc79b"></span><span style="width:35%;background:#e79b8e"></span><span style="width:10%;background:#ecd487"></span><span style="width:15%;background:#d9d5cb"></span></div>
+          <div style="font-size:9px;color:#6b675e;margin-top:2px">4 kept · 3 broken · 1 partial · 1 no action</div>
+          <div style="border:1.5px solid #c9442e;border-radius:5px;padding:3px 5px;background:#fdf3f1;font-size:10px;margin-top:4px"><b style="color:#c9442e">NEW:</b> fee vote broke "no new fees" promise · <u>receipts</u></div>
+        </div>
+        <div style="border:1.5px solid #26241f;border-radius:8px;padding:7px;background:#fff;font-size:11px">
+          <div style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:26px;border:1.5px solid #26241f;border-radius:50%;background:repeating-linear-gradient(45deg,#eae7df 0 3px,#f4f2ec 3px 6px)"></span><span><b>Mayor J. Doe</b><br><span style="font-size:9px;color:#6b675e">Town of Alpine</span></span><b style="margin-left:auto;font-size:15px">63%</b></div>
+          <div style="display:flex;height:8px;border:1.5px solid #26241f;border-radius:999px;overflow:hidden;margin-top:4px"><span style="width:46%;background:#8fc79b"></span><span style="width:23%;background:#e79b8e"></span><span style="width:15%;background:#ecd487"></span><span style="width:16%;background:#d9d5cb"></span></div>
+        </div>
+        <div style="font-size:9px;color:#6b675e;text-align:center"><u>what do these scores mean?</u> · <u>challenge a verdict</u></div>
+        <div style="display:flex;justify-content:space-between;border-top:1.5px solid #26241f;padding-top:5px;font-size:9px;color:#6b675e;text-align:center"><span>🏠</span><span>⚡</span><span>═</span><span style="color:#26241f;font-weight:700">👁</span><span>≡</span></div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go hi-fi on <a class="dv-oid" href="#1a">1a</a> in the dark theme" · "merge <a class="dv-oid" href="#1b">1b</a>'s masthead with <a class="dv-oid" href="#1a">1a</a>'s grid" · "new directions for the timeline"</p>
+</section>
+</x-dc>
+</body>
+</html>

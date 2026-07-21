@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+input::placeholder{color:#5d6875}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Master Timeline (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:14px">
+
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+      <div style="font-size:20px;font-weight:800">All-Government Timeline</div>
+      <div style="font-size:12.5px;color:#8D99A7">Town, county &amp; state on one clock — July 1 – 16, 2026 · narrow it with the tools below</div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:220px;display:flex;align-items:center;gap:9px;background:#141B23;border:1px solid #2C3642;border-radius:9px;padding:0 12px">
+          <span style="font-size:14px;color:#8D99A7">⌕</span>
+          <input value="{{ q }}" onInput="{{ onQ }}" placeholder="Search events — “fee”, “packet”, “annexation”…" style="flex:1;background:transparent;border:none;outline:none;color:#ECF1F7;font-family:'Public Sans',sans-serif;font-size:13px;padding:9px 0">
+        </div>
+        <div style="position:relative;display:flex;align-items:center;background:#141B23;color:#ECF1F7;border:1px solid #2C3642;border-radius:9px;padding:9px 12px;font-size:12.5px;font-family:'Public Sans',sans-serif;font-weight:600;cursor:pointer;min-width:220px">
+          <span>{{ issLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#8D99A7">▾</span>
+          <select aria-label="Issue filter" onChange="{{ onIss }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+            <sc-for list="{{ issueOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+          </select>
+        </div>
+        <div style="position:relative;display:flex;align-items:center;background:#141B23;color:#ECF1F7;border:1px solid #2C3642;border-radius:9px;padding:9px 12px;font-size:12.5px;font-family:'Public Sans',sans-serif;font-weight:600;cursor:pointer;min-width:170px">
+          <span>{{ typLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#8D99A7">▾</span>
+          <select aria-label="Event type filter" onChange="{{ onTyp }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+            <option value="all">All event types</option>
+            <option value="meeting">Meetings &amp; hearings</option>
+            <option value="doc">Documents posted</option>
+            <option value="change">Changes &amp; flags ▲</option>
+            <option value="deadline">Deadlines</option>
+            <option value="vote">Votes</option>
+          </select>
+        </div>
+        <span onClick="{{ toggleSort }}" style="border:1px solid #2C3642;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27">{{ sortLabel }}</span>
+        <span onClick="{{ clearAll }}" style="border:1px solid #2C3642;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:700;color:{{ clearFg }};cursor:pointer" style-hover="background:#161E27">✕ Clear</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8D99A7">LEVELS</span>
+        <span onClick="{{ tglTown }}" style="border:1.5px solid {{ tTownBd }};color:{{ tTownFg }};background:{{ tTownBg }};border-radius:999px;padding:5px 15px;font-size:12px;font-weight:700;cursor:pointer">Town</span>
+        <span onClick="{{ tglCounty }}" style="border:1.5px solid {{ tCountyBd }};color:{{ tCountyFg }};background:{{ tCountyBg }};border-radius:999px;padding:5px 15px;font-size:12px;font-weight:700;cursor:pointer">County</span>
+        <span onClick="{{ tglState }}" style="border:1.5px solid {{ tStateBd }};color:{{ tStateFg }};background:{{ tStateBg }};border-radius:999px;padding:5px 15px;font-size:12px;font-weight:700;cursor:pointer">State</span>
+        <span style="width:1px;height:20px;background:#232C37"></span>
+        <span onClick="{{ presetThread }}" style="border:1.5px dashed {{ thBd }};color:{{ thFg }};border-radius:999px;padding:5px 15px;font-size:12px;font-weight:700;cursor:pointer">⌇ Zoning &amp; property-rights thread</span>
+        <span style="margin-left:auto;font-size:12px;color:#C3CDD9"><b style="color:#4ED8C3">{{ resultCount }}</b> events · {{ activeSummary }}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8D99A7">WINDOW</span>
+        <sc-for list="{{ winOpts }}" as="w" hint-placeholder-count="4">
+          <span onClick="{{ w.pick }}" style="border:1.5px solid {{ w.bd }};color:{{ w.fg }};background:{{ w.bg }};border-radius:999px;padding:5px 15px;font-size:12px;font-weight:700;cursor:pointer">{{ w.t }}</span>
+        </sc-for>
+        <span style="font-size:11.5px;color:#8D99A7">{{ winNote }}</span>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:20px">
+      <div style="display:flex;margin-left:96px;position:relative;height:18px">
+        <sc-for list="{{ axis }}" as="a" hint-placeholder-count="6">
+          <div style="position:absolute;left:{{ a.left }};transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8D99A7">{{ a.label }}</div>
+        </sc-for>
+      </div>
+      <div style="position:relative">
+      <sc-for list="{{ lanes }}" as="lane" hint-placeholder-count="3">
+        <div style="display:flex;gap:12px;align-items:stretch;margin-top:10px;opacity:{{ lane.op }}">
+          <div style="width:84px;flex:none;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:2px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:{{ lane.color }}">{{ lane.name }}</div>
+            <div style="font-size:10px;color:#8D99A7;text-align:right">{{ lane.sub }}</div>
+          </div>
+          <div style="flex:1;position:relative;height:96px;background:#0E1319;border:1px solid #1F2833;border-radius:10px;overflow:hidden">
+            <sc-for list="{{ gridlines }}" as="g" hint-placeholder-count="6">
+              <div style="position:absolute;left:{{ g }};top:0;bottom:0;width:1px;background:#161E27"></div>
+            </sc-for>
+            <div style="position:absolute;left:0;right:0;top:50%;height:2px;background:#1B232D"></div>
+            <sc-for list="{{ lane.events }}" as="e" hint-placeholder-count="3">
+              <div onClick="{{ e.pick }}" onMouseEnter="{{ e.hov }}" onMouseLeave="{{ hovClear }}" title="{{ e.tip }}" style="position:absolute;left:{{ e.left }};top:{{ e.top }};transform:translateX(-50%);cursor:pointer;z-index:2;opacity:{{ e.op }};transition:opacity .15s">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+                  <div style="width:13px;height:13px;border-radius:50%;background:{{ e.dot }};border:2.5px solid #0E1319;box-shadow:0 0 0 2px {{ e.dot }}55"></div>
+                  <div style="background:#141B23;border:1px solid #232C37;color:#ECF1F7;border-radius:6px;padding:3px 8px;font-size:10.5px;font-weight:700;white-space:nowrap">{{ e.label }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <svg style="position:absolute;left:96px;top:0;width:calc(100% - 96px);height:100%;pointer-events:none;z-index:3">
+        <sc-for list="{{ hovLines }}" as="hl" hint-placeholder-count="1">
+          <line x1="{{ hl.x1 }}" y1="{{ hl.y1 }}" x2="{{ hl.x2 }}" y2="{{ hl.y2 }}" stroke="#4ED8C3" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.85"></line>
+        </sc-for>
+      </svg>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:14px;margin-left:96px;font-size:11.5px;color:#C3CDD9;flex-wrap:wrap">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#63D68F;margin-right:5px"></span>posted / passed</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#EE7A6D;margin-right:5px"></span>changed / deadline</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ECC35C;margin-right:5px"></span>vote possible</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7DB1FB;margin-right:5px"></span>hearing / meeting</span>
+        <span style="color:#8D99A7">click any dot or #issue tag to filter down to that issue — every event carries its issue links, PR-style</span>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:12px">EVENT LIST — {{ resultCount }} MATCHING</div>
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ listDays }}" as="day" hint-placeholder-count="4">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#8D99A7;background:#0E1319;border:1px solid #1F2833;border-radius:6px;padding:3px 12px;margin:10px 0 8px;letter-spacing:1px">{{ day.label }}</div>
+            <sc-for list="{{ day.events }}" as="e" hint-placeholder-count="2">
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #161E27">
+                <span style="flex:none;width:9px;height:9px;border-radius:50%;background:{{ e.dot }};margin-top:5px"></span>
+                <span style="flex:none;font-size:9.5px;font-weight:800;letter-spacing:.7px;color:{{ e.lvlColor }};border:1px solid {{ e.lvlColor }};border-radius:4px;padding:1px 6px;margin-top:1px">{{ e.lvlName }}</span>
+                <span style="flex:1;min-width:0;font-size:13.5px"><b>{{ e.title }}</b> <span style="color:#8D99A7">— {{ e.sub }}</span></span>
+                <span style="flex:none;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:250px">
+                  <sc-for list="{{ e.tags }}" as="t" hint-placeholder-count="1">
+                    <span onClick="{{ t.pick }}" title="Filter the timeline to this issue" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7DB1FB;border:1px solid #29405F;background:#101A28;border-radius:5px;padding:1px 7px;cursor:pointer" style-hover="border-color:#7DB1FB">#{{ t.k }}</span>
+                  </sc-for>
+                </span>
+                <span style="flex:none;font-size:11.5px"><a href="Source Vault.dc.html" style="color:#7DB1FB">receipts ({{ e.receipts }})</a></span>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:26px 0;color:#8D99A7;font-size:13.5px">Nothing matches those filters in this window.<br><span onClick="{{ clearAll }}" style="color:#4ED8C3;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Clear the filters</span> or widen the level toggles above.</div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ Every dot carries its receipts — first-seen, hash &amp; archive in the <a href="Source Vault.dc.html" style="color:#7DB1FB">Source Vault</a>.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><a href="Fast Agenda.dc.html" style="color:#8D99A7">Fast Agenda</a><a href="Power Tracker.dc.html" style="color:#8D99A7">Power Tracker</a></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Timeline (light river)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:860px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">WHAT HAPPENED, DAY BY DAY</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:16px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:'Public Sans',sans-serif">
+      <span style="font-size:11px;font-weight:800;letter-spacing:1.2px">SHOW ME</span>
+      <span onClick="{{ tglTown }}" style="border:2px solid {{ sTownBd }};color:{{ sTownFg }};background:{{ sTownBg }};border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;cursor:pointer">Town</span>
+      <span onClick="{{ tglCounty }}" style="border:2px solid {{ sCounty
+Bd }};color:{{ sCountyFg }};background:{{ sCountyBg }};border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;cursor:pointer">County</span>
+      <span onClick="{{ tglState }}" style="border:2px solid {{ sStateBd }};color:{{ sStateFg }};background:{{ sStateBg }};border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;cursor:pointer">State</span>
+      <div style="position:relative;display:flex;align-items:center;background:#FFFFFF;color:#1E1C17;border:1.5px solid #1E1C17;border-radius:8px;padding:8px 12px;font-size:14px;font-family:'Public Sans',sans-serif;min-width:200px;cursor:pointer">
+        <span>{{ issLabel }}</span><span style="margin-left:auto;padding-left:10px;color:#6E685B">▾</span>
+        <select aria-label="Issue filter" onChange="{{ onIss }}" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <sc-for list="{{ issueOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+      </div>
+      <sc-for list="{{ winOptsL }}" as="w" hint-placeholder-count="2">
+        <span onClick="{{ w.pick }}" style="border:2px solid {{ w.bd }};color:{{ w.fg }};background:{{ w.bg }};border-radius:999px;padding:6px 16px;font-size:13px;font-weight:800;cursor:pointer">{{ w.t }}</span>
+      </sc-for>
+      <span style="font-size:11.5px;color:#6E685B">{{ winNoteL }}</span>
+      <span onClick="{{ clearAll }}" style="font-size:12.5px;font-weight:700;color:#6E685B;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#7B241C">clear</span>
+      <span style="margin-left:auto;font-size:12.5px;color:#4A463C"><b>{{ resultCount }}</b> events shown</span>
+    </div>
+
+    <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ listDays }}" as="day" hint-placeholder-count="4">
+        <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:1.2px;background:#EFE8D5;border:1px solid #D8D0BC;border-radius:6px;padding:4px 12px;margin:16px 0 10px">{{ day.label }}</div>
+        <sc-for list="{{ day.events }}" as="e" hint-placeholder-count="2">
+          <div style="display:flex;gap:12px;margin-bottom:10px">
+            <div style="width:6px;border-radius:3px;background:{{ e.barL }};flex:none"></div>
+            <div style="flex:1;border:1.5px solid #D8D0BC;border-radius:8px;background:#FDFAF1;padding:10px 14px">
+              <div style="font-size:17px;font-weight:600;line-height:1.3">{{ e.title }} <span style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;color:{{ e.barL }}">{{ e.lvlName }}</span></div>
+              <div style="font-size:14.5px;color:#4A463C;margin-top:2px">{{ e.sub }}</div>
+              <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;margin-top:5px"><a href="Source Vault.dc.html">receipts ({{ e.receipts }})</a></div>
+            </div>
+          </div>
+        </sc-for>
+      </sc-for>
+    </sc-if>
+    <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:24px 0;color:#6E685B;font-size:16px;font-style:italic">Nothing matches — <span onClick="{{ clearAll }}" style="color:#1A4D8F;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-style:normal">clear the filters</span> to see the whole river.</div>
+    </sc-if>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Want lanes, threads &amp; every filter? <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = (() => {
+    let mode = 'advanced', iss = 'all';
+    try {
+      mode = localStorage.getItem('gw_home_mode') || 'advanced';
+      const p = new URLSearchParams(window.location.search).get('issue');
+      const OK = ['all', 'thread', 'moratorium', 'fees', 'str', 'landuse', 'annexation', 'water', 'permits', 'council', 'ludc', 'ami'];
+      if (p && OK.indexOf(p) >= 0) iss = p;
+    } catch (e) {}
+    return { mode, iss, q: '', typ: 'all', lv: { town: true, county: true, state: true }, sortDesc: false, win: 'n3', hovIss: null };
+  })();
+
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+
+
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GOLD = '#ECC35C';
+    const LVL = { town: { n: 'TOWN', c: MINT, l: '#0E7A6E', sub: 'Alpine' }, county: { n: 'COUNTY', c: AMBER, l: '#A36A10', sub: 'Lincoln' }, state: { n: 'STATE', c: BLUE, l: '#274F9B', sub: 'Wyoming' } };
+    const E = (day, dayLabel, lvl, type, iss, title, sub, receipts, dot, label, top, vote) => ({ day, dayLabel, lvl, type, iss, title, sub, receipts, dot, label, top, vote: !!vote });
+    const EVENTS = [
+      E(7, 'TUE · JULY 7', 'town', 'meeting', ['moratorium', 'fees', 'permits', 'council'], 'Council adopted the moratorium & the fees', '2nd/3rd readings passed · Boardwalk II Lot 18 got its 2nd reading · minutes now drafted', 4, GREEN, 'council mtg · adopted', 10, true),
+      E(9, 'THU · JULY 9', 'town', 'doc', ['ami', 'water'], 'AMI pay applications 1–4 submitted', 'Radio Read metering project · $667,067.91 total ask, $380,956.90 balance to Core & Main', 5, GREEN, 'pay apps filed', 48),
+      E(13, 'MON · JULY 13', 'town', 'doc', ['annexation'], 'P&Z signs the Alpine Apex recommendation', 'report & recommendation forwarded to council for the Jul 21 hearing', 2, GREEN, 'P&Z rec signed', 27),
+      E(13, 'MON · JULY 13', 'state', 'meeting', ['str'], 'Interim committee advanced the rental bill', '26-LSO-0142 moves toward a bill draft — preemption watch continues', 2, BLUE, 'bill advanced', 10),
+      E(15, 'WED · JULY 15', 'county', 'meeting', ['landuse'], 'Commission + rural land-use hearing held', '9:00 AM Kemmerer · follow-up set for Aug 3', 2, BLUE, 'commission + hearing', 27, true),
+      E(17, 'FRI · JULY 17', 'town', 'doc', ['council', 'annexation', 'ludc'], 'Agenda + packet posted for July 21', '9:04 AM · 10 sections, 21 attachments · archived and hashed within the hour', 2, GREEN, 'agenda + packet', 10),
+      E(18, 'SAT · JULY 18', 'town', 'change', ['ludc', 'landuse'], 'Consultant evaluation replaced with V2', 'LUDC rewrite staff evaluation swapped after posting — both versions archived', 2, RED, '▲ attachment replaced', 48),
+      E(20, 'MON · JULY 20', 'town', 'doc', ['council'], 'Pre-meeting analysis published', 'this edition — every July 21 item in plain English, one day after the agenda', 1, GREEN, 'our brief', 27),
+      E(21, 'TUE · JULY 21', 'town', 'meeting', ['annexation', 'ludc', 'ami', 'landuse', 'council'], 'Town Council — hearing + 9 motions', '6:30 PM Town Hall + YouTube live · Alpine Apex hearing · 3 ordinance readings · $667k', 5, GOLD, 'council mtg · vote?', 10, true),
+      E(23, 'THU · JULY 23', 'town', 'doc', ['council'], 'Meeting video expected', 'streamed live, posted ~2 days after · flagged if late', 1, GREEN, 'video due', 48),
+      E(25, 'SAT · JULY 25', 'town', 'doc', ['council'], 'Post-meeting analysis due', 'within ~4 days of the transcript — every vote timestamped', 1, GREEN, 'analysis due', 27),
+      E(28, 'TUE · JULY 28', 'town', 'meeting', ['landuse', 'ludc'], 'Planning & Zoning meeting', 'Town Hall · LUDC amendments pipeline · agenda due Jul 24', 1, BLUE, 'P&Z meeting', 48),
+      E(34, 'MON · AUG 3', 'county', 'meeting', ['landuse'], 'Lincoln County Commission', '9:00 AM Kemmerer · road-bid award + land-use follow-up', 1, BLUE, 'commission', 27),
+      E(35, 'TUE · AUG 4', 'town', 'meeting', ['council', 'annexation', 'landuse'], 'Next regular council meeting', '1st & 3rd Tuesdays, 6:30 PM · 2nd readings of 2026-012 / -013 / -014 expected', 1, BLUE, 'council mtg', 10)
+    ];
+    const THREAD = ['annexation', 'ludc', 'landuse', 'moratorium', 'str'];
+    const { q, iss, typ, lv, sortDesc, mode } = this.state;
+    const ql = q.trim().toLowerCase();
+    const match = (e) =>
+      lv[e.lvl] &&
+      (iss === 'all' || (iss === 'thread' ? e.iss.some(i => THREAD.indexOf(i) >= 0) : e.iss.indexOf(iss) >= 0)) &&
+      (typ === 'all' || (typ === 'vote' ? e.vote : e.type === typ)) &&
+      (ql === '' || (e.title + ' ' + e.sub).toLowerCase().indexOf(ql) >= 0);
+    const hits = EVENTS.filter(match);
+
+    const pct = (day) => (((day - 6) / 30) * 100).toFixed(1) + '%';
+    const lanes = ['town', 'county', 'state'].map(l => ({
+      name: LVL[l].n, sub: LVL[l].sub, color: LVL[l].c,
+      op: lv[l] ? 1 : 0.3,
+      events: hits.filter(e => e.lvl === l).map(e => ({ left: pct(e.day), top: e.top + 'px', dot: e.dot, label: e.label, tip: e.dayLabel + ' — ' + e.title + ' · ' + e.sub + ' · issue run: #' + e.iss[0] + ' — hover shows the whole run, click filters to it', pick: () => this.setState({ iss: e.iss[0] }), hov: () => this.setState({ hovIss: e.iss[0] }), op: this.state.hovIss ? (e.iss.indexOf(this.state.hovIss) >= 0 ? 1 : 0.22) : 1 }))
+    }));
+    const hovIss = this.state.hovIss;
+    const hovLines = (() => {
+      if (!hovIss) return [];
+      const evs = hits.filter(e => e.iss.indexOf(hovIss) >= 0).slice().sort((a, b) => a.day - b.day);
+      const li = { town: 0, county: 1, state: 2 };
+      const out = [];
+      for (let i = 0; i + 1 < evs.length; i++) {
+        const a = evs[i], b = evs[i + 1];
+        out.push({ x1: pct(a.day), y1: String(10 + li[a.lvl] * 106 + a.top + 6.5), x2: pct(b.day), y2: String(10 + li[b.lvl] * 106 + b.top + 6.5) });
+      }
+      return out;
+    })();
+
+    const days = [];
+    const sorted = hits.slice().sort((a, b) => sortDesc ? b.day - a.day : a.day - b.day);
+    sorted.forEach(e => {
+      let d = days.find(x => x.label === e.dayLabel);
+      if (!d) { d = { label: e.dayLabel, events: [] }; days.push(d); }
+      d.events.push({ title: e.title, sub: e.sub, receipts: e.receipts, dot: e.dot, lvlName: LVL[e.lvl].n, lvlColor: LVL[e.lvl].c, barL: LVL[e.lvl].l, tags: e.iss.map(k => ({ k, pick: () => this.setState({ iss: k }) })) });
+    });
+
+    const chip = (on, color, tint) => on ? { bd: color, fg: color, bg: tint } : { bd: '#2C3642', fg: '#8D99A7', bg: 'transparent' };
+    const cT = chip(lv.town, MINT, '#0F1E1B'), cC = chip(lv.county, AMBER, '#201A0E'), cS = chip(lv.state, BLUE, '#101A2B');
+    const chipL = (on, color, tint) => on ? { bd: color, fg: color, bg: tint } : { bd: '#C9C0A8', fg: '#6E685B', bg: '#FFFFFF' };
+    const lT = chipL(lv.town, '#0E7A6E', '#E4F0ED'), lC = chipL(lv.county, '#A36A10', '#F6EEDC'), lS = chipL(lv.state, '#274F9B', '#E6EDF8');
+    const tgl = (k) => () => this.setState(s => { const nl = Object.assign({}, s.lv); nl[k] = !nl[k]; return { lv: nl }; });
+
+    const ISSUE_NAMES = { all: 'All issues', thread: '⌇ Zoning & property-rights thread', moratorium: 'Building & annexation moratorium', fees: 'Admin-fee ordinance 2026-0055', str: 'Short-term rental bill (26-LSO-0142)', landuse: 'County rural land-use update', annexation: 'Alpine Lakes annexation', water: 'Water & sewer', permits: 'Interim permitting (2026-008)', council: 'Town Council (whole board)', ludc: 'LUDC rewrite package', ami: 'AMI Radio Read — $667k' };
+    const active = [];
+    if (iss !== 'all') active.push('issue: ' + (ISSUE_NAMES[iss] || iss));
+    if (typ !== 'all') active.push('type: ' + typ);
+    if (ql !== '') active.push('search: “' + q + '”');
+    if (!lv.town || !lv.county || !lv.state) active.push('levels narrowed');
+
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: mode !== 'simple',
+      isSimple: mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      q, onQ: (e) => this.setState({ q: e.target.value }),
+      iss, onIss: (e) => this.setState({ iss: e.target.value }),
+      issLabel: ISSUE_NAMES[iss] || 'All issues',
+      typLabel: ({ all: 'All event types', meeting: 'Meetings & hearings', doc: 'Documents posted', change: 'Changes & flags ▲', deadline: 'Deadlines', vote: 'Votes' })[typ],
+
+      typ, onTyp: (e) => this.setState({ typ: e.target.value }),
+      issueOptions: Object.keys(ISSUE_NAMES).map(k => ({ v: k, t: ISSUE_NAMES[k] })),
+      toggleSort: () => this.setState({ sortDesc: !sortDesc }),
+      sortLabel: sortDesc ? '↑ latest first' : '↓ soonest first',
+      clearAll: () => this.setState({ iss: 'all', q: '', typ: 'all', lv: { town: true, county: true, state: true } }),
+      clearFg: active.length ? '#EE7A6D' : '#8D99A7',
+      activeSummary: active.length ? active.join(' · ') : 'no filters — showing everything',
+      resultCount: hits.length,
+      hasResults: hits.length > 0,
+      noResults: hits.length === 0,
+      tglTown: tgl('town'), tglCounty: tgl('county'), tglState: tgl('state'),
+      tTownBd: cT.bd, tTownFg: cT.fg, tTownBg: cT.bg,
+      tCountyBd: cC.bd, tCountyFg: cC.fg, tCountyBg: cC.bg,
+      tStateBd: cS.bd, tStateFg: cS.fg, tStateBg: cS.bg,
+      sTownBd: lT.bd, sTownFg: lT.fg, sTownBg: lT.bg,
+      sCountyBd: lC.bd, sCountyFg: lC.fg, sCountyBg: lC.bg,
+      sStateBd: lS.bd, sStateFg: lS.fg, sStateBg: lS.bg,
+      presetThread: () => this.setState({ iss: iss === 'thread' ? 'all' : 'thread' }),
+      thBd: iss === 'thread' ? MINT : '#2C3642',
+      thFg: iss === 'thread' ? MINT : '#8D99A7',
+      axis: [{ left: '0%', label: 'JUL 6' }, { left: '20%', label: 'JUL 12' }, { left: '40%', label: 'JUL 18' }, { left: '60%', label: 'JUL 24' }, { left: '80%', label: 'JUL 30' }, { left: '100%', label: 'AUG 5' }],
+      gridlines: ['0%', '20%', '40%', '60%', '80%', '100%'],
+      lanes,
+      listDays: days,
+      hovLines,
+      hovClear: () => this.setState({ hovIss: null }),
+      winOpts: [['n3', 'Next 3 weeks'], ['d90', 'Past 90 days'], ['yr', 'Past year'], ['all', 'All records → 2019']].map(w => ({ t: w[1], pick: () => this.setState({ win: w[0] }), bd: this.state.win === w[0] ? MINT : '#2C3642', fg: this.state.win === w[0] ? MINT : '#8D99A7', bg: this.state.win === w[0] ? '#0F1E1B' : 'transparent' })),
+      winOptsL: [['n3', 'Next 3 weeks'], ['d90', 'Past 90 days']].map(w => ({ t: w[1], pick: () => this.setState({ win: w[0] }), bd: this.state.win === w[0] ? '#0E7A6E' : '#C9C0A8', fg: this.state.win === w[0] ? '#0E7A6E' : '#6E685B', bg: this.state.win === w[0] ? '#E4F0ED' : '#FFFFFF' })),
+      winNote: ({ n3: 'the known road ahead — default', d90: 'past 90 days — fixture shows the Jul 1–16 sample', yr: 'past year — fixture sample shown', all: 'the entire processed public record, back to 2019 — fixture sample shown' })[this.state.win],
+      winNoteL: this.state.win === 'n3' ? 'the known road ahead — default' : 'Simple looks back 90 days — Advanced reaches the full record (2019)'
+    };
+  }
+}
+</script>
+</body>
+</html>

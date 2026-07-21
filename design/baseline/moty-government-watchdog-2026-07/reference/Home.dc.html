@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,400;1,6..72,500&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="image-slot.js"></script>
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:#0F3568}
+*{box-sizing:border-box}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Signed out (beta gate)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;display:grid;place-items:center;padding:24px">
+  <div style="max-width:520px;width:100%;background:#FBF7EB;border:2px solid #1E1C17;border-radius:10px;padding:36px 34px;text-align:center">
+    <div style="width:54px;height:54px;border-radius:12px;background:#1E1C17;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-weight:800;font-size:20px;margin:0 auto">GW</div>
+    <div style="font-size:34px;font-weight:600;line-height:1.1;margin-top:14px">Government Watchdog</div>
+    <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:3px;color:#A33327;margin-top:6px">IN BETA</div>
+    <div style="font-size:16px;color:#4A463C;margin-top:10px">We watch. We report. You decide.</div>
+    <span onClick="{{ signIn }}" style="display:inline-block;margin-top:18px;font-family:'Public Sans',sans-serif;font-size:15px;font-weight:800;background:#1A4D8F;color:#FBF7EB;border-radius:9px;padding:12px 30px;cursor:pointer" style-hover="background:#0F3568">Sign in</span>
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:16px;line-height:1.65;text-align:left;border-top:1px solid #D8D0BC;padding-top:12px"><b style="color:#1E1C17">Your location is locked to your ID</b> — the street address on your driver's license sets your town, county and state. Moved? Contact support and prove the move to change it. Paid accounts and approved beta testers can pick any location.</div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Advanced Home (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+
+  <sc-if value="{{ showBanner }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓ · every label comes from the archive, never recomputed</div>
+  </sc-if>
+
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <div style="display:flex;align-items:center;gap:11px;flex:none;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</div>
+        <div style="line-height:1.05"><div style="font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</div><div style="font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</div></div>
+      </div>
+      <span style="flex:none;font-size:9px;font-weight:800;letter-spacing:.8px;color:#7DB1FB;border:1px solid #31527e;background:#0F1826;border-radius:5px;padding:3px 8px;cursor:default" title="Every summary, flag and score on this site is produced by AI from primary records — then shown with its receipts. No verdict without a source.">AI ANALYSIS</span>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text">
+        <span style="font-size:15px;opacity:.8">⌕</span>
+        <span style="flex:1;font-size:13px">Search agendas, meetings, documents, officials, issues…</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px;color:#8D99A7">⌘K</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <a href="Explainer Video.dc.html" title="Watch the demo — how Government Watchdog works" style="display:flex;align-items:center;gap:7px;border:1px solid #2E6B60;background:#0F1E1B;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:700;color:#4ED8C3;text-decoration:none" style-hover="background:#12261F">▶ Demo</a>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9">{{ userName }} <span style="color:#63D68F">✓ ID</span> · <span onClick="{{ signOut }}" style="color:#7DB1FB;cursor:pointer;text-decoration:underline;text-underline-offset:2px">log out</span></div>
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+
+    <div style="display:flex;justify-content:center">
+      <div style="display:flex;gap:6px;background:#10161D;border:1px solid #1F2833;border-radius:12px;padding:6px">
+        <span onClick="{{ pickAll }}" style="padding:7px 26px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ pAllBg }};color:{{ pAllFg }}">All</span>
+        <span onClick="{{ pickTown }}" style="padding:7px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ pTownBg }};color:{{ pTownFg }}">Town</span>
+        <span onClick="{{ pickCounty }}" style="padding:7px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ pCountyBg }};color:{{ pCountyFg }}">County</span>
+        <span onClick="{{ pickState }}" style="padding:7px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:{{ pStateBg }};color:{{ pStateFg }}">State</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:18px;background:#12181F;border:1px solid #232C37;border-radius:14px;padding:13px 20px">
+      <div style="display:flex;align-items:center;gap:10px;flex:none">
+        <div style="width:10px;height:10px;border-radius:50%;background:#E5A83B;box-shadow:0 0 12px rgba(229,168,59,.55)"></div>
+        <div><div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">CIVIC WEATHER</div><div style="font-size:11.5px;color:#8D99A7">week of Jul 20 – 26, 2026</div></div>
+      </div>
+      <div style="width:1px;height:30px;background:#232C37"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
+        <div style="font-size:13.5px;color:#C3CDD9">{{ weather }}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:9.5px;font-weight:800;letter-spacing:.9px;color:#ECC35C;flex:none">TOWN EVENTS</span>
+          <span style="font-size:11.5px;color:#C3CDD9;border:1px solid #4a3c14;background:#201A0E;border-radius:6px;padding:2px 9px">Alpine Mountain Days · Jul 11–12</span>
+          <span style="font-size:11.5px;color:#C3CDD9;border:1px solid #4a3c14;background:#201A0E;border-radius:6px;padding:2px 9px">Farmers Market · Sat 9 AM–1 PM, River Park</span>
+          <span style="font-size:11.5px;color:#C3CDD9;border:1px solid #4a3c14;background:#201A0E;border-radius:6px;padding:2px 9px">Fireworks (Palisades) · Jul 4</span>
+        </div>
+      </div>
+      <a href="Timeline.dc.html" style="flex:none;align-self:flex-start;border:1px solid #2C3642;border-radius:9px;padding:7px 14px;font-size:12.5px;font-weight:600;color:#C3CDD9;text-decoration:none" style-hover="background:#161E27;border-color:#4ED8C3">View all activity ›</a>
+    </div>
+
+    <div style="display:grid;grid-template-columns:400px 1fr 352px;gap:16px;align-items:start">
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">FAST AGENDA</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#4ED8C3;border:1px solid #29564E;background:#0F1E1B;border-radius:5px;padding:2px 8px">UPCOMING</div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <div style="width:52px;height:52px;border-radius:12px;background:#0F1E1B;border:1px solid #29564E;display:grid;place-items:center;flex:none">
+              <div style="display:flex;gap:2.5px;align-items:flex-end"><span style="width:4px;height:14px;background:#4ED8C3;border-radius:1px"></span><span style="width:4px;height:18px;background:#4ED8C3;border-radius:1px"></span><span style="width:4px;height:14px;background:#4ED8C3;border-radius:1px"></span></div>
+            </div>
+            <div>
+              <div style="font-size:19px;font-weight:700;line-height:1.2">Alpine Town Council Meeting</div>
+              <div style="font-size:12.5px;color:#8D99A7;margin-top:4px">Tue, July 7, 2026 · 6:00 PM<br>Alpine Town Hall · 250 River Circle</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+            <div style="background:#101820;border:1px solid #1F3A2C;border-radius:9px;padding:8px 10px"><div style="font-size:11px;font-weight:700;color:#63D68F">✓ Agenda posted</div><div style="font-size:10.5px;color:#8D99A7;margin-top:2px">Jul 3, 9:12 AM</div></div>
+            <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:8px 10px"><div style="font-size:11px;font-weight:700;color:#EE7A6D">▲ Packet changed</div><div style="font-size:10.5px;color:#8D99A7;margin-top:2px">v2 · Jul 5, 10:42 AM</div></div>
+            <div style="background:#201A0E;border:1px solid #4a3c14;border-radius:9px;padding:8px 10px"><div style="font-size:11px;font-weight:700;color:#ECC35C">! Vote possible</div><div style="font-size:10.5px;color:#8D99A7;margin-top:2px">2 agenda items</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <a href="Fast Agenda.dc.html" style="flex:1;text-align:center;border:1px solid #2E6B60;color:#4ED8C3;border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:700;text-decoration:none" style-hover="background:#0F1E1B">View agenda ›</a>
+            <a href="Source Vault.dc.html" style="flex:1;text-align:center;border:1px solid #2E6B60;color:#4ED8C3;border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:700;text-decoration:none" style-hover="background:#0F1E1B">View packet ›</a>
+            <a href="Timeline.dc.html?issue=council" style="flex:1;text-align:center;border:1px solid #2C3642;color:#C3CDD9;border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:600;text-decoration:none" style-hover="background:#161E27">Timeline ›</a>
+          </div>
+          <div style="border-top:1px solid #1F2833;margin-top:16px;padding-top:13px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:9px">ALSO COMING UP</div>
+            <div style="display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer" style-hover="background:#141B23"><span style="width:8px;height:8px;border-radius:50%;background:#7DB1FB;flex:none"></span><span style="flex:1;font-size:12.5px;color:#C3CDD9">Interim Committee — STR bill hearing</span><span style="font-size:11.5px;color:#8D99A7">Jul 13</span></div>
+            <div style="display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer" style-hover="background:#141B23"><span style="width:8px;height:8px;border-radius:50%;background:#E5A83B;flex:none"></span><span style="flex:1;font-size:12.5px;color:#C3CDD9">Lincoln County Commission</span><span style="font-size:11.5px;color:#8D99A7">Jul 15</span></div>
+            <div style="display:flex;align-items:center;gap:9px;padding:6px 10px;margin-top:6px;background:#141B23;border:1px solid #232C37;border-radius:9px"><span style="font-size:12px;color:#C3CDD9;flex:1">STR bill public comment closes</span><span style="font-size:10.5px;font-weight:800;color:#EE7A6D;border:1px solid #52302B;background:#1D1412;border-radius:5px;padding:2px 7px">3 DAYS</span></div>
+          </div>
+        </div>
+
+        <div style="background:#151210;border:1px solid #3E2A24;border-radius:14px;padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#EE7A6D">HIDDEN THINGS · TRANSPARENCY ALERTS</div>
+            <a href="Source Vault.dc.html" style="font-size:12px;color:#8D99A7;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">View all</a>
+          </div>
+          <div style="background:#1D1412;border:1px solid #52302B;border-radius:10px;padding:11px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+            <div style="display:flex;justify-content:space-between;gap:8px"><div style="font-size:13.5px;font-weight:700;color:#EE7A6D">▲ Packet changed after posting</div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#4ED8C3;border:1px solid #29564E;border-radius:4px;padding:1px 6px;height:fit-content">TOWN</div></div>
+            <div style="font-size:12px;color:#C3CDD9;margin-top:4px">Town Council packet for Jul 7 was updated Jul 5 at 10:42 AM — new fee language added on page 3, after first posting Jul 3.</div>
+            <div style="display:flex;gap:8px;margin-top:9px"><a href="Source Vault.dc.html" style="font-size:11.5px;font-weight:700;color:#EE7A6D;border:1px solid #52302B;border-radius:7px;padding:4px 10px;text-decoration:none" style-hover="background:#241713">Compare versions</a><span style="font-size:11.5px;font-weight:600;color:#8D99A7;border:1px solid #2C3642;border-radius:7px;padding:4px 10px;cursor:pointer" style-hover="background:#161E27">Why flagged?</span></div>
+            <div style="border-top:1px solid #3E2A24;margin-top:11px;padding-top:10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#EE7A6D;margin-bottom:6px">HOW THIS STAYED LEGAL — AND STILL SLIPPED BY</div>
+              <div style="font-size:12px;color:#C3CDD9;line-height:1.55">Wyoming's Public Meetings Act <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8D99A7">(W.S. §16-4-404)</span> requires a meeting agenda to be posted in advance, but it <b style="color:#ECF1F7">does not require a fresh public notice when a supporting packet is amended</b>. So the $150 fee language added to page 3 on <b>Jul 5</b> — two days before the vote, after most residents had already read version 1 — went out with no announcement. <b style="color:#63D68F">No law was broken.</b> The change simply never had to be surfaced, which is exactly the gap we flag.</div>
+              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:10.5px">
+                <span style="color:#63D68F;border:1px solid #1F3A2C;background:#101820;border-radius:6px;padding:3px 9px">v1 posted · Jul 3, 9:12 AM</span>
+                <span style="color:#EE7A6D;border:1px solid #52302B;background:#1D1412;border-radius:6px;padding:3px 9px">v2 amended · Jul 5, 10:42 AM · fee added p.3</span>
+                <span style="color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:6px;padding:3px 9px">vote possible · Jul 7, 6:00 PM</span>
+              </div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:8px">Statute checked against the posted record · <a href="Source Vault.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:3px">read the amendment diff and the law ↗</a></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 2px 3px;border-bottom:1px solid #241C18;cursor:pointer" style-hover="background:#1A1512"><span style="width:7px;height:7px;border-radius:50%;background:#EE7A6D;flex:none"></span><span style="flex:1;font-size:12.5px;color:#C3CDD9">Meeting video missing — Council, Jun 26</span><span style="font-size:10px;font-weight:700;color:#4ED8C3;letter-spacing:.8px">TOWN</span></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 2px 3px;cursor:pointer" style-hover="background:#1A1512"><span style="width:7px;height:7px;border-radius:50%;background:#E5A83B;flex:none"></span><span style="flex:1;font-size:12.5px;color:#C3CDD9">Minutes late &gt;30 days — Planning &amp; Zoning, May</span><span style="font-size:10px;font-weight:700;color:#E5A83B;letter-spacing:.8px">COUNTY</span></div>
+          <div style="font-size:11.5px;color:#8D99A7;margin-top:10px">About transparency alerts ⓘ · every flag shows why it was raised</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">ACTIVE ISSUES <span style="color:#8D99A7;font-weight:600;letter-spacing:0">· {{ issueCount }}</span></div>
+            <a href="Fast Agenda.dc.html" style="font-size:12px;color:#8D99A7;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">View all issues</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ issues }}" as="i" hint-placeholder-count="4">
+              <div style="display:flex;gap:12px;background:#141B23;border:1px solid #1F2833;border-left:3px solid {{ i.bar }};border-radius:10px;padding:11px 14px;cursor:pointer" style-hover="border-color:#33404E;background:#161E27">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <a href="{{ i.tlHref }}" style="font-size:14.5px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">{{ i.title }}</a>
+                    <span style="font-size:9.5px;font-weight:800;letter-spacing:.9px;color:{{ i.lvlColor }};border:1px solid {{ i.lvlColor }};border-radius:4px;padding:1px 6px;opacity:.95">{{ i.lvlName }}</span>
+                  </div>
+                  <div style="font-size:11.5px;color:#8D99A7;margin-top:3px">Board: <span style="color:#C3CDD9">{{ i.board }}</span> · Area: <span style="color:#C3CDD9">{{ i.area }}</span> · Stage: <span style="color:{{ i.stageColor }};font-weight:600">{{ i.stage }}</span></div>
+                  <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+                    <sc-for list="{{ i.flags }}" as="f" hint-placeholder-count="1">
+                      <span style="font-size:10px;font-weight:700;color:{{ f.c }};border:1px solid {{ f.c }};border-radius:5px;padding:1.5px 7px;opacity:.9">{{ f.t }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;justify-content:center">
+                  <div style="font-size:10px;color:#8D99A7;letter-spacing:.6px">IMPACT</div>
+                  <div style="font-size:19px;font-weight:800;color:{{ i.bar }};line-height:1">{{ i.impact }}</div>
+                  <div style="font-size:10px;color:#8D99A7">conf <span style="color:#C3CDD9;font-weight:700">{{ i.conf }}</span></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:12px;font-size:10.5px;color:#8D99A7"><span>Impact scale:</span><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#63D68F;margin-right:4px"></span>Low 0–39</span><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#E5A83B;margin-right:4px"></span>Medium 40–69</span><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#EE7A6D;margin-right:4px"></span>High 70–100</span></div>
+        </div>
+
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">FOLLOW AN AGENDA THROUGH TIME</div>
+            <a href="Timeline.dc.html?issue=moratorium" style="font-size:11.5px;font-weight:600;color:#8D99A7;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">open full timeline ›</a>
+          </div>
+          <a href="Timeline.dc.html?issue=moratorium" style="display:flex;align-items:center;gap:10px;background:#0F1E1B;border:1px solid #29564E;border-radius:10px;padding:9px 12px;margin-bottom:14px;text-decoration:none" style-hover="border-color:#4ED8C3">
+            <span style="font-size:10px;font-weight:800;letter-spacing:.9px;color:#8D99A7;flex:none">FOLLOWING</span>
+            <span style="font-size:13px;font-weight:700;color:#4ED8C3;min-width:0">Building &amp; Annexation Moratorium · Res. 2024-033</span>
+            <span style="margin-left:auto;font-size:11px;color:#8D99A7;flex:none">pick any active issue to follow it ›</span>
+          </a>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:44px;flex:none;text-align:right;font-size:11.5px;color:#8D99A7;padding-top:1px;font-family:'IBM Plex Mono',monospace">Jun 16</div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none"><span style="width:11px;height:11px;border-radius:50%;background:#8D99A7;border:2px solid #12181F;box-shadow:0 0 0 1.5px #3a4553"></span><span style="width:2px;height:26px;background:#232C37"></span></div>
+              <div style="font-size:13px;padding-bottom:12px"><span style="font-size:9px;font-weight:800;letter-spacing:.8px;color:#8D99A7;border:1px solid #2C3642;border-radius:4px;padding:1px 6px;margin-right:6px">LAST COVERED</span><span style="font-weight:600">First reading</span> <span style="color:#8D99A7">— motion to adopt tabled 3–2; council asked for the sewer-capacity study before voting.</span> <a href="Timeline.dc.html?issue=moratorium" style="font-size:11px;color:#7DB1FB;text-decoration:underline;text-underline-offset:3px">what happened ↗</a></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:44px;flex:none;text-align:right;font-size:11.5px;color:#8D99A7;padding-top:1px;font-family:'IBM Plex Mono',monospace">Jul 3</div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none"><span style="width:11px;height:11px;border-radius:50%;background:#63D68F;border:2px solid #12181F;box-shadow:0 0 0 1.5px #2C5A3E"></span><span style="width:2px;height:26px;background:#232C37"></span></div>
+              <div style="font-size:13px;padding-bottom:12px"><span style="font-weight:600">Agenda + packet posted</span> <span style="color:#8D99A7">— Town Council (Jul 7)</span> <span style="font-size:10px;color:#63D68F;font-weight:700">✓ archived</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:44px;flex:none;text-align:right;font-size:11.5px;color:#8D99A7;padding-top:1px;font-family:'IBM Plex Mono',monospace">Jul 5</div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none"><span style="width:11px;height:11px;border-radius:50%;background:#EE7A6D;border:2px solid #12181F;box-shadow:0 0 0 1.5px #6b3a32"></span><span style="width:2px;height:26px;background:#232C37"></span></div>
+              <div style="font-size:13px;padding-bottom:12px"><span style="font-weight:700;color:#EE7A6D">Packet changed</span> <span style="color:#8D99A7">— fee language added p.3</span> <a href="Source Vault.dc.html" style="font-size:11px;color:#7DB1FB;text-decoration:underline;text-underline-offset:3px">diff ↗</a></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:44px;flex:none;text-align:right;font-size:11.5px;color:#8D99A7;padding-top:1px;font-family:'IBM Plex Mono',monospace">Jul 7</div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none"><span style="width:11px;height:11px;border-radius:50%;background:#4ED8C3;border:2px solid #12181F;box-shadow:0 0 0 1.5px #2E6B60"></span><span style="width:2px;height:26px;background:#232C37"></span></div>
+              <div style="font-size:13px;padding-bottom:12px"><span style="font-weight:600">Council meeting · 6:00 PM</span> <span style="color:#8D99A7">— moratorium 2nd reading,</span> <span style="color:#ECC35C;font-weight:600">vote possible</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:44px;flex:none;text-align:right;font-size:11.5px;color:#8D99A7;padding-top:1px;font-family:'IBM Plex Mono',monospace">Jul 10</div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none"><span style="width:11px;height:11px;border-radius:50%;background:#0B0F14;border:2px dashed #8D99A7"></span></div>
+              <div style="font-size:13px"><span style="font-weight:600;color:#C3CDD9">STR bill comment window closes</span> <span style="font-size:10px;font-weight:800;color:#7DB1FB;border:1px solid #31527e;border-radius:4px;padding:1px 6px">STATE</span></div>
+            </div>
+          </div>
+          <a href="Timeline.dc.html" style="display:block;font-size:12px;color:#8D99A7;margin-top:12px;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">See the full three-lane timeline ›</a>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">PROMISE CONFLICTS</div>
+            <a href="Power Tracker.dc.html" style="font-size:12px;color:#8D99A7;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">View all</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:11px;background:#141B23;border:1px solid #1F2833;border-radius:10px;padding:10px 12px;cursor:pointer" style-hover="border-color:#33404E">
+              <div style="width:36px;height:36px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:12px;font-weight:800;color:#C3CDD9;flex:none">RR</div>
+              <div style="flex:1;min-width:0"><a href="Power Tracker.dc.html" style="display:block;font-size:13.5px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Councilor R. Roe</a><div style="font-size:11px;color:#8D99A7">Town Council · <span style="color:#EE7A6D;font-weight:700">new broken promise</span></div></div>
+              <div style="display:flex;gap:8px;font-size:12px;font-weight:800;flex:none"><span style="color:#63D68F">4<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">KEPT</div></span><span style="color:#EE7A6D">3<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">BROKEN</div></span><span style="color:#ECC35C">1<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">PARTIAL</div></span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;background:#141B23;border:1px solid #1F2833;border-radius:10px;padding:10px 12px;cursor:pointer" style-hover="border-color:#33404E">
+              <div style="width:36px;height:36px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:12px;font-weight:800;color:#C3CDD9;flex:none">JD</div>
+              <div style="flex:1;min-width:0"><a href="Power Tracker.dc.html" style="display:block;font-size:13.5px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Mayor J. Doe</a><div style="font-size:11px;color:#8D99A7">Town of Alpine · lean-government promise watch</div></div>
+              <div style="display:flex;gap:8px;font-size:12px;font-weight:800;flex:none"><span style="color:#63D68F">6<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">KEPT</div></span><span style="color:#EE7A6D">3<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">BROKEN</div></span><span style="color:#ECC35C">2<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">PARTIAL</div></span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;background:#141B23;border:1px solid #1F2833;border-radius:10px;padding:10px 12px;cursor:pointer" style-hover="border-color:#33404E">
+              <div style="width:36px;height:36px;border-radius:50%;background:#1B2431;border:1px solid #2C3642;display:grid;place-items:center;font-size:12px;font-weight:800;color:#C3CDD9;flex:none">PP</div>
+              <div style="flex:1;min-width:0"><a href="Power Tracker.dc.html" style="display:block;font-size:13.5px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Comm. P. Poe</a><div style="font-size:11px;color:#8D99A7">Lincoln County Commission</div></div>
+              <div style="display:flex;gap:8px;font-size:12px;font-weight:800;flex:none"><span style="color:#63D68F">7<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">KEPT</div></span><span style="color:#EE7A6D">1<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">BROKEN</div></span><span style="color:#ECC35C">0<div style="font-size:8.5px;font-weight:700;color:#8D99A7;letter-spacing:.5px">PARTIAL</div></span></div>
+            </div>
+          </div>
+          <div style="background:#1D1412;border:1px solid #52302B;border-radius:10px;padding:10px 12px;margin-top:10px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1px;color:#EE7A6D">LATEST VERDICT</div>
+            <div style="font-size:12.5px;color:#C3CDD9;margin-top:4px">R. Roe voted <b>YES</b> on fee ordinance 2026-0055 vs. 2024 quote <i>"I oppose unnecessary fees."</i> → <b style="color:#EE7A6D">Broken</b></div>
+            <div style="font-size:11px;color:#8D99A7;margin-top:5px">receipts: quote archive ✓ · roll-call ✓ · ordinance ✓ &nbsp;·&nbsp; <a href="Power Tracker.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:3px">challenge this verdict</a></div>
+          </div>
+          <div style="font-size:11.5px;color:#8D99A7;margin-top:10px">What do these scores mean? ⓘ — no verdict without a saved quote, a recorded action, and sources.</div>
+        </div>
+
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">SOURCE VAULT</div>
+            <a href="Source Vault.dc.html" style="font-size:12px;color:#8D99A7;text-decoration:underline;text-underline-offset:3px" style-hover="color:#ECF1F7">View all sources</a>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <div style="width:56px;height:56px;border-radius:50%;border:2px solid #2C5A3E;background:#101820;display:grid;place-items:center;flex:none"><span style="font-size:22px;color:#63D68F">✓</span></div>
+            <div style="display:flex;gap:22px">
+              <div><div style="font-size:23px;font-weight:800;line-height:1.1">1,248</div><div style="font-size:11px;color:#8D99A7">total sources</div></div>
+              <div><div style="font-size:23px;font-weight:800;line-height:1.1;color:#63D68F">98.6%</div><div style="font-size:11px;color:#8D99A7">hash verified</div></div>
+            </div>
+          </div>
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px;margin-top:13px">
+            <div style="font-size:11px;color:#8D99A7">Latest source added · Jul 5, 10:42 AM</div>
+            <div style="font-size:12.5px;font-weight:600;margin-top:2px">Town Council packet v2 <span style="color:#EE7A6D;font-weight:700">▲ changed</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">sha-256 8f3c2b8e7a9d4c1e9f8b6a2d…</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <a href="Source Vault.dc.html" style="flex:1;text-align:center;border:1px solid #2E6B60;color:#4ED8C3;border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:700;text-decoration:none" style-hover="background:#0F1E1B">Compare versions ›</a>
+            <a href="Source Vault.dc.html" style="flex:1;text-align:center;border:1px solid #2C3642;color:#C3CDD9;border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:600;text-decoration:none" style-hover="background:#161E27">Open archive ›</a>
+          </div>
+          <div style="font-size:11px;color:#8D99A7;margin-top:10px">✓ every document is archived with first-seen, last-changed &amp; hash — <span style="color:#C3CDD9">nothing is cited without a receipt</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #52302B;border-radius:14px;padding:16px 18px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#160B09;background:#EE7A6D;border-radius:3px;padding:1px 7px">⚠ LANGUAGE WATCH — JUL 21 PACKET</span><span style="font-size:11px;color:#8D99A7">tricky wording the AI flagged — dull words hiding big meanings · full breakdown in the <a href="Newsletter.dc.html" style="color:#7DB1FB">newsletter</a></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;font-size:11.5px;line-height:1.55;color:#F0D9D4">
+        <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:9px 11px"><b style="color:#EE7A6D">"…with ____________"</b><br>a signature authorized before the winner is named — LUDC consultant, item 8.i</div>
+        <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:9px 11px"><b style="color:#EE7A6D">"accounted for separately"</b><br>the $667k motion is not the all-in cost — AMI meters, item 8.c</div>
+        <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:9px 11px"><b style="color:#EE7A6D">"engagement agreement"</b><br>reads administrative — it's hourly litigation with no cap, item 8.e</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ Holding power accountable. Amplifying transparency. — <span style="color:#C3CDD9">Town of Alpine · Lincoln County · State of Wyoming</span></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Tip us something</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Simple Home (light broadsheet)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:16px;line-height:1.55">
+
+  <sc-if value="{{ showBanner }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  </sc-if>
+
+  <div style="max-width:1150px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 38px 44px;min-height:100vh">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} — Monday, July 20, 2026 &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700" title="Location is locked to the address on your ID — contact support if you moved; paid &amp; approved beta testers can pick freely">change my place 🔒</a></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B">Signed in: <b style="color:#1E1C17">{{ userName }}</b> <span style="color:#1E4620;font-weight:700">✓ ID-verified</span> · <span onClick="{{ signOut }}" style="color:#1A4D8F;cursor:pointer;text-decoration:underline;text-underline-offset:2px">log out</span></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+          <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+          <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+        </div>
+        <span onClick="{{ printPage }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Print</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:190px 1fr 190px;gap:16px;align-items:center;border-top:2.5px solid #1E1C17;border-bottom:2.5px solid #1E1C17;padding:16px 0 13px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:46px;height:46px;border-radius:9px;background:#1A4D8F;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.5px;flex:none">GW</div>
+        <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:13.5px;line-height:1.15;color:#1A4D8F">GOVERNMENT<br>WATCHDOG</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:clamp(24px, 7.5vw - 37px, 46px);font-weight:600;line-height:1;letter-spacing:-.5px;white-space:nowrap">Government Watchdog Updates</div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:6px;margin-top:9px;color:#4A463C">TOWN&nbsp;&nbsp;/&nbsp;&nbsp;COUNTY&nbsp;&nbsp;/&nbsp;&nbsp;STATE</div>
+      </div>
+      <div style="font-style:italic;font-size:14.5px;color:#4A463C;text-align:right;line-height:1.4">"A government of laws,<br>and not of men."<br><span style="font-style:normal;font-family:'Public Sans',sans-serif;font-size:11px;color:#6E685B">— John Adams</span></div>
+    </div>
+    <div style="text-align:center;font-style:italic;font-size:14px;color:#4A463C;border-bottom:1px solid #1E1C17;padding:7px 0">July 7, 2026&nbsp;&nbsp;|&nbsp;&nbsp;Issue No. 20&nbsp;&nbsp;|&nbsp;&nbsp;Your nonpartisan guide to what your government is doing.</div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:16px">
+      <a href="Home.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="display:grid;grid-template-columns:160px 1fr 1fr 1fr;gap:18px;border:1.5px solid #1E1C17;border-radius:6px;padding:14px 18px;background:#FDFAF1;margin-bottom:20px">
+      <div style="border-right:1px solid #D8D0BC;padding-right:14px">
+        <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:15px;letter-spacing:.3px;line-height:1.25">3 THINGS<br>TO KNOW</div>
+        <div style="font-size:12.5px;font-style:italic;color:#6E685B;margin-top:4px">The big picture, at a glance.</div>
+      </div>
+      <div style="display:flex;gap:10px"><span style="width:22px;height:22px;border-radius:50%;background:#1A4D8F;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;flex:none;margin-top:2px">1</span><div><a href="Timeline.dc.html?issue=moratorium" style="font-size:15.5px;font-weight:700;color:#1E1C17">Building moratorium vote</a><div style="font-size:13.5px;color:#4A463C;margin-top:2px">Council decides Tuesday on a six-month permit pause in six zoning districts. Public comment before the vote.</div></div></div>
+      <div style="display:flex;gap:10px"><span style="width:22px;height:22px;border-radius:50%;background:#1A4D8F;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;flex:none;margin-top:2px">2</span><div><a href="Timeline.dc.html?issue=annexation" style="font-size:15.5px;font-weight:700;color:#1E1C17">Alpine Lakes annexation</a><div style="font-size:13.5px;color:#4A463C;margin-top:2px">61 acres joined the town on a 4–1 vote; new will-serve letters now count against sewer capacity.</div></div></div>
+      <div style="display:flex;gap:10px"><span style="width:22px;height:22px;border-radius:50%;background:#1A4D8F;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;flex:none;margin-top:2px">3</span><div><a href="Timeline.dc.html?issue=str" style="font-size:15.5px;font-weight:700;color:#1E1C17">Rental bill moves in Cheyenne</a><div style="font-size:13.5px;color:#4A463C;margin-top:2px">A state draft would limit local short-term-rental rules. Public comment closes July 10.</div></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:225px 1fr 265px;gap:22px;margin-bottom:22px">
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;color:#0E7A6E;border-bottom:2.5px solid #0E7A6E;padding-bottom:4px">LOCAL</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;color:#6E685B;margin:11px 0 4px">AGENDA</div>
+          <div style="font-size:14.5px;line-height:1.45"><b>Town Council Meeting</b><br>Tue, July 7 · 6:00 PM<br>Alpine Town Hall<br><a href="Fast Agenda.dc.html" style="font-size:13.5px">View the agenda</a></div>
+          <div style="font-size:13.5px;color:#4A463C;margin-top:7px">Planning &amp; Zoning — Jul 14 <span style="font-family:'Public Sans',sans-serif;font-size:10px;color:#7A5B00;background:#FFF3CD;border:1px solid #D9A400;border-radius:4px;padding:0 5px">agenda pending</span></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;color:#6E685B;margin:13px 0 4px">NEWS</div>
+          <div style="font-size:14px;line-height:1.45">Water system restored after the May 21 main break; council orders an after-action review. <a href="Newsletter.dc.html" style="font-size:13.5px">Read more</a></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;color:#6E685B;margin:13px 0 4px">AREAS OF INTEREST</div>
+          <div style="font-size:14px;line-height:1.7">• Zoning &amp; Land Use<br>• Water / Sewer<br>• Taxes &amp; Fees<br>• Public Records</div>
+        </div>
+      </div>
+
+      <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:18px 20px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.6px;color:#A33327">FEATURED STORY</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;letter-spacing:1px;color:#0E7A6E;border:1.5px solid #0E7A6E;border-radius:4px;padding:1px 7px">TOWN</div>
+        </div>
+        <div style="font-size:37px;font-weight:600;line-height:1.08;margin-top:8px">Six-Month Building Pause Goes to a Vote</div>
+        <div style="font-size:16px;font-style:italic;color:#4A463C;margin-top:7px">Resolution 2024-033 would pause building permits and annexation petitions in six zoning districts while a sewer-capacity study lands. Single-family homes are exempt.</div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;color:#6E685B;margin:9px 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span>Updated July 5, 2026</span>
+          <span style="color:#1E4620;background:#E8F0E8;border:1px solid #1E4620;border-radius:4px;padding:1px 7px;font-weight:700">✓ 4 sources verified</span>
+          <span style="color:#7B241C;background:#FDECEA;border:1px solid #C0392B;border-radius:4px;padding:1px 7px;font-weight:700">▲ packet changed after posting</span>
+        </div>
+        <div style="width:100%;height:290px;border:1.5px solid #1E1C17;border-radius:4px;overflow:hidden">
+          <image-slot id="featured-photo" shape="rect" placeholder="Drop an Alpine photo — riverfront, town hall, or valley"></image-slot>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:11px;color:#6E685B;margin-top:5px">Alpine, Wyoming — the Snake River corridor drives the growth behind the pause.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:15px">
+          <div style="border-top:2px solid #1E1C17;padding-top:8px">
+            <div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#1E1C17">PLAIN-ENGLISH SUMMARY <span style="color:#7A5B00;background:#FFF3CD;border:1px solid #D9A400;border-radius:3px;padding:0 4px;font-weight:700">AI</span></div>
+            <div style="font-size:14px;color:#4A463C;margin-top:5px;line-height:1.5">The town wants a six-month pause on most new building and annexation while it checks whether the sewer can keep up. Existing homes and single-family builds continue as normal.</div>
+          </div>
+          <div style="border-top:2px solid #1E1C17;padding-top:8px">
+            <div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#1E1C17">WHY IT MATTERS</div>
+            <div style="font-size:14px;color:#4A463C;margin-top:5px;line-height:1.5">The town engineer's study says full build-out would use <b>92% of worst-day sewer capacity</b>. A pause buys time — but stalls projects like Alpine Flats buildings 3 &amp; 4.</div>
+          </div>
+          <div style="border-top:2px solid #1E1C17;padding-top:8px">
+            <div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#1E1C17">NEXT ACTION</div>
+            <div style="font-size:14px;color:#4A463C;margin-top:5px;line-height:1.5">Public comment and a possible vote at the <b>Tuesday 6:00 PM</b> council meeting, Town Hall. Anyone may speak or submit written comment.</div>
+          </div>
+        </div>
+        <div style="margin-top:14px"><a href="Fast Agenda.dc.html" style="font-size:15px;font-weight:600">Read the full story and background →</a> &nbsp;·&nbsp; <a href="Timeline.dc.html?issue=moratorium" style="font-size:14px">follow it on the timeline</a></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:13px 15px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.4px">SOURCES / RECEIPTS</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:3px">15 sources <a href="Source Vault.dc.html">this week</a></div>
+          <div style="font-size:14px;line-height:1.9;margin-top:6px;border-top:1px solid #D8D0BC;padding-top:6px">
+            <a href="Source Vault.dc.html">Council agenda (Jul 7)</a><br>
+            <a href="Source Vault.dc.html">Council packet v1 (Jul 3)</a><br>
+            <a href="Source Vault.dc.html">Council packet v2 (Jul 5)</a> <span style="font-family:'Public Sans',sans-serif;font-size:10px;color:#7B241C;background:#FDECEA;border:1px solid #C0392B;border-radius:3px;padding:0 4px;font-weight:700">▲ changed</span> <span style="font-family:'Public Sans',sans-serif;font-size:10px;color:#1E4620;background:#E8F0E8;border:1px solid #1E4620;border-radius:3px;padding:0 4px;font-weight:700">reprocessed ✓ Jul 5, 11:02</span><br>
+            <a href="Source Vault.dc.html">Sewer-capacity study</a><br>
+            <a href="Source Vault.dc.html">Resolution 2024-033 text</a>
+          </div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:5px">+ 10 more sources · <span style="color:#1E4620;font-weight:700">every change triggers a reprocess</span> — summaries are rebuilt from the new text</div>
+          <div style="border-top:1px solid #D8D0BC;margin-top:8px;padding-top:7px"><a href="Source Vault.dc.html" style="font-size:13.5px;font-weight:600">View all sources and receipts →</a></div>
+        </div>
+        <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:13px 15px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.4px">HISTORY LOOKS BACK</div>
+          <div style="font-size:15px;font-weight:600;margin-top:6px">2019 — the last pause</div>
+          <div style="font-size:14px;font-style:italic;color:#4A463C;line-height:1.5;margin-top:3px">Alpine halted new sewer hookups for 14 months while capacity caught up. Two subdivisions redrew their plans. Today's moratorium debate echoes that decision.</div>
+          <div style="margin-top:7px"><a href="#" style="font-size:13.5px">Explore more historical moments →</a></div>
+          <div style="border-top:1px solid #D8D0BC;margin-top:9px;padding-top:8px;font-family:'Public Sans',sans-serif">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B">EDITION VERSIONS — updates create new archived versions</div>
+            <select style="width:100%;margin-top:5px;font-family:'Public Sans',sans-serif;font-size:12.5px;padding:6px 8px;border:1.5px solid #1E1C17;border-radius:6px;background:#FFFFFF;color:#1E1C17">
+              <option>Jul 6, 9:15 AM — current edition</option>
+              <option>Jul 5, 11:02 AM — after the packet change ▲</option>
+              <option>Jul 3, 10:30 AM — agenda-day edition</option>
+            </select>
+          </div>
+        </div>
+        <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:13px 15px">
+          <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.4px">PUBLICATION HONESTY TRACKER</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px;font-family:'Public Sans',sans-serif">
+            <div style="border:1px solid #D8D0BC;border-radius:5px;padding:7px 9px;text-align:center"><div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B">SOURCED</div><div style="font-size:17px;font-weight:800;color:#1E4620;margin-top:2px">15 / 15</div><div style="font-size:10.5px;color:#6E685B">stories cite records</div></div>
+            <div style="border:1px solid #D8D0BC;border-radius:5px;padding:7px 9px;text-align:center"><div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B">BALANCED</div><div style="font-size:17px;font-weight:800;margin-top:2px">3</div><div style="font-size:10.5px;color:#6E685B">perspectives shown</div></div>
+            <div style="border:1px solid #D8D0BC;border-radius:5px;padding:7px 9px;text-align:center"><div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B">CLEAR</div><div style="font-size:17px;font-weight:800;margin-top:2px">Yes</div><div style="font-size:10.5px;color:#6E685B">plain language first</div></div>
+            <div style="border:1px solid #D8D0BC;border-radius:5px;padding:7px 9px;text-align:center"><div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B">UPDATED</div><div style="font-size:17px;font-weight:800;margin-top:2px">Jul 6</div><div style="font-size:10.5px;color:#6E685B">9:15 AM</div></div>
+          </div>
+          <div style="margin-top:8px"><a href="#" style="font-size:13px">How we keep you informed →</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+      <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:14px 17px">
+        <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;color:#A36A10;border-bottom:2.5px solid #A36A10;padding-bottom:4px">COUNTY — LINCOLN</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px">
+          <div><div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;color:#6E685B">AGENDA</div><div style="font-size:14px;margin-top:3px;line-height:1.45"><b>County Commission</b><br>Jul 15 · 9:00 AM · Kemmerer<br><a href="Fast Agenda.dc.html" style="font-size:13px">View agenda</a></div></div>
+          <div><div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;color:#6E685B">NEWS</div><div style="font-size:14px;margin-top:3px;line-height:1.45">Road &amp; Bridge opens summer bid package; rural land-use rule update set for hearing. <a href="Newsletter.dc.html" style="font-size:13px">Read more</a></div></div>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:9px">Areas: Roads · Land Use · Taxes · Public Health</div>
+      </div>
+      <div style="border:1.5px solid #1E1C17;border-radius:6px;background:#FDFAF1;padding:14px 17px">
+        <div style="font-family:'Public Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;color:#274F9B;border-bottom:2.5px solid #274F9B;padding-bottom:4px">STATE — WYOMING</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px">
+          <div><div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;color:#6E685B">AGENDA</div><div style="font-size:14px;margin-top:3px;line-height:1.45"><b>Interim Committee</b><br>Jul 13 · Cheyenne + remote<br><a href="Fast Agenda.dc.html" style="font-size:13px">View agenda</a></div></div>
+          <div><div style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;color:#6E685B">NEWS</div><div style="font-size:14px;margin-top:3px;line-height:1.45">Short-term-rental bill draft posted (26-LSO-0142); public comment closes July 10. <a href="Newsletter.dc.html" style="font-size:13px">Read more</a></div></div>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;margin-top:9px">Areas: Property Rights · Local Control · Public Records Law</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+      <div style="border:1.5px solid #A33327;border-radius:6px;background:#F8EDE9;padding:13px 17px">
+        <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#A33327">CONSERVATIVE LENS</div>
+        <div style="font-size:14.5px;color:#3A362D;line-height:1.55;margin-top:6px">A short, narrow pause protects existing owners and the infrastructure everyone already paid for. Good government means clear rules, a firm sunset date, and no quiet extensions.</div>
+        <div style="margin-top:7px"><a href="#" style="font-size:13.5px;font-style:italic">Read full perspective →</a></div>
+      </div>
+      <div style="border:1.5px solid #274F9B;border-radius:6px;background:#EBF0F8;padding:13px 17px">
+        <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#274F9B">PROGRESSIVE LENS</div>
+        <div style="font-size:14.5px;color:#3A362D;line-height:1.55;margin-top:6px">Housing in the valley is already tight. A freeze without a workforce-housing exemption risks pushing out the people who keep Alpine running — carve-outs would soften the impact.</div>
+        <div style="margin-top:7px"><a href="#" style="font-size:13.5px;font-style:italic">Read full perspective →</a></div>
+      </div>
+    </div>
+    <div style="border:1.5px solid #6E685B;border-radius:6px;background:#F3EFE3;padding:13px 17px;margin-bottom:22px">
+      <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#3A362D">LIBERTARIAN / CONSTITUTIONAL LENS</div>
+      <div style="font-size:14.5px;color:#3A362D;line-height:1.55;margin-top:6px">Property owners hold vested rights the town must respect; a pause that keeps extending starts to look like a taking. Watch renewal votes as closely as the first one.</div>
+      <div style="margin-top:7px"><a href="#" style="font-size:13.5px;font-style:italic">Read full perspective →</a></div>
+    </div>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b> <span style="color:#4A463C;font-size:14px">Government Watchdog is nonpartisan and reader-supported.</span></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C;display:flex;gap:16px;align-items:center">
+        <span>Have a tip or feedback? <a href="#">Contact us</a></span>
+        <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open the Advanced dashboard →</span>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;defaultMode&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;advanced&quot;, &quot;simple&quot;], &quot;default&quot;: &quot;advanced&quot;, &quot;tsType&quot;: &quot;\&quot;advanced\&quot; | \&quot;simple\&quot;&quot;, &quot;section&quot;: &quot;Behavior&quot; },
+  &quot;defaultLevel&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;all&quot;, &quot;town&quot;, &quot;county&quot;, &quot;state&quot;], &quot;default&quot;: &quot;all&quot;, &quot;tsType&quot;: &quot;\&quot;all\&quot; | \&quot;town\&quot; | \&quot;county\&quot; | \&quot;state\&quot;&quot;, &quot;section&quot;: &quot;Behavior&quot; },
+  &quot;showFixtureBanner&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || (this.props.defaultMode ?? 'advanced'),
+    auth: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_auth')) || null,
+    level: this.props.defaultLevel ?? 'all'
+  };
+
+  setMode(m) {
+    this.setState({ mode: m });
+    try { localStorage.setItem('gw_home_mode', m); } catch (e) {}
+  }
+
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GOLD = '#ECC35C';
+    const ISSUES = [
+      { title: 'Building & Annexation Moratorium', lvl: 'town', lvlName: 'TOWN', lvlColor: MINT, board: 'Town Council', area: 'Zoning / Land Use', stage: 'Vote soon', stageColor: GOLD, impact: 75, bar: RED, conf: '91%', flags: [ { t: '▲ Packet changed', c: RED }, { t: 'Council meets Jul 21', c: GOLD }, { t: '2 promises affected', c: BLUE } ] },
+      { title: 'Admin-Fee Ordinance 2026-0055', lvl: 'town', lvlName: 'TOWN', lvlColor: MINT, board: 'Town Council', area: 'Taxes / Fees', stage: '2nd reading passed', stageColor: '#C3CDD9', impact: 65, bar: AMBER, conf: 'MED', flags: [ { t: 'Promise conflict — R. Roe', c: RED }, { t: 'AI summary', c: GOLD } ] },
+      { title: 'Alpine Lakes Addition Annexation (61 ac)', lvl: 'town', lvlName: 'TOWN', lvlColor: MINT, board: 'Town Council', area: 'Development / Annexation', stage: 'Voted 4–1 · follow-up', stageColor: GREEN, impact: 60, bar: AMBER, conf: '96%', flags: [ { t: '✓ Roll-call recorded', c: GREEN } ] },
+      { title: 'Rural Land-Use Rule Update', lvl: 'county', lvlName: 'COUNTY', lvlColor: AMBER, board: 'Lincoln Co. Planning', area: 'Zoning / Land Use', stage: 'Draft under review', stageColor: '#C3CDD9', impact: 55, bar: AMBER, conf: 'MED', flags: [ { t: 'Hearing Jul 15', c: AMBER } ] },
+      { title: 'Short-Term Rental Bill (26-LSO-0142)', lvl: 'state', lvlName: 'STATE', lvlColor: BLUE, board: 'Interim Committee', area: 'Zoning / Property Rights', stage: 'Public comment open', stageColor: GOLD, impact: 80, bar: RED, conf: 'HIGH', flags: [ { t: 'Comment closes Jul 10', c: RED }, { t: 'Local-impact: Alpine', c: MINT } ] },
+      { title: 'Road & Bridge Summer Bid Package', lvl: 'county', lvlName: 'COUNTY', lvlColor: AMBER, board: 'Road & Bridge', area: 'Roads / Transportation', stage: 'Captured', stageColor: '#C3CDD9', impact: 40, bar: AMBER, conf: 'MED', flags: [ { t: 'Bids opened Jul 2', c: '#C3CDD9' } ] }
+    ];
+    const level = this.state.level;
+    const KEYS = ['moratorium', 'fees', 'annexation', 'landuse', 'str', 'all'];
+    const LINKED = ISSUES.map((i, ix) => Object.assign({ tlHref: 'Timeline.dc.html?issue=' + KEYS[ix] }, i));
+    const issues = level === 'all' ? LINKED : LINKED.filter(i => i.lvl === level);
+    const WEATHER = {
+      all: 'Active week — 2 meetings · 4 new documents · 1 packet changed ▲ · 1 vote soon · 2 promises affected',
+      town: 'Town of Alpine — Council meets Tue 6:00 PM · 3 agenda items · 1 packet changed ▲ · vote possible',
+      county: 'Lincoln County — Commission meets Jul 15 · 5 new documents · road bids opened · 1 hearing set',
+      state: 'State of Wyoming — 4 active bills · STR hearing Jul 13 · public comment closes Jul 10'
+    };
+    const pill = (sel, color, dark) => sel ? { bg: color, fg: dark } : { bg: 'transparent', fg: '#8D99A7' };
+    const pAll = pill(level === 'all', '#ECF1F7', '#0B0F14');
+    const pTown = pill(level === 'town', MINT, '#062019');
+    const pCounty = pill(level === 'county', AMBER, '#201302');
+    const pState = pill(level === 'state', BLUE, '#0A1A33');
+    return {
+      isAdvanced: !!this.state.auth && this.state.mode !== 'simple',
+      isSimple: !!this.state.auth && this.state.mode === 'simple',
+      loggedOut: !this.state.auth,
+      userName: this.state.auth || 'J. Citizen',
+      signIn: () => { try { localStorage.setItem('gw_auth', 'J. Citizen'); } catch (e) {} this.setState({ auth: 'J. Citizen' }); },
+      signOut: () => { try { localStorage.removeItem('gw_auth'); } catch (e) {} this.setState({ auth: null }); },
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      printPage: () => window.print(),
+      locLabel: (() => { try { const l = JSON.parse(localStorage.getItem('gw_location') || 'null'); return l ? l.town + ', ' + l.state : 'Alpine, WY'; } catch (e) { return 'Alpine, WY'; } })(),
+      locLabelLong: (() => { try { const l = JSON.parse(localStorage.getItem('gw_location') || 'null'); return l ? l.town + ', ' + (l.state === 'WY' ? 'Wyoming' : l.state) : 'Alpine, Wyoming'; } catch (e) { return 'Alpine, Wyoming'; } })(),
+      showBanner: this.props.showFixtureBanner ?? true,
+      pickAll: () => this.setState({ level: 'all' }),
+      pickTown: () => this.setState({ level: 'town' }),
+      pickCounty: () => this.setState({ level: 'county' }),
+      pickState: () => this.setState({ level: 'state' }),
+      pAllBg: pAll.bg, pAllFg: pAll.fg,
+      pTownBg: pTown.bg, pTownFg: pTown.fg,
+      pCountyBg: pCounty.bg, pCountyFg: pCounty.fg,
+      pStateBg: pState.bg, pStateFg: pState.fg,
+      weather: WEATHER[level],
+      issues,
+      issueCount: issues.length + (issues.length === 1 ? ' issue' : ' issues')
+    };
+  }
+}
+</script>
+</body>
+</html>

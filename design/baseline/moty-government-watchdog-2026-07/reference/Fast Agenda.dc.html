@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Fast Agenda (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text">
+        <span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search agendas, meetings, documents…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:18px">
+
+    <div style="display:grid;grid-template-columns:430px 1fr;gap:16px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">NEXT MEETING · LIVE BOARD</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:5px;padding:2px 8px">IN 1 DAY</div>
+          </div>
+          <a href="Boards.dc.html" style="display:block;font-size:22px;font-weight:800;line-height:1.15;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Alpine Town Council</a>
+          <div style="font-size:13.5px;color:#C3CDD9;margin-top:6px">Tuesday, July 21, 2026 · 6:30 PM<br><span style="color:#8D99A7">Alpine Town Hall · 250 River Circle · streamed live on YouTube (@townofalpine)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+            <div style="background:#101820;border:1px solid #1F3A2C;border-radius:9px;padding:8px 11px"><div style="font-size:11px;font-weight:700;color:#63D68F">✓ Agenda posted</div><div style="font-size:10.5px;color:#8D99A7">Jul 17, 9:04 AM</div></div>
+            <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:8px 11px"><div style="font-size:11px;font-weight:700;color:#EE7A6D">▲ Attachment replaced</div><div style="font-size:10.5px;color:#8D99A7">consultant eval → V2 · Jul 18</div></div>
+            <div style="background:#201A0E;border:1px solid #4a3c14;border-radius:9px;padding:8px 11px"><div style="font-size:11px;font-weight:700;color:#ECC35C">! Votes possible</div><div style="font-size:10.5px;color:#8D99A7">9 motions + 1 hearing</div></div>
+            <div style="background:#141B23;border:1px solid #232C37;border-radius:9px;padding:8px 11px"><div style="font-size:11px;font-weight:700;color:#C3CDD9">◌ Video &amp; analysis</div><div style="font-size:10.5px;color:#8D99A7">video ~2 days · analysis ~4 days</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">
+            <div style="background:#0E1319;border:1px solid #1F2833;border-radius:9px;padding:8px 4px;text-align:center"><div style="font-size:19px;font-weight:800;color:#ECF1F7">10</div><div style="font-size:9.5px;font-weight:700;letter-spacing:.6px;color:#8D99A7">AGENDA SECTIONS</div></div>
+            <div style="background:#0E1319;border:1px solid #1F2833;border-radius:9px;padding:8px 4px;text-align:center"><div style="font-size:19px;font-weight:800;color:#ECC35C">9</div><div style="font-size:9.5px;font-weight:700;letter-spacing:.6px;color:#8D99A7">MOTIONS DRAFTED</div></div>
+            <div style="background:#0E1319;border:1px solid #1F2833;border-radius:9px;padding:8px 4px;text-align:center"><div style="font-size:19px;font-weight:800;color:#4ED8C3">1</div><div style="font-size:9.5px;font-weight:700;letter-spacing:.6px;color:#8D99A7">PUBLIC HEARING</div></div>
+            <div style="background:#0E1319;border:1px solid #1F2833;border-radius:9px;padding:8px 4px;text-align:center"><div style="font-size:19px;font-weight:800;color:#ECF1F7">21</div><div style="font-size:9.5px;font-weight:700;letter-spacing:.6px;color:#8D99A7">ATTACHMENTS · 1 ▲</div></div>
+          </div>
+          <div style="background:#141B23;border:1px solid #232C37;border-radius:9px;padding:10px 12px;margin-top:8px;font-size:12px;color:#C3CDD9;line-height:1.6"><span style="font-size:10px;font-weight:800;letter-spacing:1px;color:#8D99A7">LAST MEETING — JUL 7</span><br>Minutes drafted (approval is consent item 6) · <a href="Newsletter.dc.html" style="color:#7DB1FB">post-meeting analysis ✓</a> · <span style="color:#63D68F;font-weight:700">video ✓ on YouTube</span> · <a href="Source Vault.dc.html" style="color:#7DB1FB">timestamped in the vault</a></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <div style="flex:1;text-align:center;border:1px solid #2E6B60;color:#4ED8C3;border-radius:9px;padding:9px 0;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#0F1E1B">Official agenda ↗</div>
+            <div style="flex:1;text-align:center;border:1px solid #2E6B60;color:#4ED8C3;border-radius:9px;padding:9px 0;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#0F1E1B">Packet v2 ↗</div>
+            <div style="flex:1;text-align:center;border:1px solid #2C3642;color:#C3CDD9;border-radius:9px;padding:9px 0;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#161E27">Remind me</div>
+          </div>
+          <div style="background:#141B23;border:1px solid #232C37;border-radius:9px;padding:10px 12px;margin-top:12px;font-size:12.5px;color:#C3CDD9"><b style="color:#4ED8C3">Public comment:</b> item 9 — 20 minutes total, up to 3 per speaker, any topic (council listens, doesn't act). Written comments to the clerk by 12:00 noon meeting day. The annexation hearing (item 4.a) is the only slot to speak on that question before the votes.</div>
+        </div>
+
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">ALSO COMING UP</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px">
+              <span style="width:9px;height:9px;border-radius:50%;background:#4ED8C3;flex:none"></span>
+              <span style="flex:1;min-width:0"><a href="Boards.dc.html" style="font-size:13px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Alpine Planning &amp; Zoning</a><br><span style="font-size:11px;color:#8D99A7">TOWN · Jul 28 · Town Hall · LUDC amendments pipeline</span></span>
+              <span style="font-size:10px;font-weight:800;color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:5px;padding:2px 7px;flex:none">◌ AGENDA DUE JUL 24</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px">
+              <span style="width:9px;height:9px;border-radius:50%;background:#E5A83B;flex:none"></span>
+              <span style="flex:1;min-width:0"><a href="Boards.dc.html" style="font-size:13px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#E5A83B">Lincoln County Commission</a><br><span style="font-size:11px;color:#8D99A7">COUNTY · Aug 3 · 9:00 AM · Kemmerer · road bids award</span></span>
+              <span style="font-size:10px;font-weight:800;color:#63D68F;border:1px solid #1F3A2C;background:#101820;border-radius:5px;padding:2px 7px;flex:none">✓ AGENDA POSTED</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 12px">
+              <span style="width:9px;height:9px;border-radius:50%;background:#4ED8C3;flex:none"></span>
+              <span style="flex:1;min-width:0"><a href="Boards.dc.html" style="font-size:13px;font-weight:700;color:#ECF1F7;text-decoration:none" style-hover="color:#4ED8C3">Next regular council meeting</a><br><span style="font-size:11px;color:#8D99A7">TOWN · Aug 4 · 6:30 PM · 1st &amp; 3rd Tuesdays · 2nd readings expected</span></span>
+              <span style="font-size:10px;font-weight:800;color:#ECC35C;border:1px solid #4a3c14;background:#201A0E;border-radius:5px;padding:2px 7px;flex:none">◌ AGENDA DUE JUL 31</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">WHAT'S ON THE AGENDA — JULY 21</div>
+          <div style="font-size:11.5px;color:#8D99A7">plain English first · <span style="color:#C3CDD9">numbers match the official municode agenda</span></div>
+        </div>
+        <div style="font-size:12px;color:#8D99A7;margin-bottom:12px">Every item below is read from the posted agenda &amp; packet. Numbers match the official agenda.</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ agendaItems }}" as="it" hint-placeholder-count="5">
+            <div style="display:flex;gap:13px;background:#141B23;border:1px solid #1F2833;border-radius:11px;padding:13px 15px" style-hover="border-color:#33404E">
+              <div style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#4ED8C3;padding-top:2px">{{ it.num }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span onClick="{{ it.open }}" style="font-size:15px;font-weight:700;cursor:pointer" style-hover="color:#4ED8C3">{{ it.title }}</span>
+                  <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:{{ it.actColor }};border:1px solid {{ it.actColor }};border-radius:4px;padding:1px 7px">{{ it.action }}</span>
+                </div>
+                <div style="font-size:12.5px;color:#EDE4C8;margin-top:6px;line-height:1.55;background:#1B1708;border:1px solid #4a3c14;border-left:3px solid #ECC35C;border-radius:0 8px 8px 0;padding:7px 10px"><span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px;margin-right:6px">AI ANALYSIS</span>{{ it.plain }}</div>
+                <div style="font-size:11px;color:#E8A99E;margin-top:5px;line-height:1.5"><b style="color:#EE7A6D">⚠ watch the language:</b> {{ it.langWatch }}</div>
+                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                  <sc-for list="{{ it.flags }}" as="f" hint-placeholder-count="1">
+                    <span style="font-size:10px;font-weight:700;color:{{ f.c }};border:1px solid {{ f.c }};border-radius:5px;padding:1.5px 7px;opacity:.9">{{ f.t }}</span>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:4px;margin-top:7px;flex-wrap:wrap;align-items:center">
+                  <span style="font-size:9px;font-weight:800;letter-spacing:.8px;color:#8D99A7;flex:none">PROCESS</span>
+                  <sc-for list="{{ it.proc }}" as="st" hint-placeholder-count="3">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:{{ st.c }};border:1px solid {{ st.c }};border-radius:4px;padding:1px 6px;opacity:.95">{{ st.sym }} {{ st.t }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;gap:5px;justify-content:center">
+                <span onClick="{{ it.toggleFollow }}" title="Get notified when this issue pops up in future meetings" style="font-size:11px;font-weight:700;color:{{ it.fColor }};border:1px solid {{ it.fBorder }};background:{{ it.fBg }};border-radius:7px;padding:4px 11px;text-align:center;cursor:pointer">{{ it.fLabel }}</span>
+                <span onClick="{{ it.open }}" style="font-size:11px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:4px 11px;text-align:center;cursor:pointer" style-hover="background:#0F1E1B">Analysis ›</span>
+                <span style="font-size:11px;font-weight:600;color:#8D99A7;border:1px solid #2C3642;border-radius:7px;padding:4px 11px;text-align:center;cursor:pointer" style-hover="background:#161E27">Attachments ({{ it.page }}) ↗</span>
+                <a href="{{ it.tlHref }}" style="font-size:11px;font-weight:600;color:#8D99A7;border:1px solid #2C3642;border-radius:7px;padding:4px 11px;text-align:center;text-decoration:none" style-hover="background:#161E27">Timeline ›</a>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:20px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">ISSUE TRACKER — WHERE EVERYTHING STANDS</div>
+        <div style="display:flex;gap:5px;background:#10161D;border:1px solid #1F2833;border-radius:10px;padding:4px;margin-left:auto">
+          <span onClick="{{ pickAll }}" style="padding:5px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pAllBg }};color:{{ pAllFg }}">All</span>
+          <span onClick="{{ pickTown }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pTownBg }};color:{{ pTownFg }}">Town</span>
+          <span onClick="{{ pickCounty }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pCountyBg }};color:{{ pCountyFg }}">County</span>
+          <span onClick="{{ pickState }}" style="padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:{{ pStateBg }};color:{{ pStateFg }}">State</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8D99A7;margin-bottom:14px">Issues stay in their real stage — cards keep their links, summaries and receipts as they move. Scroll sideways for later stages →</div>
+      <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px">
+        <sc-for list="{{ columns }}" as="col" hint-placeholder-count="4">
+          <div style="flex:none;width:252px;background:#0E1319;border:1px solid #1F2833;border-radius:12px;padding:11px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <span style="width:9px;height:9px;border-radius:50%;background:{{ col.dot }}"></span>
+              <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#C3CDD9">{{ col.name }}</span>
+              <span style="margin-left:auto;font-size:11px;font-weight:700;color:#8D99A7;background:#141B23;border:1px solid #232C37;border-radius:5px;padding:0 7px">{{ col.count }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ col.cards }}" as="k" hint-placeholder-count="2">
+                <div style="background:#141B23;border:1px solid #232C37;border-left:3px solid {{ k.lvlColor }};border-radius:9px;padding:10px 11px;cursor:pointer" style-hover="border-color:#33404E">
+                  <div style="font-size:13px;font-weight:700;line-height:1.3">{{ k.title }}</div>
+                  <div style="font-size:10.5px;color:#8D99A7;margin-top:3px">{{ k.board }} · {{ k.area }}</div>
+                  <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;align-items:center">
+                    <span style="font-size:9px;font-weight:800;letter-spacing:.8px;color:{{ k.lvlColor }};border:1px solid {{ k.lvlColor }};border-radius:4px;padding:0.5px 5px">{{ k.lvlName }}</span>
+                    <sc-for list="{{ k.flags }}" as="f" hint-placeholder-count="1">
+                      <span style="font-size:9.5px;font-weight:700;color:{{ f.c }};border:1px solid {{ f.c }};border-radius:4px;padding:0.5px 6px;opacity:.9">{{ f.t }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:10px;color:#8D99A7;margin-top:7px;line-height:1.6"><span style="color:#C3CDD9;font-weight:700">last:</span> {{ k.last }}<br><span style="color:#C3CDD9;font-weight:700">next:</span> {{ k.next }}</div>
+                  <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#8D99A7"><span>{{ k.when }}</span><span><a href="{{ k.tlHref }}" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">timeline</a> · <a href="Source Vault.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">receipts ({{ k.sources }})</a></span></div>
+                  <div style="display:flex;gap:6px;margin-top:8px">
+                    <span onClick="{{ k.toggleFollow }}" title="Get notified when this issue pops up in future meetings" style="flex:1;text-align:center;font-size:10px;font-weight:800;color:{{ k.fColor }};border:1px solid {{ k.fBorder }};background:{{ k.fBg }};border-radius:6px;padding:3.5px 0;cursor:pointer">{{ k.fLabel }}</span>
+                    <span onClick="{{ k.openCard }}" style="flex:1;text-align:center;font-size:10px;font-weight:800;color:#7DB1FB;border:1px solid #29405F;border-radius:6px;padding:3.5px 0;cursor:pointer" style-hover="background:#101A28">Open card ›</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ Holding power accountable. Amplifying transparency.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Tip us something</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(3,6,10,.74);z-index:60;display:grid;place-items:center;padding:26px">
+    <div onClick="{{ eatClick }}" style="width:min(800px,94vw);max-height:88vh;overflow-y:auto;background:#12181F;border:1px solid #33404E;border-radius:16px;box-shadow:0 28px 90px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:18px 22px 0">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">ITEM {{ mi.num }} · DETAILED ANALYSIS</div>
+          <div style="font-size:20px;font-weight:800;line-height:1.25;margin-top:5px">{{ mi.title }} <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:{{ mi.actColor }};border:1px solid {{ mi.actColor }};border-radius:4px;padding:1px 7px;vertical-align:3px;white-space:nowrap">{{ mi.action }}</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap">
+            <span onClick="{{ mi.toggleFollow }}" style="font-size:11.5px;font-weight:800;color:{{ mi.fColor }};border:1px solid {{ mi.fBorder }};background:{{ mi.fBg }};border-radius:999px;padding:5px 14px;cursor:pointer">{{ mi.mLabel }}</span>
+            <span style="font-size:10.5px;color:#8D99A7">alerts whenever this issue appears on a future agenda · if the issue splits, you automatically follow both halves</span>
+          </div>
+        </div>
+        <span onClick="{{ closeModal }}" style="flex:none;width:30px;height:30px;border:1px solid #2C3642;border-radius:8px;display:grid;place-items:center;color:#8D99A7;cursor:pointer;font-size:14px" style-hover="background:#161E27">✕</span>
+      </div>
+      <div style="padding:14px 22px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#1B1708;border:1px solid #4a3c14;border-left:3px solid #ECC35C;border-radius:0 10px 10px 0;padding:12px 14px;font-size:13px;color:#EDE4C8;line-height:1.55"><span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#062019;background:#ECC35C;border-radius:3px;padding:0 6px;margin-right:6px">AI ANALYSIS</span><b style="color:#4ED8C3">What's really being decided:</b> {{ mi.an.decide }}</div>
+        <div style="background:#1D1412;border:1px solid #52302B;border-left:3px solid #EE7A6D;border-radius:0 10px 10px 0;padding:10px 14px;font-size:12.5px;color:#F0D9D4;line-height:1.55"><span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#160B09;background:#EE7A6D;border-radius:3px;padding:0 6px;margin-right:6px">⚠ LANGUAGE WATCH</span>{{ mi.langWatch }}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div>
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:8px">PAST MEETINGS &amp; ANALYSES · <span style="color:#5C6673">NEWEST FIRST</span></div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ mi.an.past }}" as="p" hint-placeholder-count="2">
+                <div style="background:#141B23;border:1px solid #1F2833;border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;gap:9px">
+                    <span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#4ED8C3;padding-top:2px">{{ p.when }}</span>
+                    <span style="font-size:12px;color:#C3CDD9;line-height:1.45">{{ p.what }} · <a href="{{ p.href }}" style="color:#7DB1FB">{{ p.link }}</a> · <a href="Newsletter.dc.html" style="color:#7DB1FB">detailed analysis ›</a></span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center">
+                    <sc-for list="{{ p.vids }}" as="v" hint-placeholder-count="1">
+                      <a href="{{ v.href }}" title="Jump straight to this moment in the meeting video" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7DB1FB;border:1px solid #29405F;background:#101A28;border-radius:5px;padding:2px 7px;text-decoration:none" style-hover="border-color:#7DB1FB">▶ {{ v.s }} · {{ v.ts }}</a>
+                    </sc-for>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7">{{ p.vidNote }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:8px">CONNECTED ISSUES ACROSS TOWN</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ mi.an.related }}" as="r" hint-placeholder-count="2">
+                  <a href="{{ r.href }}" style="font-size:11.5px;font-weight:700;color:#7DB1FB;border:1px solid #29405F;background:#101A28;border-radius:999px;padding:4px 11px;text-decoration:none" style-hover="border-color:#7DB1FB">{{ r.t }} ›</a>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:8px">WHO DECIDES</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ mi.an.who }}" as="w" hint-placeholder-count="3">
+                  <a href="Power Tracker.dc.html" style="font-size:11px;font-weight:700;color:#C3CDD9;border:1px solid #232C37;background:#141B23;border-radius:7px;padding:4px 9px;text-decoration:none" style-hover="border-color:#33404E">{{ w.name }} · <span style="color:{{ w.c }}">{{ w.stance }}</span></a>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#8D99A7;margin-bottom:8px">RECEIPTS</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <sc-for list="{{ mi.an.receipts }}" as="rc" hint-placeholder-count="2">
+                  <a href="{{ rc.href }}" style="font-size:12px;color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">▸ {{ rc.t }}</a>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;border-top:1px solid #1F2833;padding-top:14px;flex-wrap:wrap">
+          <a href="{{ mi.tlHref }}" style="font-size:12px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:8px;padding:7px 14px;text-decoration:none" style-hover="background:#0F1E1B">Full timeline ›</a>
+          <span style="font-size:12px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:8px;padding:7px 14px;cursor:pointer" style-hover="background:#161E27">Packet p.{{ mi.page }} ↗</span>
+          <a href="Source Vault.dc.html" style="font-size:12px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:8px;padding:7px 14px;text-decoration:none" style-hover="background:#161E27">All receipts ›</a>
+          <span onClick="{{ closeModal }}" style="margin-left:auto;font-size:12px;font-weight:700;color:#8D99A7;border:1px solid #2C3642;border-radius:8px;padding:7px 16px;cursor:pointer" style-hover="background:#161E27">Close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ocOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ ocClose }}" style="position:fixed;inset:0;background:rgba(3,6,10,.74);z-index:70;display:grid;place-items:center;padding:26px">
+    <div onClick="{{ eatClick }}" style="width:min(560px,94vw);max-height:88vh;overflow-y:auto;background:#12181F;border:1px solid #33404E;border-radius:16px;padding:20px 22px;box-shadow:0 28px 90px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">ISSUE CARD</div>
+          <div style="font-size:19px;font-weight:800;line-height:1.25;margin-top:5px">{{ oc.title }} <span style="font-size:9px;font-weight:800;letter-spacing:.8px;color:{{ oc.lvlColor }};border:1px solid {{ oc.lvlColor }};border-radius:4px;padding:1px 6px;vertical-align:2px">{{ oc.lvlName }}</span></div>
+          <div style="font-size:11.5px;color:#8D99A7;margin-top:3px">{{ oc.board }} · {{ oc.area }} · {{ oc.when }}</div>
+        </div>
+        <span onClick="{{ ocClose }}" style="flex:none;width:28px;height:28px;border:1px solid #2C3642;border-radius:8px;display:grid;place-items:center;color:#8D99A7;cursor:pointer;font-size:13px" style-hover="background:#161E27">✕</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:#8D99A7">LAST MEETING</div><div style="font-size:12.5px;color:#C3CDD9;margin-top:3px">{{ oc.last }}</div></div>
+        <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;color:#8D99A7">NEXT MEETING</div><div style="font-size:12.5px;color:#C3CDD9;margin-top:3px">{{ oc.next }}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <sc-for list="{{ oc.flags }}" as="f" hint-placeholder-count="1"><span style="font-size:10px;font-weight:700;color:{{ f.c }};border:1px solid {{ f.c }};border-radius:5px;padding:1.5px 7px;opacity:.9">{{ f.t }}</span></sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <span onClick="{{ oc.toggleFollow }}" style="font-size:11.5px;font-weight:800;color:{{ oc.fColor }};border:1px solid {{ oc.fBorder }};background:{{ oc.fBg }};border-radius:999px;padding:5px 14px;cursor:pointer">{{ oc.fLabel }}</span>
+        <span style="font-size:10.5px;color:#8D99A7">alerts when it lands on a future agenda · if the issue splits, you follow both halves</span>
+      </div>
+      <div style="display:flex;gap:8px;border-top:1px solid #1F2833;padding-top:12px;margin-top:12px;flex-wrap:wrap">
+        <a href="{{ oc.tlHref }}" style="font-size:12px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:8px;padding:7px 14px;text-decoration:none" style-hover="background:#0F1E1B">Full timeline ›</a>
+        <a href="Source Vault.dc.html" style="font-size:12px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:8px;padding:7px 14px;text-decoration:none" style-hover="background:#161E27">Receipts ({{ oc.sources }}) ›</a>
+        <span onClick="{{ ocClose }}" style="margin-left:auto;font-size:12px;font-weight:700;color:#8D99A7;border:1px solid #2C3642;border-radius:8px;padding:7px 16px;cursor:pointer" style-hover="background:#161E27">Close</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Fast Agenda (light)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:1000px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+          <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+          <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+        </div>
+        <span onClick="{{ printPage }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Print</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">MEETINGS &amp; AGENDAS</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:20px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="border:2px solid #1E1C17;border-radius:8px;background:#FFF8E4;padding:18px 22px;margin-bottom:20px">
+      <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#A33327">THE NEXT MEETING</div>
+      <div style="font-size:clamp(24px,3.4vw,34px);font-weight:600;line-height:1.1;margin-top:6px">Town Council meets Tuesday at 6:00 PM</div>
+      <div style="font-size:16px;color:#4A463C;margin-top:6px">July 7, 2026 · Alpine Town Hall, 250 River Circle · you can also join by Zoom. Anyone may speak during public comment — sign up at the door before 6:00, three minutes per person.</div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;font-family:'Public Sans',sans-serif">
+        <a href="#" style="background:#1A4D8F;color:#FBF7EB;font-weight:800;font-size:14px;border-radius:9px;padding:10px 18px;text-decoration:none">Read the official agenda ↗</a>
+        <a href="#" style="border:2px solid #1A4D8F;color:#1A4D8F;font-weight:800;font-size:14px;border-radius:9px;padding:8px 18px;text-decoration:none;background:#FDFAF1">Meeting packet ↗</a>
+        <span style="border:2px solid #1E1C17;color:#1E1C17;font-weight:800;font-size:14px;border-radius:9px;padding:8px 18px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">🔔 Remind me</span>
+      </div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#7B241C;background:#FDECEA;border:1px solid #C0392B;border-radius:6px;padding:7px 11px;margin-top:12px;display:inline-block"><b>▲ Heads up:</b> the meeting packet was changed on July 5, two days after it was first posted. New fee wording was added on page 3. <a href="Source Vault.dc.html" style="color:#7B241C;font-weight:700">See what changed</a></div>
+    </div>
+
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#4A463C;border-bottom:2px solid #1E1C17;padding-bottom:5px;margin-bottom:14px">WHAT THEY'LL TALK ABOUT — IN PLAIN ENGLISH</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:26px">
+      <sc-for list="{{ agendaItems }}" as="it" hint-placeholder-count="5">
+        <div style="display:flex;gap:14px;border-bottom:1px solid #D8D0BC;padding-bottom:14px">
+          <div style="flex:none;width:34px;height:34px;border-radius:50%;background:#1A4D8F;color:#FBF7EB;display:grid;place-items:center;font-family:'Public Sans',sans-serif;font-size:13px;font-weight:800">{{ it.n }}</div>
+          <div style="flex:1">
+            <div style="font-size:20px;font-weight:600;line-height:1.2">{{ it.title }} <span style="font-family:'Public Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.6px;color:{{ it.actColorL }};border:1.5px solid {{ it.actColorL }};border-radius:4px;padding:1px 7px;vertical-align:3px">{{ it.action }}</span></div>
+            <div style="font-size:15.5px;color:#4A463C;margin-top:6px;line-height:1.5;background:#FFF8E4;border:1px solid #E0C98A;border-left:3px solid #D9A400;border-radius:0 6px 6px 0;padding:7px 11px"><span style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;letter-spacing:.5px;color:#5C4500;background:#FFF3CD;border:1px solid #D9A400;border-radius:3px;padding:0 5px;margin-right:5px">AI ANALYSIS</span>{{ it.plain }}</div>
+            <div style="font-family:'Public Sans',sans-serif;font-size:13px;margin-top:6px"><a href="#">Official wording — packet page {{ it.page }} ↗</a> · <a href="{{ it.tlHref }}">see it on the timeline</a>{{ it.noteJoin }}<span style="color:#7B241C;font-weight:700">{{ it.note }}</span></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#4A463C;border-bottom:2px solid #1E1C17;padding-bottom:5px;margin-bottom:14px">WHERE THINGS STAND — ALL OPEN ISSUES</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 26px;margin-bottom:22px">
+      <sc-for list="{{ columns }}" as="col" hint-placeholder-count="4">
+        <div style="break-inside:avoid;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1px;color:#1E1C17"><span style="width:10px;height:10px;border-radius:50%;background:{{ col.dot }}"></span>{{ col.name }} <span style="color:#6E685B;font-weight:600">({{ col.count }})</span></div>
+          <div style="margin-top:6px">
+            <sc-for list="{{ col.cards }}" as="k" hint-placeholder-count="2">
+              <div style="font-size:15.5px;padding:5px 0 5px 18px;border-left:3px solid {{ k.lvlColor }};margin:6px 0"><b>{{ k.title }}</b> <span style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;color:{{ k.lvlColor }}">{{ k.lvlName }}</span><br><span style="font-size:13.5px;color:#4A463C">{{ k.board }} · {{ k.when }} · <a href="{{ k.tlHref }}" style="font-size:13px">timeline</a> · <a href="Source Vault.dc.html" style="font-size:13px">receipts ({{ k.sources }})</a></span></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Want the full tracking board? <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'advanced',
+    level: 'all',
+    openItem: null,
+    openCard: null,
+    tracked: (() => { try { return JSON.parse(localStorage.getItem('gw_tracked') || '{}'); } catch (e) { return {}; } })()
+  };
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+  componentDidMount() { this._esc = (e) => { if (e.key === 'Escape') this.setState({ openItem: null, openCard: null }); }; window.addEventListener('keydown', this._esc); }
+  componentWillUnmount() { window.removeEventListener('keydown', this._esc); }
+  toggleTrack(key) { const t = Object.assign({}, this.state.tracked); if (t[key]) delete t[key]; else t[key] = true; this.setState({ tracked: t }); try { localStorage.setItem('gw_tracked', JSON.stringify(t)); } catch (e) {} }
+
+  renderVals() {
+    const MINT = '#4ED8C3', AMBER = '#E5A83B', BLUE = '#7DB1FB', RED = '#EE7A6D', GREEN = '#63D68F', GOLD = '#ECC35C', GREY = '#8D99A7';
+    const AGENDA = [
+      { num: '2.1', n: '1', title: 'Approve minutes — June 26 meeting', action: 'CONSENT', actColor: GREY, actColorL: '#6E685B', page: 2, plain: 'Routine approval of last meeting\u2019s written record. The June 26 minutes are attached; the video from that night is still missing.', an: { decide: 'Whether the written record of June 26 becomes official. Once approved, the minutes are the legal memory of that meeting — and the video that would let you check them is still not posted.', past: [{ when: 'Jul 3', what: 'Video still not posted (10 days)', href: 'Source Vault.dc.html', link: 'missing-record flag', vidNote: 'document event — no video' }, { when: 'Jun 26', what: 'Meeting held — minutes drafted', href: 'Newsletter.dc.html', link: 'post-meeting analysis', vidNote: '▲ video missing — flagged' }], related: [{ t: 'Public-notice standardization', href: 'Timeline.dc.html?issue=all' }], who: [{ name: 'Full council', stance: 'consent vote', c: GREY }], receipts: [{ t: 'Draft minutes (packet p.2)', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Video missing — flagged', c: RED }], note: ' · June 26 video still missing', noteJoin: ' ' },
+      { num: '3.1', n: '2', title: 'Resolution 2024-033 — building & annexation moratorium', action: 'HEARING + VOTE', actColor: RED, actColorL: '#A33327', page: 3, plain: 'A six-month pause on building permits and annexation petitions in six zoning districts (R2, MRC, C, LI, PCF, RC) while the sewer-capacity study lands. Single-family homes are exempt.', an: { decide: 'A six-month freeze on new building permits and annexation petitions in zones R2, MRC, C, LI, PCF and RC. Tonight is BOTH the public hearing and a possible final vote — and a $150 review fee was quietly added to page 3 after the packet was first posted.', past: [{ when: 'Jul 5', what: 'Packet v2 — $150 review fee added on p.3, two days after posting', href: 'Source Vault.dc.html', link: 'see the diff', vidNote: 'document event — no video' }, { when: 'Jun 26', what: '2nd reading passed 4–1 (Boe no)', href: 'Newsletter.dc.html', link: 'meeting analysis', vidNote: '▲ video missing — flagged' }, { when: 'Jun 12', what: 'Introduced — sewer study cited (92% of max-day capacity)', href: 'Newsletter.dc.html', link: 'analysis', vids: [{ s: 'staff intro', ts: '0:18:05', href: '#' }, { s: 'discussion', ts: '0:24:40', href: '#' }, { s: 'public comment', ts: '0:51:12', href: '#' }, { s: 'motion & vote', ts: '1:02:33', href: '#' }] }], related: [{ t: 'Alpine Flats extension (item 3.3)', href: 'Timeline.dc.html?issue=moratorium' }, { t: 'Interim permitting update (item 4.1)', href: 'Timeline.dc.html?issue=permits' }, { t: 'Sewer capacity follow-up', href: 'Timeline.dc.html?issue=water' }, { t: 'Alpine Lakes annexation', href: 'Timeline.dc.html?issue=annexation' }], who: [{ name: 'Mayor J. Doe', stance: 'leaning yes', c: GOLD }, { name: 'R. Roe', stance: 'swing vote', c: GOLD }, { name: 'K. Moe', stance: 'yes on 2nd', c: GREEN }, { name: 'L. Loe', stance: 'yes on 2nd', c: GREEN }, { name: 'T. Boe', stance: 'voted no', c: RED }], receipts: [{ t: 'Res. 2024-033 full text', href: 'Source Vault.dc.html' }, { t: 'Packet v2 diff — p.3', href: 'Source Vault.dc.html' }, { t: 'Sewer study (92% max-day)', href: 'Source Vault.dc.html' }, { t: 'Jun 26 roll-call', href: 'Source Vault.dc.html' }] }, flags: [{ t: '▲ Packet changed p.3', c: RED }, { t: '2 promises affected', c: BLUE }, { t: 'Public comment open', c: GOLD }], note: ' · new fee wording added Jul 5', noteJoin: ' ' },
+      { num: '3.2', n: '3', title: 'Ordinance 2026-0055 — administrative fees (3rd reading)', action: 'VOTE LIKELY', actColor: GOLD, actColorL: '#7A5B00', page: 9, plain: 'Final reading of new fees for administrative services, returned payments, and staff reimbursements. Passed 2nd reading June 26.', an: { decide: 'Final (3rd) reading of new administrative fees — returned payments, staff reimbursements, document processing. If it passes tonight, it becomes law. R. Roe voted YES on the 2nd reading despite a 2024 promise to oppose new fees.', past: [{ when: 'Jun 26', what: '2nd reading passed — R. Roe voted YES', href: 'Newsletter.dc.html', link: 'meeting analysis', vidNote: '▲ video missing — flagged' }, { when: 'Jun 5', what: '1st reading introduced', href: 'Newsletter.dc.html', link: 'analysis', vids: [{ s: 'introduction', ts: '0:12:20', href: '#' }, { s: 'discussion', ts: '0:19:45', href: '#' }, { s: 'vote', ts: '0:27:10', href: '#' }] }, { when: '2024', what: 'R. Roe on record: \u201cI oppose unnecessary fees.\u201d', href: 'Power Tracker.dc.html', link: 'quote archive', vidNote: 'archived quote — no video' }], related: [{ t: 'FY-27 budget priorities', href: 'Timeline.dc.html?issue=all' }, { t: 'Moratorium fee wording — packet p.3', href: 'Timeline.dc.html?issue=fees' }], who: [{ name: 'R. Roe', stance: 'promise conflict', c: RED }, { name: 'Mayor J. Doe', stance: 'yes on 2nd', c: GREEN }, { name: 'K. Moe', stance: 'yes on 2nd', c: GREEN }], receipts: [{ t: 'Ord. 2026-0055 text', href: 'Source Vault.dc.html' }, { t: 'Jun 26 roll-call', href: 'Source Vault.dc.html' }, { t: 'Roe 2024 quote — verified', href: 'Power Tracker.dc.html' }] }, flags: [{ t: 'Promise conflict — R. Roe', c: RED }], note: '', noteJoin: '' },
+      { num: '3.3', n: '4', title: 'Alpine Flats buildings 3–4 — permit extension', action: 'DISCUSSION', actColor: '#C3CDD9', actColorL: '#4A463C', page: 14, plain: 'Developer asks for a 12-month extension beyond the June 12, 2027 expiration, citing the possible moratorium. Staff memo included.', an: { decide: 'Whether Alpine Flats buildings 3–4 get 12 more months past their June 12, 2027 permit expiration. The developer argues the moratorium (item 3.1) creates the delay — the two items are linked.', past: [{ when: 'Jun 30', what: 'Developer extension letter received', href: 'Source Vault.dc.html', link: 'letter', vidNote: 'document event — no video' }, { when: '2025', what: 'Permits issued for buildings 3–4', href: 'Source Vault.dc.html', link: 'permit record', vidNote: 'document event — no video' }], related: [{ t: 'Moratorium (item 3.1)', href: 'Timeline.dc.html?issue=moratorium' }], who: [{ name: 'Full council', stance: 'discussion only', c: GREY }], receipts: [{ t: 'Staff memo (packet p.14)', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Linked to moratorium', c: MINT }], note: '', noteJoin: '' },
+      { num: '4.1', n: '5', title: 'Ordinance 2026-008 — interim permitting update (2nd reading)', action: 'VOTE LIKELY', actColor: GOLD, actColorL: '#7A5B00', page: 21, plain: 'Updates how permits are processed while the moratorium question is decided — clarifies which applications keep moving.', an: { decide: 'How permit applications are handled while the moratorium question is decided — which applications keep moving and which wait. This is the procedural companion to item 3.1.', past: [{ when: 'Jun 26', what: '1st reading passed 5–0', href: 'Newsletter.dc.html', link: 'meeting analysis', vidNote: '▲ video missing — flagged' }], related: [{ t: 'Moratorium (item 3.1)', href: 'Timeline.dc.html?issue=moratorium' }, { t: 'Alpine Flats extension (item 3.3)', href: 'Timeline.dc.html?issue=moratorium' }], who: [{ name: 'Full council', stance: '5–0 on 1st', c: GREEN }], receipts: [{ t: 'Ord. 2026-008 text', href: 'Source Vault.dc.html' }] }, flags: [], note: '', noteJoin: '' },
+      { num: '5.1', n: '6', title: 'Mayor\u2019s report — July 4th debrief & water system review', action: 'REPORT', actColor: GREY, actColorL: '#6E685B', page: 27, plain: 'Fourth of July wrap-up and the after-action review of the May 21 water-main break that shut down the system.', an: { decide: 'No vote — the mayor reports on July 4th and the review of the May 21 water-main break. Reports often preview what lands on future agendas, so we track them.', past: [{ when: 'Jun 9', what: 'System review ordered', href: 'Source Vault.dc.html', link: 'minutes', vids: [{ s: 'review ordered', ts: '0:44:18', href: '#' }] }, { when: 'May 21', what: 'Water-main break shut down the system', href: 'Timeline.dc.html?issue=water', link: 'timeline', vidNote: 'incident — no meeting video' }], related: [{ t: 'Sewer capacity follow-up (92%)', href: 'Timeline.dc.html?issue=water' }, { t: 'Water-main after-action', href: 'Timeline.dc.html?issue=water' }], who: [{ name: 'Mayor J. Doe', stance: 'reporting', c: GREY }], receipts: [{ t: 'Sewer study — archived', href: 'Source Vault.dc.html' }] }, flags: [{ t: '✓ Study archived', c: GREEN }], note: '', noteJoin: '' }
+    ];
+
+    const AGENDA2 = [
+      { num: '4.a', n: '1', title: 'Public hearing — Alpine Apex annexation petition (Dry Dog Development, LLC)', action: 'PUBLIC HEARING', actColor: RED, actColorL: '#A33327', page: 5, plain: 'The only moment tonight when any resident can speak directly to the annexation before the votes start. P&Z has already sent a signed recommendation; Ordinance 2026-013 (item 8.b) follows the same evening.', an: { decide: 'Whether the statutory conditions for annexation exist and the required procedures were met. The hearing comes first; the 1st reading of Ordinance 2026-013 is item 8.b the same night — if you have something to say about Alpine Apex, this is the slot.', past: [{ when: 'Jul 13', what: 'P&Z Commission report & recommendation signed and forwarded', href: 'Source Vault.dc.html', link: 'signed rec', vidNote: 'document event — no video' }, { when: 'Jun 10', what: 'Annexation report prepared', href: 'Source Vault.dc.html', link: 'report', vidNote: 'document event — no video' }, { when: 'Jun', what: 'Petition to annex + affidavits of mailing & posting filed', href: 'Source Vault.dc.html', link: 'petition + affidavits', vidNote: 'document event — no video' }], related: [{ t: 'Ord 2026-013 — 1st reading (8.b)', href: 'Timeline.dc.html?issue=annexation' }, { t: 'Boardwalk II Lot 18 — 3rd reading (8.a)', href: 'Timeline.dc.html?issue=annexation' }, { t: 'Outside counsel — annexation matter (8.e)', href: 'Timeline.dc.html?issue=annexation' }, { t: 'LUDC rewrite (8.i)', href: 'Timeline.dc.html?issue=ludc' }], who: [{ name: 'Full council', stance: 'hears, then reads 8.b', c: GREY }, { name: 'You', stance: '3 minutes at the mic', c: GREEN }], receipts: [{ t: 'Petition to Annex (3.26 MB)', href: 'Source Vault.dc.html' }, { t: 'Affidavit of Mailing', href: 'Source Vault.dc.html' }, { t: 'Affidavit of Posting', href: 'Source Vault.dc.html' }, { t: 'Annexation Report 2026.06.10', href: 'Source Vault.dc.html' }, { t: 'P&Z Report & Rec — SIGNED', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Speak tonight — only slot', c: GOLD }, { t: 'P&Z rec ✓ on file', c: GREEN }], note: '', noteJoin: '', proc: [{ t: 'petition', c: GREEN, sym: '✓' }, { t: 'notice mailed + posted', c: GREEN, sym: '✓' }, { t: 'P&Z rec', c: GREEN, sym: '✓' }, { t: 'hearing — tonight', c: GOLD, sym: '●' }, { t: '3 readings ahead', c: GREY, sym: '◌' }] },
+      { num: '6', n: '2', title: 'Consent agenda — minutes (Jun 23 + Jul 7), bills, May financials, Rad Curbside', action: 'ONE MOTION', actColor: GREY, actColorL: '#6E685B', page: 5, plain: 'Four items pass in a single motion unless a council member or a citizen asks to pull one: two sets of minutes, the Jun 23 – Jul 21 bills run, the May financial report (10 months of the fiscal year), and Rad Curbside customer service agreements.', an: { decide: 'Consent is where things pass without discussion — that\u2019s the design, and the risk. Any member OR citizen can ask to pull an item onto the regular agenda. The bills list and the draft financial report are the month\u2019s money trail.', past: [{ when: 'Jul 7', what: 'Meeting held — minutes drafted', href: 'Newsletter.dc.html', link: 'post-meeting analysis', vids: [{ s: 'full meeting', ts: '0:00:00', href: '#' }] }, { when: 'Jun 23', what: 'Meeting held — minutes drafted', href: 'Newsletter.dc.html', link: 'post-meeting analysis', vids: [{ s: 'full meeting', ts: '0:00:00', href: '#' }] }], related: [{ t: 'May financial report — 10 mo FY26', href: 'Timeline.dc.html?issue=all' }], who: [{ name: 'Full council', stance: 'one motion', c: GREY }], receipts: [{ t: 'Minutes 2026.07.07 (draft)', href: 'Source Vault.dc.html' }, { t: 'Minutes 2026.06.23 (draft)', href: 'Source Vault.dc.html' }, { t: 'Bills to Pay 6.23 – 7.21', href: 'Source Vault.dc.html' }, { t: 'DRAFT Financial Report', href: 'Source Vault.dc.html' }, { t: 'Rad Curbside proposal 7.13.26', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Pull to discuss — your right', c: MINT }], note: '', noteJoin: '', proc: [{ t: 'posted with packet', c: GREEN, sym: '✓' }, { t: 'one motion — tonight', c: GOLD, sym: '●' }] },
+      { num: '8.a', n: '3', title: 'Ordinance 2026-011 — Boardwalk II Lot 18 annexation (3rd & final reading)', action: 'FINAL VOTE', actColor: GOLD, actColorL: '#7A5B00', page: 1, plain: 'Third and final reading — if it passes tonight the lot is inside town limits, and town rules and rates apply. The motion to adopt is already drafted in the packet.', an: { decide: 'Final adoption. Wyoming ordinances take three readings at separate meetings; this one finishes tonight. After adoption the annexation takes effect subject to the usual challenge windows.', past: [{ when: 'Jul 7', what: '2nd reading passed', href: 'Newsletter.dc.html', link: 'meeting analysis', vids: [{ s: '2nd reading', ts: '0:41:20', href: '#' }, { s: 'vote', ts: '0:47:05', href: '#' }] }, { when: 'Jun 23', what: '1st reading passed', href: 'Newsletter.dc.html', link: 'meeting analysis', vids: [{ s: '1st reading', ts: '1:02:11', href: '#' }] }], related: [{ t: 'Alpine Apex annexation (4.a / 8.b)', href: 'Timeline.dc.html?issue=annexation' }], who: [{ name: 'Full council', stance: '3rd-reading vote', c: GREY }], receipts: [{ t: 'Ord 2026-011 — 3rd reading text', href: 'Source Vault.dc.html' }, { t: 'Jul 7 roll call', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Reading 3 of 3', c: GOLD }], note: '', noteJoin: '', proc: [{ t: '1st — Jun 23', c: GREEN, sym: '✓' }, { t: '2nd — Jul 7', c: GREEN, sym: '✓' }, { t: '3rd — tonight', c: GOLD, sym: '●' }] },
+      { num: '8.b', n: '4', title: 'Ordinance 2026-013 — Alpine Apex annexation / Alpine Village No.1 Plat 3 Lot 96 (1st reading)', action: 'VOTE — 1ST READING', actColor: GOLD, actColorL: '#7A5B00', page: 2, plain: 'Minutes after the hearing, the annexation starts its three-reading run. The drafted motion asks the council to find the statutory conditions met, procedures satisfied, and approve the 1st reading.', an: { decide: 'Reading 1 of 3. The motion contains a formal finding that statutory annexation conditions exist — that finding is exactly what gets challenged if this ever reaches a courtroom (see item 8.e, outside counsel).', past: [{ when: 'Jul 13', what: 'P&Z recommendation signed', href: 'Source Vault.dc.html', link: 'signed rec', vidNote: 'document event — no video' }, { when: 'Jun 10', what: 'Annexation report completed', href: 'Source Vault.dc.html', link: 'report', vidNote: 'document event — no video' }], related: [{ t: 'Tonight\u2019s hearing (4.a)', href: 'Timeline.dc.html?issue=annexation' }, { t: 'Outside counsel (8.e)', href: 'Timeline.dc.html?issue=annexation' }], who: [{ name: 'Full council', stance: '1st-reading vote', c: GREY }], receipts: [{ t: 'Ord 2026-013 — 1st reading text', href: 'Source Vault.dc.html' }, { t: 'Alpine Apex staff report', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Follows the hearing', c: MINT }], note: '', noteJoin: '', proc: [{ t: 'petition + rec', c: GREEN, sym: '✓' }, { t: 'hearing — tonight', c: GOLD, sym: '●' }, { t: '1st — tonight', c: GOLD, sym: '●' }, { t: '2nd · 3rd ahead', c: GREY, sym: '◌' }] },
+      { num: '8.c', n: '5', title: 'AMI Radio Read project — pay applications 1–4 ($667,067.91)', action: 'VOTE — MONEY', actColor: RED, actColorL: '#A33327', page: 5, plain: 'Approves $667,067.91 in contractor pay applications for the smart water-meter project, applies a $286,111.01 credit for parts the town already paid, and releases the $380,956.90 balance to Core & Main, LP.', an: { decide: 'The biggest single money item tonight: $667,067.91 approved, $286,111.01 credited, $380,956.90 paid out. Engineering and town staff labor are "accounted for separately" — a fair question is what the all-in project number is.', past: [{ when: 'Jul 9', what: 'Pay applications 1–4 submitted', href: 'Source Vault.dc.html', link: 'pay apps', vidNote: 'document event — no video' }], related: [{ t: 'Water & sewer thread', href: 'Timeline.dc.html?issue=water' }, { t: 'JVA on-call engineering — item 8.d, \u2264$42,000', href: 'Timeline.dc.html?issue=water' }], who: [{ name: 'Full council', stance: 'money motion', c: GREY }], receipts: [{ t: 'Staff report — pay applications', href: 'Source Vault.dc.html' }, { t: 'Pay App 1', href: 'Source Vault.dc.html' }, { t: 'Pay App 2', href: 'Source Vault.dc.html' }, { t: 'Pay App 3', href: 'Source Vault.dc.html' }, { t: 'Pay App 4', href: 'Source Vault.dc.html' }] }, flags: [{ t: '$380,956.90 out the door', c: RED }], note: '', noteJoin: '', proc: [{ t: 'work billed', c: GREEN, sym: '✓' }, { t: 'credit reconciled', c: GREEN, sym: '✓' }, { t: 'approval — tonight', c: GOLD, sym: '●' }] },
+      { num: '8.e', n: '6', title: 'Outside counsel — Jackson Hole Law engagement, annexation matter (two LLCs)', action: 'VOTE — LEGAL', actColor: RED, actColorL: '#A33327', page: 2, plain: 'Hires outside lawyers for the annexation matter involving Alpine Property Holdings Group, LLC and Premier Realty Investments, LLC. An hourly litigation agreement is attached — the town is getting ready for a fight.', an: { decide: 'Two agreements: an engagement letter and an hourly litigation representation agreement. Hourly means open-ended cost — no cap appears in the drafted motion. Note the timing: it lands the same night as two annexation ordinances and a hearing.', past: [{ when: 'Jul 17', what: 'Engagement + litigation agreements posted with the packet', href: 'Source Vault.dc.html', link: 'agreements', vidNote: 'document event — no video' }], related: [{ t: 'Alpine Apex annexation (4.a / 8.b)', href: 'Timeline.dc.html?issue=annexation' }, { t: 'Boardwalk II Lot 18 (8.a)', href: 'Timeline.dc.html?issue=annexation' }], who: [{ name: 'Full council', stance: 'contract motion', c: GREY }], receipts: [{ t: 'Engagement agreement', href: 'Source Vault.dc.html' }, { t: 'Hourly litigation agreement', href: 'Source Vault.dc.html' }] }, flags: [{ t: 'Litigation watch', c: RED }, { t: 'No fee cap in motion', c: GOLD }], note: '', noteJoin: '', proc: [{ t: 'agreements drafted', c: GREEN, sym: '✓' }, { t: 'approval — tonight', c: GOLD, sym: '●' }, { t: 'costs — open-ended', c: GREY, sym: '◌' }] },
+      { num: '8.i', n: '7', title: 'LUDC rewrite — consultant selection for the comprehensive land-use code rewrite', action: 'VOTE — CONTRACT', actColor: GOLD, actColorL: '#7A5B00', page: 8, plain: 'The council picks who rewrites the town\u2019s entire Land Use & Development Code. The RFP ran twice, two firms priced it across multiple proposals — and the staff evaluation was replaced with a V2 after the packet posted.', an: { decide: 'Whoever wins writes the first draft of every zoning rule Alpine lives under next. The drafted motion authorizes the Mayor to negotiate and execute with a blank where the firm\u2019s name goes. The evaluation attachment was swapped for a V2 after posting — both versions are archived; compare them before the vote.', past: [{ when: 'Jul 18', what: '▲ Staff evaluation replaced with V2 after posting', href: 'Source Vault.dc.html', link: 'see the diff', vidNote: 'document event — no video' }, { when: 'Jun 25–30', what: 'Updated proposals received from two firms', href: 'Source Vault.dc.html', link: 'proposals', vidNote: 'document event — no video' }, { when: 'Dec 2025', what: 'First RFP round — original proposals', href: 'Source Vault.dc.html', link: 'RFP v1 record', vidNote: 'document event — no video' }], related: [{ t: 'Ord 2026-014 — LUDC amendments (8.g)', href: 'Timeline.dc.html?issue=landuse' }, { t: 'Ord 2026-012 — ICC exemptions (8.h)', href: 'Timeline.dc.html?issue=landuse' }, { t: 'Interim permitting 2026-008', href: 'Timeline.dc.html?issue=permits' }], who: [{ name: 'Full council', stance: 'selection vote', c: GREY }, { name: 'Mayor', stance: 'negotiates + signs', c: GREY }], receipts: [{ t: 'RFP — LUDC Redesign V2', href: 'Source Vault.dc.html' }, { t: 'Staff evaluation V2 ▲', href: 'Source Vault.dc.html' }, { t: 'Proposal — firm A (Jun 30)', href: 'Source Vault.dc.html' }, { t: 'Proposal — firm B (Jun 25)', href: 'Source Vault.dc.html' }, { t: 'Staff & Commission recommendation', href: 'Source Vault.dc.html' }] }, flags: [{ t: '▲ Evaluation replaced (V2)', c: RED }, { t: 'Shapes every future permit', c: BLUE }], note: ' · staff evaluation replaced with V2 on Jul 18', noteJoin: ' ', proc: [{ t: 'RFP ×2', c: GREEN, sym: '✓' }, { t: 'proposals', c: GREEN, sym: '✓' }, { t: 'evaluation V2', c: RED, sym: '▲' }, { t: 'selection — tonight', c: GOLD, sym: '●' }, { t: 'contract + rewrite', c: GREY, sym: '◌' }] },
+      { num: '8.h', n: '8', title: 'Ordinances 2026-014 (LUDC amendments) & 2026-012 (ICC exemptions) — 1st readings', action: 'VOTE — 1ST READINGS', actColor: GOLD, actColorL: '#7A5B00', page: 4, plain: 'Two code changes start their three-reading run: targeted land-use amendments now (while the full rewrite is bid out), and building-code exemptions with local amendments to the international codes.', an: { decide: 'Both are reading 1 of 3 — nothing becomes law tonight, but text that survives 1st reading tends to survive, period. 2026-014 amends the land-use code ahead of the full rewrite (8.i); 2026-012 sets which international building-code requirements Alpine opts out of.', past: [{ when: 'Jul 13', what: '2026-014 staff report updates posted', href: 'Source Vault.dc.html', link: 'staff report', vidNote: 'document event — no video' }, { when: 'Jul 10', what: '2026-012 ICC exemptions staff report posted', href: 'Source Vault.dc.html', link: 'staff report', vidNote: 'document event — no video' }], related: [{ t: 'LUDC rewrite consultant (8.i)', href: 'Timeline.dc.html?issue=ludc' }], who: [{ name: 'Full council', stance: '1st-reading votes', c: GREY }], receipts: [{ t: 'Ord 2026-014 — 1st reading text', href: 'Source Vault.dc.html' }, { t: 'Ord 2026-012 — 1st reading text', href: 'Source Vault.dc.html' }] }, flags: [{ t: '2 ordinances · reading 1 of 3', c: MINT }], note: '', noteJoin: '', proc: [{ t: 'staff reports', c: GREEN, sym: '✓' }, { t: '1st — tonight', c: GOLD, sym: '●' }, { t: '2nd — Aug 4', c: GREY, sym: '◌' }, { t: '3rd — Aug 18', c: GREY, sym: '◌' }] }
+    ];
+
+    const CARDS = [
+      { stage: 0, title: 'Road & Bridge summer bids', lvl: 'county', board: 'Road & Bridge', area: 'Roads', when: 'bids closed Jul 18', sources: 3, flags: [], last: 'Jul 18 — bids closed', next: 'Aug 3 — award, Kemmerer' },
+      { stage: 0, title: 'Dark-sky lighting initiative', lvl: 'town', board: 'Planning & Zoning', area: 'Ordinances', when: 'discussed Jun', sources: 1, flags: [], last: 'Jun 14 — P&Z discussion', next: 'Jul 28 — P&Z agenda' },
+      { stage: 1, title: 'Playroom Learning Center lease (8.f)', lvl: 'town', board: 'Town Council', area: 'Town Property', when: 'agenda Jul 21', sources: 2, flags: [], last: 'Jul 17 — posted with packet', next: 'Jul 21 — lease motion' },
+      { stage: 1, title: 'JVA on-call WWTF engineering — \u2264$42,000 (8.d)', lvl: 'town', board: 'Town Council', area: 'Water / Sewer', when: 'agenda Jul 21', sources: 2, flags: [], last: 'Jul 9 — updated agreement', next: 'Jul 21 — contract motion' },
+      { stage: 2, title: 'ICC code exemptions — Ord 2026-012 (8.h)', lvl: 'town', board: 'Town Council', area: 'Building Codes', when: '1st reading Jul 21', sources: 2, flags: [], last: 'Jul 10 — staff report', next: 'Jul 21 — 1st reading' },
+      { stage: 2, title: 'Rural land-use rule update', lvl: 'county', board: 'Co. Planning', area: 'Zoning', when: 'hearing held Jul 15', sources: 2, flags: [], last: 'Jul 15 — hearing, Kemmerer', next: 'Aug 3 — commission follow-up' },
+      { stage: 3, title: 'Alpine Apex annexation — Ord 2026-013 (4.a / 8.b)', lvl: 'town', board: 'Town Council', area: 'Development / Annexation', when: 'hearing Jul 21', sources: 5, flags: [{ t: 'Hearing tonight — speak', c: '#ECC35C' }], last: 'Jul 13 — P&Z rec signed', next: 'Jul 21 — hearing + 1st reading' },
+      { stage: 3, title: 'FY-27 budget priorities', lvl: 'town', board: 'Town Council', area: 'Budget', when: 'comment open', sources: 2, flags: [], last: 'May financial report (10 mo)', next: 'Aug — public hearings' },
+      { stage: 4, title: 'Boardwalk II Lot 18 — Ord 2026-011 3rd reading (8.a)', lvl: 'town', board: 'Town Council', area: 'Development / Annexation', when: 'final vote Jul 21', sources: 3, flags: [{ t: 'Reading 3 of 3', c: '#ECC35C' }], last: 'Jul 7 — 2nd reading passed', next: 'Jul 21 — final adoption' },
+      { stage: 4, title: 'AMI Radio Read pay apps — $667,067.91 (8.c)', lvl: 'town', board: 'Town Council', area: 'Water / Money', when: 'vote Jul 21', sources: 5, flags: [{ t: '$380,956.90 balance due', c: '#EE7A6D' }], last: 'Jul 9 — pay apps 1–4 filed', next: 'Jul 21 — approval motion' },
+      { stage: 4, title: 'LUDC rewrite — consultant selection (8.i)', lvl: 'town', board: 'Town Council', area: 'Zoning / Land Use', when: 'vote Jul 21', sources: 8, flags: [{ t: '▲ Evaluation replaced (V2)', c: '#EE7A6D' }], last: 'Jul 18 — evaluation swapped ▲', next: 'Jul 21 — selection vote' },
+      { stage: 4, title: 'Outside counsel — annexation matter (8.e)', lvl: 'town', board: 'Town Council', area: 'Legal / Property Rights', when: 'vote Jul 21', sources: 2, flags: [{ t: 'Litigation watch', c: '#EE7A6D' }], last: 'Jul 17 — agreements posted', next: 'Jul 21 — engagement motion' },
+      { stage: 5, title: 'Building & annexation moratorium — adopted', lvl: 'town', board: 'Town Council', area: 'Zoning', when: 'adopted Jul 7', sources: 4, flags: [{ t: '✓ Roll-call recorded', c: '#63D68F' }], last: 'Jul 7 — adopted 4–1, fee intact', next: 'renewal watch — Jan 2027' },
+      { stage: 5, title: 'Admin-fee ordinance 2026-0055 — adopted', lvl: 'town', board: 'Town Council', area: 'Taxes / Fees', when: 'adopted Jul 7', sources: 3, flags: [{ t: 'Promise conflict — R. Roe', c: '#EE7A6D' }], last: 'Jul 7 — 3rd reading passed', next: 'fee schedule takes effect' },
+      { stage: 6, title: 'STR bill (26-LSO-0142) — advanced', lvl: 'state', board: 'Interim Committee', area: 'Property Rights', when: 'advanced Jul 13', sources: 4, flags: [{ t: 'Preemption watch', c: '#ECC35C' }], last: 'Jul 13 — committee advanced it', next: 'bill draft vote — fall' },
+      { stage: 6, title: 'Sewer capacity follow-up', lvl: 'town', board: 'Town Council', area: 'Utilities', when: 'study says 92%', sources: 2, flags: [{ t: 'AI extraction', c: '#ECC35C' }], last: 'Jul 7 — cited in moratorium', next: 'JVA on-call support (8.d)' }
+    ];
+    const LVL = { town: { n: 'TOWN', c: MINT }, county: { n: 'COUNTY', c: AMBER }, state: { n: 'STATE', c: BLUE } };
+    const COLS = [
+      { name: 'CAPTURED', dot: GREY }, { name: 'AGENDA POSTED', dot: '#C3CDD9' }, { name: 'PACKET AVAILABLE', dot: BLUE },
+      { name: 'PUBLIC COMMENT', dot: GOLD }, { name: 'VOTE SOON', dot: RED }, { name: 'VOTED', dot: GREEN }, { name: 'FOLLOW-UP', dot: AMBER }
+    ];
+    const trk = this.state.tracked || {};
+    const fSty = (on) => on ? { fColor: '#4ED8C3', fBorder: '#2E6B60', fBg: '#0F1E1B' } : { fColor: '#8D99A7', fBorder: '#2C3642', fBg: 'transparent' };
+    const level = this.state.level;
+    const allCards = [];
+    const columns = COLS.map((c, ix) => {
+      const issOf = (t) => (t.indexOf('Apex') >= 0 || t.indexOf('Boardwalk') >= 0 || t.indexOf('counsel') >= 0 || t.indexOf('annexation') >= 0 || t.indexOf('Lakes') >= 0) ? 'annexation' : t.indexOf('moratorium') >= 0 ? 'moratorium' : (t.indexOf('rental') >= 0 || t.indexOf('26-LSO') >= 0 || t.indexOf('STR') >= 0) ? 'str' : (t.indexOf('fee') >= 0 || t.indexOf('Fee') >= 0) ? 'fees' : t.indexOf('LUDC') >= 0 ? 'ludc' : (t.indexOf('land-use') >= 0 || t.indexOf('Land-Use') >= 0 || t.indexOf('ICC') >= 0) ? 'landuse' : (t.indexOf('AMI') >= 0 || t.indexOf('Sewer') >= 0 || t.indexOf('Water') >= 0 || t.indexOf('water') >= 0 || t.indexOf('WWTF') >= 0) ? 'water' : 'all';
+      const cards = CARDS.filter(k => k.stage === ix && (level === 'all' || k.lvl === level)).map(k => {
+        const kk = issOf(k.title); const key = kk === 'all' ? k.title : kk; const on = !!trk[key];
+        const obj = Object.assign({
+          title: k.title, board: k.board, area: k.area, when: k.when, sources: k.sources, flags: k.flags,
+          last: k.last, next: k.next, lvlName: LVL[k.lvl].n, lvlColor: LVL[k.lvl].c,
+          tlHref: 'Timeline.dc.html?issue=' + kk,
+          toggleFollow: () => this.toggleTrack(key), fLabel: on ? '✓ Tracking' : '⊕ Track'
+        }, fSty(on));
+        obj.openCard = () => this.setState({ openCard: obj.title });
+        allCards.push(obj);
+        return obj;
+      });
+      return { name: c.name, dot: c.dot, count: cards.length, cards };
+    });
+
+    const pill = (sel, color, dark) => sel ? { bg: color, fg: dark } : { bg: 'transparent', fg: '#8D99A7' };
+    const pAll = pill(level === 'all', '#ECF1F7', '#0B0F14'), pTown = pill(level === 'town', MINT, '#062019'),
+      pCounty = pill(level === 'county', AMBER, '#201302'), pState = pill(level === 'state', BLUE, '#0A1A33');
+
+    const LANGW = {
+      '4.a': 'The 8.b motion recites "statutory conditions\u2026 have been met" BEFORE this hearing happens \u2014 listen for whether testimony changes a single word of it.',
+      '6': '"Routine" is a label, not a fact \u2014 consent bundles pass unread unless someone pulls an item. The bills run and the service agreements sit in attachments, not in the motion text.',
+      '8.a': '"3rd and Final Reading" bundles adoption with effect \u2014 ask when town rates and rules actually start applying to the lot.',
+      '8.b': 'The motion asserts findings as fact ("conditions exist\u2026 procedures have been met") \u2014 findings drafted before the hearing are the courtroom target later.',
+      '8.c': '"Accounted for separately" means the $667,067.91 is NOT the all-in cost \u2014 engineering and staff labor live outside this motion, and the credit makes the check sound smaller than the project.',
+      '8.e': '"Engagement agreement" sounds administrative \u2014 the attachment is an HOURLY LITIGATION agreement with no cap anywhere in the motion. Open-ended spend, one line.',
+      '8.i': 'The motion authorizes the Mayor to "negotiate and execute\u2026 with ____________" \u2014 a signature approved before the public hears which firm won, priced off an evaluation that changed after posting.',
+      '8.h': '"Exemptions and local amendments" is subtraction dressed as housekeeping \u2014 the list of code protections being dropped lives only in the attachment.'
+    };
+    const agItems = AGENDA2.map((a, i) => { const key = ({ '4.a': 'annexation', '6': 'council', '8.a': 'annexation', '8.b': 'annexation', '8.c': 'water', '8.e': 'annexation', '8.i': 'ludc', '8.h': 'landuse' }[a.num] || 'all'); const on = !!trk[key]; return Object.assign({ tlHref: 'Timeline.dc.html?issue=' + key, open: () => this.setState({ openItem: i }), toggleFollow: () => this.toggleTrack(key), fLabel: on ? '✓ Tracking' : '⊕ Track', mLabel: on ? '✓ Following this issue' : '⊕ Follow this issue', langWatch: LANGW[a.num] || '' }, fSty(on), a); });
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: this.state.mode !== 'simple',
+      isSimple: this.state.mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      printPage: () => window.print(),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      agendaItems: agItems,
+      modalOpen: this.state.openItem !== null,
+      mi: this.state.openItem === null ? {} : agItems[this.state.openItem],
+      closeModal: () => this.setState({ openItem: null }),
+      eatClick: (e) => e.stopPropagation(),
+      ocOpen: !!this.state.openCard,
+      oc: allCards.find(c => c.title === this.state.openCard) || {},
+      ocClose: () => this.setState({ openCard: null }),
+      columns,
+      pickAll: () => this.setState({ level: 'all' }),
+      pickTown: () => this.setState({ level: 'town' }),
+      pickCounty: () => this.setState({ level: 'county' }),
+      pickState: () => this.setState({ level: 'state' }),
+      pAllBg: pAll.bg, pAllFg: pAll.fg, pTownBg: pTown.bg, pTownFg: pTown.fg,
+      pCountyBg: pCounty.bg, pCountyFg: pCounty.fg, pStateBg: pState.bg, pStateFg: pState.fg
+    };
+  }
+}
+</script>
+</body>
+</html>

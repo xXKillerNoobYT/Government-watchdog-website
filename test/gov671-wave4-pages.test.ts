@@ -39,8 +39,8 @@ describe('GOV-671 Power Tracker', () => {
     expect(root.textContent).not.toMatch(/score|verdict|influence|pledge/i);
   });
 
-  it('uses gw-mode for an advanced source trail without inventing roster data', () => {
-    localStorage.setItem('gw-mode', 'advanced');
+  it('uses gw_home_mode for an advanced source trail without inventing roster data', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderPowerTracker(root, GRAPH_REAL, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="power-advanced-list"]')).not.toBeNull();
     expect(root.querySelector('[data-test="issue-proof-rail"]')).not.toBeNull();
@@ -95,7 +95,7 @@ describe('GOV-671 Location coverage', () => {
     expect(root.querySelector('[data-test="location-covered"]')).toBeNull();
   });
 
-  it('is registered in the gated shell navigation', async () => {
+  it('keeps all three routes reachable through the gated shell navigation', async () => {
     vi.resetModules();
     document.body.replaceChildren();
     const app = document.createElement('div');
@@ -105,7 +105,7 @@ describe('GOV-671 Location coverage', () => {
     window.location.hash = '#/power?reviewer=1';
     await import('../src/main');
     expect(app.querySelector('[data-test="power-tracker-page"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="tab-power"]')?.getAttribute('aria-current')).toBe('page');
+    expect(app.querySelector('[data-test="tab-power-tracker"]')?.getAttribute('aria-current')).toBe('page');
 
     window.location.hash = '#/watchlist?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -115,6 +115,7 @@ describe('GOV-671 Location coverage', () => {
     window.location.hash = '#/location?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     expect(app.querySelector('[data-test="location-page"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="tab-location"]')?.getAttribute('aria-current')).toBe('page');
+    expect(app.querySelector('[data-test="shell-jurisdiction"]')?.getAttribute('href')).toBe('#/location');
+    expect(app.querySelector('.gw-shell-tab[aria-current="page"]')).toBeNull();
   });
 });

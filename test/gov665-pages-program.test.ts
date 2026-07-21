@@ -2,8 +2,8 @@
 //
 // GOV-665 — Wave 2 pages program: Fast Agenda, timeline levels/filters, and
 // Boards directory/detail. These tests pin the public-lane 0-leak invariant, the
-// `gw-mode` Simple/Advanced switch, and the no-score body detail rule.
-import { beforeEach, describe, expect, it } from 'vitest';
+// shared `gw_home_mode` Simple/Advanced switch, and the no-score body detail rule.
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels, readPageMode } from '../src/ui/pages-program';
 import type { AgendaBoard } from '../src/types/agenda-board';
 import type { ReadApiResponse } from '../src/types/read-api';
@@ -48,14 +48,16 @@ describe('GOV-665 Fast Agenda page', () => {
     expect(root.querySelector('[data-test="fixture-banner"]')?.textContent).toContain('OFFLINE SAMPLE');
   });
 
-  it('uses gw-mode to switch from one-card Simple to list Advanced for the sample projection', () => {
+  it('uses the shared mode preference to switch from Advanced list to one-card Simple', () => {
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(readPageMode()).toBe('simple');
-    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
-    root.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')!.click();
-    expect(localStorage.getItem('gw-mode')).toBe('advanced');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(readPageMode()).toBe('advanced');
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
+    const shellRerender = vi.fn();
+    window.addEventListener('hashchange', shellRerender, { once: true });
+    root.querySelector<HTMLButtonElement>('[data-test="mode-simple"]')!.click();
+    expect(localStorage.getItem('gw_home_mode')).toBe('simple');
+    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
+    expect(shellRerender).toHaveBeenCalledOnce();
   });
 
   it('does not let Advanced mode override an explicit light theme choice', () => {
@@ -75,18 +77,39 @@ describe('GOV-665 Fast Agenda page', () => {
 
 describe('GOV-665 Timeline levels and event filters', () => {
   it('renders advanced three-lane style buckets for reviewed source events', () => {
-    localStorage.setItem('gw-mode', 'advanced');
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams('level=day&type=source'), 'real');
     expect(root.querySelector('[data-test="timeline-filters"]')?.textContent).toContain('Level: day');
     expect(root.querySelector('[data-test="timeline-filters"]')?.textContent).toContain('Type: source');
     expect(root.querySelector('[data-test="timeline-advanced-lanes"]')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="record-card"]')).toHaveLength(GRAPH_REAL.records!.length);
+    expect(root.querySelector('[data-test="timeline-hybrid-intro"]')?.textContent).toContain('existing fail-closed record cards');
+    expect(root.querySelector('[data-test="timeline-filter-form"]')).not.toBeNull();
+    expect(root.textContent).toContain('County and State lanes remain unavailable');
   });
 
   it('shows an honest empty state instead of inventing records for unmatched filters', () => {
     renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams('type=agenda'), 'real');
     expect(root.querySelector('[data-test="timeline-empty"]')?.textContent).toContain('No reviewed records match');
     expect(root.querySelector('[data-test="record-card"]')).toBeNull();
+  });
+
+  it('applies the shared shell search query to reviewed fields only', () => {
+    const needle = GRAPH_REAL.records![0].statement_id;
+    renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(`search=${encodeURIComponent(needle)}`), 'real');
+    expect(root.querySelector('[data-test="timeline-search-filter"]')?.textContent).toContain(needle.toLocaleLowerCase());
+    expect(root.querySelectorAll('[data-test="record-card"]')).toHaveLength(1);
+  });
+
+  it('submits the hybrid filter controls as an encoded timeline route', () => {
+    renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const search = root.querySelector<HTMLInputElement>('[data-test="timeline-search-input"]')!;
+    const level = root.querySelector<HTMLSelectElement>('[data-test="timeline-level-select"]')!;
+    search.value = 'water main';
+    level.value = 'day';
+    root.querySelector<HTMLFormElement>('[data-test="timeline-filter-form"]')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(window.location.hash).toBe('#/timeline?search=water+main&level=day&reviewer=1');
   });
 
   it('renders zero timeline cards outside reviewer-internal access', () => {

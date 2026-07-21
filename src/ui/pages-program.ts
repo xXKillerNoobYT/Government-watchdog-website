@@ -25,7 +25,11 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 export type PageMode = 'simple' | 'advanced';
-const MODE_KEY = 'gw-mode';
+// The handoff defines one cross-page reading-mode preference.  Older page
+// renderers briefly used a second `gw-mode` key, which let the persistent shell
+// say Advanced while a page rendered Simple.  Keep one source of truth so the
+// two complete skins always move together.
+const MODE_KEY = 'gw_home_mode';
 const WATCHLIST_KEY = 'gw-watchlist';
 
 export function readPageMode(): PageMode {
@@ -35,7 +39,7 @@ export function readPageMode(): PageMode {
   } catch {
     /* storage unavailable */
   }
-  return 'simple';
+  return 'advanced';
 }
 
 function persistPageMode(mode: PageMode): void {
@@ -90,8 +94,15 @@ function modeToggle(onChange: (mode: PageMode) => void): HTMLElement {
     applyModeThemeDefault(mode);
     onChange(mode);
   };
-  simple.addEventListener('click', () => show('simple'));
-  advanced.addEventListener('click', () => show('advanced'));
+  const choose = (mode: PageMode): void => {
+    show(mode);
+    // The persistent shell owns the same gw_home_mode preference. Re-route so
+    // its chrome changes with this in-page control instead of leaving (for
+    // example) an Advanced timeline inside a Simple newspaper shell.
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  };
+  simple.addEventListener('click', () => choose('simple'));
+  advanced.addEventListener('click', () => choose('advanced'));
   mount.append(el('div', { class: 'gw-view-toggle', role: 'tablist', 'aria-label': 'Page mode', 'data-test': 'mode-toggle' }, [simple, advanced]));
   show(readPageMode());
   return mount;
@@ -195,8 +206,85 @@ function selectValue(query: URLSearchParams, key: string, fallback: string, allo
   return allowed.includes(value) ? value : fallback;
 }
 
+function filterOption(value: string, label: string, selected: string): HTMLOptionElement {
+  return el('option', value === selected ? { value, selected: '' } : { value }, [label]);
+}
+
+function timelineFilterBar(
+  query: URLSearchParams,
+  level: TimelineLevel,
+  type: TimelineEventType,
+  resultCount: number,
+): HTMLElement {
+  const form = el('form', {
+    class: 'gw-timeline-filterbar',
+    role: 'search',
+    'aria-label': 'Filter reviewed timeline records',
+    'data-test': 'timeline-filter-form',
+  });
+  const searchInput = el('input', {
+    type: 'search',
+    name: 'search',
+    value: query.get('search') ?? '',
+    placeholder: 'Search reviewed records…',
+    'aria-label': 'Search reviewed timeline records',
+    'data-test': 'timeline-search-input',
+  });
+  const levelSelect = el('select', {
+    name: 'level',
+    'aria-label': 'Group timeline by',
+    'data-test': 'timeline-level-select',
+  }, [
+    filterOption('month', 'Group by month', level),
+    filterOption('day', 'Group by day', level),
+    filterOption('year', 'Group by year', level),
+  ]);
+  const typeSelect = el('select', {
+    name: 'type',
+    'aria-label': 'Timeline record type',
+    'data-test': 'timeline-type-select',
+  }, [
+    filterOption('all', 'All reviewed records', type),
+    filterOption('agenda', 'Agenda-linked', type),
+    filterOption('source', 'Source-dated', type),
+    filterOption('undated', 'Undated', type),
+  ]);
+  const submit = el('button', { type: 'submit', class: 'gw-timeline-filter-submit' }, ['Apply filters']);
+  const reset = el('a', {
+    class: 'gw-timeline-filter-reset',
+    href: '#/timeline?reviewer=1',
+    'data-test': 'timeline-filter-reset',
+  }, ['Clear']);
+  form.append(
+    el('label', { class: 'gw-timeline-field gw-timeline-search-field' }, [
+      el('span', {}, ['Search']),
+      searchInput,
+    ]),
+    el('label', { class: 'gw-timeline-field' }, [el('span', {}, ['Group']), levelSelect]),
+    el('label', { class: 'gw-timeline-field' }, [el('span', {}, ['Record type']), typeSelect]),
+    submit,
+    reset,
+    el('span', { class: 'gw-timeline-result-count', 'data-test': 'timeline-result-count', role: 'status' }, [
+      `${resultCount} reviewed row${resultCount === 1 ? '' : 's'}`,
+    ]),
+  );
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const next = new URLSearchParams();
+    const term = searchInput.value.trim();
+    if (term) next.set('search', term);
+    if (levelSelect.value !== 'month') next.set('level', levelSelect.value);
+    if (typeSelect.value !== 'all') next.set('type', typeSelect.value);
+    next.set('reviewer', '1');
+    window.location.hash = `/timeline?${next.toString()}`;
+  });
+  return form;
+}
+
 export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'timeline-levels-page', 'Timeline', { notice, fixture: query.get('demo') === 'sample' });
+  ensureTimelineHybridStyle();
+  const shell = pageShell(root, 'timeline-levels-page', 'Timeline', { fixture: query.get('demo') === 'sample' });
+  shell.classList.add('gw-timeline-hybrid');
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
       el('h2', {}, ['Reviewer-internal only']),
@@ -207,18 +295,55 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
 
   const level = selectValue(query, 'level', 'month', ['year', 'month', 'day']) as TimelineLevel;
   const type = selectValue(query, 'type', 'all', ['all', 'agenda', 'source', 'undated']) as TimelineEventType;
+  const search = (query.get('search') ?? '').trim().toLocaleLowerCase();
   const timeline = buildTimeline(data);
-  const filtered = timeline.ordered.filter(({ record }) => type === 'all' || eventType(record) === type);
+  const filtered = timeline.ordered.filter(({ record }) => {
+    if (type !== 'all' && eventType(record) !== type) return false;
+    if (!search) return true;
+    const haystack = [
+      record.statement_id,
+      record.statement_text,
+      record.speaker_label,
+      record.agenda_item_id,
+      ...(record.evidence ?? []).flatMap((evidence) => [
+        evidence.to_source_id,
+        evidence.published_by,
+        evidence.jurisdiction,
+      ]),
+    ]
+      .filter((value): value is string => typeof value === 'string')
+      .join(' ')
+      .toLocaleLowerCase();
+    return haystack.includes(search);
+  });
   const byBucket = new Map<string, StatementRecord[]>();
   for (const { record, timelineDate } of filtered) {
     const bucket = dateBucket(timelineDate, level);
     byBucket.set(bucket, [...(byBucket.get(bucket) ?? []), record]);
   }
 
-  shell.append(el('nav', { class: 'gw-view-toggle', 'data-test': 'timeline-filters', 'aria-label': 'Timeline filters' }, [
-    el('span', { class: 'gw-muted' }, [`Level: ${level}`]),
-    el('span', { class: 'gw-muted' }, [`Type: ${type}`]),
-  ]));
+  shell.append(
+    el('section', { class: 'gw-timeline-intro', 'data-test': 'timeline-hybrid-intro' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-timeline-kicker' }, ['REVIEWED RECORD TIMELINE']),
+        el('h2', {}, ['What the current Alpine record actually supports']),
+        el('p', { class: 'gw-muted' }, [
+          'The handoff’s cleaner timeline framing, backed by the existing fail-closed record cards and source-reveal behavior.',
+        ]),
+      ]),
+      el('aside', { class: 'gw-timeline-scope', role: 'note' }, [
+        el('strong', {}, ['TOWN · ALPINE']),
+        el('span', {}, ['County and State lanes remain unavailable until reviewed backend projections exist.']),
+      ]),
+    ]),
+    ...(notice ? [el('div', { class: 'gw-timeline-origin', role: 'status', 'data-test': 'source-notice' }, [notice])] : []),
+    el('div', { class: 'gw-timeline-filter-meta', 'data-test': 'timeline-filters', 'aria-label': 'Applied timeline filters' }, [
+      el('span', {}, [`Level: ${level}`]),
+      el('span', {}, [`Type: ${type}`]),
+      ...(search ? [el('span', { 'data-test': 'timeline-search-filter' }, [`Search: ${search}`])] : []),
+    ]),
+    timelineFilterBar(query, level, type, filtered.length),
+  );
 
   const mount = el('div', { 'data-test': 'timeline-mode-mount' });
   shell.append(modeToggle((mode) => {
@@ -231,7 +356,7 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
       return;
     }
     if (mode === 'simple') {
-      mount.append(el('div', { 'data-test': 'timeline-simple' }, filtered.map(({ record }) => recordCard(record, undefined, undefined, { reviewerInternal: true }))));
+      mount.append(el('div', { class: 'gw-timeline-simple-list', 'data-test': 'timeline-simple' }, filtered.map(({ record }) => recordCard(record, undefined, undefined, { reviewerInternal: true }))));
       return;
     }
     const lanes = [...byBucket.entries()].map(([bucket, records]) =>
@@ -243,8 +368,55 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
         el('div', { class: 'gw-lane-body' }, records.map((record) => recordCard(record, undefined, undefined, { reviewerInternal: true }))),
       ]),
     );
-    mount.append(el('div', { class: 'gw-board', 'data-test': 'timeline-advanced-lanes' }, lanes));
+    mount.append(el('div', { class: 'gw-timeline-lanes', 'data-test': 'timeline-advanced-lanes' }, lanes));
   }), mount);
+}
+
+export const TIMELINE_HYBRID_STYLE = `
+.gw-timeline-hybrid{max-width:none;display:flex;flex-direction:column;gap:14px}
+.gw-timeline-hybrid>.gw-h1{font-size:clamp(1.8rem,3vw,2.7rem);margin:0;line-height:1.05}
+.gw-timeline-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,360px);gap:20px;align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:18px 20px}
+.gw-timeline-intro h2{font-size:1.18rem;margin:3px 0 5px}
+.gw-timeline-intro p{margin:0}
+.gw-timeline-kicker{font:800 var(--gw-text-kicker)/1.2 var(--gw-font);letter-spacing:1.4px;color:var(--gw-accent)}
+.gw-timeline-scope{display:flex;flex-direction:column;gap:5px;background:var(--gw-tone-mint-well);border:var(--gw-border-w) solid var(--gw-tone-mint-line);border-radius:10px;padding:12px 14px;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}
+.gw-timeline-scope strong{color:var(--gw-level-town);font-family:var(--gw-font-mono);font-size:11px;letter-spacing:.8px}
+.gw-timeline-origin{background:var(--gw-surface-well);border:var(--gw-border-w) dashed var(--gw-border);border-radius:10px;padding:10px 14px;text-align:center;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}
+.gw-timeline-filter-meta{display:flex;gap:6px;flex-wrap:wrap}
+.gw-timeline-filter-meta span{font:600 11px/1.2 var(--gw-font-mono);color:var(--gw-text-muted);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:5px 9px;background:var(--gw-surface-subtle)}
+.gw-timeline-filterbar{display:grid;grid-template-columns:minmax(220px,1fr) minmax(155px,auto) minmax(170px,auto) auto auto auto;gap:10px;align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:14px}
+.gw-timeline-field{display:flex;flex-direction:column;gap:5px;color:var(--gw-text-muted);font-size:11px;font-weight:800;letter-spacing:.45px;text-transform:uppercase}
+.gw-timeline-field input,.gw-timeline-field select{width:100%;min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);border-radius:8px;background:var(--gw-surface-subtle);color:var(--gw-text);padding:8px 10px;font:500 var(--gw-text-badge)/1.2 var(--gw-font)}
+.gw-timeline-field input:focus-visible,.gw-timeline-field select:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px;border-color:var(--gw-accent)}
+.gw-timeline-filter-submit,.gw-timeline-filter-reset{display:inline-flex;align-items:center;justify-content:center;min-height:var(--gw-tap-min);border-radius:8px;padding:8px 13px;font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
+.gw-timeline-filter-submit{border:var(--gw-border-w) solid var(--gw-accent);background:var(--gw-accent);color:var(--gw-accent-text-on)}
+.gw-timeline-filter-reset{border:var(--gw-border-w) solid var(--gw-border);background:transparent;color:var(--gw-text-secondary);text-decoration:none}
+.gw-timeline-result-count{align-self:center;color:var(--gw-text-muted);font:600 11px/1.25 var(--gw-font-mono);white-space:nowrap}
+.gw-timeline-hybrid>[data-test="mode-mount"]{margin:0}
+.gw-timeline-hybrid .gw-view-toggle{width:max-content;background:var(--gw-surface-well);border-radius:var(--gw-radius-pill)}
+.gw-timeline-lanes{display:flex;flex-direction:column;gap:14px}
+.gw-timeline-lanes>.gw-lane{width:100%;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);overflow:hidden}
+.gw-timeline-lanes .gw-lane-header{position:static;border-bottom:var(--gw-border-w) solid var(--gw-border);padding:11px 14px;background:var(--gw-surface)}
+.gw-timeline-lanes .gw-lane-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;padding:10px}
+.gw-timeline-lanes .gw-card,.gw-timeline-simple-list .gw-card{margin:0;border-radius:11px;background:var(--gw-card-bg)}
+.gw-timeline-simple-list{display:flex;flex-direction:column;gap:10px}
+@media (max-width:900px){
+  .gw-timeline-intro{grid-template-columns:1fr}
+  .gw-timeline-filterbar{grid-template-columns:1fr 1fr}
+  .gw-timeline-search-field,.gw-timeline-result-count{grid-column:1/-1}
+}
+@media (max-width:640px){
+  .gw-timeline-filterbar{grid-template-columns:1fr}
+  .gw-timeline-search-field,.gw-timeline-result-count{grid-column:auto}
+  .gw-timeline-lanes .gw-lane-body{grid-template-columns:1fr}
+}
+`;
+
+let timelineHybridStyleInjected = false;
+function ensureTimelineHybridStyle(): void {
+  if (timelineHybridStyleInjected) return;
+  document.head.append(el('style', { 'data-test': 'timeline-hybrid-style' }, [TIMELINE_HYBRID_STYLE]));
+  timelineHybridStyleInjected = true;
 }
 
 function topicLabel(node: TopicTreeNode): string {
@@ -500,7 +672,6 @@ export function renderLocation(root: HTMLElement, data: ReadApiResponse, query: 
     )));
   }
 }
-
 function renderIssueDossierCard(record: StatementRecord): HTMLElement {
   return el('article', { class: 'gw-card', 'data-test': 'issue-dossier-card', 'data-id': record.statement_id }, [
     el('p', { class: 'gw-muted' }, [`Record ${record.statement_id}`]),
@@ -611,4 +782,3 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     ]));
   }
 }
-

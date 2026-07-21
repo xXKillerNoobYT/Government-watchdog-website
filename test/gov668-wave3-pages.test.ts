@@ -35,6 +35,7 @@ beforeEach(() => {
 
 describe('GOV-668 Issue Detail', () => {
   it('renders one reviewed statement URL as Simple dossier and Advanced proof rail', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
     const record = GRAPH_REAL.records![0];
     renderIssueDetail(root, GRAPH_REAL, new URLSearchParams(`id=${record.statement_id}`), 'real');
     expect(root.querySelector('[data-test="issue-dossier-card"]')?.getAttribute('data-id')).toBe(record.statement_id);
@@ -42,7 +43,7 @@ describe('GOV-668 Issue Detail', () => {
     expect(root.querySelector('[data-test="issue-proof-rail"]')).toBeNull();
 
     root.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')!.click();
-    expect(localStorage.getItem('gw-mode')).toBe('advanced');
+    expect(localStorage.getItem('gw_home_mode')).toBe('advanced');
     expect(root.querySelectorAll('[data-test="proof-source"]').length).toBe(record.evidence.length);
     expect(root.textContent).not.toMatch(/impact|confidence/i);
   });
@@ -91,12 +92,12 @@ describe('GOV-668 Source Vault', () => {
     window.location.hash = '#/vault?reviewer=1';
     await import('../src/main');
     expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="tab-source vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
 
     window.location.hash = '#/sources?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="tab-source vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
   });
 
   it('keeps canonical #/vault fail-closed before the reviewer gate', async () => {

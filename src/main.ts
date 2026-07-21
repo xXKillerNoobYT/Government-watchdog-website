@@ -30,10 +30,27 @@ import { assertWebSafe } from './data/web-safe';
 import { render, renderCardFeed } from './ui/render';
 import { renderBoards } from './ui/board';
 import { renderHome } from './ui/home';
-import { renderBoardsDirectory, renderFastAgenda, renderIssueDetail, renderLocation, renderPowerTracker, renderSourceVault, renderTimelineLevels, renderWatchlist } from './ui/pages-program';
+import {
+  renderBoardsDirectory,
+  renderFastAgenda,
+  renderIssueDetail,
+  renderLocation as renderReviewedLocation,
+  renderPowerTracker as renderReviewedPowerTracker,
+  renderSourceVault,
+  renderTimelineLevels,
+  renderWatchlist as renderReviewedWatchlist,
+} from './ui/pages-program';
+import { renderFastAgendaDesign } from './ui/fast-agenda-design';
+import {
+  renderAlerts as renderDesignAlerts,
+  renderLocation as renderDesignLocation,
+  renderPowerTracker as renderDesignPowerTracker,
+  renderWatchlist as renderDesignWatchlist,
+  type DesignPageOptions,
+} from './ui/design-pages';
 import { renderTopicTreeView } from './ui/topic-tree-view';
 import { mountThemeToggle } from './ui/theme-toggle';
-import { renderShell } from './ui/shell';
+import { renderShell, type ShellOrigin } from './ui/shell';
 import {
   loadDigestResponse,
   renderNewsletterArchive,
@@ -439,11 +456,19 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
   const access = query.get('access') ?? undefined;
   const sample = query.get('demo') === 'sample';
   const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
+  if (designPreviewActive(query)) {
+    renderFastAgendaDesign(mount, {
+      access: access ?? board.access,
+      fixture: true,
+      notice: 'Owner-approved MOTY visual handoff preview. July 21 meeting content is synthetic until a reviewed backend projection exists.',
+    });
+    return;
+  }
   renderFastAgenda(mount, access ? { ...board, access } : board, sample ? BOARD_SAMPLE_NOTICE : BOARD_NOTICE, sample);
 }
 
 /** GOV-665 Timeline page: level toggles + event-type filters + simple/advanced
- * (`gw-mode`) presentation over the existing reviewed read-model data. */
+ * (`gw_home_mode`) presentation over the existing reviewed read-model data. */
 async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchParams): Promise<void> {
   const demo = query.get('demo');
   const access = query.get('access');
@@ -479,28 +504,6 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
   renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE);
 }
 
-/** GOV-671 Power Tracker: no-ranking Alpine scaffold over the reviewed capture;
- * roster is honest-empty until reviewed people/role rows exist. */
-function renderPowerTrackerRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderPowerTracker(mount, data, query, GRAPH_REAL_NOTICE);
-}
-
-/** GOV-671 Watchlist: device-local toggles only, no email/account sync. */
-function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderWatchlist(mount, data, query, GRAPH_REAL_NOTICE);
-}
-
-/** GOV-671 Location: static Wyoming→Lincoln→Alpine coverage picker, no geo map. */
-function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderLocation(mount, data, query, GRAPH_REAL_NOTICE);
-}
-
 /**
  * GOV-462 newsletter route (gated): `#/newsletter` archive list, `#/newsletter?id=`
  * digest detail. `?state=loading|empty|error` forces the async states for
@@ -532,9 +535,59 @@ function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
     cardFeed: CARD_FEED,
     board: BOARD_PROJECTION,
     newsletter: NEWSLETTER_DIGEST,
-    demo: query.get('demo') === 'sample',
+    // `demo=design` enters the shared handoff-preview session. Home reuses its
+    // existing visibly labelled sample widgets while the dedicated handoff
+    // routes render their richer synthetic design fixtures.
+    demo: query.get('demo') === 'sample' || designPreviewActive(query),
     sampleBoard: BOARD_SAMPLE,
   });
+}
+
+/** Options shared by design-handoff-only routes. The outer `gated()` wrapper is
+ * still the access authority; the explicit public-lane query remains a
+ * fail-closed verification hook for tests/review. */
+function designPageOptions(query: URLSearchParams): DesignPageOptions {
+  return {
+    access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+    fixture: designPreviewActive(query),
+  };
+}
+
+function renderPowerRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignPowerTracker(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedPowerTracker(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignWatchlist(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedWatchlist(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const options = designPageOptions(query);
+  if (options.fixture) {
+    renderDesignLocation(mount, options);
+    return;
+  }
+  const access = query.get('access');
+  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
+  renderReviewedLocation(mount, data, query, GRAPH_REAL_NOTICE);
+}
+
+function renderAlertsRoute(mount: HTMLElement, query: URLSearchParams): void {
+  renderDesignAlerts(mount, designPageOptions(query));
 }
 
 /**
@@ -551,6 +604,7 @@ function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
  * gate state can be screenshotted even with the bypass on.
  */
 const BYPASS_KEY = 'gw-reviewer-bypass';
+const DESIGN_PREVIEW_KEY = 'gw-design-preview';
 const ENV_BYPASS = (() => {
   try {
     return import.meta.env?.VITE_REVIEWER_BYPASS === 'true';
@@ -578,6 +632,61 @@ function reviewerBypassActive(query: URLSearchParams): boolean {
   return ENV_BYPASS || urlBypass || sessionBypass();
 }
 
+/**
+ * A tab-scoped switch for the owner-approved MOTY handoff preview. Entering a
+ * single route with `?demo=design` keeps the synthetic design fixture active as
+ * the reviewer moves through normal shell links. `?demo=live` explicitly exits
+ * it. This is presentation state only: it never grants access and is consulted
+ * only after the existing reviewer gate has admitted the route.
+ */
+function designPreviewActive(query: URLSearchParams): boolean {
+  try {
+    if (query.get('demo') === 'live') sessionStorage.removeItem(DESIGN_PREVIEW_KEY);
+    if (query.get('demo') === 'design') sessionStorage.setItem(DESIGN_PREVIEW_KEY, '1');
+    return sessionStorage.getItem(DESIGN_PREVIEW_KEY) === '1';
+  } catch {
+    return query.get('demo') === 'design';
+  }
+}
+
+/**
+ * Shell-wide provenance follows the explicit demo contract. The design preview
+ * is tab-sticky; all other synthetic modes are URL-local. Real captures and the
+ * live/default route remain reviewed snapshots rather than being called live.
+ */
+const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
+  '/home',
+  '/app',
+  '/agenda-boards',
+  '/agenda',
+  '/timeline',
+  '/boards',
+  '/power',
+  '/watchlist',
+  '/location',
+  '/issue',
+  '/vault',
+  '/sources',
+]);
+const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
+  '/home',
+  '/agenda',
+  '/power',
+  '/watchlist',
+  '/location',
+  '/alerts',
+]);
+function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
+  const designFixture = designPreviewActive(query);
+  const demo = query.get('demo');
+  const explicitFixture =
+    (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
+    || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
+    || (path === '/topics' && demo === 'graph-synthetic');
+  if ((designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) || explicitFixture) return 'fixture';
+  return 'reviewed_snapshot';
+}
+
 /** Resolve the access state for a request from its query + the live bypass. */
 function accessFor(query: URLSearchParams) {
   return resolveAccess(query.get('gate'), reviewerBypassActive(query));
@@ -598,7 +707,7 @@ type ShellHandler = (ctx: { mount: HTMLElement; path: string; query: URLSearchPa
 function gated(handler: ShellHandler): RouteHandler {
   return ({ path, query }) =>
     renderGatedApp(root!, accessFor(query), () => {
-      const mount = renderShell(root!, { active: path });
+      const mount = renderShell(root!, { active: path, origin: shellOriginFor(path, query) });
       handler({ mount, path, query });
     });
 }
@@ -618,14 +727,15 @@ router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRout
 router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
 router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
-router.register('/power', gated(({ mount, query }) => renderPowerTrackerRoute(mount, query)));
-router.register('/watchlist', gated(({ mount, query }) => renderWatchlistRoute(mount, query)));
-router.register('/location', gated(({ mount, query }) => renderLocationRoute(mount, query)));
 router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
 router.register('/timeline-legacy', gated(({ mount, query }) => void renderTimeline(mount, query)));
 router.register('/cards', gated(({ mount, query }) => renderCardFeedRoute(mount, query)));
 router.register('/newsletter', gated(({ mount, query }) => renderNewsletterRoute(mount, query)));
+router.register('/power', gated(({ mount, query }) => renderPowerRoute(mount, query)));
+router.register('/watchlist', gated(({ mount, query }) => renderWatchlistRoute(mount, query)));
+router.register('/location', gated(({ mount, query }) => renderLocationRoute(mount, query)));
+router.register('/alerts', gated(({ mount, query }) => renderAlertsRoute(mount, query)));
 router.register('/topics', gated(({ mount, query }) => void renderTopics(mount, query)));
 router.register('/body', gated(({ mount, query }) => void renderContextPage(mount, 'body', query)));
 router.register('/meeting', gated(({ mount, query }) => void renderContextPage(mount, 'meeting', query)));

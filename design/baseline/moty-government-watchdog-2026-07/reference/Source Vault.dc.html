@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0B0F14}
+*{box-sizing:border-box}
+a{color:#1A4D8F;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#0F3568}
+::selection{background:#4ED8C3;color:#062019}
+</style>
+</helmet>
+
+<sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Source Vault (dark)" style="min-height:100vh;background:#0B0F14;color:#ECF1F7;font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5">
+  <div style="background:#201A0E;border-bottom:1px solid #4a3c14;color:#ECC35C;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="border-bottom:1px solid #1B232D;background:#0D1218">
+    <div style="max-width:1460px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+      <a href="Home.dc.html" style="display:flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:#ECF1F7">
+        <span style="width:38px;height:38px;border-radius:10px;background:#ECF1F7;color:#0B0F14;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px">GW</span>
+        <span style="line-height:1.05"><span style="display:block;font-weight:800;font-size:16.5px;letter-spacing:.2px">GOVERNMENT</span><span style="display:block;font-weight:600;font-size:11px;letter-spacing:3.4px;color:#8D99A7">WATCHDOG</span><span style="display:block;font-weight:700;font-size:8px;letter-spacing:1.6px;color:#4ED8C3;margin-top:2px">AI-POWERED ANALYSIS</span></span>
+      </a>
+      <a href="Location.dc.html" title="Change your place" style="display:flex;align-items:center;gap:8px;border:1px solid #232C37;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#C3CDD9;text-decoration:none;flex:none" style-hover="border-color:#4ED8C3">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ED8C3"></span>{{ locLabel }}<span style="color:#8D99A7;font-weight:600">▾</span>
+      </a>
+      <div style="flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#141B23;border:1px solid #232C37;border-radius:10px;padding:8px 14px;color:#8D99A7;cursor:text">
+        <span style="font-size:15px;opacity:.8">⌕</span><span style="flex:1;font-size:13px">Search documents, hashes, URLs…</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;border:1px solid #2C3642;border-radius:5px;padding:1px 6px">⌘K</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#C3CDD9;cursor:pointer" style-hover="background:#161E27"><a href="Alerts.dc.html" style="color:#C3CDD9;text-decoration:none">Alerts</a><span style="position:absolute;top:-7px;right:-7px;background:#EE7A6D;color:#160B09;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px">3</span></div>
+        <div style="border:1px solid #232C37;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;color:#C3CDD9;flex:none">J. Citizen <span style="color:#63D68F">✓ ID</span> · <a href="Home.dc.html" style="color:#7DB1FB;text-decoration:underline;text-underline-offset:2px">manage</a></div><div style="display:flex;border:1px solid #232C37;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700">
+          <span onClick="{{ goSimple }}" style="padding:7px 15px;color:#8D99A7;cursor:pointer" style-hover="color:#ECF1F7">Simple</span>
+          <span style="padding:7px 15px;background:#4ED8C3;color:#062019;cursor:default">Advanced</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1460px;margin:0 auto;padding:0 28px;display:flex;gap:30px;font-size:13.5px;font-weight:600;color:#8D99A7">
+      <a href="Home.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Home</a>
+      <a href="Fast Agenda.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Fast Agenda</a>
+      <a href="Timeline.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Timeline</a>
+      <a href="Boards.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Boards</a>
+      <a href="Power Tracker.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Power Tracker</a>
+      <a href="Source Vault.dc.html" style="color:#4ED8C3;border-bottom:2px solid #4ED8C3;padding:4px 2px 11px;text-decoration:none">Source Vault</a>
+      <a href="Newsletter.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Newsletter</a>
+      <a href="Watchlist.dc.html" style="padding:4px 2px 11px;color:#8D99A7;text-decoration:none" style-hover="color:#ECF1F7">Watchlist</a>
+    </div>
+  </div>
+
+  <div style="max-width:1460px;margin:0 auto;padding:18px 28px 34px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:20px;font-weight:800">Hidden Things &amp; Source Vault</div>
+      <div style="font-size:12.5px;color:#8D99A7">transparency alerts + the proof behind every claim</div>
+      <div style="margin-left:auto;display:flex;gap:8px;font-size:12px;font-weight:700">
+        <span onMouseEnter="{{ hsSources }}" onMouseLeave="{{ hsNone }}" onClick="{{ pinSources }}" title="Click for the full breakdown" style="position:relative;border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:8px;padding:6px 12px;cursor:pointer">1,248 sources <span style="color:#8D99A7;font-weight:600;font-size:11px">ⓘ</span>
+          <sc-if value="{{ tipSources }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:calc(100% + 8px);right:0;width:330px;background:#141B23;border:1px solid #33404E;border-radius:10px;padding:12px 14px;z-index:40;box-shadow:0 14px 44px rgba(0,0,0,.5);font-weight:400;font-size:12px;color:#C3CDD9;line-height:1.6;text-align:left;cursor:default;white-space:normal"><b style="color:#63D68F">What it counts:</b> every document, agenda, packet, minutes file, video and web page we archive — new versions of the same file count separately, so edits can't overwrite history.<br><b style="color:#63D68F">Last 12 months:</b> +512 new sources, re-fetched and re-checked nightly.<br><span style="color:#8D99A7">click for the full breakdown ›</span></span>
+          </sc-if>
+        </span>
+        <span onMouseEnter="{{ hsHash }}" onMouseLeave="{{ hsNone }}" onClick="{{ pinHash }}" title="Click for how it's calculated" style="position:relative;border:1px solid #2C5A3E;background:#101820;color:#63D68F;border-radius:8px;padding:6px 12px;cursor:pointer">98.6% hash verified <span style="color:#8D99A7;font-weight:600;font-size:11px">ⓘ</span>
+          <sc-if value="{{ tipHash }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:calc(100% + 8px);right:0;width:330px;background:#141B23;border:1px solid #33404E;border-radius:10px;padding:12px 14px;z-index:40;box-shadow:0 14px 44px rgba(0,0,0,.5);font-weight:400;font-size:12px;color:#C3CDD9;line-height:1.6;text-align:left;cursor:default;white-space:normal"><b style="color:#63D68F">What it means:</b> the share of archived files whose SHA-256 fingerprint still matches the copy we saved first — proof nothing was edited after posting.<br><b style="color:#63D68F">How it's calculated:</b> matches ÷ all 1,248 sources, re-checked nightly, rolling 12 months. Today: 1,231 match; 12 changed after posting ▲; 5 vanished.<br><span style="color:#8D99A7">click for details ›</span></span>
+          </sc-if>
+        </span>
+        <span onMouseEnter="{{ hsFlags }}" onMouseLeave="{{ hsNone }}" onClick="{{ pinFlags }}" title="Click to see all open flags" style="position:relative;border:1px solid #52302B;background:#1D1412;color:#EE7A6D;border-radius:8px;padding:6px 12px;cursor:pointer">6 open flags <span style="color:#8D99A7;font-weight:600;font-size:11px">ⓘ</span>
+          <sc-if value="{{ tipFlags }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:calc(100% + 8px);right:0;width:330px;background:#141B23;border:1px solid #33404E;border-radius:10px;padding:12px 14px;z-index:40;box-shadow:0 14px 44px rgba(0,0,0,.5);font-weight:400;font-size:12px;color:#C3CDD9;line-height:1.6;text-align:left;cursor:default;white-space:normal"><b style="color:#EE7A6D">What it counts:</b> transparency failures we can prove — a required record that's missing, late, or changed without notice. A flag stays open until the record is fixed.<br><b style="color:#EE7A6D">Last 12 months:</b> 42 raised · 36 cleared · median 9 days to clear.<br><span style="color:#8D99A7">click to see all six ›</span></span>
+          </sc-if>
+        </span>
+      </div>
+    </div>
+
+    <sc-if value="{{ pinOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#12181F;border:1px solid #33404E;border-radius:14px;padding:16px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:{{ pinColor }}">{{ pinTitle }}</div>
+        <span onClick="{{ pinClose }}" style="flex:none;width:26px;height:26px;border:1px solid #2C3642;border-radius:7px;display:grid;place-items:center;color:#8D99A7;cursor:pointer;font-size:12px" style-hover="background:#161E27">✕</span>
+      </div>
+      <div style="font-size:12.5px;color:#C3CDD9;margin-top:6px;line-height:1.6;max-width:900px">{{ pinHow }}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px">
+        <sc-for list="{{ pinStats }}" as="s" hint-placeholder-count="4">
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px"><div style="font-size:17px;font-weight:800;color:{{ s.c }}">{{ s.v }}</div><div style="font-size:10px;color:#8D99A7;letter-spacing:.4px;margin-top:1px">{{ s.t }}</div></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+        <sc-for list="{{ pinRows }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;background:#141B23;border:1px solid #1F2833;border-radius:8px;padding:8px 11px;font-size:12px;align-items:baseline"><span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{ r.c }}">{{ r.k }}</span><span style="flex:1;color:#C3CDD9">{{ r.t }}</span><span style="flex:none;color:#7DB1FB;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:2px">{{ r.link }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <div style="display:grid;grid-template-columns:350px 1fr 330px;gap:16px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#151210;border:1px solid #3E2A24;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#EE7A6D;margin-bottom:11px">TRANSPARENCY ALERTS · 6</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:#241713;border:1.5px solid #7a453c;border-radius:10px;padding:11px 13px;cursor:pointer">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:13px;color:#EE7A6D">▲ Packet changed after posting</b><span style="font-size:9.5px;font-weight:800;color:#4ED8C3;border:1px solid #29564E;border-radius:4px;padding:1px 6px;height:fit-content">TOWN</span></div>
+              <div style="font-size:11.5px;color:#C3CDD9;margin-top:3px">Town Council · Jul 7 packet · detected Jul 5, 10:42 AM</div>
+              <div style="font-size:10.5px;color:#8D99A7;margin-top:3px">● compared below</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:10px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">Meeting video missing</b><span style="font-size:9.5px;font-weight:800;color:#4ED8C3;border:1px solid #29564E;border-radius:4px;padding:1px 6px;height:fit-content">TOWN</span></div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:2px">Council · Jun 26 · expected within 48h, 10 days late</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:10px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">Minutes posted 34 days late</b><span style="font-size:9.5px;font-weight:800;color:#E5A83B;border:1px solid #4a3c14;border-radius:4px;padding:1px 6px;height:fit-content">COUNTY</span></div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:2px">County P&amp;Z · May meeting · outside 30-day practice</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:10px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">Broken public link</b><span style="font-size:9.5px;font-weight:800;color:#7DB1FB;border:1px solid #31527e;border-radius:4px;padding:1px 6px;height:fit-content">STATE</span></div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:2px">Agency rule draft URL 404s · archive copy still served</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:10px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">Fee language buried in packet</b><span style="font-size:9.5px;font-weight:800;color:#4ED8C3;border:1px solid #29564E;border-radius:4px;padding:1px 6px;height:fit-content">TOWN</span></div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:2px">$150 review fee appears only on p.3 of 98 · flagged by scan</div>
+            </div>
+            <div style="background:#1A1512;border:1px solid #3E2A24;border-radius:10px;padding:10px 13px;cursor:pointer" style-hover="border-color:#7a453c">
+              <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">Property notice gap — Cedar St easement</b><span style="font-size:9.5px;font-weight:800;color:#4ED8C3;border:1px solid #29564E;border-radius:4px;padding:1px 6px;height:fit-content">TOWN</span></div>
+              <div style="font-size:11px;color:#8D99A7;margin-top:2px">survey authorization voted before the 3 affected owners were mailed notice · <span style="color:#ECC35C">taking / property</span></div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#8D99A7;margin-top:11px">Every flag shows <b style="color:#C3CDD9">why it was raised</b> and what would clear it. <b style="color:#ECC35C">Property watch:</b> if it can happen to your neighbor, it can happen to you.</div>
+          <span onClick="{{ pinFlags }}" style="display:block;text-align:center;font-size:11.5px;font-weight:700;color:#EE7A6D;border:1px solid #52302B;border-radius:8px;padding:7px 0;margin-top:10px;cursor:pointer" style-hover="background:#241713">Browse all flags — open &amp; cleared ›</span>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">ALERT INSIGHTS · 30 DAYS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 4px"><div style="font-size:19px;font-weight:800;color:#EE7A6D">18</div><div style="font-size:9.5px;color:#8D99A7">total alerts</div></div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 4px"><div style="font-size:19px;font-weight:800;color:#ECC35C">11</div><div style="font-size:9.5px;color:#8D99A7">docs changed</div></div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 4px"><div style="font-size:19px;font-weight:800;color:#C3CDD9">7</div><div style="font-size:9.5px;color:#8D99A7">missing items</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3">DOCUMENT VERSION COMPARE</div>
+          <span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#63D68F;border:1px solid #2C5A3E;background:#101820;border-radius:4px;padding:1px 7px">100% CODE — NO AI WAIT</span>
+          <span style="font-size:12.5px;font-weight:700">Town Council packet — Jul 7 meeting</span>
+          <div style="margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11px">
+            <span style="border:1px solid #2C3642;background:#141B23;border-radius:7px;padding:4px 10px;color:#C3CDD9">v1 · posted Jul 3, 10:15 AM</span>
+            <span style="color:#8D99A7;font-weight:800">vs</span>
+            <span style="border:1px solid #52302B;background:#1D1412;border-radius:7px;padding:4px 10px;color:#EE7A6D;font-weight:700">v2 · current · Jul 5, 10:42 AM</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;background:#141B23;border:1px solid #1F2833;border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;flex-wrap:wrap">
+          <span style="font-weight:800;color:#C3CDD9">DIFF SUMMARY</span>
+          <span style="color:#63D68F;font-weight:700">+2 paragraphs added</span>
+          <span style="color:#ECC35C;font-weight:700">1 table updated</span>
+          <span style="color:#8D99A7">page 3 of 98 · item 3.1</span>
+          <span onClick="{{ toggleWordDiff }}" style="margin-left:auto;display:flex;align-items:center;gap:7px;cursor:pointer;color:{{ wdFg }};font-weight:700">
+            <span style="width:20px;height:11px;border-radius:99px;background:{{ wdTrack }};position:relative;display:inline-block"><span style="position:absolute;top:1.5px;left:{{ wdKnob }};width:8px;height:8px;border-radius:50%;background:#ECF1F7"></span></span>
+            word-level diff
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:#FBF7EB;border:1px solid #2C3642;border-radius:10px;padding:16px;color:#1E1C17;font-family:'Newsreader',Georgia,serif">
+            <div style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;letter-spacing:1px;color:#6E685B;margin-bottom:9px">VERSION 1 · AS FIRST POSTED · PAGE 3</div>
+            <div style="text-align:center;font-weight:700;font-size:14px">TOWN OF ALPINE — TOWN COUNCIL</div>
+            <div style="text-align:center;font-size:12.5px;margin-bottom:9px">Meeting Agenda Packet · July 7, 2026 · 6:00 PM</div>
+            <div style="font-size:13px;line-height:1.55"><b>3.1 Resolution 2024-033 — Building &amp; Annexation Moratorium.</b> The Council will consider a six-month moratorium on building permits and annexation petitions in zoning districts R2, MRC, C, LI, PCF, and RC. Applications for single-family residences will continue to be accepted, reviewed, and processed in all zones.</div>
+            <div style="font-size:13px;line-height:1.55;margin-top:8px">The town engineer's capacity study is attached as Exhibit B.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6E685B;margin-top:10px">page 3 of 98 · sha a1b2c4d8…</div>
+          </div>
+          <div style="background:#FBF7EB;border:1.5px solid #C0392B;border-radius:10px;padding:16px;color:#1E1C17;font-family:'Newsreader',Georgia,serif">
+            <div style="font-family:'Public Sans',sans-serif;font-size:10px;font-weight:800;letter-spacing:1px;color:#A33327;margin-bottom:9px">VERSION 2 · CURRENT · PAGE 3</div>
+            <div style="text-align:center;font-weight:700;font-size:14px">TOWN OF ALPINE — TOWN COUNCIL</div>
+            <div style="text-align:center;font-size:12.5px;margin-bottom:9px">Meeting Agenda Packet · July 7, 2026 · 6:00 PM</div>
+            <div style="font-size:13px;line-height:1.55"><b>3.1 Resolution 2024-033 — Building &amp; Annexation Moratorium.</b> The Council will consider a six-month moratorium on building permits and annexation petitions in zoning districts R2, MRC, C, LI, PCF, and RC. Applications for single-family residences will continue to be accepted, reviewed, and processed in all zones.</div>
+            <sc-if value="{{ wordDiff }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;line-height:1.55;margin-top:8px">The town engineer's capacity study is attached as Exhibit B. <span style="background:#D9F2DC;border-bottom:2px solid #1E7A34">If adopted,</span> <span style="background:#D9F2DC;border-bottom:2px solid #1E7A34">applicants seeking an exemption shall pay a</span> <span style="background:#D9F2DC;border-bottom:2px solid #1E7A34;font-weight:700">$150 administrative review fee</span> <span style="background:#D9F2DC;border-bottom:2px solid #1E7A34">to offset processing costs associated with exemption requests.</span></div>
+            </sc-if>
+            <sc-if value="{{ blockDiff }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:13px;line-height:1.55;margin-top:8px">The town engineer's capacity study is attached as Exhibit B. <span style="background:#D9F2DC;display:inline;box-shadow:0 0 0 2px #D9F2DC">If adopted, applicants seeking an exemption shall pay a <b>$150 administrative review fee</b> to offset processing costs associated with exemption requests.</span></div>
+            </sc-if>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6E685B;margin-top:10px">page 3 of 98 · sha 8f3c2b8e…</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:12px;font-size:11.5px;color:#C3CDD9;align-items:center;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#D9F2DC;border:1px solid #1E7A34;margin-right:6px;vertical-align:-1px"></span>added in v2</span>
+          <span style="color:#8D99A7">why it matters: the public saw a packet with no fee for two days before this appeared · <b style="color:#C3CDD9">diff engine:</b> deterministic code tuned per format (HTML &amp; PDF) — publishes within minutes of a change, no AI in the loop; AI only writes this plain-English note afterward</span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <span style="font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:5px 12px;cursor:pointer" style-hover="background:#0F1E1B">View our copy — v1 ↗</span>
+            <span style="font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:7px;padding:5px 12px;cursor:pointer" style-hover="background:#0F1E1B">View our copy — v2 ↗</span>
+            <span style="font-size:11.5px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:7px;padding:5px 12px;cursor:pointer" style-hover="background:#161E27">View change log</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">VAULT LEDGER · LATEST</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+            <div style="background:#1D1412;border:1px solid #52302B;border-radius:9px;padding:9px 11px">
+              <div style="display:flex;justify-content:space-between"><b>Council packet · Jul 7</b><span style="color:#EE7A6D;font-weight:700;font-size:10.5px">▲ 2 versions</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">first seen Jul 3 10:15 · changed Jul 5 10:42<br>sha 8f3c2b8e7a9d4c1e…</div>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px">
+              <div style="display:flex;justify-content:space-between"><b>Council agenda · Jul 7</b><span style="color:#63D68F;font-weight:700;font-size:10.5px">✓ verified</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">first seen Jul 3 09:12 · unchanged · sha 77ab41c9…</div>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px">
+              <div style="display:flex;justify-content:space-between"><b>Sewer capacity study</b><span style="color:#63D68F;font-weight:700;font-size:10.5px">✓ verified</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">first seen Jun 12 · unchanged · sha a3f29c11…</div>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px">
+              <div style="display:flex;justify-content:space-between"><b>Jun 26 minutes</b><span style="color:#ECC35C;font-weight:700;font-size:10.5px">✓ + AI text</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">posted Jun 30 · AI extraction v3 · sha c4d17e02…</div>
+            </div>
+            <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px">
+              <div style="display:flex;justify-content:space-between"><b style="color:#8D99A7">Jun 26 meeting video</b><span style="color:#EE7A6D;font-weight:700;font-size:10.5px">missing (7d+)</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8D99A7;margin-top:3px">expected Jun 28 · 10 days overdue · flagged<br>ladder: pending release 0–2d → pending transcript 2–7d → missing 7d+</div>
+            </div>
+          </div>
+          <span onClick="{{ vbToggle }}" style="display:block;text-align:center;font-size:11.5px;font-weight:700;color:#4ED8C3;border:1px solid #2E6B60;border-radius:8px;padding:7px 0;margin-top:11px;cursor:pointer" style-hover="background:#0F1E1B">{{ vbLabel }}</span>
+          <sc-if value="{{ vbOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#0E1319;border:1px solid #1F2833;border-radius:10px;padding:10px;margin-top:8px">
+              <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8D99A7;margin-bottom:7px">SAMPLE — WHAT THE FULL BROWSER LOOKS LIKE</div>
+              <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
+                <div style="display:flex;gap:8px;align-items:baseline;background:#141B23;border:1px solid #1F2833;border-radius:7px;padding:6px 9px"><span style="flex:none;font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#4ED8C3;border:1px solid #29564E;border-radius:3px;padding:0 5px">AGENDA</span><span style="flex:1;min-width:0"><b>Council agenda · Jul 7</b><br><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8D99A7">first seen Jul 3 09:12 · sha 77ab41c9…</span></span><span style="flex:none;color:#63D68F;font-weight:700;font-size:10px">✓</span></div>
+                <div style="display:flex;gap:8px;align-items:baseline;background:#141B23;border:1px solid #1F2833;border-radius:7px;padding:6px 9px"><span style="flex:none;font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#EE7A6D;border:1px solid #52302B;border-radius:3px;padding:0 5px">PACKET</span><span style="flex:1;min-width:0"><b>Council packet · Jul 7</b><br><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8D99A7">2 versions · changed Jul 5 10:42 · sha 8f3c2b8e…</span></span><span style="flex:none;color:#EE7A6D;font-weight:700;font-size:10px">▲</span></div>
+                <div style="display:flex;gap:8px;align-items:baseline;background:#141B23;border:1px solid #1F2833;border-radius:7px;padding:6px 9px"><span style="flex:none;font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#C3CDD9;border:1px solid #2C3642;border-radius:3px;padding:0 5px">MINUTES</span><span style="flex:1;min-width:0"><b>P&amp;Z minutes · Jun 14</b><br><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8D99A7">first seen Jun 17 · unchanged · sha 2c91d4a7…</span></span><span style="flex:none;color:#63D68F;font-weight:700;font-size:10px">✓</span></div>
+                <div style="display:flex;gap:8px;align-items:baseline;background:#141B23;border:1px solid #1F2833;border-radius:7px;padding:6px 9px"><span style="flex:none;font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#ECC35C;border:1px solid #4a3c14;border-radius:3px;padding:0 5px">VIDEO</span><span style="flex:1;min-width:0"><b>Council video · Jun 12</b><br><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8D99A7">1:12:40 · transcript ✓ · sha e07bc3f2…</span></span><span style="flex:none;color:#63D68F;font-weight:700;font-size:10px">✓</span></div>
+                <div style="display:flex;gap:8px;align-items:baseline;background:#141B23;border:1px solid #1F2833;border-radius:7px;padding:6px 9px"><span style="flex:none;font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#7DB1FB;border:1px solid #31527e;border-radius:3px;padding:0 5px">WEB</span><span style="flex:1;min-width:0"><b>townofalpine.gov/notices</b><br><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8D99A7">checked nightly · last Jul 6 02:10 · sha 91f4ab30…</span></span><span style="flex:none;color:#63D68F;font-weight:700;font-size:10px">✓</span></div>
+              </div>
+              <div style="font-size:10px;color:#8D99A7;margin-top:7px">the full view adds search, type &amp; level filters, and per-file version history</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="background:#12181F;border:1px solid #232C37;border-radius:14px;padding:16px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#4ED8C3;margin-bottom:11px">VERIFICATION DETAILS</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+            <div style="display:flex;justify-content:space-between"><span style="color:#8D99A7">Issue ID</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px">ISS-2026-0333</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8D99A7">Published</span><span>Jul 5, 2026 · 10:45 AM</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8D99A7">Source count</span><span>4 linked</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8D99A7">AI model / prompt</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px">gw-sum-3 / p14</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#8D99A7;flex:none">3rd-party check</span><a href="https://web.archive.org" style="color:#7DB1FB;font-size:11.5px;text-align:right">Wayback snapshot · scanned Jul 5, 10:44 AM ↗</a></div>
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#8D99A7;flex:none">Original source</span><a href="#" style="color:#7DB1FB;font-family:'IBM Plex Mono',monospace;font-size:10px;text-align:right;word-break:break-all">townofalpine.gov/packets/2026-07-07-v2.pdf ↗</a></div>
+          </div>
+          <div style="font-size:10.5px;color:#8D99A7;margin-top:8px;line-height:1.5">Verify without trusting us: the Wayback snapshot is timestamped by the Internet Archive — a 3rd party we don't control — and the original lives on the government site we captured it from.</div>
+          <div style="background:#141B23;border:1px solid #1F2833;border-radius:9px;padding:9px 11px;margin-top:10px">
+            <div style="font-size:10px;color:#8D99A7;letter-spacing:.5px">MANIFEST HASH · SHA-256</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#C3CDD9;margin-top:3px;word-break:break-all">8f3c2b8e7a9d4c1e9f8b6a2d e7c4a1b2d3f6e9a8b0c1d2e3</div>
+          </div>
+          <span style="display:block;text-align:center;font-size:11.5px;font-weight:600;color:#C3CDD9;border:1px solid #2C3642;border-radius:8px;padding:7px 0;margin-top:10px;cursor:pointer" style-hover="background:#161E27">View full manifest ↗</span>
+          <div style="font-size:11px;color:#8D99A7;margin-top:9px">Anyone can re-compute these hashes against the archive — that's the point.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1B232D;padding-top:14px;font-size:12px;color:#8D99A7">
+      <div>◆ Never bury sources. Never claim without a receipt.</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px">data refreshed Jul 20, 2026 9:58 AM ⟳</div>
+      <div style="display:flex;gap:16px"><span style="cursor:pointer" style-hover="color:#ECF1F7">Report an error</span><span style="cursor:pointer" style-hover="color:#ECF1F7">About</span><span style="cursor:pointer" style-hover="color:#ECF1F7">Help</span></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSimple }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Source Vault (light receipts)" style="min-height:100vh;background:#F3EDDD;color:#1E1C17;font-family:'Newsreader',Georgia,serif;font-size:17px;line-height:1.55">
+  <div style="background:#FFF3CD;border-bottom:1px solid #D9A400;color:#5C4500;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.4px;text-align:center;padding:5px 16px">FIXTURE MODE — sample Town of Alpine records · not a live read · last update: TOWN Jul 20, 9:58 AM ✓ · COUNTY Jul 20, 8:30 AM ✓ · STATE Jul 19, 11:15 PM ✓</div>
+  <div style="max-width:880px;margin:0 auto;background:#FBF7EB;border-left:1px solid #E2D9C2;border-right:1px solid #E2D9C2;padding:18px 36px 44px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;padding-bottom:12px">
+      <div>{{ locLabelLong }} &nbsp;·&nbsp; <a href="Location.dc.html" style="font-weight:700">change my place</a></div>
+      <div style="display:flex;border:1.5px solid #1E1C17;border-radius:999px;overflow:hidden;font-weight:700;font-size:12px">
+        <span style="padding:6px 15px;background:#1E1C17;color:#FBF7EB;cursor:default">Simple</span>
+        <span onClick="{{ goAdvanced }}" style="padding:6px 15px;color:#1E1C17;cursor:pointer" style-hover="background:#EFE8D5">Advanced</span>
+      </div>
+    </div>
+    <div style="text-align:center;border-top:2.5px solid #1E1C17;border-bottom:1px solid #1E1C17;padding:12px 0 10px">
+      <a href="Home.dc.html" style="text-decoration:none;color:#1E1C17"><span style="font-size:clamp(22px,3.4vw,34px);font-weight:600">Government Watchdog Updates</span></a>
+      <div style="font-family:'Public Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#4A463C;margin-top:4px">THE RECEIPTS — WHERE EVERY CLAIM COMES FROM</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:1px;border-bottom:1px solid #1E1C17;padding:8px 0;margin-bottom:20px">
+      <a href="Home.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">FRONT PAGE</a>
+      <a href="Fast Agenda.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">MEETINGS</a>
+      <a href="Timeline.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">TIMELINE</a>
+      <a href="Boards.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">BOARDS</a>
+      <a href="Power Tracker.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">POWER TRACKER</a>
+      <a href="Source Vault.dc.html" style="color:#1E1C17;text-decoration:none;border-bottom:2px solid #1E1C17;padding-bottom:2px">SOURCES</a>
+      <a href="Newsletter.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">NEWSLETTER</a>
+      <a href="Watchlist.dc.html" style="color:#4A463C;text-decoration:none" style-hover="color:#1A4D8F">WATCHLIST</a>
+    </div>
+
+    <div style="font-size:17px;margin-bottom:18px">Every story we publish links to the official paper behind it. We save a copy the moment we see it, give it a digital fingerprint, and check it every day. When something changes quietly, you'll see it here.</div>
+
+    <div style="border:2px solid #C0392B;border-radius:8px;background:#FDECEA;padding:16px 20px;margin-bottom:20px">
+      <div style="font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1.2px;color:#7B241C">▲ SOMETHING CHANGED QUIETLY</div>
+      <div style="font-size:20px;font-weight:600;margin-top:5px">The council packet was edited after it was posted</div>
+      <div style="font-size:15.5px;color:#3A362D;margin-top:5px;line-height:1.55">The packet for Tuesday's meeting went up July 3. Two days later, new wording appeared on page 3: a <b>$150 administrative review fee</b> for moratorium exemption requests. Anyone who read the packet early never saw it.</div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;font-family:'Public Sans',sans-serif">
+        <span style="border:2px solid #1E1C17;border-radius:9px;padding:8px 16px;font-weight:800;font-size:13.5px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">Read the old version</span>
+        <span style="border:2px solid #1E1C17;border-radius:9px;padding:8px 16px;font-weight:800;font-size:13.5px;cursor:pointer;background:#FDFAF1" style-hover="background:#EFE8D5">Read the new version</span>
+        <span onClick="{{ goAdvanced }}" style="border:2px solid #A33327;color:#A33327;border-radius:9px;padding:8px 16px;font-weight:800;font-size:13.5px;cursor:pointer;background:#FDFAF1" style-hover="background:#F8E9E6">See them side-by-side →</span>
+      </div>
+    </div>
+
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#4A463C;border-bottom:2px solid #1E1C17;padding-bottom:5px;margin-bottom:12px">THIS WEEK'S DOCUMENTS</div>
+    <div style="display:flex;flex-direction:column;margin-bottom:22px">
+      <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #D8D0BC;padding:10px 0;align-items:baseline"><span style="font-size:17px"><a href="#">Council agenda — July 7 meeting</a></span><span style="font-family:'Public Sans',sans-serif;font-size:12px;color:#1E4620;font-weight:700">✓ saved &amp; verified</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #D8D0BC;padding:10px 0;align-items:baseline"><span style="font-size:17px"><a href="#">Council packet — July 7 meeting</a></span><span style="font-family:'Public Sans',sans-serif;font-size:12px;color:#7B241C;font-weight:700">▲ changed after posting</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #D8D0BC;padding:10px 0;align-items:baseline"><span style="font-size:17px"><a href="#">Sewer capacity study (Exhibit B)</a></span><span style="font-family:'Public Sans',sans-serif;font-size:12px;color:#1E4620;font-weight:700">✓ saved &amp; verified</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #D8D0BC;padding:10px 0;align-items:baseline"><span style="font-size:17px"><a href="#">June 26 meeting minutes</a></span><span style="font-family:'Public Sans',sans-serif;font-size:12px;color:#7A5B00;font-weight:700">✓ saved · AI-read text</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;align-items:baseline"><span style="font-size:17px;color:#6E685B">June 26 meeting video</span><span style="font-family:'Public Sans',sans-serif;font-size:12px;color:#6E685B;font-weight:700">still missing — we're asking</span></div>
+    </div>
+
+    <div style="font-family:'Public Sans',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#4A463C;border-bottom:2px solid #1E1C17;padding-bottom:5px;margin-bottom:12px">HOW WE VERIFY — THREE STEPS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px">
+      <div><div style="font-family:'Public Sans',sans-serif;font-size:26px;font-weight:800;color:#1A4D8F">1</div><b style="font-size:16px">We save a copy</b><div style="font-size:14.5px;color:#4A463C;margin-top:3px">The moment a document appears,
+ we download it, timestamp it, and file the copy — before anyone can change it.</div></div>
+      <div><div style="font-family:'Public Sans',sans-serif;font-size:26px;font-weight:800;color:#1A4D8F">2</div><b style="font-size:16px">We fingerprint it</b><div style="font-size:14.5px;color:#4A463C;margin-top:3px">Every file gets a digital fingerprint (a “hash”). Change one word and the fingerprint changes — that's how we catch quiet edits.</div></div>
+      <div><div style="font-family:'Public Sans',sans-serif;font-size:26px;font-weight:800;color:#1A4D8F">3</div><b style="font-size:16px">We keep checking</b><div style="font-size:14.5px;color:#4A463C;margin-top:3px">Daily re-checks catch swapped files, missing pages, and late minutes — then we show you exactly what changed.</div></div>
+    </div>
+
+    <div style="border:1.5px solid #1E1C17;border-radius:8px;background:#FDFAF1;padding:13px 17px;margin-bottom:22px;font-size:15px">
+      <b>Follow the paper trail:</b> this packet drives the <a href="Fast Agenda.dc.html">July 7 Town Council agenda</a>, sits on the <a href="Timeline.dc.html">moratorium timeline</a>, and feeds two promise checks in the <a href="Power Tracker.dc.html">Power Tracker</a>. Wherever you see a claim, the receipt is one tap away.
+    </div>
+
+    <div style="border-top:3px double #1E1C17;padding-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px"><b>★ We Watch. We Report. You Decide.</b></div>
+      <div style="font-family:'Public Sans',sans-serif;font-size:12.5px;color:#4A463C">Hashes, versions &amp; manifests? <span onClick="{{ goAdvanced }}" style="border:1.5px solid #1E1C17;border-radius:8px;padding:5px 13px;font-weight:700;cursor:pointer" style-hover="background:#EFE8D5">Open Advanced view →</span></div>
+    </div>
+  </div>
+</div>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: (typeof localStorage !== 'undefined' && localStorage.getItem('gw_home_mode')) || 'advanced',
+    wd: false,
+    hoverStat: null,
+    pinStat: null,
+    vbOpen: false
+  };
+  setMode(m) { this.setState({ mode: m }); try { localStorage.setItem('gw_home_mode', m); } catch (e) {} }
+
+  renderVals() {
+    const wd = this.state.wd;
+    const GREEN = '#63D68F', RED = '#EE7A6D', GOLD = '#ECC35C', GREY = '#8D99A7', MINT = '#4ED8C3';
+    const hv = this.state.hoverStat, pin = this.state.pinStat;
+    const PINS = {
+      sources: {
+        title: 'SOURCES — FULL BREAKDOWN', color: GREEN,
+        how: 'One entry per archived file, timestamped the moment we first see it. New versions of the same document are stored and counted separately, so an edit can never overwrite history. Everything is re-fetched nightly and compared against our copy.',
+        stats: [{ v: '1,248', t: 'ALL TIME', c: '#ECF1F7' }, { v: '+512', t: 'LAST 12 MONTHS', c: GREEN }, { v: '3', t: 'LEVELS — TOWN / CO / STATE', c: MINT }, { v: 'nightly', t: 'RE-CHECK CADENCE', c: '#C3CDD9' }],
+        rows: [
+          { k: '468', t: 'Web captures — town, county & state pages', link: 'browse ›', c: GREEN },
+          { k: '402', t: 'Agendas & meeting packets (every version kept)', link: 'browse ›', c: GREEN },
+          { k: '160', t: 'Studies, ordinances, resolutions & misc records', link: 'browse ›', c: GREEN },
+          { k: '122', t: 'Meeting minutes', link: 'browse ›', c: GREEN },
+          { k: '96', t: 'Meeting videos', link: 'browse ›', c: GREEN }
+        ]
+      },
+      hash: {
+        title: 'HASH VERIFICATION — HOW IT WORKS', color: GREEN,
+        how: 'Every file gets a SHA-256 fingerprint when we archive it. Each night we re-download the public copy and re-compute the fingerprint: a match proves the record hasn\u2019t changed. The percentage is matches \u00f7 all 1,248 sources, rolling over the last 12 months. Anyone can re-compute these hashes against the archive — that\u2019s the point.',
+        stats: [{ v: '1,231', t: 'MATCH TODAY ✓', c: GREEN }, { v: '12', t: 'CHANGED AFTER POSTING ▲', c: RED }, { v: '5', t: 'VANISHED (404) — ARCHIVED COPY KEPT', c: GOLD }, { v: '99.1→98.6%', t: '12-MONTH TREND', c: '#C3CDD9' }],
+        rows: [
+          { k: 'JUL 5', t: 'Council packet v2 — $150 fee wording added on p.3 after posting', link: 'see the diff ›', c: RED },
+          { k: 'JUN 30', t: 'County bid PDF replaced silently — both versions archived', link: 'compare ›', c: RED },
+          { k: 'MAY 12', t: 'Public-notice page removed after 6 days — our copy survives', link: 'archived copy ›', c: GOLD }
+        ]
+      },
+      flags: {
+        title: 'OPEN FLAGS — ALL 6', color: RED,
+        how: 'A flag is a transparency failure we can prove: a required record that\u2019s missing, late, or changed without notice. Each shows why it was raised and what would clear it — flags close only when the record is fixed. Last 12 months: 42 raised, 36 cleared, median 9 days to clear.',
+        stats: [{ v: '6', t: 'OPEN NOW', c: RED }, { v: '42', t: 'RAISED — 12 MONTHS', c: '#C3CDD9' }, { v: '36', t: 'CLEARED — 12 MONTHS', c: GREEN }, { v: '9 days', t: 'MEDIAN TIME TO CLEAR', c: GOLD }],
+        rows: [
+          { k: 'JUN 26', t: 'Council meeting video missing — expected Jun 28, 10 days overdue', link: 'flag ›', c: RED },
+          { k: 'JUL 5', t: 'Packet v2 fee wording added after the public read it (p.3)', link: 'see the diff ›', c: RED },
+          { k: 'MAY', t: 'County P&Z May minutes 34 days late — outside 30-day practice', link: 'record ›', c: GOLD },
+          { k: 'STATE', t: 'Agency rule-draft URL 404s — archive copy served', link: 'archive ›', c: GOLD },
+          { k: 'P.3', t: 'Fee language buried on p.3 of a 98-page packet — flagged by scan', link: 'flag ›', c: GOLD },
+          { k: 'JUL 2', t: 'Cedar St easement — survey vote before the 3 affected owners were mailed notice (property / taking watch)', link: 'flag ›', c: RED }
+        ]
+      }
+    };
+    const P = PINS[pin] || {};
+    const hs = (k) => () => this.setState({ hoverStat: k });
+    const pinTgl = (k) => () => this.setState(s => ({ pinStat: s.pinStat === k ? null : k }));
+    const loc = (() => { try { return JSON.parse(localStorage.getItem('gw_location') || 'null'); } catch (e) { return null; } })();
+    return {
+      isAdvanced: this.state.mode !== 'simple',
+      isSimple: this.state.mode === 'simple',
+      goSimple: () => this.setMode('simple'),
+      goAdvanced: () => this.setMode('advanced'),
+      locLabel: loc ? loc.town + ', ' + loc.state : 'Alpine, WY',
+      locLabelLong: loc ? loc.town + ', ' + (loc.state === 'WY' ? 'Wyoming' : loc.state) : 'Alpine, Wyoming',
+      hsSources: hs('sources'), hsHash: hs('hash'), hsFlags: hs('flags'), hsNone: hs(null),
+      pinSources: pinTgl('sources'), pinHash: pinTgl('hash'), pinFlags: pinTgl('flags'),
+      pinClose: () => this.setState({ pinStat: null }),
+      tipSources: hv === 'sources' && pin !== 'sources',
+      tipHash: hv === 'hash' && pin !== 'hash',
+      tipFlags: hv === 'flags' && pin !== 'flags',
+      pinOpen: !!pin,
+      pinTitle: P.title, pinColor: P.color, pinHow: P.how, pinStats: P.stats, pinRows: P.rows,
+      vbOpen: this.state.vbOpen,
+      vbToggle: () => this.setState({ vbOpen: !this.state.vbOpen }),
+      vbLabel: this.state.vbOpen ? 'Hide the sample ▴' : 'Browse all 1,248 sources — see a sample ▾',
+      toggleWordDiff: () => this.setState({ wd: !wd }),
+      wordDiff: wd,
+      blockDiff: !wd,
+      wdFg: wd ? '#4ED8C3' : '#8D99A7',
+      wdTrack: wd ? '#2E6B60' : '#2C3642',
+      wdKnob: wd ? '10px' : '2px'
+    };
+  }
+}
+</script>
+</body>
+</html>

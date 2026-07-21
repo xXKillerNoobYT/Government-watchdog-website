@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Government Watchdog">
+  <rect width="64" height="64" rx="14" fill="#0d1218"/>
+  <rect x="8" y="8" width="48" height="48" rx="11" fill="#ecf1f7"/>
+  <text x="32" y="39" fill="#0b0f14" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" text-anchor="middle">GW</text>
+  <rect x="20" y="49" width="24" height="3" rx="1.5" fill="#4ed8c3"/>
+</svg>
