@@ -7,6 +7,7 @@ export default defineConfig({
   // Reviewer-internal/local only: bind to localhost, never expose publicly.
   server: { host: '127.0.0.1', port: 5173 },
   preview: { host: '127.0.0.1', port: 4173 },
+  build: { outDir: 'dist/client' },
   test: {
     globals: true,
     environment: 'node',
