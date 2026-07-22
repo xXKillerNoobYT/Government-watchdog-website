@@ -1,0 +1,24 @@
+# GOV-1544 — edge server for the one-unit deploy (GOV-1543 §2).
+# Platform TLS terminates in front of us; Caddy serves the static site and
+# proxies /api/* to the loopback-only artifact service. auto_https off because
+# the platform owns certificates; admin off — no runtime config surface.
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	root * /srv/dist
+
+	handle /api/* {
+		# The ONLY sanctioned reference to the loopback service port
+		# (scripts/check-no-direct-exposure.mjs enforces this).
+		reverse_proxy 127.0.0.1:8100
+	}
+
+	handle {
+		# SPA fallback: the app shell routes client-side via /#/…
+		try_files {path} /index.html
+		file_server
+	}
+}
