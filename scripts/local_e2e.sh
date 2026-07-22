@@ -56,10 +56,11 @@ SERVICE_PORT="${GW_SERVICE_PORT:-$(free_port)}"
 PREVIEW_PORT="${GW_PREVIEW_PORT:-$(free_port)}"
 export GW_SERVICE_PORT="$SERVICE_PORT"
 
-SERVICE_PID=""; PREVIEW_PID=""
+SERVICE_PID=""; PREVIEW_PID=""; SINK_PID=""
 cleanup() {
   [ -n "$PREVIEW_PID" ] && kill "$PREVIEW_PID" 2>/dev/null || true
   [ -n "$SERVICE_PID" ] && kill "$SERVICE_PID" 2>/dev/null || true
+  [ -n "$SINK_PID" ] && kill "$SINK_PID" 2>/dev/null || true
   rm -rf "$WORK"
 }
 [ "${GW_KEEP_UP:-}" = "1" ] || trap cleanup EXIT
@@ -110,9 +111,31 @@ except run.BindError:
     print("ok: non-loopback bind refused"); sys.exit(0)
 PY
 
-say "3c/6 start loopback service on 127.0.0.1:$SERVICE_PORT"
-"$WORK/venv/bin/python" "$SERVICE_DIR/run.py" --db "$SERVICE_DB" --port "$SERVICE_PORT" &
-SERVICE_PID=$!
+# GOV-1544: if the pinned artifact carries the beta front-door wiring, run the
+# full magic-link leg through a loopback SMTP sink (the "dev adapter" path —
+# the REAL SmtpAdapter speaking real SMTP to 127.0.0.1; nothing leaves the
+# machine, no provider account, per the pre-P3d rule).
+BETA_WIRED=0
+grep -q -- "--verify-base-url" "$SERVICE_DIR/run.py" && BETA_WIRED=1
+
+if [ "$BETA_WIRED" = "1" ]; then
+  say "3c/6 start SMTP sink + loopback service on 127.0.0.1:$SERVICE_PORT (beta wiring detected)"
+  MAILDIR="$WORK/mail"
+  "$WORK/venv/bin/python" scripts/dev_smtp_sink.py --out-dir "$MAILDIR" > "$WORK/sink-port" &
+  SINK_PID=$!
+  for _ in $(seq 1 40); do [ -s "$WORK/sink-port" ] && break; sleep 0.25; done
+  SINK_PORT="$(cat "$WORK/sink-port")"
+  [ -n "$SINK_PORT" ] || fail "SMTP sink never reported its port"
+  GW_SMTP_HOST=127.0.0.1 GW_SMTP_PORT="$SINK_PORT" GW_SMTP_USERNAME= GW_SMTP_PASSWORD= \
+    GW_MAIL_FROM=beta@gov-watchdog.test GW_SMTP_SECURITY=none \
+    "$WORK/venv/bin/python" "$SERVICE_DIR/run.py" --db "$SERVICE_DB" --port "$SERVICE_PORT" \
+      --verify-base-url "http://127.0.0.1:$PREVIEW_PORT" 2> "$WORK/service.log" &
+  SERVICE_PID=$!
+else
+  say "3c/6 start loopback service on 127.0.0.1:$SERVICE_PORT (no beta wiring in this artifact — beta smoke will be SKIPPED)"
+  "$WORK/venv/bin/python" "$SERVICE_DIR/run.py" --db "$SERVICE_DB" --port "$SERVICE_PORT" &
+  SERVICE_PID=$!
+fi
 for _ in $(seq 1 40); do
   curl -sf "http://127.0.0.1:$SERVICE_PORT/api/health" >/dev/null 2>&1 && break
   sleep 0.25
@@ -174,6 +197,81 @@ if grep -RElE "$LEAK_RE" dist/client >/dev/null 2>&1; then
   fail "built static output contains a real raw absolute/vault path (§2 clause 1)"
 fi
 say "  (c) static output clean: no gated lane asset, no populated raw/vault paths — OK"
+
+# (d) GOV-1544 gated-beta front door: flag-off constant 404, then the full
+#     magic-link flow via the REAL SmtpAdapter -> loopback sink (dev adapter).
+if [ "$BETA_WIRED" = "1" ]; then
+  say "5d gated-beta front door (GOV-1544): flag-off 404 -> flag-on magic-link flow"
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+    -d '{"email":"resident@e2e.test"}' "$BASE/api/beta/waitlist")
+  [ "$code" = "404" ] || fail "beta route answered $code while the flag is off (must be constant 404)"
+
+  # Owner-gated appends, local throwaway DB only: enable the gate + adapter and
+  # allowlist the demo address (mirrors the seeded-session idiom above).
+  "$WORK/venv/bin/python" - "$BACKEND" "$SERVICE_DB" <<'PY'
+import pathlib, sys
+sys.path.insert(0, str(pathlib.Path(sys.argv[1]) / "scripts"))
+import db
+from beta import allowlist
+from email_gateway import flags
+conn = db.open_db(pathlib.Path(sys.argv[2]))
+flags.set_flag(conn, "beta_gate_enabled", enabled=True,
+               owner_decision_ref="local-e2e:GOV-1544")
+flags.set_flag(conn, "email_adapter_enabled", enabled=True,
+               owner_decision_ref="local-e2e:GOV-1544")
+allowlist.add(conn, "resident@e2e.test", owner_decision_ref="local-e2e:GOV-1544")
+conn.close()
+PY
+
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+    -d '{"email":"resident@e2e.test","area_interest":"alpine"}' "$BASE/api/beta/waitlist")
+  [ "$code" = "200" ] || fail "waitlist join expected neutral 200, got $code"
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+    -d '{"email":"resident@e2e.test"}' "$BASE/api/beta/magic-link/request")
+  [ "$code" = "200" ] || fail "magic-link request expected neutral 200, got $code"
+
+  for _ in $(seq 1 40); do ls "$MAILDIR"/msg-*.eml >/dev/null 2>&1 && break; sleep 0.25; done
+  # Parse the captured message with the email package: the body is MIME-encoded
+  # (quoted-printable soft-wraps long lines), so a raw grep would truncate the
+  # token. get_payload(decode=True) restores the exact link.
+  VERIFY_URL="$("$WORK/venv/bin/python" - "$MAILDIR" <<'PY'
+import email, pathlib, re, sys
+mails = sorted(pathlib.Path(sys.argv[1]).glob("msg-*.eml"))
+for path in reversed(mails):
+    msg = email.message_from_bytes(path.read_bytes())
+    body = msg.get_payload(decode=True) or b""
+    m = re.search(r"http://\S*verify\?token=[A-Za-z0-9._~-]+", body.decode("utf-8", "replace"))
+    if m:
+        print(m.group(0))
+        break
+PY
+)"
+  [ -n "$VERIFY_URL" ] || fail "no verify link captured by the SMTP sink (dev adapter path)"
+
+  HDRS="$(curl -s -D - -o /dev/null "$VERIFY_URL")"
+  printf '%s' "$HDRS" | head -1 | grep -q " 302" || fail "magic-link verify did not 302"
+  printf '%s' "$HDRS" | grep -qi "^Location: /#/app" || fail "verify did not redirect to /#/app"
+  printf '%s' "$HDRS" | grep -qi "SameSite=Strict" || fail "session cookie is not SameSite=Strict (F1)"
+  printf '%s' "$HDRS" | grep -qi "SameSite=Lax" && fail "a Lax cookie survived (F1 regression)"
+  COOKIE="$(printf '%s' "$HDRS" | grep -i '^Set-Cookie:' | head -1 | sed 's/^[Ss]et-[Cc]ookie: //' | cut -d';' -f1)"
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE -H "Cookie: $COOKIE" "$BASE/api/beta/sessions/current")
+  [ "$code" = "200" ] || fail "sign-out expected 200, got $code"
+
+  # F2 hash-only logging: the service log carries to_hash lines and NEVER a
+  # plaintext address (the wire/sink legitimately does — logs must not).
+  grep -q "to_hash=" "$WORK/service.log" || fail "service log has no hash-only send line (expected to_hash=...)"
+  if grep -qE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$WORK/service.log"; then
+    grep -nE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$WORK/service.log" >&2
+    fail "plaintext email address found in the service log (F2 violation)"
+  fi
+
+  # Public data surface stays honestly EMPTY (pre-P8).
+  rows=$("$WORK/venv/bin/python" -c "import json;print(len(json.load(open('dist/client/data/published.json'))))" 2>/dev/null || echo "?")
+  [ "$rows" = "0" ] || fail "published.json expected honestly-empty (0 rows), got $rows"
+  say "  (d) beta front door: 404-when-off, neutral 200s, Strict cookie, sign-out, hash-only logs, empty public lane — OK"
+else
+  say "  (d) SKIPPED beta front-door smoke — pinned artifact predates GOV-1544 wiring"
+fi
 
 # --- step 6: run record ------------------------------------------------------
 say "6/6 DONE — artifact manifest / integration record:"

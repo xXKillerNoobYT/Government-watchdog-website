@@ -1,0 +1,16 @@
+node_modules
+dist
+.vite
+.artifact
+.git
+.paperclip
+.playwright-mcp
+verification-artifacts
+harness
+docs/evidence
+# issue-evidence screenshots at the repo root (public/ imagery stays in context)
+/gov*.png
+.env
+.env.*
+# .artifact-local is deliberately NOT ignored: it carries the pre-built
+# tarball for offline local Docker verification (GW_ARTIFACT_TARBALL).

@@ -31,3 +31,5 @@ gw-web-artifact-*.tar.gz
 *.db
 /scripts/gen-gov1527-screens.mjs
 /gov1527-*.png
+# GOV-1544 — local pre-built artifact tarballs for offline Docker verification
+/.artifact-local/

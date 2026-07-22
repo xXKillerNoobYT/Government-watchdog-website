@@ -1,0 +1,39 @@
+# GOV-1544 — Fly.io deploy config (GOV-1543 §2 runbook step 2).
+# COMMITTED BUT INERT: nothing is deployed and no account exists until the
+# P3d owner card is accepted (zero spend, zero DNS, nothing public).
+#
+# One app, one machine, one mapped port (Caddy's 8080). The loopback service
+# port is deliberately absent from this file — mapping it would fail the
+# scripts/check-no-direct-exposure.mjs build gate (§5).
+#
+# app  = placeholder; P3c sets the real name after the owner picks Fly.
+app = "gov-watchdog-web"
+primary_region = "den"
+
+[build]
+  # Image from ./Dockerfile; deploy with:
+  #   fly deploy --build-secret gw_deploy_token=<PAT>   (build-time only, §4)
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # SQLite service must not cold-stop mid-session (GOV-1543 §2).
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    # One probe proves TLS -> edge -> proxy -> service (GOV-1543 §4).
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[mounts]
+  source = "gw_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
