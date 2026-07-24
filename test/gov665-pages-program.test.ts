@@ -51,17 +51,18 @@ describe('GOV-665 Fast Agenda page', () => {
 
   it('uses the shell-owned shared mode preference without rendering a duplicate page switch', () => {
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(readPageMode()).toBe('advanced');
-    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
+    expect(readPageMode()).toBe('simple');
+    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
 
-    localStorage.setItem('gw_home_mode', 'simple');
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
   });
 
   it('does not let Advanced mode override an explicit light theme choice', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     localStorage.setItem('gw-theme', 'light');
     document.documentElement.setAttribute('data-theme', 'light');
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
@@ -372,7 +373,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
     level.value = 'day';
     root.querySelector<HTMLFormElement>('[data-test="timeline-filter-form"]')!
       .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(window.location.hash).toBe('#/timeline?search=water+main&level=day&reviewer=1');
+    expect(window.location.hash).toBe('#/timeline?search=water+main&level=day');
   });
 
   it('renders zero timeline cards outside reviewer-internal access', () => {
@@ -385,6 +386,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
 
 describe('GOV-665 Boards directory and detail', () => {
   it('never relabels reviewed civic topics as government body cards', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
     expect(root.querySelector('[data-test="boards-advanced-workbench"]')).not.toBeNull();
@@ -432,6 +434,7 @@ describe('GOV-665 Boards directory and detail', () => {
   });
 
   it('preserves the jurisdiction directory and body-detail tool geometry as explicit gaps in both modes', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     const contractGapIds = [
       'boards-bodies-gap',
       'boards-cadence-gap',

@@ -29,6 +29,7 @@ beforeEach(() => {
       clear: () => { store = {}; },
     },
   });
+  localStorage.setItem('gw_home_mode', 'advanced');
   root = document.createElement('div');
   document.body.append(root);
 });

@@ -90,6 +90,7 @@ beforeEach(() => {
       return store.size;
     },
   });
+  localStorage.setItem('gw_home_mode', 'advanced');
   document.documentElement.removeAttribute('data-theme');
   document.head.replaceChildren();
   document.body.replaceChildren();

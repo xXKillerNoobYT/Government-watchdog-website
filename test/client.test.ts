@@ -85,20 +85,46 @@ describe('loadReadModel — adapter reads the read-API sample', () => {
     }
   });
 
-  it('falls back to the labeled fixture on a live-read failure (visible notice)', async () => {
+  it('keeps a live-read failure fail-closed and never substitutes a fixture', async () => {
     const { state, notice } = await loadReadModel({
       config: { useFixtures: false, readApiUrl: 'http://127.0.0.1:8787/read' },
       fetchImpl: mockFetch(null, false, 503),
     });
-    expect(state.mode).toBe('fixture');
-    expect(state.status).toBe('ready');
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
     expect(notice).toMatch(/Live read-API unavailable/);
+    expect(notice).toMatch(/No private capture or synthetic sample was substituted/);
   });
 
   it('uses the labeled fixture in fixture mode (default)', async () => {
     const { state } = await loadReadModel({ config: { useFixtures: true, readApiUrl: '' } });
     expect(state.mode).toBe('fixture');
     expect(state.data).toBe(FIXTURE);
+  });
+
+  it('fails closed when live mode is selected without an API URL', async () => {
+    const { state, notice } = await loadReadModel({
+      config: { useFixtures: false, readApiUrl: '' },
+      fetchImpl: mockFetch(sample),
+    });
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
+    expect(state.error).toContain('VITE_READ_API_URL is not configured');
+    expect(notice).toContain('No private capture or synthetic sample was substituted');
+  });
+
+  it('fails closed when live mode has no fetch implementation', async () => {
+    const { state, notice } = await loadReadModel({
+      config: { useFixtures: false, readApiUrl: '/api/reviewer-internal' },
+      fetchImpl: null,
+    });
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
+    expect(state.error).toContain('fetch is not available');
+    expect(notice).toContain('No private capture or synthetic sample was substituted');
   });
 });
 

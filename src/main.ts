@@ -485,7 +485,11 @@ async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchPar
     demo === 'graph'
       ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
       : await loadReadModel();
-  const data: ReadApiResponse = state.status === 'ready' && state.data ? state.data : GRAPH_REAL;
+  if (state.status !== 'ready' || !state.data) {
+    render(mount, state, notice);
+    return;
+  }
+  const data: ReadApiResponse = state.data;
   renderTimelineLevels(mount, access ? { ...data, access } : data, query, notice);
 }
 

@@ -24,6 +24,7 @@ function memoryStorage(): Storage {
 
 beforeEach(() => {
   vi.stubGlobal('localStorage', memoryStorage());
+  localStorage.setItem('gw_home_mode', 'advanced');
   document.head.replaceChildren();
   document.body.replaceChildren();
   root = document.createElement('main');

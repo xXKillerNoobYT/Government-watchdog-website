@@ -44,7 +44,7 @@ export function readPageMode(): PageMode {
   } catch {
     /* storage unavailable */
   }
-  return 'advanced';
+  return 'simple';
 }
 
 function fixtureBanner(notice?: string): HTMLElement {
@@ -254,7 +254,7 @@ function timelineFilterBar(
   const submit = el('button', { type: 'submit', class: 'gw-timeline-filter-submit' }, ['Apply filters']);
   const reset = el('a', {
     class: 'gw-timeline-filter-reset',
-    href: '#/timeline?reviewer=1',
+    href: '#/timeline',
     'data-test': 'timeline-filter-reset',
   }, ['Clear']);
   form.append(
@@ -277,8 +277,8 @@ function timelineFilterBar(
     if (term) next.set('search', term);
     if (levelSelect.value !== 'month') next.set('level', levelSelect.value);
     if (typeSelect.value !== 'all') next.set('type', typeSelect.value);
-    next.set('reviewer', '1');
-    window.location.hash = `/timeline?${next.toString()}`;
+    const encoded = next.toString();
+    window.location.hash = encoded ? `/timeline?${encoded}` : '/timeline';
   });
   return form;
 }
@@ -809,7 +809,7 @@ function topicContextCard(node: TopicTreeNode): HTMLElement {
         ...(alias.sourceRef.archiveUrl ? [el('a', { href: alias.sourceRef.archiveUrl, target: '_blank', rel: 'noopener noreferrer' }, [' Open archive'])] : []),
       ]);
     }))] : []),
-    el('a', { href: `#/timeline?search=${encodeURIComponent(topicLabel(node))}&reviewer=1`, 'data-test': 'boards-topic-timeline-link' }, ['Find reviewed records in Timeline']),
+    el('a', { href: `#/timeline?search=${encodeURIComponent(topicLabel(node))}`, 'data-test': 'boards-topic-timeline-link' }, ['Find reviewed records in Timeline']),
   ]);
 }
 
@@ -947,7 +947,7 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
         ? `${topicLabel(selected)} is a reviewed civic topic. Use Timeline to inspect its source-backed records.`
         : 'The requested id is not present in the reviewed topic context.']),
       ...(selected ? [el('a', {
-        href: `#/timeline?search=${encodeURIComponent(topicLabel(selected))}&reviewer=1`,
+        href: `#/timeline?search=${encodeURIComponent(topicLabel(selected))}`,
       }, ['Open this topic in Timeline'])] : []),
     ]);
   };
@@ -1090,7 +1090,7 @@ export function renderPowerTracker(root: HTMLElement, data: ReadApiResponse, _qu
         el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'power-verification' }, [record.verification_status ?? 'verification not present']),
       ]),
       el('p', { class: 'gw-muted', 'data-test': 'power-source' }, [recordSourceSummary(record)]),
-      el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}&reviewer=1`, 'data-test': 'power-record-link' }, ['Open record']),
+      el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'power-record-link' }, ['Open record']),
       watchToggle(record),
       ...(mode === 'advanced' ? [evidenceMetaRows(record.evidence ?? [])] : []),
     ]));
@@ -1129,7 +1129,7 @@ export function renderWatchlist(root: HTMLElement, data: ReadApiResponse, _query
         el('article', { class: 'gw-card', 'data-test': 'watchlist-item', 'data-id': record.statement_id }, [
           el('h2', {}, [statementTitle(record)]),
           el('p', { class: 'gw-muted' }, [recordSourceSummary(record)]),
-          el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}&reviewer=1`, 'data-test': 'watchlist-record-link' }, ['Open record']),
+          el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'watchlist-record-link' }, ['Open record']),
           watchToggle(record, renderList),
         ]),
       )));
@@ -1178,8 +1178,8 @@ export function renderLocation(root: HTMLElement, data: ReadApiResponse, query: 
     el('p', {}, ['Static Alpine coverage picker. No geographic analysis map, waitlist form, or notification signup is wired.']),
   ]));
   shell.append(el('nav', { class: 'gw-view-toggle', 'data-test': 'location-picker', 'aria-label': 'Coverage picker' }, [
-    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Lincoln%20County&town=Alpine&reviewer=1', 'data-test': 'location-alpine-link' }, ['Wyoming → Lincoln County → Alpine']),
-    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Teton%20County&town=Jackson&reviewer=1', 'data-test': 'location-uncovered-link' }, ['Other Wyoming town']),
+    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Lincoln%20County&town=Alpine', 'data-test': 'location-alpine-link' }, ['Wyoming → Lincoln County → Alpine']),
+    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Teton%20County&town=Jackson', 'data-test': 'location-uncovered-link' }, ['Other Wyoming town']),
   ]));
   shell.append(el('section', { class: 'gw-card', 'data-test': covered ? 'location-covered' : 'location-not-covered' }, [
     el('h2', {}, [covered ? 'Alpine is covered in this reviewer build' : 'Not covered yet']),
@@ -1191,7 +1191,7 @@ export function renderLocation(root: HTMLElement, data: ReadApiResponse, query: 
       el('article', { class: 'gw-card', 'data-test': 'location-record', 'data-id': record.statement_id }, [
         el('h3', {}, [statementTitle(record)]),
         el('p', { class: 'gw-muted' }, [recordSourceSummary(record)]),
-        el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}&reviewer=1`, 'data-test': 'location-record-link' }, ['Open record']),
+        el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'location-record-link' }, ['Open record']),
       ]),
     )));
   }

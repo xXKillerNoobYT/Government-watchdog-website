@@ -19,6 +19,7 @@
 import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { mountNotificationPanel } from './notification-panel';
+import { renderInfoNote } from './info-note';
 
 export type ShellMode = 'simple' | 'advanced';
 export type ShellOrigin = 'fixture' | 'reviewed_snapshot';
@@ -72,7 +73,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** Read the persisted reading mode, defaulting to the dense Advanced view. */
+/** Read the persisted reading mode, defaulting new visitors to the quick Simple view. */
 export function readMode(): ShellMode {
   try {
     const value = localStorage.getItem(MODE_KEY);
@@ -80,7 +81,7 @@ export function readMode(): ShellMode {
   } catch {
     /* Storage can be unavailable in private/non-browser contexts. */
   }
-  return 'advanced';
+  return 'simple';
 }
 
 function persistMode(mode: ShellMode): void {
@@ -166,7 +167,7 @@ function locationLink(): HTMLAnchorElement {
 }
 
 function timelineSearchHash(query: string): string {
-  return `#/timeline?search=${encodeURIComponent(query.trim())}&reviewer=1`;
+  return `#/timeline?search=${encodeURIComponent(query.trim())}`;
 }
 
 function searchControl(): HTMLFormElement {
@@ -291,7 +292,7 @@ function printControl(): HTMLButtonElement {
 function shellActions(mode: ShellMode, includePrint = false): HTMLDivElement {
   const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [accountChip()]);
   mountNotificationPanel(actions);
-  actions.append(modeToggle(mode));
+  actions.append(modeToggle(mode), renderInfoNote('shell-mode'));
   if (includePrint) actions.append(printControl());
   return actions;
 }
@@ -495,7 +496,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .gw-shell-header{position:sticky;top:0;z-index:20;background:var(--gw-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-shell-bar{display:flex;align-items:center;gap:18px;max-width:1460px;margin:0 auto;padding:14px 28px}
-.gw-shell-brand{display:inline-flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:var(--gw-text)}
+.gw-shell-brand{display:inline-flex;align-items:center;gap:11px;flex:none;min-height:var(--gw-tap-min);text-decoration:none;color:var(--gw-text)}
 .gw-shell-logo{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--gw-text);color:var(--gw-page-bg);font-weight:800;font-size:15px;letter-spacing:-.5px;flex:none}
 .gw-shell-wordmark{display:flex;flex-direction:column;line-height:1.05}
 .gw-shell-wordmark b{font-size:16.5px;font-weight:800;letter-spacing:.2px}
@@ -507,7 +508,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-location-arrow{color:var(--gw-text-muted);font-size:18px;line-height:1}
 .gw-shell-search{position:relative;display:flex;align-items:center;gap:10px;flex:1 1 280px;max-width:560px;min-width:220px;min-height:var(--gw-tap-min);padding:0 10px;background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:10px;color:var(--gw-text-muted)}
 .gw-shell-search:focus-within{border-color:var(--gw-accent);outline:2px solid var(--gw-accent);outline-offset:1px}
-.gw-shell-search-submit{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 18px/1 var(--gw-font);padding:6px;cursor:pointer}
+.gw-shell-search-submit{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:var(--gw-tap-min);min-height:var(--gw-tap-min);border:0;background:transparent;color:var(--gw-text-muted);font:700 18px/1 var(--gw-font);padding:6px;cursor:pointer}
 .gw-shell-search-submit:hover{color:var(--gw-accent)}
 .gw-shell-search-submit:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px;border-radius:var(--gw-radius-sm)}
 .gw-shell-search-input{flex:1;min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--gw-text);font:500 var(--gw-text-badge)/1.3 var(--gw-font)}
@@ -522,7 +523,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-account-copy b{font-size:11px;letter-spacing:.65px}
 .gw-shell-account-copy small{margin-top:2px;color:var(--gw-text-muted);font-size:10.5px}
 .gw-shell-mode{display:inline-flex;flex:none;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:2px}
-.gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:calc(var(--gw-tap-min) - 4px);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
+.gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:var(--gw-tap-min);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn:hover{color:var(--gw-text)}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
 .gw-shell-print{appearance:none;min-height:var(--gw-tap-min);padding:6px 13px;border:1.5px solid var(--gw-rule-strong);border-radius:8px;background:transparent;color:var(--gw-text);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
@@ -555,7 +556,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-preview-note{font-style:italic}
 .gw-shell-refreshed{grid-column:1/-1;font-family:var(--gw-font-mono);font-size:11px;color:var(--gw-text-muted)}
 .gw-shell-footer-links{display:flex;align-items:center;justify-content:flex-end;gap:16px;font-family:var(--gw-font)}
-.gw-shell-footer-links a{color:var(--gw-text-secondary);font-weight:600;text-decoration:none}
+.gw-shell-footer-links a{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);color:var(--gw-text-secondary);font-weight:600;text-decoration:none}
 .gw-shell-footer-links a:hover{text-decoration:underline;text-underline-offset:3px}
 .gw-shell-root[data-mode="simple"] .gw-shell-header{position:relative;border-top:2px solid var(--gw-rule-strong);border-bottom:2px solid var(--gw-rule-strong)}
 .gw-shell-simple-title{font:600 var(--gw-text-display)/1 var(--gw-font-serif);letter-spacing:-.5px}

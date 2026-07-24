@@ -35,6 +35,7 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-theme');
   vi.stubGlobal('localStorage', memoryStorage());
   vi.stubGlobal('sessionStorage', memoryStorage());
+  localStorage.setItem('gw_home_mode', 'advanced');
   const root = document.createElement('div');
   root.id = 'app';
   document.body.append(root);

@@ -174,7 +174,7 @@ describe('GOV-658 shell — functional shared controls with honest preview label
 
     input.value = 'water rates & fees';
     form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true }));
-    expect(window.location.hash).toBe('#/timeline?search=water%20rates%20%26%20fees&reviewer=1');
+    expect(window.location.hash).toBe('#/timeline?search=water%20rates%20%26%20fees');
   });
 
   it('focuses the current search input with Meta+K or Ctrl+K', () => {
@@ -287,13 +287,13 @@ describe('GOV-658 shell — mode control and the single palette authority', () =
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('defaults to Advanced and syncs its dark palette when no theme is pinned', () => {
-    expect(readMode()).toBe('advanced');
+  it('defaults new visitors to Simple and syncs its light palette when no theme is pinned', () => {
+    expect(readMode()).toBe('simple');
     expect(localStorage.getItem('gw-theme')).toBeNull();
     renderShell(root, { active: '/agenda' });
-    expect(root.getAttribute('data-mode')).toBe('advanced');
-    expect(root.querySelector('[data-test="mode-advanced"]')?.getAttribute('aria-pressed')).toBe('true');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(root.getAttribute('data-mode')).toBe('simple');
+    expect(root.querySelector('[data-test="mode-simple"]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('does not override an explicit standalone theme pin', () => {
