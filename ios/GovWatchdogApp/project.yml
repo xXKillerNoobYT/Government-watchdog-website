@@ -44,6 +44,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaac4alpine.govwatchdog
         PRODUCT_NAME: GovWatchdogApp
+        # The Keychain session store (GOV-1539) needs an explicit access group so it
+        # works in the simulator (ad-hoc signed) and on device/TestFlight alike.
+        CODE_SIGN_ENTITLEMENTS: Config/GovWatchdogApp.entitlements
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -59,3 +62,33 @@ targets:
           INFOPLIST_FILE: Resources/Info-Debug.plist
         Release:
           INFOPLIST_FILE: Resources/Info.plist
+
+  # Unit tests (GOV-1539 leg 4c-3). Hosted by the app so Keychain-backed tests run
+  # against a real (simulator) keychain. Backend-free: they cover Keychain
+  # attributes (AC #2), Set-Cookie extraction, PII redaction (AC #4), and the
+  # neutral input validators. The full sign-in→sign-out loop is a simulator e2e.
+  GovWatchdogAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: GovWatchdogApp
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaac4alpine.govwatchdog.tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/GovWatchdogApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GovWatchdogApp"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  GovWatchdogApp:
+    build:
+      targets:
+        GovWatchdogApp: all
+        GovWatchdogAppTests: [test]
+    test:
+      targets:
+        - GovWatchdogAppTests
+      gatherCoverageData: false

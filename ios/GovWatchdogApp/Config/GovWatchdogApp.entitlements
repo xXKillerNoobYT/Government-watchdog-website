@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app stores exactly one secret in the Keychain: the gated-beta session
+	     token (GOV-1539, SessionStore.swift). Declaring an explicit
+	     keychain-access-group makes that store work identically in the simulator
+	     (ad-hoc signed) and on device/TestFlight, and is required for the hosted
+	     SessionStore unit tests to reach the keychain (else errSecMissingEntitlement
+	     / -34018). No other entitlements: no APNs, no App Groups, no associated
+	     domains (universal links are post-v1, spec §1). -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>com.isaac4alpine.govwatchdog</string>
+	</array>
+</dict>
+</plist>
