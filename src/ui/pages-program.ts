@@ -81,14 +81,14 @@ function pageShell(root: HTMLElement, testId: string, title: string, options: Pa
 
 const BASELINE_PAGE_STYLE = `
 .gw-baseline-mode-mount{margin-top:var(--gw-space-4)}
-.gw-baseline-simple-sheet{max-width:70rem;margin:0 auto;padding:var(--gw-space-6);border:var(--gw-border-w) solid var(--gw-rule-strong);border-top:4px solid var(--gw-rule-strong);background:var(--gw-surface);font-family:var(--gw-font-serif);display:grid;gap:var(--gw-space-5)}
+.gw-baseline-simple-sheet{max-width:70rem;margin:0 auto;padding:var(--gw-space-6);border:var(--gw-border-w) solid var(--gw-rule-strong);border-top:4px solid var(--gw-rule-strong);background:var(--gw-surface);font-family:var(--gw-font-serif);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-5)}
 .gw-baseline-simple-head{text-align:center;border-bottom:3px double var(--gw-rule-strong);padding-bottom:var(--gw-space-5)}
 .gw-baseline-simple-head p{margin:.25rem 0;color:var(--gw-text-secondary)}
 .gw-baseline-simple-head>p:first-child{font:800 var(--gw-text-kicker)/1.2 var(--gw-font);letter-spacing:1.3px;color:var(--gw-accent)}
 .gw-baseline-simple-head h2{margin:.35rem auto;font-size:clamp(1.7rem,3vw,2.8rem);line-height:1.05;max-width:22ch}
 .gw-baseline-simple-sheet>.gw-board,.gw-baseline-simple-sheet [data-test="boards-topic-context"]>.gw-board,.gw-baseline-simple-sheet [data-test="source-vault-list"]{grid-template-columns:1fr}
 .gw-baseline-simple-sheet .gw-state,.gw-baseline-simple-sheet .gw-card{border-radius:0;border-left:0;border-right:0;box-shadow:none}
-.gw-baseline-advanced-workbench{display:grid;gap:var(--gw-space-5)}
+.gw-baseline-advanced-workbench{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-5)}
 .gw-baseline-workbench-head{display:flex;justify-content:space-between;gap:var(--gw-space-5);align-items:end;border-bottom:var(--gw-border-w) solid var(--gw-border);padding-bottom:var(--gw-space-4)}
 .gw-baseline-workbench-head p{font:800 var(--gw-text-kicker)/1.2 var(--gw-font);letter-spacing:1.2px;color:var(--gw-accent);margin:0}
 .gw-baseline-workbench-head h2{font-size:var(--gw-text-lg);margin:0;text-align:right}
@@ -736,7 +736,7 @@ function flattenTopics(node: TopicTreeNode): TopicTreeNode[] {
 }
 
 const BOARDS_VAULT_FIDELITY_STYLE = `
-.gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-boards-contract-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);padding:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius)}
 .gw-boards-contract-tab,.gw-boards-contract-tool,.gw-vault-contract-tool{min-height:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.2 var(--gw-font);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-boards-contract-tab:disabled,.gw-boards-contract-tool:disabled,.gw-vault-contract-tool:disabled{cursor:not-allowed;opacity:.78}
@@ -749,9 +749,9 @@ const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-boards-contract-detail-head .gw-muted{margin-left:auto}
 .gw-boards-contract-tools,.gw-vault-contract-tools{display:flex;gap:var(--gw-space-2);flex-wrap:wrap}
 .gw-boards-contract-slots{display:grid;grid-template-columns:1.05fr 1.25fr 1fr;gap:var(--gw-space-3);align-items:start}
-.gw-boards-contract-slot-stack,.gw-vault-contract-stack{display:grid;gap:var(--gw-space-3)}
+.gw-boards-contract-slot-stack,.gw-vault-contract-stack{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
 .gw-boards-contract-gap{text-align:left;min-height:8.5rem;background:var(--gw-card-bg)}
-.gw-boards-contract-advanced-layout{display:grid;gap:var(--gw-space-4);align-items:start}
+.gw-boards-contract-advanced-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-4);align-items:start}
 .gw-vault-contract-toolbar{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.75fr) minmax(160px,.75fr);gap:var(--gw-space-3);align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-vault-contract-field{display:grid;gap:var(--gw-space-1);font:700 var(--gw-text-badge)/1.2 var(--gw-font);color:var(--gw-text-secondary)}
 .gw-vault-contract-field input,.gw-vault-contract-field select{min-height:var(--gw-tap-min);width:100%;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
@@ -759,7 +759,7 @@ const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-vault-contract-stat-explainer{border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:var(--gw-space-2);font-size:var(--gw-text-xs);color:var(--gw-text-secondary)}
 .gw-vault-contract-stat-explainer summary{cursor:pointer;font-weight:700;color:var(--gw-accent)}
 .gw-vault-contract-advanced-layout{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(340px,1.45fr) minmax(240px,.83fr);gap:var(--gw-space-4);align-items:start}
-.gw-vault-contract-receipts{display:grid;gap:var(--gw-space-3)}
+.gw-vault-contract-receipts{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
 .gw-vault-contract-receipts[data-test="source-vault-list"]{grid-auto-flow:row;grid-auto-columns:auto;overflow-x:visible}
 .gw-vault-contract-version-controls{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:var(--gw-space-2);align-items:end}
 .gw-vault-contract-version-controls .gw-vault-contract-field{text-align:left}
