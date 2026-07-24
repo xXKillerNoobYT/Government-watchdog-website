@@ -8,6 +8,8 @@
  */
 
 import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
+import { readTracked, writeTracked } from '../state/local-store';
+import { closeModal, openModal } from './modal';
 import { readMode, type ShellMode } from './shell';
 import { GW_TOKENS } from './tokens';
 
@@ -300,26 +302,6 @@ function kicker(text: string): HTMLElement {
   return el('p', { class: 'gw-fa-kicker' }, [text]);
 }
 
-function readTracked(): Record<string, boolean> {
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem('gw_tracked') ?? '{}');
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    return Object.fromEntries(
-      Object.entries(parsed as Record<string, unknown>).filter((entry): entry is [string, true] => entry[1] === true),
-    );
-  } catch {
-    return {};
-  }
-}
-
-function persistTracked(tracked: Record<string, boolean>): void {
-  try {
-    localStorage.setItem('gw_tracked', JSON.stringify(tracked));
-  } catch {
-    /* The control still works for this render when storage is unavailable. */
-  }
-}
-
 function syncTrackingButtons(root: HTMLElement, issueKey: string, tracked: boolean): void {
   for (const node of root.querySelectorAll<HTMLButtonElement>('[data-track-key]')) {
     if (node.dataset.trackKey !== issueKey) continue;
@@ -352,7 +334,7 @@ function trackButton(
     const next = tracked[issueKey] !== true;
     if (next) tracked[issueKey] = true;
     else delete tracked[issueKey];
-    persistTracked(tracked);
+    writeTracked(tracked);
     syncTrackingButtons(root, issueKey, next);
   });
   return button;
@@ -399,24 +381,14 @@ function processLadder(steps: readonly ProcessStep[]): HTMLOListElement {
   return list;
 }
 
-const modalCleanup = new WeakMap<HTMLElement, () => void>();
-
 function openDetails(
   root: HTMLElement,
   item: AgendaItem,
   tracked: Record<string, boolean>,
   trigger: HTMLElement,
 ): void {
-  modalCleanup.get(root)?.();
-
   const titleId = `gw-fa-modal-title-${item.id}`;
   const receiptId = `gw-fa-modal-receipts-${item.id}`;
-  const closeButton = el('button', {
-    type: 'button',
-    class: 'gw-fa-modal-close',
-    'aria-label': 'Close detailed agenda analysis',
-    'data-test': 'modal-close',
-  }, ['×']);
 
   const history = el('section', { class: 'gw-fa-modal-section' }, [
     el('h3', {}, ['Past activity — newest first']),
@@ -428,103 +400,38 @@ function openDetails(
     el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [RECEIPTS_DISCLAIMER]),
   ]);
 
-  const dialog = el('section', {
-    class: 'gw-fa-modal',
-    role: 'dialog',
-    'aria-modal': 'true',
-    'aria-labelledby': titleId,
-    'aria-describedby': receiptId,
-    'data-test': 'agenda-modal',
-  }, [
-    el('header', { class: 'gw-fa-modal-head' }, [
-      el('div', {}, [
-        kicker(`ITEM ${item.number} · DETAILED DESIGN ANALYSIS`),
-        el('h2', { id: titleId }, [item.title]),
-        el('p', { class: 'gw-fa-action' }, [item.action]),
+  openModal(root, {
+    testId: 'agenda-modal',
+    labelledById: titleId,
+    describedById: receiptId,
+    closeLabel: 'Close detailed agenda analysis',
+    trigger,
+    className: 'gw-fa-modal',
+    header: el('div', {}, [
+      kicker(`ITEM ${item.number} · DETAILED DESIGN ANALYSIS`),
+      el('h2', { id: titleId }, [item.title]),
+      el('p', { class: 'gw-fa-action' }, [item.action]),
+    ]),
+    body: [
+      trackButton(root, tracked, item.issueKey, item.title),
+      aiAnalysis(`What's being decided: ${item.decision}`),
+      languageWatch(item.languageWatch),
+      el('section', { class: 'gw-fa-modal-section' }, [
+        el('h3', {}, ['Process']),
+        processLadder(item.process),
       ]),
-      closeButton,
-    ]),
-    trackButton(root, tracked, item.issueKey, item.title),
-    aiAnalysis(`What's being decided: ${item.decision}`),
-    languageWatch(item.languageWatch),
-    el('section', { class: 'gw-fa-modal-section' }, [
-      el('h3', {}, ['Process']),
-      processLadder(item.process),
-    ]),
-    el('div', { class: 'gw-fa-modal-grid' }, [history, receipts]),
-    el('footer', { class: 'gw-fa-modal-actions' }, [
-      el('span', {}, [`Packet page ${item.page} · synthetic fixture reference`]),
-      el('button', { type: 'button', class: 'gw-fa-secondary', 'data-test': 'modal-footer-close' }, ['Close']),
-    ]),
-  ]);
-
-  const backdrop = el('div', {
-    class: 'gw-fa-backdrop',
-    'data-test': 'agenda-modal-backdrop',
-  }, [dialog]);
-
-  const backgroundState = [...root.children]
-    .filter((node): node is HTMLElement => node instanceof HTMLElement)
-    .map((node) => ({
-      node,
-      hadInert: node.hasAttribute('inert'),
-      ariaHidden: node.getAttribute('aria-hidden'),
-    }));
-  const previousBodyOverflow = document.body.style.overflow;
-
-  let closed = false;
-  const close = (): void => {
-    if (closed) return;
-    closed = true;
-    document.removeEventListener('keydown', onKeyDown);
-    backdrop.remove();
-    for (const state of backgroundState) {
-      if (!state.hadInert) state.node.removeAttribute('inert');
-      if (state.ariaHidden === null) state.node.removeAttribute('aria-hidden');
-      else state.node.setAttribute('aria-hidden', state.ariaHidden);
-    }
-    document.body.style.overflow = previousBodyOverflow;
-    modalCleanup.delete(root);
-    if (trigger.isConnected) trigger.focus();
-  };
-  const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      close();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const focusable = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')];
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (!dialog.contains(document.activeElement)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first)?.focus();
-    } else if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  };
-
-  closeButton.addEventListener('click', close);
-  const footerClose = dialog.querySelector<HTMLButtonElement>('[data-test="modal-footer-close"]');
-  footerClose?.addEventListener('click', close);
-  backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop) close();
+      el('div', { class: 'gw-fa-modal-grid' }, [history, receipts]),
+      el('footer', { class: 'gw-fa-modal-actions' }, [
+        el('span', {}, [`Packet page ${item.page} · synthetic fixture reference`]),
+        el('button', {
+          type: 'button',
+          class: 'gw-fa-secondary',
+          'data-test': 'modal-footer-close',
+          'data-modal-close': '',
+        }, ['Close']),
+      ]),
+    ],
   });
-  document.addEventListener('keydown', onKeyDown);
-  modalCleanup.set(root, close);
-  root.append(backdrop);
-  closeButton.focus();
-  for (const state of backgroundState) {
-    state.node.setAttribute('inert', '');
-    state.node.setAttribute('aria-hidden', 'true');
-  }
-  document.body.style.overflow = 'hidden';
 }
 
 function statusTile(label: string, detail: string, tone: string): HTMLElement {
@@ -1278,7 +1185,7 @@ function gate(
  */
 export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDesignOptions = {}): void {
   ensureFastAgendaStyle();
-  modalCleanup.get(root)?.();
+  closeModal(root);
   root.className = 'gw-fast-agenda-design-root';
   root.replaceChildren();
 
@@ -1413,9 +1320,6 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-reviewed-stage-items{margin:0;padding-left:1.2rem;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-fa-reviewed-disclosures{margin-top:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-fa-reviewed-disclosures ul{margin-bottom:0;padding-left:1.2rem;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-footer{display:flex;justify-content:space-between;gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-5);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-unavailable-tools{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);margin-top:var(--gw-space-4)}.gw-fa-tool-unavailable{border:var(--gw-border-w) dashed var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-surface-well);color:var(--gw-text-muted);padding:var(--gw-space-2) var(--gw-space-3);cursor:not-allowed}
-.gw-fa-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:var(--gw-space-5);background:rgba(3,6,10,.76)}
-.gw-fa-modal{width:min(800px,96vw);max-height:90vh;overflow:auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-lg);box-shadow:0 24px 80px rgba(0,0,0,.45);padding:var(--gw-space-6);display:grid;gap:var(--gw-space-4)}
-.gw-fa-modal-head{display:flex;align-items:start;justify-content:space-between;gap:var(--gw-space-4)}.gw-fa-modal-head h2{font-size:var(--gw-text-xl)}.gw-fa-modal-close{flex:none;width:44px;height:44px;border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:transparent;color:var(--gw-text);font-size:1.4rem}
 .gw-fa-modal>.gw-fa-track{justify-self:start}.gw-fa-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-4)}.gw-fa-modal-section{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}.gw-fa-modal-section ul{margin-bottom:0;padding-left:1.25rem}.gw-fa-modal-actions{display:flex;align-items:center;gap:var(--gw-space-3);justify-content:space-between;border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-gated{max-width:52rem;margin:var(--gw-space-6) auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-6);color:var(--gw-text);font-family:var(--gw-font)}
 .gw-fa--simple{font-family:var(--gw-font-serif);font-size:1.03rem}.gw-fa--simple .gw-fa-frame{max-width:920px;background:var(--gw-header-bg);border-left:var(--gw-border-w) solid var(--gw-border);border-right:var(--gw-border-w) solid var(--gw-border)}.gw-fa--simple .gw-fa-page-head{text-align:center;border-top:3px solid var(--gw-rule-strong);border-bottom:3px double var(--gw-rule-strong);align-items:center}.gw-fa--simple .gw-fa-page-head>div{flex:1}.gw-fa--simple .gw-fa-page-head h1{font:600 var(--gw-text-display)/1 var(--gw-font-serif)}
@@ -1424,8 +1328,8 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-simple-list{list-style:none;margin:var(--gw-space-5) 0 0;padding:0}.gw-fa-simple-item{border-top:var(--gw-border-w) solid var(--gw-border);padding:var(--gw-space-5) 0}.gw-fa-simple-item:first-child{border-top:3px double var(--gw-rule-strong)}.gw-fa-simple-item article{display:grid;gap:var(--gw-space-3)}.gw-fa-simple-item-head{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:var(--gw-space-4);align-items:start}.gw-fa-simple-item-head h3{font:600 1.3rem/1.2 var(--gw-font-serif)}.gw-fa--simple .gw-fa-number{display:grid;place-items:center;min-width:38px;min-height:38px;border-radius:50%;background:var(--gw-accent);color:var(--gw-accent-text-on);padding:var(--gw-space-1)}.gw-fa-simple-action{margin:var(--gw-space-1) 0 0;color:var(--gw-text-muted);font:700 var(--gw-text-xs)/1.4 var(--gw-font-mono);letter-spacing:.04em}.gw-fa-simple-decision{margin:0;color:var(--gw-text-secondary)}.gw-fa-simple-receipts{justify-self:start}
 @media (max-width:1050px){.gw-fa-overview{grid-template-columns:1fr}.gw-fa-meeting{position:static}.gw-fa-stat-grid{grid-template-columns:repeat(4,minmax(90px,1fr))}}
 @media (max-width:720px){.gw-fa-frame{padding:var(--gw-space-4)}.gw-fa-page-head,.gw-fa-section-head,.gw-fa-footer{align-items:stretch;flex-direction:column}.gw-fa-status-grid,.gw-fa-stat-grid{grid-template-columns:1fr 1fr}.gw-fa-modal-grid,.gw-fa-reviewed-slot-grid{grid-template-columns:1fr}.gw-fa-agenda-row{grid-template-columns:2.5rem minmax(0,1fr)}.gw-fa-row-actions{grid-column:2;grid-template-columns:1fr 1fr}.gw-fa-agenda,.gw-fa-meeting,.gw-fa-tracker,.gw-fa-simple-meeting,.gw-fa-simple-agenda{padding:var(--gw-space-4)}}
-@media (max-width:440px){.gw-fa-status-grid,.gw-fa-stat-grid,.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-row-actions,.gw-fa--simple .gw-fa-row-actions{grid-template-columns:1fr}.gw-fa-process-wrap{display:block}.gw-fa-process-wrap>strong{display:block;margin-bottom:var(--gw-space-2)}.gw-fa-backdrop{padding:var(--gw-space-2)}.gw-fa-modal{padding:var(--gw-space-4)}}
-@media print{.gw-fa-fixture-banner{border:2px solid var(--gw-caution-line)}.gw-fa-reviewed-banner{border:2px solid var(--gw-border-strong)}.gw-fa button{display:none}.gw-fa-issue-rail{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}.gw-fa-backdrop{display:none}}
+@media (max-width:440px){.gw-fa-status-grid,.gw-fa-stat-grid,.gw-fa-modal-grid{grid-template-columns:1fr}.gw-fa-row-actions,.gw-fa--simple .gw-fa-row-actions{grid-template-columns:1fr}.gw-fa-process-wrap{display:block}.gw-fa-process-wrap>strong{display:block;margin-bottom:var(--gw-space-2)}}
+@media print{.gw-fa-fixture-banner{border:2px solid var(--gw-caution-line)}.gw-fa-reviewed-banner{border:2px solid var(--gw-border-strong)}.gw-fa button{display:none}.gw-fa-issue-rail{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}}
 `;
 
 function ensureFastAgendaStyle(): void {

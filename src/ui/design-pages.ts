@@ -8,6 +8,12 @@
  * surface is visibly labelled, and every persisted interaction is device-local.
  */
 
+import {
+  ALERTS_READ_KEY,
+  DELIVERY_PREVIEW_KEY,
+  LOCATION_KEY,
+  TRACKED_KEY,
+} from '../state/local-store';
 import { readMode } from './shell';
 import type { ShellMode } from './shell';
 import { applyThemePref, hasExplicitThemePref } from './theme-toggle';
@@ -34,10 +40,10 @@ export interface SavedLocation {
 }
 
 export const DESIGN_FIXTURE_LABEL = 'SYNTHETIC DESIGN FIXTURE — not a live read';
-export const TRACKED_STORAGE_KEY = 'gw_tracked';
-export const LOCATION_STORAGE_KEY = 'gw_location';
-export const ALERTS_READ_STORAGE_KEY = 'gw_alerts_read';
-export const DELIVERY_PREVIEW_STORAGE_KEY = 'gw_alert_delivery_preview';
+export const TRACKED_STORAGE_KEY = TRACKED_KEY;
+export const LOCATION_STORAGE_KEY = LOCATION_KEY;
+export const ALERTS_READ_STORAGE_KEY = ALERTS_READ_KEY;
+export const DELIVERY_PREVIEW_STORAGE_KEY = DELIVERY_PREVIEW_KEY;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
