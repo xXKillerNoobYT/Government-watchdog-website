@@ -1,0 +1,19 @@
+# Xcode / build artifacts — never commit these.
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Per-user Xcode scheme management state (schemes themselves ARE committed).
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Secrets never belong in the tree (defense in depth; none are committed today).
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+AuthKey_*.p8
+
+# macOS noise
+.DS_Store

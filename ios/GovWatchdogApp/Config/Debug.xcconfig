@@ -1,0 +1,24 @@
+// GovWatchdogApp — Debug configuration (simulator / local dev)
+//
+// Points at the website repo's local end-to-end stack:
+//   npm run e2e:local   (with GW_KEEP_UP=1 to leave it running for the app)
+// which serves the site + same-origin /api proxy at 127.0.0.1:4173 (spec §3,
+// scripts/local_e2e.sh). The iOS *simulator* shares the Mac's loopback, so
+// 127.0.0.1 is reachable from a simulator build. A physical device cannot reach
+// 127.0.0.1 — on-device builds use the Release origin and presuppose Phase 3.
+
+#include "Base.xcconfig"
+
+// NOTE on the `$()` escape below: .xcconfig treats `//` as a comment, so writing
+// `http://127.0.0.1:4173` would silently truncate to `http:`. Inserting the empty
+// `$()` variable between the slashes stops the comment scanner without changing
+// the value. The setting expands to exactly: http://127.0.0.1:4173
+// Do NOT "clean this up" by removing $() — it will break the URL.
+GW_API_BASE_URL = http:/$()/127.0.0.1:4173
+
+// Debug uses Resources/Info-Debug.plist (selected per-config in project.yml),
+// which adds NSAllowsLocalNetworking so the simulator can reach the loopback e2e
+// stack over http. This is NOT an ATS weakening exception — Apple documents
+// NSAllowsLocalNetworking as ATS-compliant (it only permits local/.local/loopback
+// addresses; all non-local traffic still requires TLS). Release uses Info.plist,
+// which carries no ATS keys at all.

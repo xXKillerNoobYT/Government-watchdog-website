@@ -1,0 +1,20 @@
+// GovWatchdogApp — Release configuration (device / TestFlight)
+//
+// Points at the Phase-3-selected hosting origin over HTTPS (spec §3). That origin
+// and its DNS/hosting spend are owned by the Phase-3 Isaac deploy card `87c0cd91`
+// (GOV-420 modified hold) — this file does NOT authorize deployment. On-device /
+// TestFlight distribution is leg 4c-6 and is blocked on 4b + Phase-3 execution.
+//
+// The value below is the origin locked by the Phase-3d decision; it is only
+// reachable once the deploy card is executed. Until then, Release is buildable but
+// not distributable, and the simulator/dev flow uses Debug.xcconfig (loopback).
+
+#include "Base.xcconfig"
+
+// `$()` escape defeats the .xcconfig `//`-comment truncation (see Debug.xcconfig).
+// Expands to exactly: https://watchdog.isaac4alpine.com
+GW_API_BASE_URL = https:/$()/watchdog.isaac4alpine.com
+
+// Release ships full App Transport Security with NO exceptions (spec §2 item 7).
+// Its Info.plist (Resources/Info.plist, selected per-config in project.yml) carries
+// no NSAppTransportSecurity keys, so ATS defaults apply and all traffic must be TLS.

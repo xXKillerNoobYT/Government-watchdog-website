@@ -1,0 +1,16 @@
+// GovWatchdogApp — shared build settings (GOV-1537 / GOV-1523 Phase 4c leg 1)
+//
+// Settings common to every build configuration live here. Configuration-specific
+// values (notably GW_API_BASE_URL) are set in Debug.xcconfig / Release.xcconfig,
+// which each `#include` this file first.
+//
+// SECURITY: never put secrets, tokens, API keys, or PII in any .xcconfig file.
+// These files are committed to the repo. The only per-config value we set is a
+// non-secret HTTPS/loopback origin.
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// iPhone-first, iOS 17+ floor (spec §1). Device family 1 = iPhone.
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+TARGETED_DEVICE_FAMILY = 1
