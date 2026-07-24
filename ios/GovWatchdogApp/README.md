@@ -1,16 +1,42 @@
 # GovWatchdogApp (iOS)
 
-SwiftUI companion app for the Government Watchdog gated beta — **scaffold only**
-(GOV-1537 / GOV-1523 Phase 4c leg 1). This leg stands up the Xcode project, the
-build-time configuration plumbing, and a minimal launch screen. Sign-in, gated
-access states, and reviewer-internal views are **later legs** (4c-3, 4c-4) and are
-intentionally absent here.
+SwiftUI companion app for the Government Watchdog gated beta. The scaffold
+(GOV-1537 / Phase 4c leg 1) stood up the Xcode project, build-time config, and a
+launch screen. **Leg 4c-3 (GOV-1539)** adds the native on-device auth flow:
+email → 6-digit code → session token in the iOS Keychain, sign-out, and an
+account-deletion request screen. Gated reviewer-internal views remain a **later
+leg** (4c-4) and are intentionally absent.
 
 - **Platform:** iOS 17+ deployment target, iPhone-first (no iPad/Android layout).
-- **UI:** SwiftUI, single screen.
+- **UI:** SwiftUI, `@Observable` state machine (`AuthModel`) routing
+  signed-out → awaiting-code → signed-in.
 - **Networking:** talks only to one HTTPS/loopback origin, injected from build
-  settings (never hardcoded). The only endpoint this scaffold calls is the public
-  `GET /api/health` reachability probe.
+  settings (never hardcoded). Endpoints: the public `GET /api/health` probe and the
+  gated-beta account routes (`/api/beta/magic-link/request`, `/consume`,
+  `DELETE /api/beta/sessions/current`).
+- **Single stored secret:** the session token, in the Keychain
+  (`kSecAttrAccessibleAfterFirstUnlock`, non-synchronizable). No email, code, or
+  gated row is ever written to disk; the app emits **no logs** at all.
+
+### Auth flow ↔ delivered backend contract (leg 4c-2, GOV-1538)
+
+The 4a spec §1 envisioned a *bearer* token returned in the body ("native uses
+bearer directly"). The backend that actually shipped (GOV-1538) reuses the existing
+**cookie** session: `POST /api/beta/magic-link/consume {email, code}` returns
+`200` with the session only in a `Set-Cookie: gw_beta_session=…` header (or one
+neutral `401`; `404` while the beta flag is off). This client therefore extracts
+the raw token from `Set-Cookie`, stores it as the single Keychain secret (never in
+`URLSession`'s on-disk cookie jar, which is disabled), and replays it in the
+`Cookie` header — the header the delivered sign-out route reads. This is a
+client-side adaptation, **not** a contract fork; switching to
+`Authorization: Bearer` is a one-line change in `BetaAPI`/`AuthClient` if a later
+4c-2 addendum adds a bearer route. See the GOV-1539 issue thread for the escalation.
+
+> **Account deletion (App Store 5.1.1(v)):** the screen submits a request to
+> `POST /api/beta/account/deletion-request` and routes through the backend account
+> lifecycle — **no client-side deletes**. That HTTP route is not deployed yet; until
+> it is, the screen renders an honest "not accepted in this build" state rather than
+> faking success.
 
 Authoritative scope: `docs/gov1523-ios-app-scoping-spec.md` (website `main`). This
 app consumes the Phase-1 artifact contract verbatim and forks nothing.
@@ -118,18 +144,45 @@ ios/GovWatchdogApp/
 ├── Config/
 │   ├── Base.xcconfig             # shared settings (version, deployment target)
 │   ├── Debug.xcconfig            # GW_API_BASE_URL → local e2e loopback
-│   └── Release.xcconfig          # GW_API_BASE_URL → Phase-3 HTTPS origin
+│   ├── Release.xcconfig          # GW_API_BASE_URL → Phase-3 HTTPS origin
+│   └── GovWatchdogApp.entitlements # keychain-access-group (session store)
 ├── Sources/
-│   ├── GovWatchdogApp.swift      # @main App entry
-│   ├── ContentView.swift         # scaffold landing screen
+│   ├── GovWatchdogApp.swift      # @main App entry (renders RootView)
 │   ├── AppConfig.swift           # the ONLY reader of the injected base URL
-│   └── HealthClient.swift        # minimal GET /api/health probe (no auth, no PII)
+│   ├── ContentView.swift         # scaffold health-probe screen (retained)
+│   ├── HealthClient.swift        # minimal GET /api/health probe (no auth, no PII)
+│   ├── Auth/
+│   │   ├── BetaAPI.swift         # route constants + Set-Cookie/PII-redaction helpers
+│   │   ├── SessionStore.swift    # Keychain wrapper (the one stored secret)
+│   │   ├── AuthClient.swift      # request/consume/sign-out/deletion network calls
+│   │   └── AuthModel.swift       # @Observable auth state machine
+│   └── Views/
+│       ├── RootView.swift        # phase router (signed-out/awaiting-code/signed-in)
+│       ├── SignInView.swift      # email entry
+│       ├── CodeEntryView.swift   # 6-digit code entry
+│       ├── SignedInView.swift    # signed-in shell + sign-out
+│       └── AccountDeletionView.swift # deletion-request screen (5.1.1(v))
+├── Tests/GovWatchdogAppTests/    # Keychain attrs (AC #2), cookie parse, redaction
 ├── Resources/
 │   ├── Info.plist                # Release: full ATS
 │   ├── Info-Debug.plist          # Debug: + NSAllowsLocalNetworking
 │   └── Assets.xcassets/          # AppIcon + AccentColor placeholders
+├── docs/screenshots/             # simulator captures of each auth state
 └── README.md
 ```
+
+## Tests
+
+```bash
+cd ios/GovWatchdogApp
+xcodebuild test -project GovWatchdogApp.xcodeproj -scheme GovWatchdogApp \
+  -destination 'platform=iOS Simulator,name=<an iPhone sim>' \
+  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES
+```
+
+The Keychain tests need the app's `keychain-access-group` entitlement, so the test
+run **ad-hoc signs** the app (identity `-`, no Apple team required). On device /
+TestFlight the provisioning profile grants the group automatically.
 
 ### Regenerating the project
 

@@ -9,22 +9,55 @@
 /* Begin PBXBuildFile section */
 		0809AD8A56DC4B365F74CA36 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */; };
 		0BFE2FABB3FA25B7E52859B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A8104A109BA32D61E0BA1CE /* Assets.xcassets */; };
+		1A4AEAFC40C0B6D304236F54 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6737C56E3ADA4BA605AA6396 /* RootView.swift */; };
 		22E20904F149A283E1DC5C0C /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24B69D0828F145DFBF49254 /* AppConfig.swift */; };
+		308E1AA5CDF0F103FF78D210 /* BetaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0CAC1B5542E4606F2E64DB /* BetaAPI.swift */; };
+		32734EFEF0B2EC404DFA983F /* AccountDeletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F097E54A53942411F719392 /* AccountDeletionView.swift */; };
+		48B27CC3E52A6C6CDE150751 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53F483C1BCF77221AA5FF161 /* SessionStoreTests.swift */; };
 		679D2CC1ABFE80192513A62F /* HealthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5D4E0887610F9426B02488 /* HealthClient.swift */; };
+		7BA6ECDC7B1FBAF9C35DC140 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F342142A55117626B33AC4 /* SignInView.swift */; };
+		84073A3670A1D05C5C68A224 /* AuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E18B0F41D7A1EDEBB0473297 /* AuthClient.swift */; };
+		8FA0C53061E8486033E104B3 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F0A45FB923F63825AC4A1F /* SessionStore.swift */; };
+		9CBF53B68B36FA9C1E5C09E5 /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4127E1B160F8EBF0DD7F2B /* AuthModel.swift */; };
+		BFEFDACF9EBF5CC26F7EE457 /* AuthContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B43AEBF62EC90C5B73F9FED4 /* AuthContractTests.swift */; };
+		CDE91070B03E235A1C696228 /* SignedInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38F72EBB3D5C438C620E9E4A /* SignedInView.swift */; };
 		EC65801DEC1E4CE1893AA8CD /* GovWatchdogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */; };
+		EC9D07E47C7525A10EEB0026 /* CodeEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA765DA039AEA3E2CEE6956 /* CodeEntryView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		85D60AEDA94BB162C393346F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E3504165EE37B291E1795B28 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6636E27509588345CBBA4203;
+			remoteInfo = GovWatchdogApp;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0D4127E1B160F8EBF0DD7F2B /* AuthModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModel.swift; sourceTree = "<group>"; };
 		0EE2C7560A064D89FCC7BCBF /* Info-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		1CA765DA039AEA3E2CEE6956 /* CodeEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEntryView.swift; sourceTree = "<group>"; };
 		2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GovWatchdogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		38F72EBB3D5C438C620E9E4A /* SignedInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignedInView.swift; sourceTree = "<group>"; };
+		53F483C1BCF77221AA5FF161 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
+		6737C56E3ADA4BA605AA6396 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		6A8104A109BA32D61E0BA1CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6F097E54A53942411F719392 /* AccountDeletionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionView.swift; sourceTree = "<group>"; };
 		7C5D4E0887610F9426B02488 /* HealthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthClient.swift; sourceTree = "<group>"; };
 		862B73F009B1ABB8C91A6AB7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		86F0A45FB923F63825AC4A1F /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		A0804FD6CF8DCC2A60D99FA1 /* GovWatchdogAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GovWatchdogAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A24B69D0828F145DFBF49254 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		A33E449BC8CC47B9AA16858A /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		B43AEBF62EC90C5B73F9FED4 /* AuthContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthContractTests.swift; sourceTree = "<group>"; };
 		BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GovWatchdogApp.swift; sourceTree = "<group>"; };
+		C1F342142A55117626B33AC4 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		CC5F91447360234812D49A6A /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		DD0CAC1B5542E4606F2E64DB /* BetaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaAPI.swift; sourceTree = "<group>"; };
+		E18B0F41D7A1EDEBB0473297 /* AuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -37,12 +70,53 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
+		2EAD61B8319E0D0E6950BB57 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6F097E54A53942411F719392 /* AccountDeletionView.swift */,
+				1CA765DA039AEA3E2CEE6956 /* CodeEntryView.swift */,
+				6737C56E3ADA4BA605AA6396 /* RootView.swift */,
+				38F72EBB3D5C438C620E9E4A /* SignedInView.swift */,
+				C1F342142A55117626B33AC4 /* SignInView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		3138B92771D459FABFBDCCA2 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				E18B0F41D7A1EDEBB0473297 /* AuthClient.swift */,
+				0D4127E1B160F8EBF0DD7F2B /* AuthModel.swift */,
+				DD0CAC1B5542E4606F2E64DB /* BetaAPI.swift */,
+				86F0A45FB923F63825AC4A1F /* SessionStore.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		3A4FB361746A215CD04F8A31 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				46E9B03452CF16C89EEDF914 /* GovWatchdogAppTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		46E9B03452CF16C89EEDF914 /* GovWatchdogAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				B43AEBF62EC90C5B73F9FED4 /* AuthContractTests.swift */,
+				53F483C1BCF77221AA5FF161 /* SessionStoreTests.swift */,
+			);
+			path = GovWatchdogAppTests;
+			sourceTree = "<group>";
+		};
 		7BF12E8E481CC81C0587DF2E = {
 			isa = PBXGroup;
 			children = (
 				00D5936E68EDADB0568F8A5C /* Config */,
 				7D40161D08EBFA129A89DC69 /* Resources */,
 				D10EC70B0FF367EA732916BD /* Sources */,
+				3A4FB361746A215CD04F8A31 /* Tests */,
 				CD24337941D513416581E56D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,6 +135,7 @@
 			isa = PBXGroup;
 			children = (
 				2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */,
+				A0804FD6CF8DCC2A60D99FA1 /* GovWatchdogAppTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -72,6 +147,8 @@
 				BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */,
 				BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */,
 				7C5D4E0887610F9426B02488 /* HealthClient.swift */,
+				3138B92771D459FABFBDCCA2 /* Auth */,
+				2EAD61B8319E0D0E6950BB57 /* Views */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -97,6 +174,24 @@
 			productReference = 2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8C32842A639C85DE32B3613C /* GovWatchdogAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 45FF37288928ED5572DCC33A /* Build configuration list for PBXNativeTarget "GovWatchdogAppTests" */;
+			buildPhases = (
+				ADC1B175B62BEB18D095A004 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EA1DCEF8E78C320CCC88BF53 /* PBXTargetDependency */,
+			);
+			name = GovWatchdogAppTests;
+			packageProductDependencies = (
+			);
+			productName = GovWatchdogAppTests;
+			productReference = A0804FD6CF8DCC2A60D99FA1 /* GovWatchdogAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -107,6 +202,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					6636E27509588345CBBA4203 = {
+						ProvisioningStyle = Automatic;
+					};
+					8C32842A639C85DE32B3613C = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -126,6 +224,7 @@
 			projectRoot = "";
 			targets = (
 				6636E27509588345CBBA4203 /* GovWatchdogApp */,
+				8C32842A639C85DE32B3613C /* GovWatchdogAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -142,18 +241,44 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		ADC1B175B62BEB18D095A004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFEFDACF9EBF5CC26F7EE457 /* AuthContractTests.swift in Sources */,
+				48B27CC3E52A6C6CDE150751 /* SessionStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C46FB6CCED5120EFD17E4531 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32734EFEF0B2EC404DFA983F /* AccountDeletionView.swift in Sources */,
 				22E20904F149A283E1DC5C0C /* AppConfig.swift in Sources */,
+				84073A3670A1D05C5C68A224 /* AuthClient.swift in Sources */,
+				9CBF53B68B36FA9C1E5C09E5 /* AuthModel.swift in Sources */,
+				308E1AA5CDF0F103FF78D210 /* BetaAPI.swift in Sources */,
+				EC9D07E47C7525A10EEB0026 /* CodeEntryView.swift in Sources */,
 				0809AD8A56DC4B365F74CA36 /* ContentView.swift in Sources */,
 				EC65801DEC1E4CE1893AA8CD /* GovWatchdogApp.swift in Sources */,
 				679D2CC1ABFE80192513A62F /* HealthClient.swift in Sources */,
+				1A4AEAFC40C0B6D304236F54 /* RootView.swift in Sources */,
+				8FA0C53061E8486033E104B3 /* SessionStore.swift in Sources */,
+				7BA6ECDC7B1FBAF9C35DC140 /* SignInView.swift in Sources */,
+				CDE91070B03E235A1C696228 /* SignedInView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EA1DCEF8E78C320CCC88BF53 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6636E27509588345CBBA4203 /* GovWatchdogApp */;
+			targetProxy = 85D60AEDA94BB162C393346F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		01F580AD8768119E1FFA6F96 /* Release */ = {
@@ -221,6 +346,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/GovWatchdogApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -234,6 +360,24 @@
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		126FFCA6237FDB84F6E22155 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaac4alpine.govwatchdog.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GovWatchdogApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GovWatchdogApp";
 			};
 			name = Release;
 		};
@@ -309,6 +453,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/GovWatchdogApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -322,6 +467,24 @@
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		95DD1A03A658848B1466589C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaac4alpine.govwatchdog.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GovWatchdogApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GovWatchdogApp";
 			};
 			name = Debug;
 		};
@@ -342,6 +505,15 @@
 			buildConfigurations = (
 				624637E91FC01DAF29C2E7DE /* Debug */,
 				01F580AD8768119E1FFA6F96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		45FF37288928ED5572DCC33A /* Build configuration list for PBXNativeTarget "GovWatchdogAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				95DD1A03A658848B1466589C /* Debug */,
+				126FFCA6237FDB84F6E22155 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
