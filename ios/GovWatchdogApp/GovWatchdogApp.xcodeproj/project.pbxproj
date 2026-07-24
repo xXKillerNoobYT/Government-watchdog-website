@@ -1,0 +1,352 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0809AD8A56DC4B365F74CA36 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */; };
+		0BFE2FABB3FA25B7E52859B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A8104A109BA32D61E0BA1CE /* Assets.xcassets */; };
+		22E20904F149A283E1DC5C0C /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24B69D0828F145DFBF49254 /* AppConfig.swift */; };
+		679D2CC1ABFE80192513A62F /* HealthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5D4E0887610F9426B02488 /* HealthClient.swift */; };
+		EC65801DEC1E4CE1893AA8CD /* GovWatchdogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0EE2C7560A064D89FCC7BCBF /* Info-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GovWatchdogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A8104A109BA32D61E0BA1CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7C5D4E0887610F9426B02488 /* HealthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthClient.swift; sourceTree = "<group>"; };
+		862B73F009B1ABB8C91A6AB7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A24B69D0828F145DFBF49254 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A33E449BC8CC47B9AA16858A /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GovWatchdogApp.swift; sourceTree = "<group>"; };
+		CC5F91447360234812D49A6A /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		00D5936E68EDADB0568F8A5C /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A33E449BC8CC47B9AA16858A /* Debug.xcconfig */,
+				CC5F91447360234812D49A6A /* Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		7BF12E8E481CC81C0587DF2E = {
+			isa = PBXGroup;
+			children = (
+				00D5936E68EDADB0568F8A5C /* Config */,
+				7D40161D08EBFA129A89DC69 /* Resources */,
+				D10EC70B0FF367EA732916BD /* Sources */,
+				CD24337941D513416581E56D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7D40161D08EBFA129A89DC69 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				6A8104A109BA32D61E0BA1CE /* Assets.xcassets */,
+				0EE2C7560A064D89FCC7BCBF /* Info-Debug.plist */,
+				862B73F009B1ABB8C91A6AB7 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CD24337941D513416581E56D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D10EC70B0FF367EA732916BD /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A24B69D0828F145DFBF49254 /* AppConfig.swift */,
+				BA3C8A4864AABEDAFE8AF01B /* ContentView.swift */,
+				BE86525E17CE69E8DD8EE6A3 /* GovWatchdogApp.swift */,
+				7C5D4E0887610F9426B02488 /* HealthClient.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6636E27509588345CBBA4203 /* GovWatchdogApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1A525B41D4A42F462223FC1B /* Build configuration list for PBXNativeTarget "GovWatchdogApp" */;
+			buildPhases = (
+				C46FB6CCED5120EFD17E4531 /* Sources */,
+				88DC827B8B9B87B8806DB48A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GovWatchdogApp;
+			packageProductDependencies = (
+			);
+			productName = GovWatchdogApp;
+			productReference = 2D78C5BF03509F50C64DC7C5 /* GovWatchdogApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E3504165EE37B291E1795B28 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					6636E27509588345CBBA4203 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 2A27CDD74A279228C684A44E /* Build configuration list for PBXProject "GovWatchdogApp" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7BF12E8E481CC81C0587DF2E;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = CD24337941D513416581E56D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6636E27509588345CBBA4203 /* GovWatchdogApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		88DC827B8B9B87B8806DB48A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0BFE2FABB3FA25B7E52859B9 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C46FB6CCED5120EFD17E4531 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22E20904F149A283E1DC5C0C /* AppConfig.swift in Sources */,
+				0809AD8A56DC4B365F74CA36 /* ContentView.swift in Sources */,
+				EC65801DEC1E4CE1893AA8CD /* GovWatchdogApp.swift in Sources */,
+				679D2CC1ABFE80192513A62F /* HealthClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		01F580AD8768119E1FFA6F96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		12380988F80C3B01169A318F /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CC5F91447360234812D49A6A /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaac4alpine.govwatchdog;
+				PRODUCT_NAME = GovWatchdogApp;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		624637E91FC01DAF29C2E7DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		678055086F4B46E37649E3EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A33E449BC8CC47B9AA16858A /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Resources/Info-Debug.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaac4alpine.govwatchdog;
+				PRODUCT_NAME = GovWatchdogApp;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1A525B41D4A42F462223FC1B /* Build configuration list for PBXNativeTarget "GovWatchdogApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				678055086F4B46E37649E3EF /* Debug */,
+				12380988F80C3B01169A318F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2A27CDD74A279228C684A44E /* Build configuration list for PBXProject "GovWatchdogApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				624637E91FC01DAF29C2E7DE /* Debug */,
+				01F580AD8768119E1FFA6F96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E3504165EE37B291E1795B28 /* Project object */;
+}
