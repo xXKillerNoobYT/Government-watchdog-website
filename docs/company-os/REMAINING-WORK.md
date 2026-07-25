@@ -55,6 +55,67 @@ work. They close under their GOV numbers; everything opened after 2026-07-24 goe
 
 ---
 
+## 0.5. Board defect repair — one fixed, two deliberately left for the owner
+
+Three defects were found by the stage-gate authoring pass. Each proposed fix was checked by
+independent adversarial verifiers before anything was executed. **One was executed. Two were
+not, and the reason matters more than the fix would have.**
+
+### DONE — Stage 5 self-certification (the serious one)
+VerificationSafetyReviewer owned Stage 5 *and* was its mandated independent reviewer, which
+made Directive 3 ("never self-certify") unenforceable on an **active** stage.
+
+`stage-gates.md` §3.5 names the remedy verbatim and §8 action #3 assigns it to the CEO:
+reassign the producing ownership, not the review. Executed exactly that — Stage 5
+`9d3d7fbd` and its eight stage-owner template slots (`.01 .02 .03 .04 .12 .13 .14 .15`)
+moved to BackendCrawlerEngineer `f26f530c`, and the unowned slot `.16` `a05b55f1` was
+assigned to the same owner, satisfying §3.2 precondition 5.
+
+**VSR retains exactly one Stage 5 slot — `.10` QA and workflow testing plan.** That is its
+legitimate review slot, not a producing one. Verified after the fact: stage owner is no
+longer VSR, VSR holds 1 slot, zero slots are unowned.
+
+### NOT DONE — Stage 8, because the obvious fix trades one self-certification for another
+§3.5 and §8 #4 name SecurityPrivacyAgent `72d0eccf` as the Stage 8 owner. But §3.3 step 6
+requires an **SPA review** before exit on any stage touching publication — and Stage 8 is on
+that list. Making SPA the producer would recreate the exact defect one seat over.
+
+Stage 8 is `planned`. No work flows through it, so nothing is bleeding. A verifier raised
+FrontendTimelineEngineer `a73c847f` as the alternative that removes the collision entirely,
+at the cost of putting a frontend agent over a backend identity/threshold stage.
+
+> **OWNER DECISION:** Stage 8 producer — SPA (follows the doc, keeps the co-sign collision)
+> or FTE (removes the collision, weaker domain fit)? Until this is answered Stage 8 keeps
+> VSR as owner, which is a known and recorded violation on a stage that is not running.
+
+### NOT DONE — MOTY sub-goals, because the proposed fix was refuted
+The plan was to create 16 children, five of them at `--status achieved`. Verifiers refuted it
+on grounds that hold up:
+
+- §3.1 makes `planned → achieved` illegal; creating directly at `achieved` bypasses the state
+  machine rather than passing it.
+- §3.6 defines this precise defect and permits exactly **two** remedies: give MOTY the slot
+  template (minimum `.01 .02 .06 .10 .11 .14`), **or** reparent it under Stage 6 `c10c406c`.
+  The plan took neither.
+- It would still have left MOTY `active` with zero `active` children — the same
+  mis-declaration, with more rows.
+
+> **OWNER DECISION:** MOTY remedy — slot template, or reparent under Stage 6? §3.6 sanctions
+> both. A verifier put it plainly: the operator must choose one on the record, not skip both.
+
+### Follow-on work this exposed (not yet done)
+- No `docs/company-os/receipts/` directory exists, so §3.5's requirement to record a reviewer
+  substitution "in the stage receipt header **before** entry" cannot currently be satisfied.
+- No `GOV-#### [Stage N ENTRY]` / `[Stage N EXIT]` issue pair exists for any stage (§6.3,
+  §8 action 6). Stage 5 predates the gate law — it was set active 2026-06-07, seven weeks
+  before `stage-gates.md` was written. It was never bypassed; there was nothing to bypass.
+- Slot activation was deliberately **not** performed. Stage 5 still has zero `active` slots
+  and so still breaches §3.2 precondition 4. Mass-activating eleven slots would have added
+  motion, not fixed a defect, and the stage cannot lawfully enter until the receipt and
+  ENTRY-issue machinery above exists.
+
+---
+
 ## 1. Do these first (they unblock or de-risk everything else)
 
 ### 1.1 Split commit `d8bb3c6` — **defect, fix before the PR**
