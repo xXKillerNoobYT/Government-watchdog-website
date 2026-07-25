@@ -182,8 +182,13 @@ function searchControl(): HTMLFormElement {
     'aria-label': 'Search Government Watchdog',
     'data-test': 'shell-search-form',
   });
+  // Names only what is actually searched. Submitting filters the reviewed timeline
+  // records already admitted to this app — there is no officials index, no document
+  // index, and no archive behind this field. Advertising those would let an empty
+  // result read as "Alpine has no such official" instead of "this response has no
+  // matching row".
   const label = el('label', { class: 'gw-shell-sr-only', for: 'gw-shell-search-input' }, [
-    'Search agendas, meetings, documents, officials, and issues',
+    'Filter the reviewed timeline records already admitted to this app. This is not an archive search.',
   ]);
   const submit = el('button', {
     class: 'gw-shell-search-submit',
@@ -197,7 +202,9 @@ function searchControl(): HTMLFormElement {
     type: 'search',
     name: 'search',
     autocomplete: 'off',
-    placeholder: 'Search agendas, meetings, documents, officials, issues…',
+    placeholder: 'Filter reviewed timeline records…',
+    // The shortcut focuses this field; it does not open a command palette.
+    title: 'Filters reviewed timeline records already loaded — not an archive search. ⌘K or Ctrl-K focuses this field.',
     'data-test': 'shell-search',
   });
   const shortcut = el('kbd', {

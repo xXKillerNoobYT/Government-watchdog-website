@@ -178,7 +178,15 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     const form = root.querySelector('[data-test="shell-search-form"]') as HTMLFormElement;
     expect(input.tagName).toBe('INPUT');
     expect(input.type).toBe('search');
-    expect(input.labels?.[0]?.textContent).toMatch(/search agendas/i);
+    // The field must not advertise a population it cannot search. There is no
+    // officials index, no document index, and no archive behind it.
+    expect(input.labels?.[0]?.textContent).toMatch(/reviewed timeline records/i);
+    expect(input.labels?.[0]?.textContent).toMatch(/not an archive search/i);
+    for (const claim of [input.placeholder, input.labels?.[0]?.textContent ?? '']) {
+      expect(claim).not.toMatch(/officials|documents/i);
+    }
+    // ⌘K focuses this field; it must not imply a command palette that does not exist.
+    expect(input.title).toMatch(/focuses this field/i);
 
     input.value = 'water rates & fees';
     form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true }));
