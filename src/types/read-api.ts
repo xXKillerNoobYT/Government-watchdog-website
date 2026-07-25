@@ -456,3 +456,63 @@ export interface ReadApiResponse {
    */
   completeness_gaps?: CompletenessGapCard[];
 }
+
+// --- Supplied source files (GOV-1566 F2, consumes the B6 web-safe projection) -
+
+/**
+ * One reviewed supplied source file, as projected by the Backend **B6 web-safe
+ * read endpoint** (GOV-1566 §7). B6 is the ONLY thing that crosses the
+ * Backend→Website boundary for the file-intake feature, and it returns ONLY
+ * files whose backend `review_state` is `web_safe`. Consequences baked into
+ * this type:
+ *
+ *  - Pending / reviewing / held / rejected files NEVER appear here — they are
+ *    absent from the projection, not hidden by the client. So there is no
+ *    per-file review flag to read: presence in `files` *is* the web-safe verdict.
+ *  - The raw `review_state` key must never cross the wire — it is on the
+ *    frontend `RAW_PATH_FORBIDDEN_KEYS` denylist and would trip `assertWebSafe`.
+ *    Deliberately un-modeled so a fixture/live payload carrying it fails loud.
+ *  - No raw bytes, no absolute/vault path, no uploader PII, no sha of the raw
+ *    file. Only the public, review-cleared metadata below — every URL is a
+ *    hosted http(s) link to the reviewed projection, never a local path.
+ */
+export interface SuppliedSourceFile {
+  /** Stable web-safe id for the reviewed file (NOT a raw path or raw-bytes sha). */
+  file_id: string;
+  /** Review-cleared display title (sanitized of any private original filename). */
+  title: string;
+  /** Public file kind, e.g. `agenda_packet` | `minutes` | `transcript` | `pdf`. */
+  source_type?: string | null;
+  /** Tie to the meeting this file documents (matches the timeline meeting id). */
+  meeting_id?: number | string | null;
+  /** Tie to a specific agenda item when the file documents one (else null). */
+  agenda_item_id?: string | null;
+  /** Public, review-cleared date the source was produced/published. */
+  source_date?: string | null;
+  /** Review-cleared supplier/publisher label (never raw uploader identity/PII). */
+  published_by?: string | null;
+  /** Preserved-version grouping (B5): web-safe id + ordinal only, no raw diff. */
+  version_group_id?: string | null;
+  version?: number | null;
+  /** Hosted URL for the reviewed projection of the file (never a raw/vault path). */
+  original_url?: string | null;
+  /** Hosted archived copy, when captured (never a raw/vault path). */
+  archive_url?: string | null;
+}
+
+/**
+ * The B6 web-safe read projection consumed by F2. `files` are ALL already
+ * `web_safe` (B6 filters server-side; the client never re-filters by a review
+ * flag it cannot see). `pending_review_count` is the SOLE signal about
+ * not-yet-web-safe files: a bare non-negative integer so the UI can show an
+ * honest "N file(s) pending review" placeholder WITHOUT leaking any content,
+ * filename, uploader, version, or `review_state` of the pending items.
+ */
+export interface SuppliedFilesProjection {
+  /** Same gate as the read API — supplied files render only reviewer-internal. */
+  access?: AccessState | null;
+  /** Reviewed (web_safe) files only. Empty array = honestly nothing reviewed yet. */
+  files: SuppliedSourceFile[];
+  /** Count of files still in review; content of those files is never projected. */
+  pending_review_count?: number | null;
+}

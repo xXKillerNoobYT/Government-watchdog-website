@@ -59,7 +59,7 @@ import {
 import type { CardFeed } from './ui/card-feed';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
-import type { ReadApiResponse } from './types/read-api';
+import type { ReadApiResponse, SuppliedFilesProjection } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
 import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
@@ -68,6 +68,7 @@ import cardFeedData from './fixtures/alpine-card-feed.json';
 import newsletterDigestData from './fixtures/alpine-newsletter-digest.json';
 import agendaBoardData from './fixtures/agenda-board-projection.json';
 import agendaBoardSampleData from './fixtures/agenda-board-projection.sample.dev.json';
+import suppliedFilesData from './fixtures/alpine-supplied-files.json';
 import type { AgendaBoard } from './types/agenda-board';
 
 /**
@@ -143,6 +144,16 @@ const BOARD_NOTICE =
 const BOARD_SAMPLE: AgendaBoard = assertWebSafe(agendaBoardSampleData as unknown as AgendaBoard);
 const BOARD_SAMPLE_NOTICE =
   'DEV SAMPLE — genuine agenda_board() output over the backend test seed, NOT real Alpine data.';
+
+/**
+ * GOV-1566 F2 — reviewed supplied-file source drawer, consuming the B6 web-safe
+ * projection contract. This is a CONTRACT fixture (Backend B6 is not built yet):
+ * it exercises the fail-closed renderer against the exact shape B6 will emit —
+ * only `web_safe` files, no raw `review_state` key, a bare `pending_review_count`
+ * for the content-free placeholder. Swept for raw paths on load exactly like the
+ * other fixtures; when B6 lands this constant is swapped for the live read.
+ */
+const SUPPLIED_FILES: SuppliedFilesProjection = assertWebSafe(suppliedFilesData as SuppliedFilesProjection);
 
 /**
  * GOV-462 — the Stage 4.05 reviewer-internal Alpine newsletter digest object,
@@ -510,7 +521,7 @@ function renderIssueDetailRoute(mount: HTMLElement, query: URLSearchParams): voi
 function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): void {
   const access = query.get('access');
   const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE);
+  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE, SUPPLIED_FILES);
 }
 
 /**

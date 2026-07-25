@@ -1,0 +1,30 @@
+{
+  "access": "reviewer_internal",
+  "files": [
+    {
+      "file_id": "sf_2f1a9c",
+      "title": "Town Council agenda packet — regular meeting",
+      "source_type": "agenda_packet",
+      "meeting_id": 148,
+      "agenda_item_id": "ai_148_03",
+      "source_date": "2026-06-09",
+      "published_by": "Town of Alpine Clerk",
+      "version_group_id": "vg_packet_148",
+      "version": 1,
+      "original_url": "https://watchdog.isaac4alpine.com/reviewed/sf_2f1a9c.pdf"
+    },
+    {
+      "file_id": "sf_7b3e04",
+      "title": "Approved minutes — regular meeting",
+      "source_type": "minutes",
+      "meeting_id": 148,
+      "agenda_item_id": null,
+      "source_date": "2026-06-23",
+      "published_by": "Town of Alpine Clerk",
+      "version": 1,
+      "original_url": "https://watchdog.isaac4alpine.com/reviewed/sf_7b3e04.pdf",
+      "archive_url": "https://web.archive.org/web/2026/https://alpine.example.gov/minutes-148"
+    }
+  ],
+  "pending_review_count": 2
+}

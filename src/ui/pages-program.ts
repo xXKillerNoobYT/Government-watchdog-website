@@ -7,8 +7,20 @@
  */
 
 import type { AgendaBoard, AgendaBoardCard, AgendaLane } from '../types/agenda-board';
-import type { EvidenceLink, ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
+import type {
+  EvidenceLink,
+  ReadApiResponse,
+  StatementRecord,
+  SuppliedFilesProjection,
+  SuppliedSourceFile,
+  TopicTreeNode,
+} from '../types/read-api';
 import { ensureStyle, gapCardSection, recordCard } from './render';
+import {
+  groupSuppliedFilesByMeeting,
+  pendingReviewNotice,
+  suppliedFileMeta,
+} from './supplied-files';
 import { FIXTURE_BANNER_TEXT, trustLabel } from './state-view';
 import { buildGapSummary, buildTimeline, recordTimelineDate } from './timeline';
 import {
@@ -738,6 +750,9 @@ function flattenTopics(node: TopicTreeNode): TopicTreeNode[] {
 const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-boards-contract-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);padding:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius)}
+.gw-supplied-files-group{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
+.gw-supplied-files-group>.gw-card{min-width:0}
+.gw-supplied-files-group>.gw-card a{display:inline-block;margin-right:var(--gw-space-4)}
 .gw-boards-contract-tab,.gw-boards-contract-tool,.gw-vault-contract-tool{min-height:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.2 var(--gw-font);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-boards-contract-tab:disabled,.gw-boards-contract-tool:disabled,.gw-vault-contract-tool:disabled{cursor:not-allowed;opacity:.78}
 .gw-boards-contract-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-3)}
@@ -1314,7 +1329,91 @@ function collectSources(data: ReadApiResponse): EvidenceLink[] {
   return [...byKey.values()];
 }
 
-export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
+/**
+ * GOV-1566 F2 — reviewed supplied-file source drawer. Consumes the B6 web-safe
+ * projection ONLY. Renders an honest empty state when B6 is not wired (no
+ * projection), the reviewed files grouped by their meeting tie when present, and
+ * a content-free "N pending review" notice — pending/held files never render any
+ * content. Every file here is `web_safe` by construction (B6 filters server-side).
+ */
+export function renderSuppliedFiles(
+  projection: SuppliedFilesProjection | null | undefined,
+  query: URLSearchParams,
+): HTMLElement {
+  const section = el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-test': 'supplied-files',
+    'aria-label': 'Reviewed supplied source files',
+  }, [
+    el('p', { class: 'gw-muted' }, ['SUPPLIED SOURCE FILES · REVIEWED ONLY']),
+  ]);
+
+  // B6 not wired yet ⇒ honest empty panel, consistent with the page's other
+  // not-yet-connected contract slots. No file rows are ever invented.
+  if (!projection) {
+    section.append(
+      el('h2', {}, ['Supplied-file intake not wired yet']),
+      el('p', {}, ['Reviewed supplied files will appear here, tied to their meeting, once the web-safe intake projection is connected. No file rows are shown until then.']),
+    );
+    section.setAttribute('data-state', 'empty');
+    return section;
+  }
+
+  const groups = groupSuppliedFilesByMeeting(projection);
+  const pending = pendingReviewNotice(projection);
+
+  if (!groups.length) {
+    section.append(
+      el('h2', {}, ['No reviewed supplied files yet']),
+      el('p', {}, ['No reviewed files are tied to a meeting yet. Nothing is invented for this slot.']),
+    );
+    section.setAttribute('data-state', 'empty');
+  } else {
+    section.append(el('h2', {}, ['Reviewed files by meeting']));
+    for (const group of groups) {
+      section.append(el('div', {
+        class: 'gw-supplied-files-group',
+        'data-test': 'supplied-files-group',
+        'data-meeting-id': group.meetingId ?? 'untied',
+      }, [
+        el('p', { class: 'gw-muted' }, [group.meetingId ? `Meeting ${group.meetingId}` : 'Not tied to a meeting']),
+        ...group.files.map((file) => suppliedFileCard(file)),
+      ]));
+    }
+  }
+
+  // Content-free pending placeholder — count only, never a filename/uploader.
+  if (pending) {
+    section.append(el('p', {
+      class: 'gw-muted',
+      'data-test': 'supplied-files-pending',
+      role: 'status',
+    }, [pending]));
+  }
+
+  if (query.get('demo') === 'sample') {
+    section.setAttribute('data-demo', 'sample');
+  }
+  return section;
+}
+
+/** One reviewed file rendered as a source-drawer card (present-only metadata). */
+function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
+  const meta = suppliedFileMeta(file);
+  return el('article', {
+    class: 'gw-card',
+    'data-test': 'supplied-file-row',
+    'data-file-id': file.file_id,
+    ...(file.agenda_item_id ? { 'data-agenda-item-id': file.agenda_item_id } : {}),
+  }, [
+    el('h3', {}, [file.title]),
+    ...meta.map((row) => el('p', { class: 'gw-muted', 'data-test': `supplied-file-${row.key}` }, [`${row.label}: ${row.value}`])),
+    ...(file.original_url ? [el('a', { href: file.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),
+    ...(file.archive_url ? [el('a', { href: file.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-archive' }, ['Archived copy ↗'])] : []),
+  ]);
+}
+
+export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string, suppliedFiles?: SuppliedFilesProjection | null): void {
   const shell = pageShell(root, 'source-vault-page', 'Source vault', {
     notice,
     fixture: query.get('demo') === 'sample',
@@ -1535,6 +1634,8 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
       ])
     : null;
 
+  const suppliedFilesSection = (): HTMLElement => renderSuppliedFiles(suppliedFiles, query);
+
   ensureBaselinePageStyle();
   ensureBoardsVaultFidelityStyle();
   const mount = el('div', { class: 'gw-baseline-mode-mount', 'data-test': 'source-vault-mode-mount' });
@@ -1551,6 +1652,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         vaultToolbar(),
         overview(),
         sourceContent(),
+        suppliedFilesSection(),
         versionCompare(),
         ledgerPanel(),
         videoPanel(),
@@ -1574,6 +1676,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         ]),
         el('div', { class: 'gw-vault-contract-stack' }, [
           sourceContent(),
+          suppliedFilesSection(),
           versionCompare(),
         ]),
         el('aside', { class: 'gw-vault-contract-stack', 'aria-label': 'Ledger and verification gaps' }, [
