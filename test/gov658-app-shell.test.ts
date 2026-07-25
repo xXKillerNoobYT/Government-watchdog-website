@@ -9,6 +9,7 @@ import {
   readMode,
   applyMode,
   NAV_TABS,
+  SHELL_STYLE,
   type ShellMode,
 } from '../src/ui/shell';
 
@@ -244,7 +245,9 @@ describe('GOV-658 shell — functional shared controls with honest preview label
       expect(notificationNote).not.toBeNull();
       notificationNote?.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
       const notePanelId = notificationNote?.getAttribute('aria-controls');
-      const noteText = notePanelId ? root.querySelector(`#${notePanelId}`)?.textContent : '';
+      const noteText = notePanelId
+        ? document.querySelector(`#${notePanelId}`)?.textContent
+        : '';
       expect(noteText).toMatch(/Account workflow/);
       expect(noteText).toMatch(/not civic Alerts/i);
       expect(noteText).toMatch(/unavailable—not proof/i);
@@ -333,6 +336,54 @@ describe('GOV-658 shell — mode control and the single palette authority', () =
   });
 });
 
+describe('GOV-658 shell — responsive Simple chrome', () => {
+  it('stacks Simple utility and search rows before the 768px tablet collision', () => {
+    const tabletRule = SHELL_STYLE.match(
+      /@media \(max-width:900px\)\{(?<rule>[\s\S]*?)\n\}/,
+    )?.groups?.rule;
+
+    expect(tabletRule).toBeTruthy();
+    expect(tabletRule).toContain(
+      '.gw-shell-simple-utility{align-items:stretch;flex-direction:column}',
+    );
+    expect(tabletRule).toContain(
+      '.gw-shell-simple-utility .gw-shell-actions{margin-left:0;overflow-x:auto',
+    );
+    expect(tabletRule).toContain(
+      '.gw-shell-simple-tools .gw-shell-search{margin:0;max-width:none}',
+    );
+    expect(tabletRule).toContain(
+      '.gw-shell-root[data-mode="simple"] .gw-shell-tabs{justify-content:flex-start}',
+    );
+  });
+
+  it('contains the full mobile action rail without widening the page', () => {
+    const mobileRule = SHELL_STYLE.match(
+      /@media \(max-width:760px\)\{(?<rule>[\s\S]*?)\n\}/,
+    )?.groups?.rule;
+
+    expect(mobileRule).toBeTruthy();
+    expect(mobileRule).toContain(
+      '.gw-shell-actions{order:3;width:100%;max-width:100%',
+    );
+    expect(mobileRule).toContain('overflow-x:auto;overflow-y:hidden');
+  });
+
+  it('wraps phone actions and stacks the Simple masthead instead of clipping controls or words', () => {
+    const phoneRule = SHELL_STYLE.match(
+      /@media \(max-width:430px\)\{(?<rule>[\s\S]*?)\n\}/,
+    )?.groups?.rule;
+
+    expect(phoneRule).toBeTruthy();
+    expect(phoneRule).toContain(
+      '.gw-shell-actions,.gw-shell-simple-utility .gw-shell-actions{justify-content:flex-start;flex-wrap:wrap;overflow:visible}',
+    );
+    expect(phoneRule).toContain(
+      '.gw-shell-simple-masthead{grid-template-columns:1fr;align-items:start}',
+    );
+  });
+});
+
 describe('GOV-658 shell — footer honesty', () => {
   it('carries mode-specific mottos, source verification, and real footer routes', () => {
     renderShell(root, { active: '/home', mode: 'advanced' });
@@ -401,6 +452,111 @@ describe('GOV-658 shell — brand route', () => {
     renderShell(root, { active: '/timeline' });
     expect(root.querySelector('[data-test="shell-brand"]')?.getAttribute('href'))
       .toBe(`#${NAV_TABS[0].route}`);
+  });
+});
+
+describe('GOV-658 shell — contextual information notes', () => {
+  const commonNoteIds = [
+    'shell-location',
+    'shell-search',
+    'shell-account',
+    'shell-navigation',
+    'shell-ai',
+    'shell-origin',
+  ] as const;
+
+  for (const mode of ['advanced', 'simple'] as const) {
+    it(`connects each ${mode} chrome note to one complete accessible panel`, () => {
+      renderShell(root, { active: '/home', mode, origin: 'live_server' });
+      const required = mode === 'simple'
+        ? [...commonNoteIds, 'shell-print'] as const
+        : commonNoteIds;
+
+      for (const id of required) {
+        const trigger = root.querySelector<HTMLButtonElement>(`[data-info-note="${id}"]`);
+        expect(trigger, `${id} trigger`).not.toBeNull();
+        expect(trigger?.type).toBe('button');
+        expect(trigger?.getAttribute('aria-label')).toBeTruthy();
+        expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+
+        const panelId = trigger?.getAttribute('aria-controls');
+        expect(panelId, `${id} panel id`).toBeTruthy();
+        const panel = panelId ? root.querySelector<HTMLElement>(`#${panelId}`) : null;
+        expect(panel, `${id} panel`).not.toBeNull();
+        expect(panel?.hasAttribute('hidden')).toBe(true);
+        expect(panel?.getAttribute('aria-label')).toBe(trigger?.getAttribute('aria-label'));
+        expect(panel?.textContent).toMatch(/What this is/);
+        expect(panel?.textContent).toMatch(/Filled from/);
+        expect(panel?.textContent).toMatch(/Filed under/);
+        expect(panel?.textContent).toMatch(/Review and updates/);
+        expect(panel?.textContent).toMatch(/Current state/);
+        expect(panel?.textContent).toMatch(/Limits/);
+        expect(panel?.textContent).toMatch(/Expected result/);
+      }
+
+      const labels = [...root.querySelectorAll<HTMLButtonElement>('[data-info-note]')]
+        .map((trigger) => trigger.getAttribute('aria-label'));
+      expect(new Set(labels).size).toBe(labels.length);
+      expect(root.querySelectorAll('[data-info-note="shell-print"]'))
+        .toHaveLength(mode === 'simple' ? 1 : 0);
+    });
+  }
+
+  it('keeps each explanation adjacent to the control or status it describes', () => {
+    renderShell(root, { active: '/home', mode: 'simple', origin: 'live_server' });
+
+    expect(root.querySelector('.gw-shell-location-control [data-info-note="shell-location"]'))
+      .not.toBeNull();
+    expect(root.querySelector('[data-test="shell-search-form"] [data-info-note="shell-search"]'))
+      .not.toBeNull();
+    expect(root.querySelector('[data-test="shell-actions"] [data-info-note="shell-account"]'))
+      .not.toBeNull();
+    expect(root.querySelector('[data-test="shell-actions"] [data-info-note="shell-print"]'))
+      .not.toBeNull();
+    expect(root.querySelector('[data-test="shell-tabs"] [data-info-note="shell-navigation"]'))
+      .not.toBeNull();
+    expect(root.querySelector('.gw-shell-brand-group [data-info-note="shell-ai"]'))
+      .not.toBeNull();
+    expect(root.querySelector('.gw-shell-origin-wrap [data-info-note="shell-origin"]'))
+      .not.toBeNull();
+  });
+
+  it('explains scope and origin without changing their authoritative values', () => {
+    localStorage.setItem('gw_location', JSON.stringify({
+      town: 'Jackson',
+      state: 'Wyoming',
+    }));
+    renderShell(root, { active: '/home', origin: 'live_server' });
+
+    const locationTrigger = root.querySelector<HTMLButtonElement>(
+      '[data-info-note="shell-location"]',
+    );
+    locationTrigger?.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    const locationPanelId = locationTrigger?.getAttribute('aria-controls');
+    const locationText = locationPanelId
+      ? document.querySelector(`#${locationPanelId}`)?.textContent
+      : '';
+    expect(locationText).toMatch(/cannot widen records/i);
+    expect(locationText).toMatch(/not residence, identity, coverage, entitlement/i);
+
+    const originTrigger = root.querySelector<HTMLButtonElement>(
+      '[data-info-note="shell-origin"]',
+    );
+    originTrigger?.click();
+    const originPanelId = originTrigger?.getAttribute('aria-controls');
+    const originText = originPanelId
+      ? document.querySelector(`#${originPanelId}`)?.textContent
+      : '';
+    expect(originText).toMatch(/live server data, a reviewed archived snapshot, or a synthetic design fixture/i);
+    expect(root.getAttribute('data-origin')).toBe('live_server');
+    expect(root.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+      .toBe('live_server');
+  });
+
+  it('does not render an origin explanation when no origin claim is supplied', () => {
+    renderShell(root, { active: '/home' });
+    expect(root.querySelector('[data-info-note="shell-origin"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-origin-banner"]')).toBeNull();
   });
 });
 

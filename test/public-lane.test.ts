@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it } from 'vitest';
-import { INFO_NOTES, renderInfoNote } from '../src/ui/info-note';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { INFO_NOTES, INFO_NOTE_STYLE, renderInfoNote } from '../src/ui/info-note';
 import { renderPublicLanding } from '../src/ui/public-landing';
 
 let root: HTMLElement;
@@ -13,6 +13,12 @@ beforeEach(() => {
   root = document.createElement('div');
   root.id = 'app';
   document.body.append(root);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('anonymous Free lane', () => {
@@ -58,6 +64,7 @@ describe('anonymous Free lane', () => {
     for (const required of [
       'public-plan',
       'public-scope',
+      'public-coverage',
       'public-status',
       'public-meetings',
       'public-decisions',
@@ -69,9 +76,15 @@ describe('anonymous Free lane', () => {
       expect(INFO_NOTES[required as keyof typeof INFO_NOTES]).toBeTruthy();
     }
     expect(new Set(panelIds).size).toBe(panelIds.length);
+    const labels = triggers.map((node) => node.getAttribute('aria-label'));
+    expect(new Set(labels).size).toBe(labels.length);
     for (const panelId of panelIds) {
       expect(panelId).toBeTruthy();
-      expect(root.querySelector(`#${panelId}`)).not.toBeNull();
+      const panel = root.querySelector<HTMLElement>(`#${panelId}`);
+      expect(panel).not.toBeNull();
+      expect(panel?.textContent).toContain('Current state');
+      expect(panel?.textContent).toContain('Limits');
+      expect(panel?.textContent).toContain('Expected result');
     }
   });
 });
@@ -90,6 +103,9 @@ describe('universal information note interaction', () => {
     trigger.click();
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(panel.hidden).toBe(false);
+    expect(panel.parentElement).toBe(document.body);
+    expect(panel.tabIndex).toBe(-1);
+    expect(document.activeElement).toBe(panel);
     expect(panel.textContent).toContain('What this is');
     expect(panel.textContent).toContain('Filled from');
     expect(panel.textContent).toContain('Filed under');
@@ -98,6 +114,7 @@ describe('universal information note interaction', () => {
     trigger.click();
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     expect(panel.hidden).toBe(true);
+    expect(panel.parentElement).toBe(note);
   });
 
   it('pins open when click follows a hover preview', () => {
@@ -129,6 +146,98 @@ describe('universal information note interaction', () => {
 
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('keeps hover preview open while the pointer crosses into the portalled panel', () => {
+    vi.useFakeTimers();
+    const note = renderInfoNote('public-status');
+    root.append(note);
+    const trigger = note.querySelector<HTMLButtonElement>('[data-info-note="public-status"]')!;
+    const panel = note.querySelector<HTMLElement>('.gw-info-panel')!;
+
+    trigger.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    note.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+    panel.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    vi.advanceTimersByTime(200);
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(panel.hidden).toBe(false);
+
+    panel.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+    vi.advanceTimersByTime(121);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(panel.hidden).toBe(true);
+  });
+
+  it('closes a pinned panel with document-level Escape after focus leaves the note', () => {
+    const note = renderInfoNote('public-ai-safety');
+    const outside = document.createElement('button');
+    root.append(note, outside);
+    const trigger = note.querySelector<HTMLButtonElement>('[data-info-note]')!;
+
+    trigger.click();
+    outside.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    }));
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('portals and clamps a desktop panel to the viewport instead of its route container', () => {
+    vi.stubGlobal('innerWidth', 800);
+    vi.stubGlobal('innerHeight', 600);
+    const note = renderInfoNote('public-status');
+    root.append(note);
+    const trigger = note.querySelector<HTMLButtonElement>('[data-info-note]')!;
+    const panel = note.querySelector<HTMLElement>('.gw-info-panel')!;
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 100,
+      left: 0,
+      right: 28,
+      top: 100,
+      bottom: 128,
+      width: 28,
+      height: 28,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      right: 390,
+      top: 0,
+      bottom: 300,
+      width: 390,
+      height: 300,
+      toJSON: () => ({}),
+    });
+
+    trigger.click();
+
+    expect(panel.parentElement).toBe(document.body);
+    expect(panel.style.left).toBe('10px');
+    expect(panel.style.top).toBe('128px');
+    expect(Number.parseInt(panel.style.left, 10) + 390).toBeLessThanOrEqual(800);
+  });
+
+  it('supports contextual accessible names and the tablet touch floor', () => {
+    const note = renderInfoNote('public-status', { contextLabel: 'Header availability' });
+    root.append(note);
+    const trigger = note.querySelector<HTMLButtonElement>('[data-info-note]')!;
+    const panel = note.querySelector<HTMLElement>('.gw-info-panel')!;
+
+    expect(trigger.getAttribute('aria-label'))
+      .toBe('How feed availability is determined: Header availability');
+    expect(panel.getAttribute('aria-label')).toBe(trigger.getAttribute('aria-label'));
+    expect(panel.textContent).toContain('Header availability');
+    expect(INFO_NOTE_STYLE).toMatch(
+      /@media \(max-width:900px\)\{[\s\S]*\.gw-info-trigger,.gw-info-close\{width:var\(--gw-tap-min\);height:var\(--gw-tap-min\)\}/,
+    );
   });
 
   it('keeps only one pinned note open and dismisses it from outside', () => {

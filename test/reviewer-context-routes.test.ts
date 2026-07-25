@@ -131,7 +131,21 @@ function expectDetailedProjectionGap(id: string): void {
   expect(gap?.textContent, id).toContain('Required backend projection');
   expect(gap?.textContent, id).toContain('How it will work');
   expect(gap?.textContent, id).toContain('Expected result');
-  expect(gap?.querySelector('summary')?.textContent, id).toBe('?');
+  const infoTrigger = gap?.querySelector<HTMLButtonElement>('[data-info-note]');
+  expect(infoTrigger?.textContent, id).toBe('?');
+  expect(infoTrigger?.getAttribute('aria-label'), id).toContain('How ');
+}
+
+function expectRouteInfoNote(id: string, accessibleLabel: string): void {
+  const triggers = document.querySelectorAll<HTMLButtonElement>(`[data-info-note="${id}"]`);
+  expect(triggers, id).toHaveLength(1);
+  const trigger = triggers[0]!;
+  expect(trigger.getAttribute('aria-label'), id).toBe(accessibleLabel);
+  const panelId = trigger.getAttribute('aria-controls');
+  expect(panelId, id).toBeTruthy();
+  expect(document.querySelectorAll(`#${panelId}`), id).toHaveLength(1);
+  expect(document.getElementById(panelId!)?.textContent, id).toContain('Current state');
+  expect(document.getElementById(panelId!)?.textContent, id).toContain('Expected result');
 }
 
 interface HomeSnapshot {
@@ -305,6 +319,15 @@ describe('shared live reviewer context across canonical routes', () => {
 
     await navigate('/topics?reviewer=1', '[data-projection="topic-tree"]');
     expectDetailedProjectionGap('topic-tree');
+    expectRouteInfoNote('topics-overview', 'About the Topics tree');
+    expect(document.querySelectorAll('[data-test="shell-content"] h1')).toHaveLength(1);
+    expect(document.querySelector('[data-test="shell-content"] h1')?.textContent)
+      .toBe('Topics');
+    expect(document.querySelector('[data-test="topics-page"] h1')).toBeNull();
+    expect(document.querySelector('[data-test="topics-page"] h2')).not.toBeNull();
+    expect(document.querySelector('[data-test="topics-timeline"] h1')).toBeNull();
+    expect(document.querySelector('[data-test="topics-timeline"] h2')?.textContent)
+      .toBe('Alpine timeline (reviewer-internal)');
     expect(document.body.textContent).toContain('SERVER SENTINEL');
     expect(document.querySelectorAll('[data-test="record-card"]')).toHaveLength(2);
 
@@ -371,12 +394,15 @@ describe('shared live reviewer context across canonical routes', () => {
 
     await navigate('/timeline-legacy?reviewer=1', '[data-test="record-card"]');
     expectOnlyAuthorizedIds('[data-test="record-card"]');
+    expectRouteInfoNote('legacy-timeline-overview', 'About the legacy Timeline view');
 
     await navigate('/cards?reviewer=1', '[data-test="record-card"]');
     expectOnlyAuthorizedIds('[data-test="record-card"]');
+    expectRouteInfoNote('cards-overview', 'About the reviewed Cards view');
 
     await navigate('/body?reviewer=1', '[data-test="body-unscoped-records"]');
     expectDetailedProjectionGap('government-body-relationship');
+    expectRouteInfoNote('body-overview', 'About Government Body context');
     expectOnlyAuthorizedIds('[data-test="body-unscoped-records"] [data-test="record-card"]');
     expect(document.querySelector('[data-test="body-unscoped-records"]')?.getAttribute('data-relationship'))
       .toBe('unscoped');
@@ -385,6 +411,7 @@ describe('shared live reviewer context across canonical routes', () => {
 
     await navigate('/meeting?reviewer=1', '[data-test="meeting-unscoped-records"]');
     expectDetailedProjectionGap('meeting-relationship');
+    expectRouteInfoNote('meeting-overview', 'About Meeting context');
     expectOnlyAuthorizedIds('[data-test="meeting-unscoped-records"] [data-test="record-card"]');
     expect(document.querySelector('[data-test="meeting-unscoped-records"] h2')?.textContent)
       .toContain('not assigned to this meeting');
@@ -396,6 +423,56 @@ describe('shared live reviewer context across canonical routes', () => {
     expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
       .toHaveLength(1);
   });
+
+  it.each([
+    [
+      '/topics?reviewer=1&access=public',
+      '[data-test="reviewer-context-denied"]',
+      'topics-overview',
+      'About the Topics tree',
+    ],
+    [
+      '/body?reviewer=1&access=public',
+      '[data-test="reviewer-context-denied"]',
+      'body-overview',
+      'About Government Body context',
+    ],
+    [
+      '/meeting?reviewer=1&access=public',
+      '[data-test="reviewer-context-denied"]',
+      'meeting-overview',
+      'About Meeting context',
+    ],
+    [
+      '/cards?reviewer=1&access=public',
+      '[data-test="state-empty"]',
+      'cards-overview',
+      'About the reviewed Cards view',
+    ],
+    [
+      '/timeline-legacy?reviewer=1&access=public',
+      '[data-test="state-empty"]',
+      'legacy-timeline-overview',
+      'About the legacy Timeline view',
+    ],
+  ] as const)(
+    'keeps the private %s route explanation out of a direct public response',
+    async (route, readySelector, noteId, privateLabel) => {
+      const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        responseLike(200, SUCCESS_ENVELOPE));
+      vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
+
+      replaceHash(route);
+      await import('../src/main');
+      await vi.waitFor(() => {
+        expect(document.querySelector(readySelector), route).not.toBeNull();
+      });
+
+      expect(document.querySelector(`[data-info-note="${noteId}"]`), route).toBeNull();
+      expect(document.body.textContent, route).not.toContain(privateLabel);
+      expectNoRejectedCivicRows();
+    },
+  );
 
   it('keeps Alpine authoritative over a saved town and gives every live route one h1', async () => {
     localStorage.setItem('gw_location', JSON.stringify({

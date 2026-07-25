@@ -98,6 +98,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -124,6 +125,8 @@ describe('shared reviewer-context state panels', () => {
       expect(panel?.textContent).toContain('Safety boundary');
       expect(root.querySelector('[data-test="record-card"]')).toBeNull();
       expect(root.querySelector('[data-record-id]')).toBeNull();
+      expect(root.querySelector('.gw-info-trigger')).toBeNull();
+      expect(root.textContent).not.toContain('Filed under');
       expect(root.textContent).not.toContain('stale captured civic row');
       expect(root.textContent).not.toContain('stack');
       expect(root.textContent).not.toContain('response body');
@@ -158,47 +161,60 @@ describe('detailed projection gaps', () => {
     expect(gap.textContent).toContain('Expected result');
     expect(gap.textContent).toContain(GAP.expectedResult);
 
-    const note = gap.querySelector('summary');
+    const note = gap.querySelector<HTMLButtonElement>('.gw-info-trigger');
+    const panel = document.getElementById(note?.getAttribute('aria-controls') ?? '');
     expect(note?.textContent).toBe('?');
+    expect(note?.tagName).toBe('BUTTON');
+    expect(note?.type).toBe('button');
     expect(note?.getAttribute('aria-label')).toContain(GAP.title);
-    expect(gap.textContent).toContain(`Filed under ${GAP.filedUnder}`);
-    expect(gap.textContent).toContain('not a record, result, entitlement, or coverage claim');
+    expect(note?.getAttribute('aria-expanded')).toBe('false');
+    expect(panel?.hidden).toBe(true);
+    expect(panel?.textContent).toContain('Filed under');
+    expect(panel?.textContent).toContain(GAP.filedUnder);
+    expect(panel?.textContent).toContain('Current state');
+    expect(gap.textContent).toContain('not a record, result, entitlement, coverage claim');
   });
 
-  it('opens on hover/focus and pins on click, Enter, or Space without first-activation collapse', () => {
+  it('opens on hover/focus, uses native button keyboard semantics, and pins or closes accessibly', () => {
+    vi.useFakeTimers();
     const gap = renderProjectionGap(GAP);
     root.append(gap);
-    const details = gap.querySelector<HTMLDetailsElement>('details');
-    const summary = gap.querySelector<HTMLElement>('summary');
-    expect(details?.open).toBe(false);
+    const wrapper = gap.querySelector<HTMLElement>('.gw-info-note')!;
+    const trigger = gap.querySelector<HTMLButtonElement>('.gw-info-trigger')!;
+    const panel = document.getElementById(trigger.getAttribute('aria-controls') ?? '')!;
+    const close = panel.querySelector<HTMLButtonElement>('.gw-info-close')!;
+    expect(panel.hidden).toBe(true);
 
-    details?.dispatchEvent(new MouseEvent('mouseenter'));
-    expect(details?.open).toBe(true);
-    details?.dispatchEvent(new MouseEvent('mouseleave'));
-    expect(details?.open).toBe(false);
+    trigger.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(panel.hidden).toBe(false);
+    wrapper.dispatchEvent(new MouseEvent('mouseleave'));
+    vi.advanceTimersByTime(119);
+    expect(panel.hidden).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(panel.hidden).toBe(true);
 
-    summary?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    expect(details?.open).toBe(true);
-    summary?.click();
-    expect(details?.open).toBe(true);
-    summary?.click();
-    expect(details?.open).toBe(false);
+    trigger.focus();
+    expect(panel.hidden).toBe(false);
+    expect(trigger.type).toBe('button');
+    expect(trigger.getAttribute('role')).toBeNull();
 
-    summary?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    summary?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    expect(details?.open).toBe(true);
-    summary?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    expect(details?.open).toBe(false);
+    trigger.click();
+    expect(wrapper.hasAttribute('data-pinned')).toBe(true);
+    expect(panel.hidden).toBe(false);
+    wrapper.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(panel.hidden).toBe(false);
 
-    summary?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    summary?.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-    expect(details?.open).toBe(true);
-    summary?.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-    expect(details?.open).toBe(false);
+    close.click();
+    expect(wrapper.hasAttribute('data-pinned')).toBe(false);
+    expect(panel.hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
 
-    summary?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    summary?.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
-    expect(details?.open).toBe(false);
+    trigger.click();
+    expect(panel.hidden).toBe(false);
+    wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(panel.hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
   });
 });
 

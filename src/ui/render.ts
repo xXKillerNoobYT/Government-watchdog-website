@@ -24,6 +24,10 @@ import {
 } from './timeline';
 import { buildCardFeedModel, type CardFeed, type CardHeadView } from './card-feed';
 import { GW_TOKENS } from './tokens';
+import {
+  renderPrivateInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -34,6 +38,36 @@ function el<K extends keyof HTMLElementTagNameMap>(
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
   for (const c of children) node.append(typeof c === 'string' ? document.createTextNode(c) : c);
   return node;
+}
+
+export interface RecordSurfaceInfoOptions {
+  /** One route-level explanation; never attach the same note to repeated cards. */
+  infoNoteId?: PrivateInfoNoteId;
+  /**
+   * Embedded record surfaces yield route-level heading ownership to their
+   * parent. The visual class stays the same; only the document outline changes.
+   */
+  headingLevel?: 'h1' | 'h2';
+  /**
+   * Authoritative response access. Required when a response resolves to the
+   * shared empty state because `AsyncState` deliberately drops that payload.
+   */
+  access?: ReadApiResponse['access'];
+}
+
+function recordSurfaceHeading(
+  heading: string,
+  infoNoteId?: PrivateInfoNoteId,
+  headingLevel: 'h1' | 'h2' = 'h1',
+): HTMLElement {
+  if (!infoNoteId) return el(headingLevel, { class: 'gw-h1' }, [heading]);
+  return el('div', {
+    class: 'gw-context-heading',
+    'data-test': 'record-surface-context-heading',
+  }, [
+    el(headingLevel, { class: 'gw-h1' }, [heading]),
+    renderPrivateInfoNote(infoNoteId),
+  ]);
 }
 
 /** One source's evidence row, rendered as a labeled field list (1.06 §6). */
@@ -635,7 +669,7 @@ export function renderCardFeed(root: HTMLElement, feed: CardFeed, notice?: strin
 
   const recordCount = response.records?.length ?? 0;
   const children: HTMLElement[] = [
-    el('h1', { class: 'gw-h1' }, ['Alpine card feed (reviewer-internal)']),
+    recordSurfaceHeading('Alpine card feed (reviewer-internal)', 'cards-overview'),
     el('p', { class: 'gw-muted' }, [readyHeaderMessage(response.records ?? [])]),
     legendDisclosure(),
   ];
@@ -653,7 +687,7 @@ export function renderCardFeed(root: HTMLElement, feed: CardFeed, notice?: strin
   } else if (!gapSummary) {
     children.push(
       el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'state-empty', role: 'status' }, [
-        el('h1', {}, ['Nothing to show yet']),
+        el('h2', {}, ['Nothing to show yet']),
         el('p', {}, ['No reviewed Alpine cards in this feed.']),
       ]),
     );
@@ -825,6 +859,8 @@ export const STYLE = `${GW_TOKENS}
 .gw-thread-span{font-size:var(--gw-text-sm);color:var(--gw-text-muted);font-variant-numeric:tabular-nums}
 .gw-thread-edges{list-style:none;margin:var(--gw-space-2) 0 0;padding:0;display:flex;flex-direction:column;gap:.2rem}
 .gw-synthetic-banner{background:var(--gw-surface-accent-tint);border:var(--gw-border-w) dashed var(--gw-accent);color:var(--gw-text-secondary);border-radius:var(--gw-radius);padding:var(--gw-space-2) var(--gw-space-4);margin:0 0 var(--gw-space-4);font-size:var(--gw-text-sm)}
+.gw-context-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-4);min-width:0}
+.gw-context-heading .gw-h1{min-width:0}
 /* Mobile floor — lanes stack full width, board stops being a horizontal rail. */
 @media (max-width:640px){.gw-board{grid-auto-flow:row;grid-auto-columns:auto;overflow-x:visible}.gw-lane-header{position:static}}
 `;
@@ -846,9 +882,15 @@ export function render(
   root: HTMLElement,
   state: AsyncState<ReadApiResponse>,
   notice?: string,
+  info: RecordSurfaceInfoOptions = {},
 ): void {
   ensureStyle();
   const view = stateView(state, notice);
+  const access = state.status === 'ready' && state.data
+    ? state.data.access
+    : info.access;
+  const contextualInfoNote =
+    access === 'reviewer_internal' ? info.infoNoteId : undefined;
   root.className = 'gw-root';
   root.replaceChildren();
 
@@ -863,13 +905,17 @@ export function render(
   }
 
   if (view.kind === 'ready' && state.data) {
-    root.append(el('h1', { class: 'gw-h1' }, [view.heading]), el('p', { class: 'gw-muted' }, [view.message]), readyView(state.data));
+    root.append(
+      recordSurfaceHeading(view.heading, contextualInfoNote, info.headingLevel),
+      el('p', { class: 'gw-muted' }, [view.message]),
+      readyView(state.data),
+    );
     return;
   }
 
   root.append(
     el('section', { class: 'gw-state', 'data-state': view.kind, 'data-test': `state-${view.kind}`, role: view.kind === 'error' ? 'alert' : 'status' }, [
-      el('h1', {}, [view.heading]),
+      recordSurfaceHeading(view.heading, contextualInfoNote, info.headingLevel),
       el('p', {}, [view.message]),
     ]),
   );

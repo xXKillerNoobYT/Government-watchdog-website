@@ -67,6 +67,10 @@ import {
   renderReviewerContextState,
   type ProjectionGapDefinition,
 } from './ui/reviewer-context-state';
+import {
+  renderPrivateInfoNote,
+  type PrivateInfoNoteId,
+} from './ui/private-info-note';
 import type { ReadApiResponse } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
@@ -223,6 +227,22 @@ function el(tag: string, attrs: Record<string, string> = {}, text?: string): HTM
   return node;
 }
 
+function contextualRouteHeading(
+  heading: string,
+  noteId: PrivateInfoNoteId,
+  testId: string,
+): HTMLElement {
+  const wrapper = el('div', {
+    class: 'gw-context-heading',
+    'data-test': `${testId}-context-heading`,
+  });
+  wrapper.append(
+    el('h1', { class: 'gw-h1', 'data-test': `${testId}-page-title` }, heading),
+    renderPrivateInfoNote(noteId),
+  );
+  return wrapper;
+}
+
 /**
  * Screenshot-only override for the `complete` completeness state (GOV-101
  * evidence: one `complete`, one `gaps`). The labeled fixture ships the honest
@@ -362,28 +382,48 @@ function renderTimeline(
   data?: ReadApiResponse,
 ): void {
   const forced = forcedState(query.get('state'));
-  if (forced) return render(mount, forced);
+  if (forced) {
+    return render(mount, forced, undefined, {
+      infoNoteId: 'legacy-timeline-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
+  }
   if (query.get('demo') === 'matrix') {
+    const matrix = narrowToRequestedAccess(STATE_MATRIX, query);
     render(
       mount,
-      resolved(narrowToRequestedAccess(STATE_MATRIX, query), 'fixture', isEmptyResponse),
+      resolved(matrix, 'fixture', isEmptyResponse),
       'State-matrix sample — one card per trust state, not real data.',
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: matrix.access,
+      },
     );
     return;
   }
   if (query.get('demo') === 'complete') {
+    const complete = narrowToRequestedAccess(completeDemoBody(), query);
     render(
       mount,
-      resolved(narrowToRequestedAccess(completeDemoBody(), query), 'fixture', isEmptyResponse),
+      resolved(complete, 'fixture', isEmptyResponse),
       'Showing a labeled sample — not real data.',
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: complete.access,
+      },
     );
     return;
   }
   if (query.get('demo') === 'provenance') {
+    const provenance = narrowToRequestedAccess(provenanceDemoBody(), query);
     render(
       mount,
-      resolved(narrowToRequestedAccess(provenanceDemoBody(), query), 'fixture', isEmptyResponse),
+      resolved(provenance, 'fixture', isEmptyResponse),
       PROVENANCE_DEMO_NOTICE,
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: provenance.access,
+      },
     );
     return;
   }
@@ -391,7 +431,10 @@ function renderTimeline(
     renderReviewerContextState(mount, 'unavailable');
     return;
   }
-  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE);
+  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE, {
+    infoNoteId: 'legacy-timeline-overview',
+    access: data.access,
+  });
 }
 
 /** Render the topics surface: an optional civic topic tree above the reused
@@ -400,12 +443,19 @@ function renderTimeline(
 function renderTopicsSurface(
   mount: HTMLElement,
   state: AsyncState<ReadApiResponse>,
+  access: ReadApiResponse['access'],
   notice: string | undefined,
   focusTopicId: string,
   move: MoveRequest | undefined,
   treeOverride?: ReadApiResponse['topic_tree'],
 ): void {
+  if (access !== 'reviewer_internal') {
+    renderReviewerContextState(mount, 'denied');
+    return;
+  }
   mount.replaceChildren();
+
+  mount.append(contextualRouteHeading('Topics', 'topics-overview', 'topics'));
 
   const treeBox = el('div', { class: 'tt-wrap', 'data-test': 'topics-page' });
   mount.append(treeBox);
@@ -428,7 +478,10 @@ function renderTopicsSurface(
   // Reuse the B card+drawer timeline below the tree.
   const timelineBox = el('div', { 'data-test': 'topics-timeline' });
   mount.append(timelineBox);
-  render(timelineBox, state, notice);
+  render(timelineBox, state, notice, {
+    access,
+    headingLevel: 'h2',
+  });
 }
 
 /** Topic page: civic topic tree above the reused B card+drawer timeline.
@@ -451,6 +504,7 @@ function renderTopics(
     renderTopicsSurface(
       mount,
       resolved(synthetic, 'fixture', isEmptyResponse),
+      synthetic.access,
       GRAPH_DEMO_NOTICE,
       query.get('topic') ?? DEFAULT_FOCUS,
       parseMove(query),
@@ -471,6 +525,7 @@ function renderTopics(
   renderTopicsSurface(
     mount,
     state,
+    selected.access,
     notice,
     query.get('topic') ?? (demo === 'graph' ? REAL_DEFAULT_FOCUS : ''),
     parseOptionalMove(query),
@@ -512,7 +567,10 @@ function renderContextPage(
 ): void {
   const forced = forcedState(query.get('state'));
   if (forced) {
-    render(mount, forced);
+    render(mount, forced, undefined, {
+      infoNoteId: kind === 'body' ? 'body-overview' : 'meeting-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
     return;
   }
   if (!data) {
@@ -527,10 +585,10 @@ function renderContextPage(
   ensureRecordStyle();
   mount.className = 'gw-context-projection-page';
   mount.replaceChildren();
-  mount.append(el(
-    'h1',
-    { class: 'gw-h1', 'data-test': `${kind}-page-title` },
+  mount.append(contextualRouteHeading(
     kind === 'body' ? 'Government body' : 'Meeting record',
+    kind === 'body' ? 'body-overview' : 'meeting-overview',
+    kind,
   ));
   mount.append(renderProjectionGap(CONTEXT_RELATIONSHIP_GAPS[kind]));
 
@@ -578,14 +636,20 @@ function renderCardFeedRoute(
 ): void {
   const forced = forcedState(query.get('state'));
   if (forced) {
-    render(mount, forced);
+    render(mount, forced, undefined, {
+      infoNoteId: 'cards-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
     return;
   }
   if (!data) {
     renderReviewerContextState(mount, 'unavailable');
     return;
   }
-  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE);
+  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE, {
+    infoNoteId: 'cards-overview',
+    access: data.access,
+  });
 }
 
 /**

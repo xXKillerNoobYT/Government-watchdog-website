@@ -8,6 +8,7 @@
  */
 
 import { GW_TOKENS } from './tokens';
+import { renderPrivateProjectionInfoNote } from './private-info-note';
 
 export type ReviewerContextPanelStatus =
   | 'loading'
@@ -105,7 +106,6 @@ export function renderProjectionGap(
   options: ProjectionGapRenderOptions = {},
 ): HTMLElement {
   ensureReviewerContextStyle();
-  const noteId = `gw-projection-note-${definition.id}`;
   const headingTag = `h${options.headingLevel ?? 2}` as 'h1' | 'h2' | 'h3';
   const article = el('article', {
     class: 'gw-projection-gap',
@@ -118,16 +118,7 @@ export function renderProjectionGap(
         el('p', { class: 'gw-projection-gap-kicker' }, [definition.kicker]),
         el(headingTag, { class: 'gw-projection-gap-title' }, [definition.title]),
       ]),
-      el('details', { class: 'gw-projection-gap-note' }, [
-        el('summary', {
-          'aria-label': `How ${definition.title} is filed`,
-          'aria-controls': noteId,
-          title: `How ${definition.title} is filed`,
-        }, ['?']),
-        el('p', { id: noteId }, [
-          `Filed under ${definition.filedUnder}. This is an explanatory placeholder, not a record, result, entitlement, or coverage claim.`,
-        ]),
-      ]),
+      renderPrivateProjectionInfoNote(definition),
     ]),
     el('p', { class: 'gw-projection-gap-status', role: 'status' }, ['Not available yet']),
     el('dl', {}, [
@@ -137,56 +128,6 @@ export function renderProjectionGap(
       definitionRow('Expected result', definition.expectedResult),
     ]),
   ]);
-  const note = article.querySelector<HTMLDetailsElement>('.gw-projection-gap-note');
-  if (note) {
-    const summary = note.querySelector<HTMLElement>('summary');
-    let pinnedOpen = false;
-    let pointerInside = false;
-    let focusInside = false;
-    const syncOpen = (): void => {
-      note.open = pinnedOpen || pointerInside || focusInside;
-    };
-    const togglePinned = (): void => {
-      pinnedOpen = !pinnedOpen;
-      if (!pinnedOpen) {
-        // An explicit second activation closes the note even though the
-        // summary still owns focus or the pointer remains over it.
-        pointerInside = false;
-        focusInside = false;
-      }
-      note.open = pinnedOpen;
-    };
-    note.addEventListener('mouseenter', () => {
-      pointerInside = true;
-      syncOpen();
-    });
-    note.addEventListener('mouseleave', () => {
-      pointerInside = false;
-      syncOpen();
-    });
-    note.addEventListener('focusin', () => {
-      focusInside = true;
-      syncOpen();
-    });
-    note.addEventListener('focusout', (event) => {
-      if (!(event.relatedTarget instanceof Node) || !note.contains(event.relatedTarget)) {
-        focusInside = false;
-        syncOpen();
-      }
-    });
-    summary?.addEventListener('click', (event) => {
-      // Prevent focus-open followed by the native toggle closing on first
-      // activation. Click also covers touch and browser-generated Enter/Space
-      // activation for the native summary control.
-      event.preventDefault();
-      togglePinned();
-    });
-    summary?.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      togglePinned();
-    });
-  }
   return article;
 }
 
@@ -244,12 +185,6 @@ export const REVIEWER_CONTEXT_STYLE = `${GW_TOKENS}
 .gw-projection-gap-row{display:grid;gap:2px}
 .gw-projection-gap-row dt{color:var(--gw-text-muted);font-size:var(--gw-text-xs);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .gw-projection-gap-row dd{margin:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}
-.gw-projection-gap-note{position:relative;flex:none}
-.gw-projection-gap-note summary{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;list-style:none;cursor:help;color:var(--gw-info-text);background:var(--gw-tone-info-well);border:var(--gw-border-w) solid var(--gw-tone-info-line);border-radius:50%;font:800 14px/1 var(--gw-font)}
-.gw-projection-gap-note summary::-webkit-details-marker{display:none}
-.gw-projection-gap-note summary:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
-.gw-projection-gap-note p{position:absolute;z-index:10;right:0;top:36px;width:min(330px,calc(100vw - 52px));margin:0;padding:var(--gw-space-3);color:var(--gw-text-secondary);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);box-shadow:0 12px 30px rgba(0,0,0,.2);font-size:var(--gw-text-sm);line-height:1.45}
-@media (max-width:600px){.gw-projection-gap-note summary{width:var(--gw-tap-min);height:var(--gw-tap-min)}.gw-projection-gap-note p{position:fixed;z-index:1000;left:10px;right:10px;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));width:auto}}
 `;
 
 const REVIEWER_CONTEXT_STYLE_ID = 'gw-reviewer-context-style';

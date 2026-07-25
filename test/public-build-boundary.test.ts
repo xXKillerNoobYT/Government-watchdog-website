@@ -21,6 +21,7 @@ describe('public build module-graph boundary', () => {
       '/src/ui/home.ts',
       '/src/ui/notification-panel.ts',
       '/src/ui/private-info-note.ts',
+      '/src/ui/private-info-note-definitions.ts',
       '/src/ui/reviewer-context-state.ts',
       '/src/types/notification.ts',
       '/src/fixtures/notifications.sample.json',

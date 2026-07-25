@@ -114,6 +114,42 @@ describe('GOV-758 — six gated-beta access states', () => {
     }
   });
 
+  it('gives every landing state one collapsed, accessible beta-access explanation', () => {
+    for (const state of ACCESS_STATES) {
+      renderLanding(root, state);
+      const trigger = root.querySelector<HTMLButtonElement>('[data-info-note="beta-access"]');
+      expect(trigger, `${state} beta-access trigger`).not.toBeNull();
+      expect(root.querySelectorAll('[data-info-note="beta-access"]')).toHaveLength(1);
+      expect(trigger?.type).toBe('button');
+      expect(trigger?.getAttribute('aria-label')).toMatch(/beta access status/i);
+      expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+
+      const panelId = trigger?.getAttribute('aria-controls');
+      const panel = panelId ? root.querySelector<HTMLElement>(`#${panelId}`) : null;
+      expect(panel, `${state} beta-access panel`).not.toBeNull();
+      expect(panel?.hasAttribute('hidden')).toBe(true);
+      expect(panel?.textContent).toMatch(/revocable server session/i);
+      expect(panel?.textContent).toMatch(/cannot grant reviewer access/i);
+      expect(panel?.textContent).toMatch(/reveals no civic data until the server admits/i);
+      assertNoCivicData(root);
+    }
+  });
+
+  it('keeps beta-access help inside every fail-closed full-app gate', () => {
+    for (const state of ['anonymous', 'waitlisted', 'pending', 'denied', 'revoked'] as AccessState[]) {
+      let ran = false;
+      renderGatedApp(root, state, () => {
+        ran = true;
+      });
+
+      expect(ran, `full app must remain blocked for ${state}`).toBe(false);
+      expect(root.querySelectorAll('[data-info-note="beta-access"]')).toHaveLength(1);
+      expect(root.querySelector('[data-test="gate-panel"] [data-info-note="beta-access"]'))
+        .not.toBeNull();
+      assertNoCivicData(root);
+    }
+  });
+
   it('denial AND revocation copy never imply anything about civic standing', () => {
     for (const s of ['denied', 'revoked'] as AccessState[]) {
       const msg = gatePanelContent(s).message.toLowerCase();

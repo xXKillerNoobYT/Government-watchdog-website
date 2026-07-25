@@ -7,7 +7,11 @@ import { readMode } from './shell';
 import { claimPresentation } from './newsletter';
 import { AI_LABEL_TEXT } from './state-view';
 import { ensureStyle, recordCard } from './render';
-import { renderInfoNote } from './info-note';
+import {
+  renderPrivateInfoNote,
+  renderPrivateUnavailableInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 import {
   renderProjectionGap,
   renderReviewerContextState,
@@ -120,22 +124,51 @@ function levelFilter(level: HomeLevel, onSelect: (level: HomeLevel) => void): HT
     btn.addEventListener('click', () => onSelect(opt.value));
     wrap.append(btn);
   }
+  wrap.append(renderPrivateInfoNote('home-jurisdiction-filter'));
   return wrap;
 }
 
-function widget(title: string, kicker: string, children: (Node | string)[], attrs: Record<string, string> = {}): HTMLElement {
+function headingWithNote(
+  tag: 'h1' | 'h2' | 'h3',
+  title: string,
+  noteId: PrivateInfoNoteId,
+): HTMLElement {
+  return el('div', { class: 'gw-home-title-with-note' }, [
+    el(tag, {}, [title]),
+    renderPrivateInfoNote(noteId),
+  ]);
+}
+
+function widget(
+  title: string,
+  kicker: string,
+  children: (Node | string)[],
+  attrs: Record<string, string> = {},
+  noteId?: PrivateInfoNoteId,
+): HTMLElement {
   return el('section', { class: 'gw-home-widget', ...attrs }, [
     el('div', { class: 'gw-home-widget-head' }, [
       el('p', { class: 'gw-home-kicker' }, [kicker]),
-      el('h2', {}, [title]),
+      noteId ? headingWithNote('h2', title, noteId) : el('h2', {}, [title]),
     ]),
     ...children,
   ]);
 }
 
 function honestEmpty(title: string, body: string, source: string): HTMLElement {
+  const slug = title.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return el('div', { class: 'gw-home-empty', 'data-test': 'home-honest-empty' }, [
-    el('strong', {}, [title]),
+    el('div', { class: 'gw-home-empty-title' }, [
+      el('strong', {}, [title]),
+      renderPrivateUnavailableInfoNote({
+        id: `home-${slug}`,
+        title,
+        what: body,
+        source,
+        filedUnder: 'Home · Honest-empty module',
+        expectedResult: 'This same module will show only a reviewed, authorized result with its source, status, freshness, limitations, and route to the complete evidence.',
+      }),
+    ]),
     el('p', {}, [body]),
     el('p', { class: 'gw-home-source-note' }, [source]),
   ]);
@@ -163,8 +196,15 @@ function civicWeather(model: HomeModel, nested = false): HTMLElement {
   return el('section', { class: 'gw-home-weather', 'data-test': 'home-civic-weather' }, [
     el('div', {}, [
       el('p', { class: 'gw-home-kicker' }, ['CIVIC WEATHER']),
-      el(nested ? 'h2' : 'h1', {}, ['Alpine government dashboard']),
-      el('p', {}, ['Reviewed records first, honest-empty where the archive or backend projection is not ready yet.']),
+      headingWithNote(
+        nested ? 'h2' : 'h1',
+        'Alpine government dashboard',
+        nested ? 'home-summary' : 'home-overview',
+      ),
+      el('div', { class: 'gw-home-summary-copy' }, [
+        el('p', {}, ['Reviewed records first, honest-empty where the archive or backend projection is not ready yet.']),
+        ...(nested ? [] : [renderPrivateInfoNote('home-summary')]),
+      ]),
     ]),
     el('div', { class: 'gw-home-weather-grid' }, items.map((item) =>
       el('article', { class: 'gw-home-stat', 'data-metric': item.key, 'data-origin': item.origin }, [
@@ -186,7 +226,7 @@ function fastAgenda(model: HomeModel, demo: boolean): HTMLElement {
           'The synthetic Alpine/Town agenda cards do not populate County or State filters.',
           'Source: explicit reviewer design fixture; no civic record is inferred for this filter.',
         ),
-      ], { 'data-test': 'home-fast-agenda', 'data-origin': 'fixture' });
+      ], { 'data-test': 'home-fast-agenda', 'data-origin': 'fixture' }, 'home-fast-agenda');
     }
     return widget('Fast Agenda', 'NEXT MEETING', [
       honestEmpty(
@@ -194,7 +234,7 @@ function fastAgenda(model: HomeModel, demo: boolean): HTMLElement {
         'Meeting agenda cards will appear here after the agenda-thread and meeting-id contract lands in the reviewed projection.',
         'Source: GOV-605 board projection today reports an honest empty board for the real Alpine corpus.',
       ),
-    ], { 'data-test': 'home-fast-agenda', 'data-origin': 'reviewed_snapshot' });
+    ], { 'data-test': 'home-fast-agenda', 'data-origin': 'reviewed_snapshot' }, 'home-fast-agenda');
   }
   return widget('Fast Agenda', demo ? 'DEV SAMPLE' : 'NEXT MEETING', [
     ...cards.map((card) => el('article', { class: 'gw-home-mini-card', 'data-test': 'home-agenda-card', 'data-origin': demo ? 'fixture' : 'reviewed_snapshot' }, [
@@ -202,7 +242,7 @@ function fastAgenda(model: HomeModel, demo: boolean): HTMLElement {
       el('h3', {}, [card.agendaItemTitle ?? card.agendaItemId]),
       el('p', {}, [[card.meetingDate, card.meetingBody, card.laneLabel].filter(Boolean).join(' · ')]),
     ])),
-  ], { 'data-test': 'home-fast-agenda', 'data-origin': demo ? 'fixture' : 'reviewed_snapshot' });
+  ], { 'data-test': 'home-fast-agenda', 'data-origin': demo ? 'fixture' : 'reviewed_snapshot' }, 'home-fast-agenda');
 }
 
 function transparencyAlerts(demo: boolean): HTMLElement {
@@ -213,7 +253,7 @@ function transparencyAlerts(demo: boolean): HTMLElement {
         'Late packet, missing-video, and quiet-edit alerts will appear here when the version-diff pipeline is live and reviewed.',
         'Source: future document version-diff projection; no claims are made before that contract exists.',
       ),
-    ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'designed-gap' });
+    ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'designed-gap' }, 'home-transparency-alerts');
   }
   return widget('Transparency Alerts', 'DEV SAMPLE', [
     el('article', { class: 'gw-home-mini-card', 'data-origin': 'fixture' }, [
@@ -221,7 +261,7 @@ function transparencyAlerts(demo: boolean): HTMLElement {
       el('h3', {}, ['Packet changed after posting']),
       el('p', {}, ['Demonstration only — not a real Alpine alert.']),
     ]),
-  ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'fixture' });
+  ], { 'data-test': 'home-transparency-alerts', 'data-origin': 'fixture' }, 'home-transparency-alerts');
 }
 
 function activeIssues(model: HomeModel): HTMLElement {
@@ -232,7 +272,7 @@ function activeIssues(model: HomeModel): HTMLElement {
         'Issue rows derive from reviewed topic/card records only. Empty filters mean no matching reviewed records, not a broken dashboard.',
         'Source: GOV-347 card feed and GOV-149 topic projection.',
       ),
-    ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' });
+    ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' }, 'home-active-issues');
   }
   return widget('Active Issues', 'SOURCE-BACKED ROWS', [
     el('p', { class: 'gw-home-source-note', 'data-test': 'home-issues-record-disclosure' }, [
@@ -248,7 +288,7 @@ function activeIssues(model: HomeModel): HTMLElement {
         el('a', { href: '#/cards', class: 'gw-home-link' }, ['receipts ›']),
       ]),
     )),
-  ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' });
+  ], { 'data-test': 'home-active-issues', 'data-origin': 'reviewed_snapshot' }, 'home-active-issues');
 }
 
 function timelinePreview(model: HomeModel): HTMLElement {
@@ -259,7 +299,7 @@ function timelinePreview(model: HomeModel): HTMLElement {
         'Latest events will show here directly from the reviewer-internal Alpine projection.',
         'Source: the same reviewed read/card projection that powers #/timeline and #/cards.',
       ),
-    ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' });
+    ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' }, 'home-timeline-preview');
   }
   return widget('Timeline Preview', 'LATEST REVIEWED EVENTS', [
     el('ol', { class: 'gw-home-timeline' }, model.presentCards.slice(0, 4).map((card) =>
@@ -283,7 +323,7 @@ function timelinePreview(model: HomeModel): HTMLElement {
       ]),
     )),
     el('a', { href: '#/timeline', class: 'gw-home-link' }, ['Timeline ›']),
-  ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' });
+  ], { 'data-test': 'home-timeline-preview', 'data-origin': 'reviewed_snapshot' }, 'home-timeline-preview');
 }
 
 function sourceVault(model: HomeModel, demo: boolean): HTMLElement {
@@ -297,11 +337,11 @@ function sourceVault(model: HomeModel, demo: boolean): HTMLElement {
       ...(model.sourceCount ? [el('p', { class: 'gw-home-source-note', 'data-origin': 'reviewed_snapshot' }, [
         `The selected digest items carry ${model.sourceCount} source trail receipt${model.sourceCount === 1 ? '' : 's'}.`,
       ])] : []),
-    ], { 'data-test': 'home-source-vault', 'data-origin': 'designed-gap' });
+    ], { 'data-test': 'home-source-vault', 'data-origin': 'designed-gap' }, 'home-source-vault');
   }
   return widget('Source Vault', 'DEV SAMPLE', [
     el('p', {}, ['Sample source statistics would render here only in demo mode.']),
-  ], { 'data-test': 'home-source-vault', 'data-origin': 'fixture' });
+  ], { 'data-test': 'home-source-vault', 'data-origin': 'fixture' }, 'home-source-vault');
 }
 
 function latestVerdict(): HTMLElement {
@@ -312,7 +352,7 @@ function latestVerdict(): HTMLElement {
       'Source: future reviewed promise-versus-action projection; no official, score, or verdict is inferred from the card feed.',
     ),
     el('a', { href: '#/power', class: 'gw-home-link' }, ['Open the Power Tracker baseline ›']),
-  ], { 'data-test': 'home-latest-verdict-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' });
+  ], { 'data-test': 'home-latest-verdict-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' }, 'home-latest-verdict');
 }
 
 function languageWatch(): HTMLElement {
@@ -322,7 +362,7 @@ function languageWatch(): HTMLElement {
       'The Home route does not classify agenda wording on its own. Exact excerpts, their source anchors, an AI-presented label, and reviewer state must arrive together before this area can identify wording for attention.',
       'Source: future reviewed language-watch projection; ordinary agenda and statement text remains unflagged.',
     ),
-  ], { 'data-test': 'home-language-watch-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' });
+  ], { 'data-test': 'home-language-watch-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' }, 'home-language-watch');
 }
 
 function explainerVideo(): HTMLElement {
@@ -332,14 +372,17 @@ function explainerVideo(): HTMLElement {
       'The baseline keeps a place for the visual walkthrough, but the production route needs an approved media asset, captions, and a text transcript before a play control can be offered.',
       'Source: product media capability; no video URL or playback status is connected.',
     ),
-  ], { 'data-test': 'home-explainer-video-unavailable', 'data-origin': 'designed-gap' });
+  ], { 'data-test': 'home-explainer-video-unavailable', 'data-origin': 'designed-gap' }, 'home-explainer');
 }
 
 function simpleThings(model: HomeModel): HTMLElement {
   const items = model.newsletterItems.slice(0, 3);
   if (!items.length) {
     return el('section', { class: 'gw-simple-things', 'data-test': 'home-simple-things', 'data-origin': 'reviewed_snapshot' }, [
-      el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
+      el('div', { class: 'gw-home-title-with-note' }, [
+        el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
+        renderPrivateInfoNote('home-simple-things'),
+      ]),
       honestEmpty(
         'No reviewed briefing items for this filter',
         'The front-page summary uses reviewed digest or briefing items verbatim when present.',
@@ -348,7 +391,10 @@ function simpleThings(model: HomeModel): HTMLElement {
     ]);
   }
   return el('section', { class: 'gw-simple-things', 'data-test': 'home-simple-things', 'data-origin': 'reviewed_snapshot' }, [
-    el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
+    el('div', { class: 'gw-home-title-with-note' }, [
+      el('p', { class: 'gw-home-kicker' }, ['3 THINGS TO KNOW']),
+      renderPrivateInfoNote('home-simple-things'),
+    ]),
     ...items.map((item, idx) => {
       const presentation = claimPresentation(item.labels.claimStatus, item.labels.aiPresented);
       return el('article', { class: 'gw-simple-thing', 'data-test': 'home-simple-item', 'data-origin': 'reviewed_snapshot' }, [
@@ -380,13 +426,13 @@ function simpleFeatured(model: HomeModel): HTMLElement {
   if (!item) {
     return widget('Featured Story', 'PLAIN ENGLISH FIRST', [
       honestEmpty('No featured story yet', 'A sourced story appears here when a reviewed digest item matches the current filter.', 'Source: reviewed newsletter digest items.'),
-    ], { 'data-test': 'home-simple-featured' });
+    ], { 'data-test': 'home-simple-featured' }, 'home-featured-story');
   }
   const sourceCount = item.sourceTrail.length;
   const presentation = claimPresentation(item.labels.claimStatus, item.labels.aiPresented);
   return el('article', { class: 'gw-simple-feature', 'data-test': 'home-simple-featured', 'data-origin': 'reviewed_snapshot' }, [
     el('p', { class: 'gw-home-kicker' }, ['FEATURED STORY']),
-    el('h2', {}, [item.title ?? item.summary ?? item.id]),
+    headingWithNote('h2', item.title ?? item.summary ?? item.id, 'home-featured-story'),
     el('div', { class: 'gw-simple-dek gw-home-record-meta' }, [
       el('span', {}, [item.recordDate]),
       el('span', {
@@ -417,7 +463,10 @@ function editionHistorySelector(): HTMLElement {
     'data-test': 'home-edition-history-unavailable',
     'data-origin': 'designed-gap',
   }, [
-    el('label', { for: id }, ['EDITION VERSIONS — archived updates']),
+    el('div', { class: 'gw-home-title-with-note' }, [
+      el('label', { for: id }, ['EDITION VERSIONS — archived updates']),
+      renderPrivateInfoNote('home-edition-history'),
+    ]),
     el('select', {
       id,
       disabled: '',
@@ -433,7 +482,7 @@ function simpleSearchTools(): HTMLElement {
   return el('section', { class: 'gw-simple-tools', 'data-test': 'home-simple-90-day-tools', 'data-origin': 'designed-gap' }, [
     el('div', { class: 'gw-simple-tool-copy' }, [
       el('p', { class: 'gw-home-kicker' }, ['SEARCH THE RECORD']),
-      el('h2', {}, ['Simple 90-day search']),
+      headingWithNote('h2', 'Simple 90-day search', 'home-search'),
       el('p', {}, ['Past 90 days is the intended Simple reading window. The connected digest does not yet provide a reviewed 90-day search index, so no range, match count, or result is claimed here.']),
     ]),
     el('div', { class: 'gw-simple-search', 'data-test': 'home-simple-search-unavailable' }, [
@@ -460,7 +509,7 @@ function simpleRails(model: HomeModel): HTMLElement {
       model.sourceCount
         ? el('p', {}, [`${model.sourceCount} source trail receipt${model.sourceCount === 1 ? '' : 's'} in the selected digest items.`])
         : honestEmpty('No source trail in this filter', 'Receipts appear when selected briefing items carry source trails.', 'Source: digest sourceTrail.'),
-    ], { 'data-origin': 'reviewed_snapshot' }),
+    ], { 'data-origin': 'reviewed_snapshot' }, 'reviewed-source-receipts'),
     widget('History Looks Back', 'ARCHIVE', [
       model.newsletterItems[0]
         ? el('p', {}, [model.newsletterItems[0].summary ?? 'Reviewed historical item available.'])
@@ -469,19 +518,23 @@ function simpleRails(model: HomeModel): HTMLElement {
     ], { 'data-origin': 'reviewed_snapshot' }),
     widget('Publication Honesty Tracker', 'HONESTY', [
       honestEmpty('Metrics not computed yet', 'Sourced, balanced, clear, and updated scores are not self-asserted until digest metadata can compute them.', 'Source: future digest-metadata metrics projection.'),
-    ], { 'data-origin': 'designed-gap' }),
+    ], { 'data-origin': 'designed-gap' }, 'home-honesty-metrics'),
   ]);
 }
 
 function localEditionGaps(): HTMLElement {
-  return el('div', { class: 'gw-simple-local-boxes', 'data-test': 'home-local-edition-gaps', 'data-origin': 'designed-gap' }, [
-    widget('County', 'HONEST EMPTY', [honestEmpty('No county dashboard yet', 'County-level rows filter real data and show empty until reviewed county records land.', 'Source: same Alpine-first projections.')]),
-    widget('State', 'HONEST EMPTY', [honestEmpty('No state dashboard yet', 'State-level rows filter real data and show empty until reviewed state records land.', 'Source: same Alpine-first projections.')]),
+  return el('section', { class: 'gw-simple-local-editions', 'data-test': 'home-local-edition-gaps', 'data-origin': 'designed-gap' }, [
+    headingWithNote('h2', 'County and State editions', 'home-local-editions'),
+    el('div', { class: 'gw-simple-local-boxes' }, [
+      widget('County', 'HONEST EMPTY', [honestEmpty('No county dashboard yet', 'County-level rows filter real data and show empty until reviewed county records land.', 'Source: same Alpine-first projections.')]),
+      widget('State', 'HONEST EMPTY', [honestEmpty('No state dashboard yet', 'State-level rows filter real data and show empty until reviewed state records land.', 'Source: same Alpine-first projections.')]),
+    ]),
   ]);
 }
 
 function advancedBriefingGroups(model: HomeModel): HTMLElement {
   return el('div', { class: 'gw-home-advanced-briefing', 'data-test': 'home-advanced-briefing' }, [
+    headingWithNote('h2', 'Plain-English briefing and archive tools', 'home-briefing'),
     simpleSearchTools(),
     simpleThings(model),
     el('div', { class: 'gw-home-advanced-briefing-grid' }, [
@@ -498,6 +551,7 @@ function simpleAccountabilityGroups(model: HomeModel, opts: HomeOptions): HTMLEl
     'data-test': 'home-simple-accountability',
     'aria-label': 'Accountability dashboard details',
   }, [
+    headingWithNote('h2', 'Accountability dashboard details', 'home-accountability'),
     civicWeather(model, true),
     el('div', { class: 'gw-home-grid' }, [
       el('div', { class: 'gw-home-col' }, [activeIssues(model), timelinePreview(model)]),
@@ -528,7 +582,7 @@ function renderSimple(root: HTMLElement, model: HomeModel, opts: HomeOptions, se
     el('section', { class: 'gw-simple-home', 'data-test': 'home-simple' }, [
       el('header', { class: 'gw-simple-masthead' }, [
         el('p', {}, ['plain English first · official text one tap away']),
-        el('h1', {}, ['Government Watchdog Weekly']),
+        headingWithNote('h1', 'Government Watchdog Weekly', 'home-overview'),
         el('blockquote', {}, ['“Facts are stubborn things.” — John Adams']),
         el('p', {}, [dateline]),
       ]),
@@ -660,6 +714,7 @@ function liveHomeSummary(
   data: ReadApiResponse,
   records: readonly StatementRecord[],
   headingLevel: 'h1' | 'h2' = 'h1',
+  includeRouteNote = true,
 ): HTMLElement {
   const receiptCount = liveReceiptCount(records);
   const items = [
@@ -697,11 +752,15 @@ function liveHomeSummary(
       el('div', { class: 'gw-home-live-heading' }, [
         el('div', {}, [
           el('p', { class: 'gw-home-kicker' }, ['LIVE REVIEWER CONTEXT']),
-          el(headingLevel, {}, ['Alpine government dashboard']),
+          includeRouteNote
+            ? headingWithNote(headingLevel, 'Alpine government dashboard', 'home-overview')
+            : headingWithNote(headingLevel, 'Alpine government dashboard', 'home-summary'),
         ]),
-        renderInfoNote('shell-mode'),
       ]),
-      el('p', {}, ['One authorized record set, shown with the same IDs, trust labels, provenance, and receipts in Simple and Advanced.']),
+      el('div', { class: 'gw-home-summary-copy' }, [
+        el('p', {}, ['One authorized record set, shown with the same IDs, trust labels, provenance, and receipts in Simple and Advanced.']),
+        ...(includeRouteNote ? [renderPrivateInfoNote('home-summary')] : []),
+      ]),
     ]),
     el('div', { class: 'gw-home-weather-grid' }, items.map((item) =>
       el('article', {
@@ -753,7 +812,7 @@ function liveRecords(records: readonly StatementRecord[]): HTMLElement {
     el('header', { class: 'gw-home-live-records-head' }, [
       el('div', {}, [
         el('p', { class: 'gw-home-kicker' }, ['AUTHORIZED RECORD SET']),
-        el('h2', {}, ['Reviewed records and receipts']),
+        headingWithNote('h2', 'Reviewed records and receipts', 'home-records'),
       ]),
       el('p', {}, [
         'These are direct response rows, not client-generated agenda items, issues, newsletter stories, scores, or verdicts. Captured and sample records are never substituted or added.',
@@ -771,7 +830,10 @@ function liveProjectionGaps(): HTMLElement {
   }, [
     el('header', { class: 'gw-home-live-gaps-head' }, [
       el('p', { class: 'gw-home-kicker' }, ['DESIGNED SLOTS · HONEST STATUS']),
-      el('h2', { id: 'gw-home-live-gaps-title' }, ['What still needs a backend projection']),
+      el('div', { class: 'gw-home-title-with-note' }, [
+        el('h2', { id: 'gw-home-live-gaps-title' }, ['What still needs a backend projection']),
+        renderPrivateInfoNote('home-gaps'),
+      ]),
       el('p', {}, [
         'These placeholders preserve the planned dashboard layout while naming the exact contract each feature needs. They contain no civic result or access grant.',
       ]),
@@ -807,11 +869,11 @@ function renderLiveSimple(
     el('section', { class: 'gw-simple-home', 'data-test': 'home-live-simple' }, [
       el('header', { class: 'gw-simple-masthead' }, [
         el('p', {}, ['plain English first · official receipts one tap away']),
-        el('h1', {}, ['Government Watchdog Weekly']),
+        headingWithNote('h1', 'Government Watchdog Weekly', 'home-overview'),
         el('blockquote', {}, ['“Facts are stubborn things.” — John Adams']),
         el('p', {}, ['Live reviewer context · Alpine private beta']),
       ]),
-      liveHomeSummary(data, records, 'h2'),
+      liveHomeSummary(data, records, 'h2', false),
       liveRecords(records),
       liveProjectionGaps(),
       el('footer', { class: 'gw-simple-footer' }, [
@@ -846,6 +908,7 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-root{font-family:var(--gw-font);color:var(--gw-text);line-height:var(--gw-leading)}
 .gw-home-root *{box-sizing:border-box}
 .gw-home-kicker{margin:0 0 var(--gw-space-2);font-size:var(--gw-text-kicker);font-weight:800;letter-spacing:1.4px;color:var(--gw-accent);text-transform:uppercase}
+.gw-home-title-with-note{display:flex;align-items:flex-start;gap:var(--gw-space-2);min-width:0}.gw-home-title-with-note>h1,.gw-home-title-with-note>h2,.gw-home-title-with-note>h3,.gw-home-title-with-note>p{min-width:0}.gw-home-title-with-note>.gw-info-note{flex:0 0 auto}.gw-home-summary-copy{display:flex;align-items:flex-start;gap:var(--gw-space-2)}.gw-home-summary-copy>p{flex:1;min-width:0}.gw-home-summary-copy>.gw-info-note{flex:0 0 auto}
 .gw-home-levels{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);margin:0 0 var(--gw-space-5)}
 .gw-home-level{min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);background:var(--gw-surface);color:var(--gw-text-secondary);border-radius:var(--gw-radius-pill);padding:0 var(--gw-space-5);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
 .gw-home-level[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on);border-color:var(--gw-accent)}
@@ -879,7 +942,7 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-simple-masthead{text-align:center;border-bottom:3px double var(--gw-rule-strong);margin-bottom:var(--gw-space-5);padding-bottom:var(--gw-space-5)}.gw-simple-masthead h1{font-size:var(--gw-text-display);line-height:1;margin:.2rem 0}.gw-simple-masthead p,.gw-simple-masthead blockquote{margin:.25rem 0;color:var(--gw-text-secondary)}
 .gw-simple-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:var(--gw-space-5);align-items:end;border:2px solid var(--gw-rule-strong);background:var(--gw-surface-subtle);padding:var(--gw-space-5);margin-bottom:var(--gw-space-5)}.gw-simple-tools h2{margin:0;font-size:var(--gw-text-xl)}.gw-simple-tool-copy>p:last-child{margin:.35rem 0 0;color:var(--gw-text-secondary)}.gw-simple-search{display:grid;gap:var(--gw-space-2);font-family:var(--gw-font)}.gw-simple-search label,.gw-home-edition-history label{font-size:var(--gw-text-badge);font-weight:800;letter-spacing:1px;text-transform:uppercase}.gw-simple-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--gw-space-2)}.gw-simple-search input,.gw-simple-search button,.gw-home-edition-history select{min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface);color:var(--gw-text);padding:0 var(--gw-space-3);font:600 var(--gw-text-sm)/1 var(--gw-font)}.gw-simple-search button{font-weight:800}.gw-simple-search :disabled,.gw-home-edition-history select:disabled{cursor:not-allowed;opacity:.72}.gw-simple-search small{color:var(--gw-text-muted)}
 .gw-simple-things{border:2px solid var(--gw-rule-strong);padding:var(--gw-space-5);margin-bottom:var(--gw-space-5)}.gw-simple-thing{display:grid;grid-template-columns:2rem 1fr;gap:var(--gw-space-3);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-simple-thing span{font:800 1.4rem/1 var(--gw-font-serif)}
-.gw-simple-layout{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;gap:var(--gw-space-5);align-items:start}.gw-simple-feature{border-top:3px solid var(--gw-rule-strong);border-bottom:3px solid var(--gw-rule-strong);padding:var(--gw-space-5) 0}.gw-simple-feature h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.05;margin:0}.gw-simple-dek{color:var(--gw-text-secondary);font-style:italic}.gw-simple-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-simple-columns h3{font-family:var(--gw-font);font-size:var(--gw-text-kicker);letter-spacing:1.2px;text-transform:uppercase}.gw-simple-rail{display:grid;gap:var(--gw-space-4)}.gw-home-edition-history{display:grid;gap:var(--gw-space-2);border-top:var(--gw-border-w) solid var(--gw-border);margin-top:var(--gw-space-4);padding-top:var(--gw-space-4);font-family:var(--gw-font)}.gw-home-edition-history p{margin:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-simple-local-boxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5);margin-top:var(--gw-space-5)}.gw-simple-footer{text-align:center;border-top:3px double var(--gw-rule-strong);margin-top:var(--gw-space-5);padding-top:var(--gw-space-5);color:var(--gw-text-secondary)}
+.gw-simple-layout{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;gap:var(--gw-space-5);align-items:start}.gw-simple-feature{border-top:3px solid var(--gw-rule-strong);border-bottom:3px solid var(--gw-rule-strong);padding:var(--gw-space-5) 0}.gw-simple-feature h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.05;margin:0}.gw-simple-dek{color:var(--gw-text-secondary);font-style:italic}.gw-simple-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-simple-columns h3{font-family:var(--gw-font);font-size:var(--gw-text-kicker);letter-spacing:1.2px;text-transform:uppercase}.gw-simple-rail{display:grid;gap:var(--gw-space-4)}.gw-home-edition-history{display:grid;gap:var(--gw-space-2);border-top:var(--gw-border-w) solid var(--gw-border);margin-top:var(--gw-space-4);padding-top:var(--gw-space-4);font-family:var(--gw-font)}.gw-home-edition-history p{margin:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-simple-local-editions{display:grid;gap:var(--gw-space-4);margin-top:var(--gw-space-5)}.gw-simple-local-editions>h2,.gw-simple-local-editions>.gw-home-title-with-note h2{margin:0;font-size:var(--gw-text-xl)}.gw-simple-local-boxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5)}.gw-simple-footer{text-align:center;border-top:3px double var(--gw-rule-strong);margin-top:var(--gw-space-5);padding-top:var(--gw-space-5);color:var(--gw-text-secondary)}
 .gw-home-advanced-briefing,.gw-simple-accountability{display:grid;gap:var(--gw-space-5);margin-top:var(--gw-space-6);padding-top:var(--gw-space-6);border-top:3px double var(--gw-rule-strong)}.gw-home-advanced-briefing-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.5fr);gap:var(--gw-space-5);align-items:start}.gw-home-advanced-briefing .gw-simple-things{margin-bottom:0}.gw-simple-accountability .gw-home-weather{margin-bottom:0}
 .gw-home-live-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-4)}
 .gw-home-live-root .gw-home-live-summary{margin-bottom:var(--gw-space-5)}

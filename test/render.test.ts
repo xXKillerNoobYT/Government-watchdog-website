@@ -78,6 +78,69 @@ describe('render — loading/empty/error primitives render from fixtures', () =>
   });
 });
 
+describe('GOV-53 — one admitted contextual note per record surface', () => {
+  it('explains the legacy route once at its heading, not once per repeated card', () => {
+    render(root, resolved(FIXTURE, 'fixture', isEmptyResponse), undefined, {
+      infoNoteId: 'legacy-timeline-overview',
+      access: 'reviewer_internal',
+    });
+
+    const triggers = root.querySelectorAll<HTMLButtonElement>(
+      '[data-info-note="legacy-timeline-overview"]',
+    );
+    expect(triggers).toHaveLength(1);
+    expect(root.querySelectorAll('[data-test="record-card"]').length).toBeGreaterThan(1);
+    expect(root.querySelector(
+      '[data-test="record-surface-context-heading"] [data-info-note="legacy-timeline-overview"]',
+    )).not.toBeNull();
+
+    const trigger = triggers[0]!;
+    expect(trigger.getAttribute('aria-label')).toBe('About the legacy Timeline view');
+    const panelId = trigger.getAttribute('aria-controls');
+    expect(panelId).toBeTruthy();
+    expect(root.querySelectorAll(`#${panelId}`)).toHaveLength(1);
+    trigger.focus();
+    const panel = document.querySelector<HTMLElement>(`#${panelId}`);
+    expect(panel?.hidden).toBe(false);
+    expect(panel?.textContent).toContain('Current state');
+    expect(panel?.textContent).toContain('supported compatibility route');
+    expect(panel?.textContent).toContain('Expected result');
+  });
+
+  it('keeps the Cards explanation on an admitted reviewer empty state', () => {
+    render(root, resolved(empty, 'fixture', isEmptyResponse), undefined, {
+      infoNoteId: 'cards-overview',
+      access: 'reviewer_internal',
+    });
+
+    expect(root.querySelector('[data-test="state-empty"]')).not.toBeNull();
+    expect(root.querySelectorAll('[data-info-note="cards-overview"]')).toHaveLength(1);
+  });
+
+  it('does not create or copy a private route note for a public empty response', () => {
+    const publicEmpty: ReadApiResponse = { scope: 'alpine', access: 'public', records: [] };
+    render(root, resolved(publicEmpty, 'live', isEmptyResponse), undefined, {
+      infoNoteId: 'cards-overview',
+      access: 'public',
+    });
+
+    expect(root.querySelector('[data-info-note="cards-overview"]')).toBeNull();
+    expect(root.textContent).not.toContain('About the reviewed Cards view');
+    expect(root.textContent).not.toContain('Research · Reviewed record cards');
+  });
+
+  it('renders an embedded record surface with an h2 and no competing h1', () => {
+    render(root, resolved(FIXTURE, 'fixture', isEmptyResponse), undefined, {
+      access: 'reviewer_internal',
+      headingLevel: 'h2',
+    });
+
+    expect(root.querySelectorAll('h1')).toHaveLength(0);
+    expect(root.querySelector('h2.gw-h1')?.textContent)
+      .toBe('Alpine timeline (reviewer-internal)');
+  });
+});
+
 describe('GOV-100 — statement card + drawer + typed related-links (synthetic demo)', () => {
   beforeEach(() => render(root, resolved(DEMO, 'fixture', isEmptyResponse)));
 

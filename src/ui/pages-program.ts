@@ -17,6 +17,10 @@ import {
   provenanceBadge,
   verificationStatusLabel,
 } from './statement-presenter';
+import {
+  renderPrivateInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -64,17 +68,53 @@ interface PageShellOptions {
   fixture?: boolean;
   /** False suppresses every provenance/fixture notice until lane admission. */
   admitted?: boolean;
+  /** Private route explanation; never rendered before reviewer admission. */
+  noteId?: PrivateInfoNoteId;
+}
+
+function headingWithInfo(
+  heading: HTMLElement,
+  noteId: PrivateInfoNoteId,
+  testId?: string,
+): HTMLDivElement {
+  return el('div', {
+    class: 'gw-context-info-heading',
+    ...(testId ? { 'data-test': testId } : {}),
+  }, [
+    heading,
+    renderPrivateInfoNote(noteId),
+  ]);
+}
+
+function noteRow(
+  label: string,
+  noteIds: readonly PrivateInfoNoteId[],
+  testId: string,
+): HTMLDivElement {
+  return el('div', {
+    class: 'gw-context-info-row',
+    role: 'group',
+    'aria-label': label,
+    'data-test': testId,
+  }, noteIds.map((id) => renderPrivateInfoNote(id)));
 }
 
 function pageShell(root: HTMLElement, testId: string, title: string, options: PageShellOptions = {}): HTMLElement {
   ensureStyle();
+  ensureBaselinePageStyle();
   root.className = 'gw-root gw-boards-root';
   root.replaceChildren();
-  if (options.admitted !== false) {
+  const admitted = options.admitted !== false;
+  if (admitted) {
     if (options.fixture) root.append(fixtureBanner(options.notice));
     else if (options.notice) root.append(sourceNotice(options.notice));
   }
-  const shell = el('div', { class: 'gw-boards', 'data-test': testId }, [el('h1', { class: 'gw-h1' }, [title])]);
+  const heading = el('h1', { class: 'gw-h1' }, [title]);
+  const shell = el('div', { class: 'gw-boards', 'data-test': testId }, [
+    admitted && options.noteId
+      ? headingWithInfo(heading, options.noteId, `${testId}-info`)
+      : heading,
+  ]);
   root.append(shell);
   return shell;
 }
@@ -92,6 +132,10 @@ const BASELINE_PAGE_STYLE = `
 .gw-baseline-workbench-head{display:flex;justify-content:space-between;gap:var(--gw-space-5);align-items:end;border-bottom:var(--gw-border-w) solid var(--gw-border);padding-bottom:var(--gw-space-4)}
 .gw-baseline-workbench-head p{font:800 var(--gw-text-kicker)/1.2 var(--gw-font);letter-spacing:1.2px;color:var(--gw-accent);margin:0}
 .gw-baseline-workbench-head h2{font-size:var(--gw-text-lg);margin:0;text-align:right}
+.gw-context-info-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-3)}
+.gw-context-info-heading>:first-child{min-width:0}
+.gw-context-info-row{display:flex;align-items:center;justify-content:flex-end;gap:var(--gw-space-2);flex-wrap:wrap}
+.gw-vault-contract-toolbar>.gw-context-info-row{grid-column:1/-1}
 .gw-source-vault-advanced-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:var(--gw-space-5);align-items:start}
 .gw-source-vault-gap-stack{display:grid;gap:var(--gw-space-4)}
 @media(max-width:800px){.gw-baseline-simple-sheet{padding:var(--gw-space-4)}.gw-baseline-workbench-head{align-items:start;flex-direction:column}.gw-baseline-workbench-head h2{text-align:left}.gw-source-vault-advanced-grid{grid-template-columns:1fr}}
@@ -100,7 +144,7 @@ const BASELINE_PAGE_STYLE = `
 let baselinePageStyleInjected = false;
 
 function ensureBaselinePageStyle(): void {
-  if (baselinePageStyleInjected) return;
+  if (baselinePageStyleInjected && document.head.querySelector('[data-test="baseline-page-style"]')) return;
   document.head.append(el('style', { 'data-test': 'baseline-page-style' }, [BASELINE_PAGE_STYLE]));
   baselinePageStyleInjected = true;
 }
@@ -155,6 +199,7 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
     notice,
     fixture,
     admitted: board.access === 'reviewer_internal',
+    noteId: 'agenda-overview',
   });
   if (board.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -167,6 +212,11 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
   const mount = el('div', { 'data-test': 'fast-agenda-mount' });
   ((mode: PageMode) => {
     mount.replaceChildren();
+    mount.append(noteRow(
+      'How Fast Agenda cards are filed',
+      ['agenda-meeting', 'agenda-lifecycle', 'agenda-sources'],
+      'fast-agenda-card-info',
+    ));
     const cards = allCards(board);
     if (!cards.length) {
       mount.append(honestAgendaEmpty(board));
@@ -176,7 +226,16 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
       mount.append(el('div', { class: 'gw-board', 'data-test': 'fast-agenda-list' }, cards.map(fastAgendaCard)));
     }
     mount.append(el('section', { class: 'gw-state', 'data-test': 'fast-agenda-disclosures', role: 'note' }, [
-      el('p', { class: 'gw-muted' }, ['Agenda projection limits, rendered verbatim:']),
+      headingWithInfo(
+        el('p', { class: 'gw-muted' }, ['Agenda projection limits, rendered verbatim:']),
+        'agenda-gaps',
+        'fast-agenda-gap-info',
+      ),
+      noteRow(
+        'About planned agenda controls',
+        ['agenda-filters'],
+        'fast-agenda-filter-info',
+      ),
       el('ul', { class: 'gw-muted' }, [
         el('li', {}, [board.disclosures.decisions]),
         el('li', {}, [board.disclosures.categories]),
@@ -258,6 +317,11 @@ function timelineFilterBar(
     'data-test': 'timeline-filter-reset',
   }, ['Clear']);
   form.append(
+    headingWithInfo(
+      el('strong', {}, ['Timeline search and display filters']),
+      'timeline-filters',
+      'timeline-filter-info',
+    ),
     el('label', { class: 'gw-timeline-field gw-timeline-search-field' }, [
       el('span', {}, ['Search']),
       searchInput,
@@ -326,11 +390,15 @@ function timelineUnavailableTools(exactGovernmentLevel: 'town' | 'unavailable'):
   }, [
     el('div', {}, [
       el('p', { class: 'gw-timeline-kicker' }, ['DESIGNED TIMELINE TOOLS']),
-      el('strong', {}, [
-        exactGovernmentLevel === 'town'
-          ? 'Only the reviewed Town ordering projection is connected'
-          : 'The exact government-level projection is not connected',
-      ]),
+      headingWithInfo(
+        el('strong', {}, [
+          exactGovernmentLevel === 'town'
+            ? 'Only the reviewed Town ordering projection is connected'
+            : 'The exact government-level projection is not connected',
+        ]),
+        'timeline-gaps',
+        'timeline-gap-info',
+      ),
       el('p', {}, [
         'Unsupported government level, event-kind, issue, event-window, and event-sort controls stay visible but disabled until typed backend fields are supplied.',
       ]),
@@ -529,11 +597,15 @@ function timelineMap(
     el('header', { class: 'gw-timeline-map-head' }, [
       el('div', {}, [
         el('p', { class: 'gw-timeline-kicker' }, ['CROSS-GOVERNMENT DATE-ORDER BAR']),
-        el('h2', {}, [
-          exactGovernmentLevel === 'town'
-            ? 'Town supplied; County and State reserved'
-            : 'Date ordering supplied; government level unavailable',
-        ]),
+        headingWithInfo(
+          el('h2', {}, [
+            exactGovernmentLevel === 'town'
+              ? 'Town supplied; County and State reserved'
+              : 'Date ordering supplied; government level unavailable',
+          ]),
+          'timeline-map',
+          'timeline-map-info',
+        ),
       ]),
       el('div', { class: 'gw-timeline-map-legend', 'aria-label': 'Timeline marker legend' }, [
         el('span', { class: 'is-agenda' }, ['● Agenda-id ordering date · not event']),
@@ -542,6 +614,11 @@ function timelineMap(
         el('span', { class: 'is-undated' }, ['● Undated below']),
       ]),
     ]),
+    noteRow(
+      'How Timeline ordering dates are calculated',
+      ['timeline-date-basis'],
+      'timeline-date-basis-info',
+    ),
     el('div', { class: 'gw-timeline-map-axis', 'aria-label': 'Timeline date range' }, [
       el('span', {}, [firstDate ?? 'No dated start']),
       el('i', { 'aria-hidden': 'true' }, []),
@@ -587,7 +664,10 @@ export function renderTimelineLevels(
 ): void {
   ensureTimelineHybridStyle();
   const exactGovernmentLevel = options.exactGovernmentLevel ?? 'unavailable';
-  const shell = pageShell(root, 'timeline-levels-page', 'Timeline');
+  const shell = pageShell(root, 'timeline-levels-page', 'Timeline', {
+    admitted: data.access === 'reviewer_internal',
+    noteId: 'timeline-overview',
+  });
   shell.classList.add('gw-timeline-hybrid');
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -666,6 +746,11 @@ export function renderTimelineLevels(
   const mount = el('div', { 'data-test': 'timeline-mode-mount' });
   ((mode: PageMode) => {
     mount.replaceChildren();
+    mount.append(noteRow(
+      'About reviewed Timeline rows and receipts',
+      ['timeline-records'],
+      'timeline-records-info',
+    ));
     if (gapSummary) mount.append(gapCardSection(gapSummary));
     if (filtered.length === 0) {
       mount.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'timeline-empty', role: 'status' }, [
@@ -706,7 +791,7 @@ export function renderTimelineLevels(
 
 export const TIMELINE_HYBRID_STYLE = `
 .gw-timeline-hybrid{max-width:none;display:flex;flex-direction:column;gap:14px}
-.gw-timeline-hybrid>.gw-h1{font-size:clamp(1.8rem,3vw,2.7rem);margin:0;line-height:1.05}
+.gw-timeline-hybrid>.gw-h1,.gw-timeline-hybrid>.gw-context-info-heading>.gw-h1{font-size:clamp(1.8rem,3vw,2.7rem);margin:0;line-height:1.05}
 .gw-timeline-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,360px);gap:20px;align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:18px 20px}
 .gw-timeline-intro h2{font-size:1.18rem;margin:3px 0 5px}
 .gw-timeline-intro p{margin:0}
@@ -717,6 +802,7 @@ export const TIMELINE_HYBRID_STYLE = `
 .gw-timeline-filter-meta{display:flex;gap:6px;flex-wrap:wrap}
 .gw-timeline-filter-meta span{font:600 11px/1.2 var(--gw-font-mono);color:var(--gw-text-muted);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:5px 9px;background:var(--gw-surface-subtle)}
 .gw-timeline-filterbar{display:grid;grid-template-columns:minmax(220px,1fr) minmax(155px,auto) minmax(170px,auto) auto auto auto;gap:10px;align-items:end;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:14px}
+.gw-timeline-filterbar>.gw-context-info-heading{grid-column:1/-1}
 .gw-timeline-field{display:flex;flex-direction:column;gap:5px;color:var(--gw-text-muted);font-size:11px;font-weight:800;letter-spacing:.45px;text-transform:uppercase}
 .gw-timeline-field input,.gw-timeline-field select{width:100%;min-height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border);border-radius:8px;background:var(--gw-surface-subtle);color:var(--gw-text);padding:8px 10px;font:500 var(--gw-text-badge)/1.2 var(--gw-font)}
 .gw-timeline-field input:focus-visible,.gw-timeline-field select:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px;border-color:var(--gw-accent)}
@@ -877,6 +963,7 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
   const shell = pageShell(root, 'boards-directory-page', 'Boards directory', {
     notice,
     admitted: data.access === 'reviewer_internal',
+    noteId: 'boards-overview',
   });
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -903,6 +990,11 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
     'data-test': 'boards-directory-geometry',
     'aria-label': 'Government body directory contract gaps',
   }, [
+    noteRow(
+      'About government body directory controls',
+      ['boards-directory'],
+      'boards-directory-info',
+    ),
     el('div', { class: 'gw-boards-contract-tabs', role: 'group', 'aria-label': 'Unavailable government-level directory filters' },
       jurisdictionLanes.map((lane) => el('button', {
         type: 'button',
@@ -943,6 +1035,11 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
     'data-test': 'boards-detail-geometry',
     'aria-label': 'Government body detail contract gaps',
   }, [
+    noteRow(
+      'About planned government body details',
+      ['boards-body'],
+      'boards-body-info',
+    ),
     el('header', { class: 'gw-boards-contract-detail-head' }, [
       el('p', { class: 'gw-muted' }, ['BOARD DETAIL']),
       el('h2', {}, ['No policy-cleared body selected']),
@@ -1006,7 +1103,11 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
   };
 
   const topicContext = (): HTMLElement => el('section', { 'data-test': 'boards-topic-context' }, [
-    el('h2', {}, ['Reviewed topic context']),
+    headingWithInfo(
+      el('h2', {}, ['Reviewed topic context']),
+      'boards-topic',
+      'boards-topic-info',
+    ),
     el('p', { class: 'gw-muted' }, [
       'These source-backed topic labels help navigate reviewed records; they do not satisfy or replace the Boards directory contract.',
     ]),
@@ -1276,7 +1377,11 @@ function renderIssueDossierCard(record: StatementRecord): HTMLElement {
   }
   return el('article', { class: 'gw-card', 'data-test': 'issue-dossier-card', 'data-id': record.statement_id }, [
     el('p', { class: 'gw-muted' }, [`Record ${record.statement_id}`]),
-    el('h2', { 'data-test': 'issue-title' }, [statementTitle(record)]),
+    headingWithInfo(
+      el('h2', { 'data-test': 'issue-title' }, [statementTitle(record)]),
+      'issue-trust',
+      'issue-trust-info',
+    ),
     el('div', { class: 'gw-badges', 'data-test': 'issue-trust-bundle' }, trustBadges),
     el('p', { class: 'gw-muted', 'data-test': 'issue-speaker' }, [record.speaker_label ?? 'Speaker label not present']),
     el('p', { 'data-test': 'issue-statement' }, [record.statement_text ?? 'Statement text not present in reviewed projection.']),
@@ -1327,6 +1432,7 @@ export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, quer
   const shell = pageShell(root, 'issue-detail-page', 'Issue detail', {
     notice,
     admitted: data.access === 'reviewer_internal',
+    noteId: 'issue-overview',
   });
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -1340,7 +1446,11 @@ export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, quer
   const record = records.find((r) => r.statement_id === id);
   if (!record) {
     shell.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'issue-missing', role: 'status' }, [
-      el('h2', {}, ['Reviewed record not found']),
+      headingWithInfo(
+        el('h2', {}, ['Reviewed record not found']),
+        'issue-missing',
+        'issue-missing-info',
+      ),
       el('p', {}, ['No dossier was fabricated for the requested id.']),
     ]));
     return;
@@ -1350,6 +1460,11 @@ export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, quer
     mount.setAttribute('data-mode', mode);
     mount.replaceChildren(
       renderIssueDossierCard(record),
+      noteRow(
+        'About Issue evidence and source locators',
+        ['issue-proof'],
+        'issue-proof-info',
+      ),
       evidenceMetaRows(record.evidence ?? []),
     );
   })(readPageMode());
@@ -1372,6 +1487,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     notice,
     fixture: query.get('demo') === 'sample',
     admitted: data.access === 'reviewer_internal',
+    noteId: 'vault-overview',
   });
   if (data.access !== 'reviewer_internal') {
     shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
@@ -1393,7 +1509,11 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
   const overview = (): HTMLElement => el('section', { class: 'gw-board', 'data-test': 'source-vault-overview', 'aria-label': 'Source Vault overview' }, [
       el('article', { class: 'gw-card', 'data-test': 'source-reviewed-count' }, [
         el('p', { class: 'gw-muted' }, ['REVIEWED SOURCE METADATA']),
-        el('h2', {}, [String(sources.length)]),
+        headingWithInfo(
+          el('h2', {}, [String(sources.length)]),
+          'vault-source-count',
+          'source-count-info',
+        ),
         el('p', {}, [`Unique source row${sources.length === 1 ? '' : 's'} exposed by the current reviewed statement receipts.`]),
         statExplainer('This is a deduplicated count of source metadata linked by the reviewed statement receipts on this page. It is not a count of every file in a full source registry.'),
       ]),
@@ -1416,6 +1536,11 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     'data-test': 'source-vault-tools',
     'aria-label': 'Source Vault search and filters',
   }, [
+    noteRow(
+      'About Source Vault search and filters',
+      ['vault-filters'],
+      'source-vault-filter-info',
+    ),
     el('label', { class: 'gw-vault-contract-field' }, [
       'Search vault',
       el('input', {
@@ -1445,20 +1570,31 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
   const sourceContent = (): HTMLElement => {
     if (!sources.length) {
       return el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'source-vault-empty', role: 'status' }, [
-        el('h2', {}, ['No reviewed source metadata yet']),
+        headingWithInfo(
+          el('h2', {}, ['No reviewed source metadata yet']),
+          'vault-source-rows',
+          'source-vault-row-info',
+        ),
         el('p', {}, ['No rows were invented for the vault.']),
       ]);
     }
-    return el('div', { class: 'gw-board gw-vault-contract-receipts', 'data-test': 'source-vault-list' }, sources.map((source, index) =>
-      el('article', { class: 'gw-card', 'data-test': 'source-vault-row', 'data-source-id': source.to_source_id ?? `source-${index + 1}` }, [
-        el('h2', {}, [source.to_source_id ?? `Source ${index + 1}`]),
-        el('p', { class: 'gw-muted' }, [[source.source_type, source.published_by, source.jurisdiction].filter(Boolean).join(' · ') || 'Metadata not present']),
-        el('p', { class: 'gw-muted' }, [`Date: ${source.source_date ?? 'not present'}`]),
-        el('p', { class: 'gw-muted' }, [`Validation: ${source.last_validated_utc ?? source.scan_date ?? 'not present'}`]),
-        ...(source.original_url ? [el('a', { href: source.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-original' }, ['Original'])] : []),
-        ...(source.archive_url ? [el('a', { href: source.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-archive' }, ['Archive'])] : []),
-      ]),
-    ));
+    return el('section', { class: 'gw-vault-contract-stack', 'data-test': 'source-vault-content' }, [
+      noteRow(
+        'About Source Vault receipt rows',
+        ['vault-source-rows'],
+        'source-vault-row-info',
+      ),
+      el('div', { class: 'gw-board gw-vault-contract-receipts', 'data-test': 'source-vault-list' }, sources.map((source, index) =>
+        el('article', { class: 'gw-card', 'data-test': 'source-vault-row', 'data-source-id': source.to_source_id ?? `source-${index + 1}` }, [
+          el('h2', {}, [source.to_source_id ?? `Source ${index + 1}`]),
+          el('p', { class: 'gw-muted' }, [[source.source_type, source.published_by, source.jurisdiction].filter(Boolean).join(' · ') || 'Metadata not present']),
+          el('p', { class: 'gw-muted' }, [`Date: ${source.source_date ?? 'not present'}`]),
+          el('p', { class: 'gw-muted' }, [`Validation: ${source.last_validated_utc ?? source.scan_date ?? 'not present'}`]),
+          ...(source.original_url ? [el('a', { href: source.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-original' }, ['Original'])] : []),
+          ...(source.archive_url ? [el('a', { href: source.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'vault-archive' }, ['Archive'])] : []),
+        ]),
+      )),
+    ]);
   };
 
   const versionCompare = (): HTMLElement => el('section', {
@@ -1468,7 +1604,11 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
   }, [
     el('header', {}, [
       el('p', { class: 'gw-muted' }, ['DOCUMENT VERSION COMPARE · DETERMINISTIC DIFF SLOT']),
-      el('h2', {}, ['Document version compare not wired yet']),
+      headingWithInfo(
+        el('h2', {}, ['Document version compare not wired yet']),
+        'vault-diff',
+        'source-vault-diff-info',
+      ),
       el('p', {}, ['The baseline deterministic v1/v2 comparison stays unavailable until a reviewed source-versions projection supplies both document versions and a web-safe diff.']),
     ]),
     el('div', { class: 'gw-vault-contract-version-controls', 'data-test': 'source-version-selectors' }, [
@@ -1523,7 +1663,11 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     'data-test': 'source-ledger-empty',
   }, [
     el('p', { class: 'gw-muted' }, ['VAULT LEDGER · LATEST']),
-    el('h2', {}, ['Ledger history not wired yet']),
+    headingWithInfo(
+      el('h2', {}, ['Ledger history not wired yet']),
+      'vault-ledger',
+      'source-vault-ledger-info',
+    ),
     el('p', {}, ['The current reviewed payload has source metadata, but no ledger-change projection.']),
     el('div', { 'data-test': 'source-ledger-geometry' }, [
       el('div', { class: 'gw-vault-contract-ledger-row' }, [el('strong', {}, ['First seen']), el('span', {}, ['Not supplied'])]),
@@ -1539,7 +1683,11 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     'data-test': 'source-video-status-empty',
   }, [
     el('p', { class: 'gw-muted' }, ['VIDEO RELEASE · TRANSCRIPT STATUS']),
-    el('h2', {}, ['Video release and transcript status not wired yet']),
+    headingWithInfo(
+      el('h2', {}, ['Video release and transcript status not wired yet']),
+      'vault-video',
+      'source-vault-video-info',
+    ),
     el('div', { class: 'gw-vault-contract-video-ladder', 'data-test': 'source-video-ladder' }, [
       el('span', {}, ['Pending release']),
       el('span', {}, ['Pending transcript']),
@@ -1554,14 +1702,22 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
     'data-test': 'source-alerts-empty',
   }, [
     el('p', { class: 'gw-muted' }, ['TRANSPARENCY ALERTS']),
-    el('h2', {}, ['Transparency alerts not wired yet']),
+    headingWithInfo(
+      el('h2', {}, ['Transparency alerts not wired yet']),
+      'vault-transparency',
+      'source-vault-transparency-info',
+    ),
     el('p', {}, ['No live alert generation is performed on this page.']),
     el('button', { type: 'button', class: 'gw-vault-contract-tool', 'data-test': 'source-alerts-tool', disabled: '' }, ['Browse open and cleared flags']),
   ]);
 
   const verificationDetails = (): HTMLElement => el('section', { class: 'gw-vault-contract-panel', 'data-test': 'source-verification-details' }, [
       el('p', { class: 'gw-muted' }, ['VERIFICATION DETAILS']),
-      el('h2', {}, ['Verification details']),
+      headingWithInfo(
+        el('h2', {}, ['Verification details']),
+        'vault-verification',
+        'source-vault-verification-info',
+      ),
       el('p', {}, [
         `${originalLinkCount} original link${originalLinkCount === 1 ? '' : 's'} and ${archiveLinkCount} archive link${archiveLinkCount === 1 ? '' : 's'} are present in the reviewed receipt metadata. Link presence alone does not establish freshness, third-party preservation, or hash verification.`,
       ]),

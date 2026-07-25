@@ -8,22 +8,89 @@
 import {
   renderDefinedInfoNote,
   type InfoNoteDefinition,
+  type InfoNoteRenderOptions,
 } from './info-note';
+import {
+  PRIVATE_INFO_NOTES,
+  type PrivateInfoNoteId,
+} from './private-info-note-definitions';
 
-export const PRIVATE_INFO_NOTES = {
-  'shell-notifications': {
-    label: 'About account notifications',
-    what: 'These messages report beta-account workflow changes such as access, cohort, or email-consent updates.',
-    source: 'The admitted browser session requests a same-origin, session-scoped notification endpoint.',
-    filedUnder: 'Account workflow · Notifications',
-    review: 'The server writes and counts these account events; the browser validates the response before showing it.',
-    limits: 'These are not civic Alerts. A denial, 404, outage, or invalid response means unavailable—not proof that no real events exist—and live mode never substitutes a sample.',
-    expectedResult: 'A validated server list and server unread count, or a zero-badge unavailable explanation.',
-  },
-} as const satisfies Record<string, InfoNoteDefinition>;
+export {
+  PRIVATE_INFO_NOTES,
+  type PrivateInfoNoteId,
+} from './private-info-note-definitions';
 
-export type PrivateInfoNoteId = keyof typeof PRIVATE_INFO_NOTES;
+export function renderPrivateInfoNote(
+  id: PrivateInfoNoteId,
+  options: InfoNoteRenderOptions = {},
+): HTMLDivElement {
+  return renderDefinedInfoNote(id, PRIVATE_INFO_NOTES[id], options);
+}
 
-export function renderPrivateInfoNote(id: PrivateInfoNoteId): HTMLDivElement {
-  return renderDefinedInfoNote(id, PRIVATE_INFO_NOTES[id]);
+/**
+ * Structured private placeholder explanation. Callers must provide the exact
+ * missing projection and end result; this prevents a polished empty card from
+ * silently becoming a generic "coming soon" promise.
+ */
+export interface PrivateUnavailableInfoNote {
+  id: string;
+  title: string;
+  what: string;
+  source: string;
+  filedUnder: string;
+  review?: string;
+  lifecycle?: string;
+  limits?: string;
+  expectedResult: string;
+}
+
+export function renderPrivateUnavailableInfoNote(
+  definition: PrivateUnavailableInfoNote,
+): HTMLDivElement {
+  return renderDefinedInfoNote(`private-gap-${definition.id}`, {
+    label: `About ${definition.title}`,
+    what: definition.what,
+    source: definition.source,
+    filedUnder: definition.filedUnder,
+    review: definition.review
+      ?? 'The slot remains unavailable until the server contract, authorization, review policy, and safe output fields are approved.',
+    lifecycle: definition.lifecycle ?? 'Current state: planned or incomplete; this is an explanatory placeholder.',
+    limits: definition.limits
+      ?? 'The placeholder contains no civic result, score, entitlement, coverage decision, subscription, or release-date promise.',
+    expectedResult: definition.expectedResult,
+  });
+}
+
+/** Minimal structural type avoids a circular import from reviewer-context-state. */
+export interface PrivateProjectionInfoNote {
+  id: string;
+  title: string;
+  whatItDoes: string;
+  requiredProjection: string;
+  howItWorks: string;
+  expectedResult: string;
+  filedUnder: string;
+}
+
+export function renderPrivateProjectionInfoNote(
+  definition: PrivateProjectionInfoNote,
+): HTMLDivElement {
+  return renderDefinedInfoNote(`private-projection-${definition.id}`, {
+    label: `How ${definition.title} is filed`,
+    what: definition.whatItDoes,
+    source: definition.requiredProjection,
+    filedUnder: definition.filedUnder,
+    review: definition.howItWorks,
+    lifecycle: 'Current state: designed gap. The required backend projection is not available to this route.',
+    limits: 'This explanation is not a record, result, entitlement, coverage claim, subscription, or release-date promise.',
+    expectedResult: definition.expectedResult,
+  });
+}
+
+/** Feature-specific private modules may supply a reviewed static definition. */
+export function renderPrivateDefinedInfoNote(
+  id: string,
+  definition: InfoNoteDefinition,
+): HTMLDivElement {
+  return renderDefinedInfoNote(`private-${id}`, definition);
 }

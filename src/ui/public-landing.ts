@@ -220,7 +220,7 @@ export function renderPublicLanding(root: HTMLElement): void {
   const coverage = el('section', { class: 'gw-public-section gw-public-coverage' }, [
     el('div', { class: 'gw-public-section-intro' }, [
       el('p', { class: 'gw-public-kicker' }, ['INITIAL SERVICE AREA']),
-      labelledHeading('Alpine-first coverage', 'public-scope'),
+      labelledHeading('Alpine-first coverage', 'public-coverage'),
       el('p', {}, ['Current implementation focus is Alpine. County and state slots remain explicit without claiming complete coverage.']),
     ]),
     el('div', { class: 'gw-public-coverage-list' }, [
