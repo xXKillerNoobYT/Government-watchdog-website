@@ -238,6 +238,16 @@ describe('GOV-658 shell — functional shared controls with honest preview label
       expect(root.querySelectorAll('[data-test="notification-panel"]')).toHaveLength(1);
       expect(bell?.getAttribute('aria-haspopup')).toBe('dialog');
       expect(bell?.getAttribute('aria-expanded')).toBe('false');
+      const notificationNote = root.querySelector<HTMLButtonElement>(
+        '[data-info-note="shell-notifications"]',
+      );
+      expect(notificationNote).not.toBeNull();
+      notificationNote?.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      const notePanelId = notificationNote?.getAttribute('aria-controls');
+      const noteText = notePanelId ? root.querySelector(`#${notePanelId}`)?.textContent : '';
+      expect(noteText).toMatch(/Account workflow/);
+      expect(noteText).toMatch(/not civic Alerts/i);
+      expect(noteText).toMatch(/unavailable—not proof/i);
       expect(root.querySelector('[data-test="shell-alerts"]')).toBeNull();
       expect(root.querySelector('[data-test="shell-alert-count"]')).toBeNull();
     });

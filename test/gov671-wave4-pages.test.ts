@@ -132,7 +132,10 @@ describe('GOV-671 Location coverage', () => {
       ).not.toBeNull();
     });
     expect(app.querySelector('[data-test="tab-power-tracker"]')?.getAttribute('aria-current')).toBe('page');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
 
     window.location.hash = '#/watchlist?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -142,7 +145,10 @@ describe('GOV-671 Location coverage', () => {
       ).not.toBeNull();
     });
     expect(app.querySelector('[data-test="tab-watchlist"]')?.getAttribute('aria-current')).toBe('page');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
 
     window.location.hash = '#/location?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -153,6 +159,9 @@ describe('GOV-671 Location coverage', () => {
     });
     expect(app.querySelector('[data-test="shell-jurisdiction"]')?.getAttribute('href')).toBe('#/location');
     expect(app.querySelector('.gw-shell-tab[aria-current="page"]')).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
   });
 });

@@ -25,10 +25,9 @@ import { validateWaitlist, renderWaitlistForm } from '../src/ui/waitlist-form';
 import { renderNotificationList, mountNotificationPanel } from '../src/ui/notification-panel';
 import {
   loadNotifications,
-  NOTIFICATIONS_FIXTURE,
   readNotificationsConfig,
 } from '../src/data/notifications';
-import { NOTIFICATION_KINDS, type NotificationResponse } from '../src/types/notification';
+import type { NotificationResponse } from '../src/types/notification';
 
 let root: HTMLElement;
 beforeEach(() => {
@@ -189,46 +188,48 @@ describe('GOV-758 — waitlist intake form (email + area interest only)', () => 
 });
 
 describe('GOV-758 — notification client (leg-2 contract)', () => {
-  it('fixture is web-safe and carries all five notification kinds', () => {
-    const kinds = new Set(NOTIFICATIONS_FIXTURE.notifications.map((n) => n.kind));
-    for (const k of NOTIFICATION_KINDS) expect(kinds.has(k)).toBe(true);
+  it('defaults to the fixed same-origin live endpoint and ignores the civic fixture flag', () => {
+    const cfg = readNotificationsConfig({
+      DEV: false,
+      PROD: true,
+      VITE_USE_FIXTURES: 'true',
+      VITE_NOTIFICATIONS_API_URL: 'https://evil.example/notifications',
+    });
+    expect(cfg).toEqual({ mode: 'live', apiPath: '/api/notifications' });
   });
 
-  it('defaults to fixture mode (no live endpoint) with a visible notice', async () => {
-    const cfg = readNotificationsConfig({ VITE_USE_FIXTURES: 'true' });
-    const { data, notice } = await loadNotifications({ config: cfg });
-    expect(data.notifications.length).toBeGreaterThan(0);
-    expect(notice).toMatch(/DEV SAMPLE/i);
-  });
-
-  it('normalizes: drops unknown kinds fail-closed and trusts the SERVER unread count', async () => {
+  it('renders only a fully valid response and trusts the SERVER unread count', async () => {
     const fakeBody: NotificationResponse = {
       unread_count: 7, // deliberately not derivable from the rows — server is authority
       notifications: [
         { id: 'a', kind: 'account_approved', title: 'T', body: 'B', created_utc: '2026-07-16T00:00:00Z', read: false },
-        // @ts-expect-error — an unknown kind must be dropped, not rendered
-        { id: 'b', kind: 'totally_made_up', title: 'X', body: 'Y', created_utc: '2026-07-16T00:00:00Z', read: false },
       ],
     };
     const fetchImpl = vi.fn(async () =>
       new Response(JSON.stringify(fakeBody), { status: 200, headers: { 'content-type': 'application/json' } }),
     ) as unknown as typeof fetch;
-    const { data } = await loadNotifications({
-      config: { useFixtures: false, apiUrl: 'https://api.example/notifications' },
+    const result = await loadNotifications({
+      config: { mode: 'live', apiPath: '/api/notifications' },
       fetchImpl,
     });
-    expect(data.notifications.map((n) => n.id)).toEqual(['a']); // unknown kind dropped
-    expect(data.unread_count).toBe(7); // server number preserved, not recomputed
+    expect(result.state).toBe('ready');
+    expect(result.data.notifications.map((n) => n.id)).toEqual(['a']);
+    expect(result.data.unread_count).toBe(7); // server number preserved, not recomputed
+    expect(fetchImpl).toHaveBeenCalledWith('/api/notifications', expect.objectContaining({
+      credentials: 'same-origin',
+      redirect: 'error',
+    }));
   });
 
-  it('falls back to the fixture (with notice) when the live read fails', async () => {
+  it('returns zero rows and no sample text when the live read fails', async () => {
     const fetchImpl = vi.fn(async () => new Response('nope', { status: 500 })) as unknown as typeof fetch;
-    const { data, notice } = await loadNotifications({
-      config: { useFixtures: false, apiUrl: 'https://api.example/notifications' },
+    const result = await loadNotifications({
+      config: { mode: 'live', apiPath: '/api/notifications' },
       fetchImpl,
     });
-    expect(data).toBe(NOTIFICATIONS_FIXTURE);
-    expect(notice).toMatch(/unavailable/i);
+    expect(result.state).toBe('unavailable');
+    expect(result.data).toEqual({ notifications: [], unread_count: 0 });
+    expect(JSON.stringify(result)).not.toMatch(/approved|revoked|cohort|consent/i);
   });
 });
 
@@ -242,23 +243,30 @@ describe('GOV-758 — notification panel (bell + drawer)', () => {
   };
 
   it('renderNotificationList shows the server count + one row per notification', () => {
-    const listEl = renderNotificationList(sample, 'DEV SAMPLE notice');
+    const listEl = renderNotificationList({
+      state: 'demo',
+      data: sample,
+      notice: 'DEVELOPMENT SAMPLE notice',
+    });
     root.append(listEl);
-    expect(root.querySelector('[data-test="notification-unread-count"]')?.textContent).toContain('2 unread');
+    expect(root.querySelector('[data-test="notification-unread-count"]')?.textContent).toContain('2 sample unread');
     expect(root.querySelectorAll('[data-test="notification-item"]').length).toBe(2);
-    expect(root.querySelector('[data-test="notification-notice"]')?.textContent).toMatch(/DEV SAMPLE/);
+    expect(root.querySelector('[data-test="notification-notice"]')?.textContent).toMatch(/DEVELOPMENT SAMPLE/);
     // Unread row is marked; read row is not.
     expect(root.querySelector('[data-kind="account_approved"]')?.getAttribute('data-read')).toBe('false');
   });
 
   it('renders an honest empty state when there are no notifications', () => {
-    root.append(renderNotificationList({ unread_count: 0, notifications: [] }));
+    root.append(renderNotificationList({
+      state: 'ready',
+      data: { unread_count: 0, notifications: [] },
+    }));
     expect(root.querySelector('[data-test="notification-empty"]')).not.toBeNull();
     expect(root.querySelector('[data-test="notification-list"]')).toBeNull();
   });
 
   it('mounts an accessible bell that toggles the dialog drawer', async () => {
-    const load = vi.fn(async () => ({ data: sample }));
+    const load = vi.fn(async () => ({ state: 'ready' as const, data: sample }));
     const bell = mountNotificationPanel(root, { load });
     // Accessible name reflects the unread count once primed.
     await Promise.resolve();
@@ -276,7 +284,7 @@ describe('GOV-758 — notification panel (bell + drawer)', () => {
   });
 
   it('shows the unread badge with the server count and hides it at zero', async () => {
-    const load = vi.fn(async () => ({ data: sample }));
+    const load = vi.fn(async () => ({ state: 'ready' as const, data: sample }));
     const bell = mountNotificationPanel(root, { load });
     await Promise.resolve();
     await Promise.resolve();

@@ -2,10 +2,9 @@
  * In-app notification contract (GOV-758 / GOV-721 leg 3/5).
  *
  * This is the FRONTEND view of the leg-2 (GOV-754) notification query endpoint —
- * the backend's `scripts/notifications/` writer + query surface. Leg-2 is not yet
- * merged, so this file is the proposed wire contract the frontend builds against
- * (documented for FoundingEngineer on GOV-754). Keep it a small, additive shape:
- * the backend may add fields, but these are the ones the panel reads.
+ * the backend's `scripts/notifications/` writer + query surface. This file is the
+ * allowlisted wire contract the panel reads. The backend may add safe fields,
+ * but the browser deliberately ignores anything outside this shape.
  *
  * The five notification kinds mirror the leg-2 writer's enumerated events
  * (GOV-754 deliverable #3 / AC-6). Rendering is copy-from-data: the panel shows

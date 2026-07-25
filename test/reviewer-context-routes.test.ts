@@ -201,8 +201,13 @@ describe('shared live reviewer context across canonical routes', () => {
       expect(document.body.textContent).toContain('SERVER SENTINEL');
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [requestUrl, requestInit] = fetchMock.mock.calls[0];
+    const reviewerCalls = fetchMock.mock.calls.filter(
+      ([input]) => input === '/api/reviewer-internal',
+    );
+    expect(reviewerCalls).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/notifications'))
+      .toHaveLength(1);
+    const [requestUrl, requestInit] = reviewerCalls[0]!;
     expect(requestUrl).toBe('/api/reviewer-internal');
     expect(String(requestUrl)).not.toMatch(/^https?:/);
     expect(requestInit?.credentials).toBe('same-origin');
@@ -257,7 +262,8 @@ describe('shared live reviewer context across canonical routes', () => {
     });
     const simple = homeSnapshot();
     expect(simple).toEqual(advanced);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+      .toHaveLength(1);
 
     document.querySelector<HTMLButtonElement>('[data-test="mode-advanced"]')?.click();
     await vi.waitFor(() => {
@@ -343,7 +349,8 @@ describe('shared live reviewer context across canonical routes', () => {
       '[data-test="home-live-advanced"]',
     );
     expectOnlyAuthorizedIds('[data-test="home-live-record"]');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+      .toHaveLength(1);
 
     await navigate('/agenda?reviewer=1', '[data-projection="agenda-board"]');
     expectDetailedProjectionGap('agenda-board');
@@ -386,7 +393,8 @@ describe('shared live reviewer context across canonical routes', () => {
     expect(document.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
       .toBe('fixture');
     expectNoRejectedCivicRows();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+      .toHaveLength(1);
   });
 
   it('keeps Alpine authoritative over a saved town and gives every live route one h1', async () => {
@@ -442,7 +450,8 @@ describe('shared live reviewer context across canonical routes', () => {
       expect(headings, route).toHaveLength(1);
       expect(headings[0]?.textContent, route).toContain(heading);
     }
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+      .toHaveLength(1);
   });
 });
 
@@ -493,17 +502,21 @@ describe('shared reviewer-context route failures', () => {
         `[data-test="reviewer-context-${expectedState}"]`,
       );
       expectNoRejectedCivicRows();
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/reviewer-internal');
-      expect(fetchMock.mock.calls[0]?.[1]?.credentials).toBe('same-origin');
+      const reviewerCalls = fetchMock.mock.calls.filter(
+        ([input]) => input === '/api/reviewer-internal',
+      );
+      expect(reviewerCalls).toHaveLength(1);
+      expect(reviewerCalls[0]?.[1]?.credentials).toBe('same-origin');
     },
   );
 
   it('times out one stalled shared request and keeps every later route unavailable with zero rows', async () => {
     vi.useFakeTimers();
     let requestSignal: AbortSignal | undefined;
-    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-      requestSignal = init?.signal ?? undefined;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input === '/api/reviewer-internal') {
+        requestSignal = init?.signal ?? undefined;
+      }
       return new Promise<Response>(() => undefined);
     });
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
@@ -512,7 +525,8 @@ describe('shared reviewer-context route failures', () => {
     await import('../src/main');
     await Promise.resolve();
     await Promise.resolve();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+      .toHaveLength(1);
     expect(document.querySelector('[data-test="reviewer-context-loading"]')).not.toBeNull();
 
     await vi.advanceTimersByTimeAsync(8_001);
@@ -526,8 +540,10 @@ describe('shared reviewer-context route failures', () => {
     await Promise.resolve();
     expect(document.querySelector('[data-test="reviewer-context-unavailable"]')).not.toBeNull();
     expectNoRejectedCivicRows();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/reviewer-internal');
-    expect(fetchMock.mock.calls[0]?.[1]?.credentials).toBe('same-origin');
+    const reviewerCalls = fetchMock.mock.calls.filter(
+      ([input]) => input === '/api/reviewer-internal',
+    );
+    expect(reviewerCalls).toHaveLength(1);
+    expect(reviewerCalls[0]?.[1]?.credentials).toBe('same-origin');
   });
 });

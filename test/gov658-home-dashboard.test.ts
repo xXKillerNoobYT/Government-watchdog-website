@@ -305,7 +305,10 @@ describe('GOV-658 Home route access scoping', () => {
     await vi.waitFor(() => {
       expect(app.querySelector('[data-test="reviewer-context-denied"]')).not.toBeNull();
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
     expect(app.querySelector('[data-test="home-live-record"]')).toBeNull();
     expect(app.textContent).not.toContain('Live Home route sentinel');
     expect(app.querySelector('[data-origin="fixture"]')).toBeNull();

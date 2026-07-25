@@ -211,7 +211,10 @@ describe('GOV-668 Source Vault', () => {
       ).not.toBeNull();
     });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
 
     window.location.hash = '#/sources?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -221,7 +224,10 @@ describe('GOV-668 Source Vault', () => {
       ).not.toBeNull();
     });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
   });
 
   it('keeps canonical #/vault fail-closed before the reviewer gate', async () => {
@@ -352,7 +358,10 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
     expect(gap?.textContent).toContain('How it will work');
     expect(gap?.textContent).toContain('Expected result');
     expect(app.querySelector('[data-test="archive-row"]')).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
 
     window.location.hash = '#/newsletter?reviewer=1&demo=snapshot';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -360,6 +369,9 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
       expect(app.querySelectorAll('[data-test="archive-row"]')).toHaveLength(DIGEST.digests.length);
     });
     expect(app.querySelector('[data-projection="newsletter-digest"]')).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
   });
 });

@@ -10,7 +10,7 @@
  *  - `main.ts` remains the beta-gate authority; this module never authenticates.
  *  - the account chrome is visibly labelled as a preview.
  *  - notifications mount only inside the approved gated shell and consume the
- *    server/fixture response contract without recomputing unread state.
+ *    typed same-origin response contract without recomputing unread state.
  *  - AI analysis is disclosed as machine-generated and source-verification is
  *    repeated in the footer.
  *  - a refreshed timestamp is shown only when the caller supplies a real one.
@@ -20,6 +20,7 @@ import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { mountNotificationPanel } from './notification-panel';
 import { renderInfoNote } from './info-note';
+import { renderPrivateInfoNote } from './private-info-note';
 
 export type ShellMode = 'simple' | 'advanced';
 export type ShellOrigin = 'fixture' | 'reviewed_snapshot' | 'live_server';
@@ -320,7 +321,11 @@ function printControl(): HTMLButtonElement {
 function shellActions(mode: ShellMode, includePrint = false): HTMLDivElement {
   const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [accountChip()]);
   mountNotificationPanel(actions);
-  actions.append(modeToggle(mode), renderInfoNote('shell-mode'));
+  actions.append(
+    renderPrivateInfoNote('shell-notifications'),
+    modeToggle(mode),
+    renderInfoNote('shell-mode'),
+  );
   if (includePrint) actions.append(printControl());
   return actions;
 }

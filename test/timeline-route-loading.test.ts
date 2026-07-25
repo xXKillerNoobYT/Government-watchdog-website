@@ -34,7 +34,9 @@ describe('Timeline route transient state', () => {
     window.location.hash = '#/timeline?reviewer=1';
     await import('../src/main');
 
-    expect(fetch).toHaveBeenCalledOnce();
+    expect(vi.mocked(fetch).mock.calls.filter(
+      ([input]) => input === '/api/reviewer-internal',
+    )).toHaveLength(1);
     expect(document.querySelector('[data-test="reviewer-context-loading"]')?.textContent)
       .toContain('Loading the authorized Alpine record set');
     expect(document.querySelector('[data-test="timeline-map"]')).toBeNull();

@@ -148,11 +148,22 @@ function row(label: string, value: string): HTMLDivElement {
   ]);
 }
 
-/** Render one accessible hover, focus, click, and touch explanation control. */
+/** Render a registered public-safe explanation. */
 export function renderInfoNote(id: InfoNoteId): HTMLDivElement {
+  return renderDefinedInfoNote(id, INFO_NOTES[id]);
+}
+
+/**
+ * Render one accessible hover, focus, click, and touch explanation control from
+ * a caller-owned definition. Private modules use this primitive without adding
+ * their content to the public INFO_NOTES object or anonymous asset graph.
+ */
+export function renderDefinedInfoNote(
+  id: string,
+  note: InfoNoteDefinition,
+): HTMLDivElement {
   ensureInfoNoteStyle();
   ensureOutsideDismiss(document);
-  const note: InfoNoteDefinition = INFO_NOTES[id];
   const panelId = `gw-info-panel-${id}-${++infoNoteInstance}`;
   const trigger = el('button', {
     type: 'button',
@@ -269,10 +280,10 @@ export const INFO_NOTE_STYLE = `
 .gw-info-row{display:grid;gap:2px}
 .gw-info-row dt{color:var(--gw-text-muted);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .gw-info-row dd{margin:0;color:var(--gw-text-secondary)}
-@media (max-width:600px){
+@media (max-width:760px){
   .gw-info-trigger{width:var(--gw-tap-min);height:var(--gw-tap-min)}
   .gw-info-close{width:var(--gw-tap-min);height:var(--gw-tap-min)}
-  .gw-info-note[data-pinned] .gw-info-panel{position:fixed;z-index:1000;left:10px;right:10px;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));width:auto;max-height:min(72vh,620px);border-radius:16px}
+  .gw-info-note .gw-info-panel{position:fixed;z-index:1000;left:10px;right:10px;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));width:auto;max-height:min(72vh,620px);border-radius:16px}
 }
 @media (prefers-reduced-motion:reduce){
   .gw-info-panel{scroll-behavior:auto}
