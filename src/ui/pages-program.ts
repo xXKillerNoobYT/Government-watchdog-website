@@ -7,8 +7,29 @@
  */
 
 import type { AgendaBoard, AgendaBoardCard, AgendaLane } from '../types/agenda-board';
-import type { EvidenceLink, ReadApiResponse, StatementRecord, TopicTreeNode } from '../types/read-api';
+import type {
+  EvidenceLink,
+  ReadApiResponse,
+  StatementRecord,
+  SuppliedFilesProjection,
+  SuppliedSourceFile,
+  SupersedeEvent,
+  SupersedeProjection,
+  TopicTreeNode,
+} from '../types/read-api';
 import { ensureStyle, gapCardSection, recordCard } from './render';
+import {
+  groupSuppliedFilesByMeeting,
+  pendingReviewNotice,
+  safeHttpUrl,
+  suppliedFileMeta,
+} from './supplied-files';
+import {
+  reprocessingNotice,
+  supersedeFlagLabel,
+  supersedeSideRows,
+  hasClearedAfter,
+} from './supersede-view';
 import { FIXTURE_BANNER_TEXT, trustLabel } from './state-view';
 import { buildGapSummary, buildTimeline, recordTimelineDate } from './timeline';
 import {
@@ -738,6 +759,14 @@ function flattenTopics(node: TopicTreeNode): TopicTreeNode[] {
 const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-boards-contract-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);padding:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius)}
+.gw-supplied-files-group{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
+.gw-supplied-files-group>.gw-card{min-width:0}
+.gw-supplied-files-group>.gw-card a{display:inline-block;margin-right:var(--gw-space-4)}
+.gw-supersede-card{display:grid;gap:var(--gw-space-3);min-width:0}
+.gw-supersede-card[data-flagged="true"]{border-color:var(--gw-caution-text-strong)}
+.gw-supersede-flag{margin:0;font:700 var(--gw-text-badge)/1.3 var(--gw-font);color:var(--gw-caution-text-strong);background:var(--gw-caution-bg-soft);border:var(--gw-border-w) solid var(--gw-caution-text-strong);border-radius:var(--gw-radius);padding:var(--gw-space-2) var(--gw-space-3)}
+.gw-supersede-card .gw-vault-contract-diff-pane[data-state="pending"]{background:var(--gw-caution-bg-soft)}
+.gw-supersede-card .gw-vault-contract-diff-pane a{display:inline-block;margin-top:var(--gw-space-2)}
 .gw-boards-contract-tab,.gw-boards-contract-tool,.gw-vault-contract-tool{min-height:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.2 var(--gw-font);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-boards-contract-tab:disabled,.gw-boards-contract-tool:disabled,.gw-vault-contract-tool:disabled{cursor:not-allowed;opacity:.78}
 .gw-boards-contract-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-3)}
@@ -1314,7 +1343,206 @@ function collectSources(data: ReadApiResponse): EvidenceLink[] {
   return [...byKey.values()];
 }
 
-export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
+/**
+ * GOV-1566 F2 — reviewed supplied-file source drawer. Consumes the B6 web-safe
+ * projection ONLY. Renders an honest empty state when B6 is not wired (no
+ * projection), the reviewed files grouped by their meeting tie when present, and
+ * a content-free "N pending review" notice — pending/held files never render any
+ * content. Every file here is `web_safe` by construction (B6 filters server-side).
+ */
+export function renderSuppliedFiles(
+  projection: SuppliedFilesProjection | null | undefined,
+  query: URLSearchParams,
+): HTMLElement {
+  const section = el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-test': 'supplied-files',
+    'aria-label': 'Reviewed supplied source files',
+  }, [
+    el('p', { class: 'gw-muted' }, ['SUPPLIED SOURCE FILES · REVIEWED ONLY']),
+  ]);
+
+  // B6 not wired yet ⇒ honest empty panel, consistent with the page's other
+  // not-yet-connected contract slots. No file rows are ever invented.
+  if (!projection) {
+    section.append(
+      el('h2', {}, ['Supplied-file intake not wired yet']),
+      el('p', {}, ['Reviewed supplied files will appear here, tied to their meeting, once the web-safe intake projection is connected. No file rows are shown until then.']),
+    );
+    section.setAttribute('data-state', 'empty');
+    return section;
+  }
+
+  const groups = groupSuppliedFilesByMeeting(projection);
+  const pending = pendingReviewNotice(projection);
+
+  if (!groups.length) {
+    section.append(
+      el('h2', {}, ['No reviewed supplied files yet']),
+      el('p', {}, ['No reviewed files are tied to a meeting yet. Nothing is invented for this slot.']),
+    );
+    section.setAttribute('data-state', 'empty');
+  } else {
+    section.append(el('h2', {}, ['Reviewed files by meeting']));
+    for (const group of groups) {
+      section.append(el('div', {
+        class: 'gw-supplied-files-group',
+        'data-test': 'supplied-files-group',
+        'data-meeting-id': group.meetingId ?? 'untied',
+      }, [
+        el('p', { class: 'gw-muted' }, [group.meetingId ? `Meeting ${group.meetingId}` : 'Not tied to a meeting']),
+        ...group.files.map((file) => suppliedFileCard(file)),
+      ]));
+    }
+  }
+
+  // Content-free pending placeholder — count only, never a filename/uploader.
+  if (pending) {
+    section.append(el('p', {
+      class: 'gw-muted',
+      'data-test': 'supplied-files-pending',
+      role: 'status',
+    }, [pending]));
+  }
+
+  if (query.get('demo') === 'sample') {
+    section.setAttribute('data-demo', 'sample');
+  }
+  return section;
+}
+
+/** One reviewed file rendered as a source-drawer card (present-only metadata). */
+function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
+  const meta = suppliedFileMeta(file);
+  // GOV-1609 §4.2 — display-safety: only auto-linkify a provenance URL that
+  // actually parses as http(s). Prose that landed in a URL-named field renders
+  // as no link, never a bare/broken hyperlink.
+  const originalHref = safeHttpUrl(file.original_url);
+  const archiveHref = safeHttpUrl(file.archive_url);
+  return el('article', {
+    class: 'gw-card',
+    'data-test': 'supplied-file-row',
+    'data-file-id': file.file_id,
+    ...(file.agenda_item_id ? { 'data-agenda-item-id': file.agenda_item_id } : {}),
+  }, [
+    el('h3', {}, [file.title]),
+    ...meta.map((row) => el('p', { class: 'gw-muted', 'data-test': `supplied-file-${row.key}` }, [`${row.label}: ${row.value}`])),
+    ...(originalHref ? [el('a', { href: originalHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),
+    ...(archiveHref ? [el('a', { href: archiveHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-archive' }, ['Archived copy ↗'])] : []),
+  ]);
+}
+
+/**
+ * GOV-1566 F3 — before/after supersede view. Consumes the B6 web-safe supersede
+ * projection ONLY (built from a B5 supersede mark). Reuses the vault's existing
+ * two-pane comparison layout (`.gw-vault-contract-diff`) for the before/after
+ * panes. Honest empty when the projection is not wired. Fail-closed on the
+ * "after" side: while re-review is in flight the new version is NOT web_safe and
+ * its content is absent, so we render the before pane + a content-free
+ * reprocessing status instead of inventing the not-yet-reviewed new version.
+ */
+export function renderSupersedeView(
+  projection: SupersedeProjection | null | undefined,
+  query: URLSearchParams,
+): HTMLElement {
+  const section = el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-test': 'supersede-view',
+    'aria-label': 'Superseded source files — before / after',
+  }, [
+    el('p', { class: 'gw-muted' }, ['SUPERSEDED FILES · BEFORE / AFTER · REVIEWED ONLY']),
+  ]);
+
+  // B6 not wired yet ⇒ honest empty panel. No supersede rows are ever invented.
+  if (!projection) {
+    section.append(
+      el('h2', {}, ['Supersede intake not wired yet']),
+      el('p', {}, ['When a supplied file is superseded, the before/after comparison and reprocessing status will appear here once the web-safe supersede projection is connected. Nothing is shown until then.']),
+    );
+    section.setAttribute('data-state', 'empty');
+    return section;
+  }
+
+  const events = projection.events ?? [];
+  if (!events.length) {
+    section.append(
+      el('h2', {}, ['No superseded files yet']),
+      el('p', {}, ['No supplied file has been superseded. Nothing is invented for this slot.']),
+    );
+    section.setAttribute('data-state', 'empty');
+  } else {
+    section.append(el('h2', {}, ['Superseded files']));
+    for (const event of events) {
+      section.append(supersedeCard(event));
+    }
+  }
+
+  if (query.get('demo') === 'sample') {
+    section.setAttribute('data-demo', 'sample');
+  }
+  return section;
+}
+
+/** One supersede event as a red-flag before/after card + reprocessing status. */
+function supersedeCard(event: SupersedeEvent): HTMLElement {
+  const flag = supersedeFlagLabel(event);
+  const reprocessing = reprocessingNotice(event);
+  const cleared = hasClearedAfter(event);
+
+  const beforePane = el('article', {
+    class: 'gw-vault-contract-diff-pane',
+    'data-test': 'supersede-before',
+  }, [
+    el('p', { class: 'gw-muted' }, ['BEFORE · SUPERSEDED']),
+    el('h3', {}, [event.before?.title ?? 'Superseded file']),
+    ...supersedeSideRows(event.before).map((row) =>
+      el('p', { class: 'gw-muted', 'data-test': `supersede-before-${row.key}` }, [`${row.label}: ${row.value}`])),
+    ...(event.before?.original_url
+      ? [el('a', { href: event.before.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supersede-before-link' }, ['View superseded file ↗'])]
+      : []),
+  ]);
+
+  // Fail-closed after pane: only render the new version's content when it is
+  // itself web_safe (present in the projection). Otherwise an honest hold note.
+  const afterPane = cleared
+    ? el('article', {
+        class: 'gw-vault-contract-diff-pane',
+        'data-test': 'supersede-after',
+        'data-state': 'cleared',
+      }, [
+        el('p', { class: 'gw-muted' }, ['AFTER · CURRENT REVIEWED VERSION']),
+        el('h3', {}, [event.after?.title ?? 'Current reviewed version']),
+        ...supersedeSideRows(event.after).map((row) =>
+          el('p', { class: 'gw-muted', 'data-test': `supersede-after-${row.key}` }, [`${row.label}: ${row.value}`])),
+        ...(event.after?.original_url
+          ? [el('a', { href: event.after.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supersede-after-link' }, ['View current file ↗'])]
+          : []),
+      ])
+    : el('article', {
+        class: 'gw-vault-contract-diff-pane',
+        'data-test': 'supersede-after',
+        'data-state': 'pending',
+      }, [
+        el('p', { class: 'gw-muted' }, ['AFTER · IN RE-REVIEW']),
+        el('h3', {}, ['New version not shown until re-review completes']),
+        el('p', {}, ['The superseding version is preserved but is not yet independently reviewed, so its content is not shown here.']),
+      ]);
+
+  return el('article', {
+    class: 'gw-card gw-supersede-card',
+    'data-test': 'supersede-row',
+    'data-supersede-id': event.supersede_id,
+    'data-version-group-id': event.version_group_id,
+    ...(event.flagged ? { 'data-flagged': 'true' } : {}),
+    ...(event.before?.agenda_item_id ? { 'data-agenda-item-id': event.before.agenda_item_id } : {}),
+  }, [
+    ...(flag ? [el('p', { class: 'gw-supersede-flag', 'data-test': 'supersede-flag', role: 'alert' }, [`⚑ ${flag}`])] : []),
+    el('div', { class: 'gw-vault-contract-diff', 'data-test': 'supersede-panes' }, [beforePane, afterPane]),
+    ...(reprocessing ? [el('p', { class: 'gw-muted', 'data-test': 'supersede-reprocessing', role: 'status' }, [reprocessing])] : []),
+  ]);
+}
+
+export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string, suppliedFiles?: SuppliedFilesProjection | null, supersedes?: SupersedeProjection | null): void {
   const shell = pageShell(root, 'source-vault-page', 'Source vault', {
     notice,
     fixture: query.get('demo') === 'sample',
@@ -1535,6 +1763,10 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
       ])
     : null;
 
+  const suppliedFilesSection = (): HTMLElement => renderSuppliedFiles(suppliedFiles, query);
+
+  const supersedeSection = (): HTMLElement => renderSupersedeView(supersedes, query);
+
   ensureBaselinePageStyle();
   ensureBoardsVaultFidelityStyle();
   const mount = el('div', { class: 'gw-baseline-mode-mount', 'data-test': 'source-vault-mode-mount' });
@@ -1551,6 +1783,8 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         vaultToolbar(),
         overview(),
         sourceContent(),
+        suppliedFilesSection(),
+        supersedeSection(),
         versionCompare(),
         ledgerPanel(),
         videoPanel(),
@@ -1574,6 +1808,8 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         ]),
         el('div', { class: 'gw-vault-contract-stack' }, [
           sourceContent(),
+          suppliedFilesSection(),
+          supersedeSection(),
           versionCompare(),
         ]),
         el('aside', { class: 'gw-vault-contract-stack', 'aria-label': 'Ledger and verification gaps' }, [
