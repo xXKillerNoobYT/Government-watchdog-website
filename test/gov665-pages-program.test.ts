@@ -88,7 +88,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
     expect(root.querySelectorAll('[data-test="record-card"]')).toHaveLength(GRAPH_REAL.records!.length);
     expect(root.querySelector('[data-test="timeline-hybrid-intro"]')?.textContent).toContain('fail-closed record cards');
     expect(root.querySelector('[data-test="timeline-filter-form"]')).not.toBeNull();
-    expect(root.textContent).toContain('County and State lanes remain unavailable');
+    expect(root.textContent).toContain('does not assign them to Town, County, or State government');
     expect(root.querySelector('[data-test="timeline-map"]')?.getAttribute('data-mode')).toBe('advanced');
     const receiptCount = [...root.querySelectorAll<HTMLElement>('[data-test="timeline-map-event"]')]
       .reduce((sum, marker) => sum + Number(marker.dataset.recordCount), 0);
@@ -178,7 +178,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
         }
       }
     }
-    expect(root.querySelector('[data-test="timeline-map-town-events"]')?.getAttribute('style'))
+    expect(root.querySelector('[data-test="timeline-map-record-events"]')?.getAttribute('style'))
       .toMatch(/--gw-timeline-rows:[5-9]/);
   });
 
@@ -296,12 +296,16 @@ describe('GOV-665 Timeline levels and event filters', () => {
   it('keeps all level, event-type, event-window, and sort slots visible without inventing support', () => {
     renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(), 'real');
 
-    const suppliedTown = root.querySelector<HTMLElement>('[data-test="timeline-level-town"]');
-    expect(suppliedTown?.tagName).toBe('SPAN');
-    expect(suppliedTown?.dataset.state).toBe('supplied');
-    expect(suppliedTown?.textContent).toContain('Town · supplied');
+    const unavailableTown = root.querySelector<HTMLButtonElement>(
+      '[data-test="timeline-level-town-unavailable"]',
+    );
+    expect(unavailableTown?.disabled).toBe(true);
+    expect(unavailableTown?.textContent).toContain('Town · unavailable');
     expect(root.querySelector<HTMLButtonElement>('[data-test="timeline-level-county-unavailable"]')?.disabled).toBe(true);
     expect(root.querySelector<HTMLButtonElement>('[data-test="timeline-level-state-unavailable"]')?.disabled).toBe(true);
+    expect(root.querySelector('[data-test="timeline-map-unscoped"]')).not.toBeNull();
+    expect(root.textContent).not.toContain('Town supplied');
+    expect(root.textContent).not.toContain('TOWN · ALPINE');
     for (const testId of [
       'timeline-type-meeting-unavailable',
       'timeline-type-document-unavailable',

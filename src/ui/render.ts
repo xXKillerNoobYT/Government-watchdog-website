@@ -227,7 +227,11 @@ export function recordCard(
     ['Reveal details'],
   );
 
-  const attrs: Record<string, string> = { class: 'gw-card', 'data-test': 'record-card' };
+  const attrs: Record<string, string> = {
+    class: 'gw-card',
+    'data-test': 'record-card',
+    'data-record-id': r.statement_id,
+  };
   if (opts.anchorId) attrs.id = opts.anchorId;
 
   // The sharp meta row (speaker + confidence) only renders when present.

@@ -101,21 +101,58 @@ describe('GOV-671 Location coverage', () => {
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => JSON.stringify({
+        reviewer_internal_records: [{
+          statement_id: 'wave4-live-sentinel',
+          statement_text: 'Live Wave 4 route sentinel',
+          ui_status: 'source-backed',
+          verification_status: 'reviewed_source_linked',
+          provenance_status: 'grounded',
+          publication_state: 'publishable',
+          produced_by: 'human',
+          evidence: [{
+            to_source_id: 'wave4-live-source',
+            verification_status: 'human_verified',
+            original_url: 'https://www.alpinewy.gov/wave4-live-source',
+          }],
+        }],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
 
     window.location.hash = '#/power?reviewer=1';
     await import('../src/main');
-    expect(app.querySelector('[data-test="power-tracker-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="power-real-record"][data-record-id="wave4-live-sentinel"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-power-tracker"]')?.getAttribute('aria-current')).toBe('page');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     window.location.hash = '#/watchlist?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(app.querySelector('[data-test="watchlist-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="watchlist-real-candidate"][data-record-id="wave4-live-sentinel"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-watchlist"]')?.getAttribute('aria-current')).toBe('page');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     window.location.hash = '#/location?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(app.querySelector('[data-test="location-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="location-real-record"][data-record-id="wave4-live-sentinel"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="shell-jurisdiction"]')?.getAttribute('href')).toBe('#/location');
     expect(app.querySelector('.gw-shell-tab[aria-current="page"]')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -283,8 +283,17 @@ function timelineFilterBar(
   return form;
 }
 
+export interface TimelineProjectionOptions {
+  /**
+   * The serving endpoint's Alpine scope does not establish a government level.
+   * Callers may opt into `town` only when a separate reviewed projection proves
+   * that relationship.
+   */
+  exactGovernmentLevel?: 'town' | 'unavailable';
+}
+
 /** Preserve the full handoff tool geometry without enabling unsupported claims. */
-function timelineUnavailableTools(): HTMLElement {
+function timelineUnavailableTools(exactGovernmentLevel: 'town' | 'unavailable'): HTMLElement {
   const unavailable = (testId: string, label: string): HTMLButtonElement => el('button', {
     type: 'button',
     disabled: '',
@@ -297,6 +306,18 @@ function timelineUnavailableTools(): HTMLElement {
     'aria-label': label,
   }, [el('span', { class: 'gw-timeline-tool-label' }, [label]), ...children]);
 
+  const governmentLevelControls = exactGovernmentLevel === 'town'
+    ? [
+      el('span', { class: 'gw-timeline-tool-status', 'data-state': 'supplied', 'data-test': 'timeline-level-town' }, ['Town · supplied']),
+      unavailable('timeline-level-county-unavailable', 'County · unavailable'),
+      unavailable('timeline-level-state-unavailable', 'State · unavailable'),
+    ]
+    : [
+      unavailable('timeline-level-town-unavailable', 'Town · unavailable'),
+      unavailable('timeline-level-county-unavailable', 'County · unavailable'),
+      unavailable('timeline-level-state-unavailable', 'State · unavailable'),
+    ];
+
   return el('section', {
     class: 'gw-timeline-tool-gaps',
     role: 'note',
@@ -305,15 +326,17 @@ function timelineUnavailableTools(): HTMLElement {
   }, [
     el('div', {}, [
       el('p', { class: 'gw-timeline-kicker' }, ['DESIGNED TIMELINE TOOLS']),
-      el('strong', {}, ['Only the reviewed Town ordering projection is connected']),
-      el('p', {}, ['Unsupported jurisdiction, event-kind, issue, event-window, and event-sort controls stay visible but disabled until typed backend fields are supplied.']),
+      el('strong', {}, [
+        exactGovernmentLevel === 'town'
+          ? 'Only the reviewed Town ordering projection is connected'
+          : 'The exact government-level projection is not connected',
+      ]),
+      el('p', {}, [
+        'Unsupported government level, event-kind, issue, event-window, and event-sort controls stay visible but disabled until typed backend fields are supplied.',
+      ]),
     ]),
     el('div', { class: 'gw-timeline-tool-gap-controls' }, [
-      toolGroup('Government level', [
-        el('span', { class: 'gw-timeline-tool-status', 'data-state': 'supplied', 'data-test': 'timeline-level-town' }, ['Town · supplied']),
-        unavailable('timeline-level-county-unavailable', 'County · unavailable'),
-        unavailable('timeline-level-state-unavailable', 'State · unavailable'),
-      ]),
+      toolGroup('Government level', governmentLevelControls),
       toolGroup('Event category', [
         unavailable('timeline-type-meeting-unavailable', 'Meeting'),
         unavailable('timeline-type-document-unavailable', 'Document'),
@@ -393,11 +416,15 @@ function timelineMapLabel(record: StatementRecord): string {
 
 /**
  * Preserve the handoff's cross-government timeline bar without pretending the
- * current Alpine statement projection contains County/State events or typed
- * issue-run edges. Town markers use only the same web-safe ordering date as the
+ * current Alpine statement projection contains a government-level assignment or
+ * typed issue-run edges. Markers use only the same web-safe ordering date as the
  * record list; unavailable lanes and connector behavior remain visible gaps.
  */
-function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTMLElement {
+function timelineMap(
+  records: readonly TimelineMapRecord[],
+  mode: PageMode,
+  exactGovernmentLevel: 'town' | 'unavailable',
+): HTMLElement {
   const dated = records
     .map((entry, index) => ({ ...entry, index }))
     .filter((entry): entry is TimelineMapRecord & { timelineDate: string; index: number } => Boolean(entry.timelineDate))
@@ -433,10 +460,10 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
   });
   const rowCount = Math.max(1, rowEndPositions.length);
 
-  const townEvents = dated.length
+  const recordEvents = dated.length
     ? el('ol', {
       class: 'gw-timeline-map-events',
-      'data-test': 'timeline-map-town-events',
+      'data-test': 'timeline-map-record-events',
       'aria-label': 'Proportionally positioned reviewed ordering-date markers',
       style: `--gw-timeline-rows:${rowCount}`,
     }, clusters.map((cluster) => {
@@ -480,7 +507,9 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
     }))
     : el('div', { class: 'gw-timeline-map-gap', role: 'status', 'data-test': 'timeline-map-date-gap' }, [
       el('strong', {}, ['No web-safe timeline date available']),
-      el('span', {}, [`${records.length} reviewed Town row${records.length === 1 ? '' : 's'} remain in the undated record list below.`]),
+      el('span', {}, [
+        `${records.length} authorized row${records.length === 1 ? '' : 's'} remain in the undated record list below; no government level was inferred.`,
+      ]),
     ]);
 
   const unavailableLane = (level: string, testId: string): HTMLElement => el('div', {
@@ -500,7 +529,11 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
     el('header', { class: 'gw-timeline-map-head' }, [
       el('div', {}, [
         el('p', { class: 'gw-timeline-kicker' }, ['CROSS-GOVERNMENT DATE-ORDER BAR']),
-        el('h2', {}, ['Town supplied; County and State reserved']),
+        el('h2', {}, [
+          exactGovernmentLevel === 'town'
+            ? 'Town supplied; County and State reserved'
+            : 'Date ordering supplied; government level unavailable',
+        ]),
       ]),
       el('div', { class: 'gw-timeline-map-legend', 'aria-label': 'Timeline marker legend' }, [
         el('span', { class: 'is-agenda' }, ['● Agenda-id ordering date · not event']),
@@ -515,9 +548,14 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
       el('span', {}, [lastDate ?? 'No dated end']),
     ]),
     el('div', { class: 'gw-timeline-map-lanes' }, [
-      el('section', { class: 'gw-timeline-map-lane gw-timeline-map-town', 'data-test': 'timeline-map-town' }, [
-        el('h3', {}, ['TOWN', el('small', {}, ['Alpine'])]),
-        townEvents,
+      el('section', {
+        class: `gw-timeline-map-lane ${exactGovernmentLevel === 'town' ? 'gw-timeline-map-town' : 'gw-timeline-map-unscoped'}`,
+        'data-test': exactGovernmentLevel === 'town' ? 'timeline-map-town' : 'timeline-map-unscoped',
+      }, [
+        exactGovernmentLevel === 'town'
+          ? el('h3', {}, ['TOWN', el('small', {}, ['Alpine'])])
+          : el('h3', {}, ['AUTHORIZED RECORDS', el('small', {}, ['Level unavailable'])]),
+        recordEvents,
       ]),
       el('section', { class: 'gw-timeline-map-lane gw-timeline-map-county', 'data-test': 'timeline-map-county' }, [
         el('h3', {}, ['COUNTY']),
@@ -540,8 +578,15 @@ function timelineMap(records: readonly TimelineMapRecord[], mode: PageMode): HTM
   ]);
 }
 
-export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
+export function renderTimelineLevels(
+  root: HTMLElement,
+  data: ReadApiResponse,
+  query: URLSearchParams,
+  notice?: string,
+  options: TimelineProjectionOptions = {},
+): void {
   ensureTimelineHybridStyle();
+  const exactGovernmentLevel = options.exactGovernmentLevel ?? 'unavailable';
   const shell = pageShell(root, 'timeline-levels-page', 'Timeline');
   shell.classList.add('gw-timeline-hybrid');
   if (data.access !== 'reviewer_internal') {
@@ -596,8 +641,16 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
         ]),
       ]),
       el('aside', { class: 'gw-timeline-scope', role: 'note' }, [
-        el('strong', {}, ['TOWN · ALPINE']),
-        el('span', {}, ['County and State lanes remain unavailable until reviewed backend projections exist.']),
+        el('strong', {}, [
+          exactGovernmentLevel === 'town'
+            ? 'TOWN · ALPINE'
+            : 'ALPINE ENDPOINT CONTEXT · EXACT LEVEL UNAVAILABLE',
+        ]),
+        el('span', {}, [
+          exactGovernmentLevel === 'town'
+            ? 'County and State lanes remain unavailable until reviewed backend projections exist.'
+            : 'These records came from the Alpine serving context, but the response does not assign them to Town, County, or State government.',
+        ]),
       ]),
     ]),
     ...(notice ? [el('div', { class: 'gw-timeline-origin', role: 'status', 'data-test': 'source-notice' }, [notice])] : []),
@@ -607,7 +660,7 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
       ...(search ? [el('span', { 'data-test': 'timeline-search-filter' }, [`Search: ${search}`])] : []),
     ]),
     timelineFilterBar(query, level, type, filtered.length),
-    timelineUnavailableTools(),
+    timelineUnavailableTools(exactGovernmentLevel),
   );
 
   const mount = el('div', { 'data-test': 'timeline-mode-mount' });
@@ -621,7 +674,7 @@ export function renderTimelineLevels(root: HTMLElement, data: ReadApiResponse, q
       ]));
       return;
     }
-    mount.append(timelineMap(filtered, mode));
+    mount.append(timelineMap(filtered, mode, exactGovernmentLevel));
     if (mode === 'simple') {
       mount.append(el('div', { class: 'gw-timeline-simple-list', 'data-test': 'timeline-simple' }, filtered.map(({ record }, index) =>
         el('div', { id: timelineRecordAnchor(index), class: 'gw-timeline-record-anchor', tabindex: '-1' }, [
@@ -685,7 +738,7 @@ export const TIMELINE_HYBRID_STYLE = `
 .gw-timeline-map-lanes{display:grid;gap:8px}
 .gw-timeline-map-lane{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;align-items:stretch;min-height:64px;border:var(--gw-border-w) solid var(--gw-border);border-left-width:4px;border-radius:10px;background:var(--gw-surface-well);padding:8px}
 .gw-timeline-map-lane h3{display:flex;flex-direction:column;justify-content:center;gap:3px;margin:0;font:800 11px/1.2 var(--gw-font);letter-spacing:1px}.gw-timeline-map-lane h3 small{color:var(--gw-text-muted);font-size:10px;letter-spacing:0}
-.gw-timeline-map-town{border-left-color:var(--gw-level-town)}.gw-timeline-map-county{border-left-color:var(--gw-level-county)}.gw-timeline-map-state{border-left-color:var(--gw-level-state)}
+.gw-timeline-map-town{border-left-color:var(--gw-level-town)}.gw-timeline-map-unscoped{border-left-color:var(--gw-accent)}.gw-timeline-map-county{border-left-color:var(--gw-level-county)}.gw-timeline-map-state{border-left-color:var(--gw-level-state)}
 .gw-timeline-map-events{position:relative;min-height:max(76px,calc(var(--gw-timeline-rows,1) * 70px + 12px));margin:0 8px;padding:0;list-style:none;background:linear-gradient(to right,var(--gw-border-subtle) 1px,transparent 1px) 0 0/25% 100%;overflow:hidden}
 .gw-timeline-map-events li{position:absolute;top:calc(var(--gw-timeline-row) * 70px);left:var(--gw-timeline-position);width:clamp(142px,20vw,230px);transform:translateX(-50%)}.gw-timeline-map-events li[data-edge="start"]{transform:none}.gw-timeline-map-events li[data-edge="end"]{transform:translateX(-100%)}
 .gw-timeline-map-event{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;width:100%;min-height:62px;padding:7px 9px;border:var(--gw-border-w) solid var(--gw-border);border-radius:8px;background:var(--gw-surface);color:var(--gw-text);font:inherit;text-align:left;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--gw-bg) 55%,transparent)}

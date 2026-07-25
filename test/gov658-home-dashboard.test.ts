@@ -269,20 +269,45 @@ describe('GOV-658 Home dashboard — Simple broadsheet mode', () => {
 });
 
 describe('GOV-658 Home route access scoping', () => {
-  it('keeps #/home?reviewer=1&access=public inside the shell but renders zero civic records', async () => {
+  it('narrows the shared live context to denied for access=public and renders zero civic rows', async () => {
     vi.resetModules();
     document.body.replaceChildren();
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => JSON.stringify({
+        reviewer_internal_records: [{
+          statement_id: 'home-live-sentinel',
+          statement_text: 'Live Home route sentinel',
+          ui_status: 'source-backed',
+          verification_status: 'reviewed_source_linked',
+          provenance_status: 'grounded',
+          publication_state: 'publishable',
+          produced_by: 'human',
+          evidence: [{
+            to_source_id: 'home-live-source',
+            verification_status: 'human_verified',
+            original_url: 'https://www.alpinewy.gov/home-live-source',
+          }],
+        }],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
     window.location.hash = '#/home?reviewer=1&access=public';
 
     await import('../src/main');
 
     expect(app.querySelector('[data-test="app-shell"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="home-issue-row"]')).toBeNull();
-    expect(app.querySelector('[data-test="home-timeline-event"]')).toBeNull();
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="reviewer-context-denied"]')).not.toBeNull();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(app.querySelector('[data-test="home-live-record"]')).toBeNull();
+    expect(app.textContent).not.toContain('Live Home route sentinel');
     expect(app.querySelector('[data-origin="fixture"]')).toBeNull();
   });
 });

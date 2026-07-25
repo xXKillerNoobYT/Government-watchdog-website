@@ -10,14 +10,25 @@ describe('public build module-graph boundary', () => {
       expect(publicRepositoryModulePath(`/repo${allowed}`, '/repo'), allowed).toBe(allowed);
     }
 
-    expect(PUBLIC_LOCAL_MODULES.has(publicRepositoryModulePath('/repo/src/main.ts', '/repo')!))
-      .toBe(false);
-    expect(PUBLIC_LOCAL_MODULES.has(
-      publicRepositoryModulePath('/repo/src/data/client.ts', '/repo')!,
-    )).toBe(false);
-    expect(PUBLIC_LOCAL_MODULES.has(
-      publicRepositoryModulePath('/repo/design/private-review.png', '/repo')!,
-    )).toBe(false);
+    const privateModules = [
+      '/src/main.ts',
+      '/src/data/api.ts',
+      '/src/data/client.ts',
+      '/src/data/reviewer-normalize.ts',
+      '/src/state/reviewer-context.ts',
+      '/src/ui/home.ts',
+      '/src/ui/reviewer-context-state.ts',
+      '/src/fixtures/concept-graph-real.json',
+      '/design/private-review.png',
+    ];
+    for (const privateModule of privateModules) {
+      expect(
+        PUBLIC_LOCAL_MODULES.has(
+          publicRepositoryModulePath(`/repo${privateModule}`, '/repo')!,
+        ),
+        privateModule,
+      ).toBe(false);
+    }
   });
 
   it('ignores external packages and Vite virtual modules', () => {

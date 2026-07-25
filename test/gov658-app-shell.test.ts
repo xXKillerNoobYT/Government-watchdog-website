@@ -164,6 +164,25 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     expect(location?.getAttribute('aria-label')).toMatch(/change location/i);
   });
 
+  it('keeps live Alpine context authoritative while labeling a different saved view', () => {
+    localStorage.setItem('gw_location', JSON.stringify({
+      town: 'Jackson',
+      state: 'Wyoming',
+    }));
+    renderShell(root, { active: '/home', origin: 'live_server' });
+    const location = root.querySelector<HTMLElement>('[data-test="shell-jurisdiction"]');
+
+    expect(location?.dataset.authoritativeContext).toBe('alpine');
+    expect(location?.dataset.savedLocation).toBe('Jackson, Wyoming');
+    expect(location?.querySelector('.gw-shell-location-primary')?.textContent)
+      .toBe('Alpine endpoint');
+    expect(location?.querySelector('.gw-shell-location-saved')?.textContent)
+      .toBe('Saved view: Jackson, Wyoming');
+    expect(location?.getAttribute('aria-label')).toContain(
+      'Live records remain in the Alpine endpoint context',
+    );
+  });
+
   it('renders an accessible search input and submits an encoded timeline search', () => {
     renderShell(root, { active: '/home' });
     const input = root.querySelector('[data-test="shell-search"]') as HTMLInputElement;
@@ -356,6 +375,14 @@ describe('GOV-658 shell — footer honesty', () => {
     expect(reviewed?.textContent).toMatch(/reviewer-internal archived projection/i);
     expect(reviewed?.querySelector('time')?.getAttribute('datetime'))
       .toBe('2026-07-07T22:00:00Z');
+
+    renderShell(root, { active: '/home', origin: 'live_server' });
+    const live = root.querySelector('[data-test="shell-origin-banner"]');
+    expect(root.getAttribute('data-origin')).toBe('live_server');
+    expect(live?.getAttribute('data-origin')).toBe('live_server');
+    expect(live?.textContent).toMatch(/LIVE SERVER CONTEXT/i);
+    expect(live?.textContent).toMatch(/no captured fallback/i);
+    expect(live?.textContent).not.toMatch(/REVIEWED SNAPSHOT/i);
   });
 });
 

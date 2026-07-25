@@ -11,14 +11,14 @@
 
 import type { ReadApiResponse } from '../types/read-api';
 import { assertWebSafe } from './web-safe';
-import { isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
+import { apiBase, isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
 import { type AsyncState, failed, resolved } from '../state/async-state';
 import fixtureData from '../fixtures/alpine-sample.json';
 
 export interface ClientConfig {
-  /** When true (default), read the labeled fixture instead of the live API. */
+  /** When true, read the labeled fixture instead of the live API. */
   useFixtures: boolean;
-  /** Base URL of the local read-API; required when fixture mode is disabled. */
+  /** Same-origin reviewer endpoint used when fixture mode is disabled. */
   readApiUrl: string;
 }
 
@@ -26,9 +26,9 @@ type EnvLike = Record<string, unknown>;
 
 /** Resolve client config from Vite env (overridable for tests). */
 export function readConfig(env: EnvLike = import.meta.env as unknown as EnvLike): ClientConfig {
-  const rawUseFixtures = String(env.VITE_USE_FIXTURES ?? 'true').trim().toLowerCase();
-  const useFixtures = rawUseFixtures !== 'false';
-  const readApiUrl = String(env.VITE_READ_API_URL ?? '').trim();
+  const rawUseFixtures = String(env.VITE_USE_FIXTURES ?? 'false').trim().toLowerCase();
+  const useFixtures = ['1', 'true', 'yes'].includes(rawUseFixtures);
+  const readApiUrl = `${apiBase(env)}/reviewer-internal`;
   return { useFixtures, readApiUrl };
 }
 
@@ -111,7 +111,7 @@ export async function loadReadModel(opts: LoadOptions = {}): Promise<LoadResult>
     ),
     notice: 'Live read-API unavailable. No private capture or synthetic sample was substituted.',
   });
-  if (!config.readApiUrl) return liveUnavailable('VITE_READ_API_URL is not configured');
+  if (!config.readApiUrl) return liveUnavailable('same-origin reviewer endpoint is not configured');
   if (!fetchImpl) return liveUnavailable('fetch is not available in this runtime');
 
   try {

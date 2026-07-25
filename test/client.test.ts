@@ -25,13 +25,20 @@ function mockFetch(body: unknown, ok = true, status = 200): typeof fetch {
 }
 
 describe('readConfig', () => {
-  it('defaults to fixture mode', () => {
-    expect(readConfig({})).toEqual({ useFixtures: true, readApiUrl: '' });
-  });
-  it('enables live mode only when explicitly false + URL present', () => {
-    expect(readConfig({ VITE_USE_FIXTURES: 'false', VITE_READ_API_URL: 'http://127.0.0.1:8787/read' })).toEqual({
+  it('defaults to the live same-origin reviewer endpoint', () => {
+    expect(readConfig({})).toEqual({
       useFixtures: false,
-      readApiUrl: 'http://127.0.0.1:8787/read',
+      readApiUrl: '/api/reviewer-internal',
+    });
+  });
+  it('enables fixture mode only when explicit and never accepts a cross-origin read URL', () => {
+    expect(readConfig({
+      VITE_USE_FIXTURES: 'true',
+      VITE_API_BASE: 'https://evil.example/api',
+      VITE_READ_API_URL: 'https://evil.example/read',
+    })).toEqual({
+      useFixtures: true,
+      readApiUrl: '/api/reviewer-internal',
     });
   });
 });
@@ -111,7 +118,7 @@ describe('loadReadModel — adapter reads the read-API sample', () => {
     expect(state.mode).toBe('live');
     expect(state.status).toBe('error');
     expect(state.data).toBeUndefined();
-    expect(state.error).toContain('VITE_READ_API_URL is not configured');
+    expect(state.error).toContain('same-origin reviewer endpoint is not configured');
     expect(notice).toContain('No private capture or synthetic sample was substituted');
   });
 

@@ -22,7 +22,7 @@ import { mountNotificationPanel } from './notification-panel';
 import { renderInfoNote } from './info-note';
 
 export type ShellMode = 'simple' | 'advanced';
-export type ShellOrigin = 'fixture' | 'reviewed_snapshot';
+export type ShellOrigin = 'fixture' | 'reviewed_snapshot' | 'live_server';
 
 /** Shared per-user reading mode used by the approved page designs. */
 const MODE_KEY = 'gw_home_mode';
@@ -138,9 +138,15 @@ function aiDisclosure(): HTMLElement {
   }, ['AI-POWERED ANALYSIS']);
 }
 
-/** A real route link; the location screen owns any later picker behavior. */
-function locationLink(): HTMLAnchorElement {
-  let locationLabel = 'Alpine, WY';
+/**
+ * A real route link; the location screen owns any later picker behavior.
+ *
+ * A saved place is only a device preference. Live server routes therefore keep
+ * the Alpine endpoint context primary and disclose a non-Alpine saved view
+ * separately instead of letting it visually relabel authorized civic rows.
+ */
+function locationLink(origin?: ShellOrigin): HTMLAnchorElement {
+  let savedLocationLabel = '';
   try {
     const stored = JSON.parse(localStorage.getItem('gw_location') ?? 'null') as {
       town?: unknown;
@@ -148,20 +154,42 @@ function locationLink(): HTMLAnchorElement {
     } | null;
     const town = typeof stored?.town === 'string' ? stored.town.trim() : '';
     const state = typeof stored?.state === 'string' ? stored.state.trim() : '';
-    if (town && state) locationLabel = `${town}, ${state}`;
-    else if (state) locationLabel = state;
+    if (town && state) savedLocationLabel = `${town}, ${state}`;
+    else if (town) savedLocationLabel = town;
+    else if (state) savedLocationLabel = state;
   } catch {
     /* Invalid preview storage falls back to the known Alpine design location. */
   }
-  return el('a', {
+  const live = origin === 'live_server';
+  const locationLabel = live ? 'Alpine endpoint' : (savedLocationLabel || 'Alpine, WY');
+  const nonAlpineSavedView = live
+    && savedLocationLabel.length > 0
+    && !savedLocationLabel.toLocaleLowerCase().startsWith('alpine');
+  const ariaLabel = nonAlpineSavedView
+    ? `Open location settings. Live records remain in the Alpine endpoint context. Saved view: ${savedLocationLabel}; it does not change authorized records.`
+    : live
+      ? 'Open location settings. Live records are in the Alpine endpoint context.'
+      : `Change location. Current preview location: ${locationLabel}.`;
+  const attrs: Record<string, string> = {
     class: 'gw-shell-location',
     href: '#/location',
-    title: 'Change your place',
-    'aria-label': `Change location. Current preview location: ${locationLabel}.`,
+    title: live ? 'Live context and saved location view' : 'Change your place',
+    'aria-label': ariaLabel,
     'data-test': 'shell-jurisdiction',
+  };
+  if (live) attrs['data-authoritative-context'] = 'alpine';
+  if (nonAlpineSavedView) attrs['data-saved-location'] = savedLocationLabel;
+
+  return el('a', {
+    ...attrs,
   }, [
     el('span', { class: 'gw-shell-location-dot', 'aria-hidden': 'true' }, []),
-    el('span', {}, [locationLabel]),
+    el('span', { class: 'gw-shell-location-copy' }, [
+      el('span', { class: 'gw-shell-location-primary' }, [locationLabel]),
+      ...(nonAlpineSavedView
+        ? [el('small', { class: 'gw-shell-location-saved' }, [`Saved view: ${savedLocationLabel}`])]
+        : []),
+    ]),
     el('span', { class: 'gw-shell-location-arrow', 'aria-hidden': 'true' }, ['›']),
   ]);
 }
@@ -349,20 +377,20 @@ function localDateIso(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function advancedBar(mode: ShellMode): HTMLElement {
+function advancedBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
   return el('div', { class: 'gw-shell-bar gw-shell-advanced-bar' }, [
     brand(),
-    locationLink(),
+    locationLink(origin),
     searchControl(),
     shellActions(mode),
   ]);
 }
 
-function simpleUtilityBar(mode: ShellMode): HTMLElement {
+function simpleUtilityBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
   const today = new Date();
   return el('div', { class: 'gw-shell-simple-utility', 'data-test': 'shell-simple-utility' }, [
     el('div', { class: 'gw-shell-simple-place' }, [
-      locationLink(),
+      locationLink(origin),
       el('time', {
         datetime: localDateIso(today),
         'data-test': 'shell-local-date',
@@ -383,19 +411,24 @@ function simpleTools(): HTMLElement {
 
 function originBanner(origin: ShellOrigin, refreshedAt?: string): HTMLElement {
   const fixture = origin === 'fixture';
+  const live = origin === 'live_server';
   const children: (Node | string)[] = [
-    el('strong', {}, [fixture ? 'SYNTHETIC DESIGN FIXTURE' : 'REVIEWED SNAPSHOT']),
+    el('strong', {}, [
+      fixture ? 'SYNTHETIC DESIGN FIXTURE' : live ? 'LIVE SERVER CONTEXT' : 'REVIEWED SNAPSHOT',
+    ]),
     el('span', {}, [
       fixture
         ? 'visual-review sample · not a live read'
-        : 'reviewer-internal archived projection · not a live read',
+        : live
+          ? 'same-origin authorization and reviewed records · no captured fallback'
+          : 'reviewer-internal archived projection · not a live read',
     ]),
   ];
   if (refreshedAt) {
     children.push(el('time', { datetime: refreshedAt }, [`snapshot generated ${refreshedAt}`]));
   }
   return el('div', {
-    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : 'reviewed'}`,
+    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : live ? 'live' : 'reviewed'}`,
     role: 'status',
     'data-test': 'shell-origin-banner',
     'data-origin': origin,
@@ -464,8 +497,8 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   const bannerSlot = el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' });
   if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt));
   const headerChildren = mode === 'simple'
-    ? [simpleUtilityBar(mode), simpleMasthead(), simpleTools(), tabRow(opts.active)]
-    : [advancedBar(mode), tabRow(opts.active)];
+    ? [simpleUtilityBar(mode, opts.origin), simpleMasthead(), simpleTools(), tabRow(opts.active)]
+    : [advancedBar(mode, opts.origin), tabRow(opts.active)];
 
   root.append(
     bannerSlot,
@@ -505,6 +538,9 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-location{display:inline-flex;align-items:center;gap:8px;flex:none;min-height:var(--gw-tap-min);padding:7px 14px;color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none}
 .gw-shell-location:hover{border-color:var(--gw-accent);color:var(--gw-text)}
 .gw-shell-location-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-level-town);flex:none}
+.gw-shell-location-copy{display:grid;gap:1px;min-width:0}
+.gw-shell-location-primary{white-space:nowrap}
+.gw-shell-location-saved{display:block;max-width:190px;overflow:hidden;color:var(--gw-text-muted);font-size:10px;font-weight:600;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
 .gw-shell-location-arrow{color:var(--gw-text-muted);font-size:18px;line-height:1}
 .gw-shell-search{position:relative;display:flex;align-items:center;gap:10px;flex:1 1 280px;max-width:560px;min-width:220px;min-height:var(--gw-tap-min);padding:0 10px;background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:10px;color:var(--gw-text-muted)}
 .gw-shell-search:focus-within{border-color:var(--gw-accent);outline:2px solid var(--gw-accent);outline-offset:1px}

@@ -13,6 +13,32 @@ import digestData from '../src/fixtures/alpine-newsletter-digest.json';
 const GRAPH_REAL = graphRealData as unknown as ReadApiResponse;
 const DIGEST = loadDigestResponse(digestData);
 
+function stubLiveReviewerContext(statementId: string, sourceId: string) {
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    text: async () => JSON.stringify({
+      reviewer_internal_records: [{
+        statement_id: statementId,
+        statement_text: `Live route sentinel ${statementId}`,
+        ui_status: 'source-backed',
+        verification_status: 'reviewed_source_linked',
+        provenance_status: 'grounded',
+        publication_state: 'publishable',
+        produced_by: 'human',
+        evidence: [{
+          to_source_id: sourceId,
+          verification_status: 'human_verified',
+          original_url: `https://www.alpinewy.gov/${sourceId}`,
+        }],
+      }],
+    }),
+  }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 let root: HTMLElement;
 let store: Record<string, string>;
 
@@ -175,16 +201,27 @@ describe('GOV-668 Source Vault', () => {
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
+    const fetchMock = stubLiveReviewerContext('vault-live-sentinel', 'vault-live-source');
 
     window.location.hash = '#/vault?reviewer=1';
     await import('../src/main');
-    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="source-vault-row"][data-source-id="vault-live-source"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     window.location.hash = '#/sources?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="source-vault-row"][data-source-id="vault-live-source"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps canonical #/vault fail-closed before the reviewer gate', async () => {
@@ -291,19 +328,38 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
     expect(root.querySelector('[data-test="source-timestamp"]')?.textContent).toBe('Timestamp: 125s');
   });
 
-  it('keeps #/newsletter?reviewer=1&access=public inside the shell but renders zero civic records', async () => {
+  it('shows the detailed live projection gap by default and the archive only in demo=snapshot', async () => {
     vi.resetModules();
     document.body.replaceChildren();
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
-    window.location.hash = '#/newsletter?reviewer=1&access=public';
+    const fetchMock = stubLiveReviewerContext('newsletter-live-sentinel', 'newsletter-live-source');
+    window.history.replaceState(null, '', '#/newsletter?reviewer=1');
 
     await import('../src/main');
 
     expect(app.querySelector('[data-test="app-shell"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="reviewer-projection-gap"][data-projection="newsletter-digest"]'),
+      ).not.toBeNull();
+    });
+    const gap = app.querySelector('[data-projection="newsletter-digest"]');
+    expect(gap?.textContent).toContain('Not available yet');
+    expect(gap?.textContent).toContain('What this will do');
+    expect(gap?.textContent).toContain('Required backend projection');
+    expect(gap?.textContent).toContain('How it will work');
+    expect(gap?.textContent).toContain('Expected result');
     expect(app.querySelector('[data-test="archive-row"]')).toBeNull();
-    expect(app.querySelector('[data-test="newsletter-reviewed-origin"]')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelectorAll('[data-test="archive-row"]')).toHaveLength(DIGEST.digests.length);
+    });
+    expect(app.querySelector('[data-projection="newsletter-digest"]')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

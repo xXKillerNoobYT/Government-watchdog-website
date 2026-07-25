@@ -1,10 +1,18 @@
 import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
+import type { ReadApiResponse, StatementRecord } from '../types/read-api';
 import type { CardFeed, CardFeedCard, PresentCard } from './card-feed';
 import type { NewsletterDigest, NewsletterDigestResponse, NewsletterItem } from '../types/newsletter-digest';
 import { GW_TOKENS } from './tokens';
 import { readMode } from './shell';
 import { claimPresentation } from './newsletter';
 import { AI_LABEL_TEXT } from './state-view';
+import { ensureStyle, recordCard } from './render';
+import { renderInfoNote } from './info-note';
+import {
+  renderProjectionGap,
+  renderReviewerContextState,
+  type ProjectionGapDefinition,
+} from './reviewer-context-state';
 
 export type HomeLevel = 'all' | 'town' | 'county' | 'state';
 
@@ -572,6 +580,268 @@ export function renderHome(root: HTMLElement, opts: HomeOptions): void {
   draw();
 }
 
+/**
+ * Detailed designed slots that the current reviewer-context response does not
+ * supply. These definitions are shared by Simple and Advanced so a presentation
+ * preference cannot make a capability, entitlement, or geography appear.
+ */
+const LIVE_HOME_PROJECTION_GAPS: readonly ProjectionGapDefinition[] = [
+  {
+    id: 'agenda-board',
+    kicker: 'FAST AGENDA',
+    title: 'Meeting and agenda projection not available yet',
+    whatItDoes: 'Shows upcoming public meetings, official agenda item numbering, packet status, deadlines, and the source receipt for each row.',
+    requiredProjection: 'An authorized AgendaBoard response with stable meeting IDs, agenda item IDs, dates, body names, lane states, and web-safe packet receipts.',
+    howItWorks: 'The backend reviews and files official meeting records, then returns the agenda projection for the already-authorized record and geography scope. The browser displays those rows without turning statements into agenda items.',
+    expectedResult: 'A quick next-meeting view that opens the exact agenda item and its official packet while preserving missing-packet and review warnings.',
+    filedUnder: 'Civic records · Meetings and agendas',
+  },
+  {
+    id: 'newsletter-digest',
+    kicker: 'PLAIN-ENGLISH BRIEFING',
+    title: 'Newsletter digest projection not available yet',
+    whatItDoes: 'Provides a short everyday briefing, edition history, corrections, and one-tap source trails without replacing the underlying records.',
+    requiredProjection: 'An authorized NewsletterDigest response with stable edition and item IDs, coverage dates, reviewed summaries, backend labels, correction state, and source trails.',
+    howItWorks: 'The backend assembles and reviews a versioned digest from eligible records. The website consumes that saved projection verbatim instead of selecting or summarizing records on its own.',
+    expectedResult: 'A readable Alpine briefing whose claims, updates, and receipts can be traced to a specific reviewed edition.',
+    filedUnder: 'Publications · Reviewed newsletter digest',
+  },
+  {
+    id: 'plan-entitlements',
+    kicker: 'PLAN AND TOOLS',
+    title: 'Plan-specific tools not available in this response',
+    whatItDoes: 'Explains which Free, Pro Town, Pro Home, Pro State, Pro Global, team, beta, or developer capabilities this account may use.',
+    requiredProjection: 'A server-authoritative access decision containing the effective program, plan, feature grants, publication lane, decision time, and safe reason codes.',
+    howItWorks: 'The server evaluates the account and feature together. The browser may explain the returned decision, but a mode toggle, URL value, or saved setting never creates a grant.',
+    expectedResult: 'Only authorized research, export, watchlist, alert, and team tools activate, with a clear explanation when a tool is outside the current plan.',
+    filedUnder: 'Product access · Plans and feature entitlements',
+  },
+  {
+    id: 'geography-coverage',
+    kicker: 'COVERAGE',
+    title: 'Authorized geography and coverage details not available yet',
+    whatItDoes: 'Shows the exact town, border-town, county, and state coverage assigned to the account and the source health available for each place.',
+    requiredProjection: 'A server-authoritative exact-geography grant plus reviewed coverage metadata for Alpine, Lincoln County, Wyoming, and any later approved location.',
+    howItWorks: 'The server intersects the requested feature with the account’s active geography grant. A location picker remains a display/navigation choice and cannot widen the returned record set.',
+    expectedResult: 'A clear coverage map and location switcher that displays only authorized places, including honest gaps and the next eligible town-change date where applicable.',
+    filedUnder: 'Geography · Authorized coverage',
+  },
+  {
+    id: 'transparency-alerts',
+    kicker: 'TRANSPARENCY ALERTS',
+    title: 'Reviewed alert projection not available yet',
+    whatItDoes: 'Surfaces reviewed late packets, missing media, document revisions, correction events, and other source-backed changes worth checking.',
+    requiredProjection: 'An authorized alert feed with stable alert IDs, typed reasons, review state, timestamps, affected record IDs, and before/after source receipts.',
+    howItWorks: 'Backend comparison jobs detect a candidate change, a review step confirms its meaning, and the resulting alert is filed before the website displays it.',
+    expectedResult: 'A watchable alert inbox where every item explains what changed, when it changed, its review state, and which source proves it.',
+    filedUnder: 'Monitoring · Reviewed transparency alerts',
+  },
+  {
+    id: 'source-vault-stats',
+    kicker: 'SOURCE VAULT',
+    title: 'Source registry statistics not available yet',
+    whatItDoes: 'Summarizes source freshness, archive coverage, validation state, corrections, and receipt history across the authorized record set.',
+    requiredProjection: 'An authorized source-registry summary with stable source IDs, reviewed validation timestamps, archive state, correction links, and completeness counts.',
+    howItWorks: 'The backend calculates source-level status from its reviewed registry. The website may count the receipts attached to this response, but it does not infer vault health from those links.',
+    expectedResult: 'A source health overview that opens the exact receipt and distinguishes fresh, changed, incomplete, and corrected material.',
+    filedUnder: 'Source Vault · Registry health',
+  },
+];
+
+function liveReceiptCount(records: readonly StatementRecord[]): number {
+  return records.reduce((total, record) => total + (record.evidence?.length ?? 0), 0);
+}
+
+function displayValue(value: string): string {
+  return value.replace(/_/g, ' ');
+}
+
+function liveHomeSummary(
+  data: ReadApiResponse,
+  records: readonly StatementRecord[],
+  headingLevel: 'h1' | 'h2' = 'h1',
+): HTMLElement {
+  const receiptCount = liveReceiptCount(records);
+  const items = [
+    {
+      key: 'reviewed-records',
+      label: 'Reviewed records',
+      value: String(records.length),
+      detail: 'Exact rows in this authorized response; neither reading mode filters them.',
+    },
+    {
+      key: 'source-receipts',
+      label: 'Source receipts',
+      value: String(receiptCount),
+      detail: 'Exact evidence entries attached to the returned records.',
+    },
+    {
+      key: 'response-scope',
+      label: 'Response scope',
+      value: data.scope,
+      detail: 'Server-provided scope label; detailed geography coverage needs its own grant projection.',
+    },
+    {
+      key: 'access-lane',
+      label: 'Access lane',
+      value: displayValue(data.access),
+      detail: 'Server-provided response lane; this is not a subscription-plan decision.',
+    },
+  ];
+  return el('section', {
+    class: 'gw-home-weather gw-home-live-summary',
+    'data-test': 'home-live-summary',
+    'data-origin': 'reviewer-context',
+  }, [
+    el('div', {}, [
+      el('div', { class: 'gw-home-live-heading' }, [
+        el('div', {}, [
+          el('p', { class: 'gw-home-kicker' }, ['LIVE REVIEWER CONTEXT']),
+          el(headingLevel, {}, ['Alpine government dashboard']),
+        ]),
+        renderInfoNote('shell-mode'),
+      ]),
+      el('p', {}, ['One authorized record set, shown with the same IDs, trust labels, provenance, and receipts in Simple and Advanced.']),
+    ]),
+    el('div', { class: 'gw-home-weather-grid' }, items.map((item) =>
+      el('article', {
+        class: 'gw-home-stat',
+        'data-metric': item.key,
+        'data-origin': 'reviewer-context',
+      }, [
+        el('span', {}, [item.label]),
+        el('strong', {}, [item.value]),
+        el('small', {}, [item.detail]),
+      ]),
+    )),
+  ]);
+}
+
+function liveRecordItem(record: StatementRecord): HTMLElement {
+  const attrs: Record<string, string> = {
+    class: 'gw-home-live-record',
+    'data-test': 'home-live-record',
+    'data-record-id': record.statement_id,
+    'data-receipt-count': String(record.evidence?.length ?? 0),
+    'data-origin': 'reviewer-context',
+  };
+  if (record.ui_status != null) attrs['data-ui-status'] = record.ui_status;
+  if (record.provenance_status != null) attrs['data-provenance-status'] = record.provenance_status;
+  return el('div', attrs, [
+    recordCard(record, undefined, undefined, { reviewerInternal: true }),
+  ]);
+}
+
+function liveRecords(records: readonly StatementRecord[]): HTMLElement {
+  const body = records.length
+    ? el('div', { class: 'gw-home-live-record-list' }, records.map(liveRecordItem))
+    : renderProjectionGap({
+        id: 'reviewed-record-feed',
+        kicker: 'REVIEWED RECORDS',
+        title: 'No reviewed records are available in this response',
+        whatItDoes: 'Lists the source-backed statement records already authorized for this private-beta session.',
+        requiredProjection: 'A web-safe reviewer-context response containing at least one eligible StatementRecord with its stable ID and evidence receipts.',
+        howItWorks: 'The backend applies publication, provenance, and authorization checks before returning records. The website does not fill an empty response with captured or sample rows.',
+        expectedResult: 'Each eligible record appears with the same ID, trust state, provenance state, speaker/confidence labels when supplied, and expandable source receipts.',
+        filedUnder: 'Civic records · Reviewed statement feed',
+      });
+  return el('section', {
+    class: 'gw-home-live-records',
+    'data-test': 'home-live-records',
+    'data-origin': 'reviewer-context',
+  }, [
+    el('header', { class: 'gw-home-live-records-head' }, [
+      el('div', {}, [
+        el('p', { class: 'gw-home-kicker' }, ['AUTHORIZED RECORD SET']),
+        el('h2', {}, ['Reviewed records and receipts']),
+      ]),
+      el('p', {}, [
+        'These are direct response rows, not client-generated agenda items, issues, newsletter stories, scores, or verdicts. Captured and sample records are never substituted or added.',
+      ]),
+    ]),
+    body,
+  ]);
+}
+
+function liveProjectionGaps(): HTMLElement {
+  return el('section', {
+    class: 'gw-home-live-gaps',
+    'data-test': 'home-live-projection-gaps',
+    'aria-labelledby': 'gw-home-live-gaps-title',
+  }, [
+    el('header', { class: 'gw-home-live-gaps-head' }, [
+      el('p', { class: 'gw-home-kicker' }, ['DESIGNED SLOTS · HONEST STATUS']),
+      el('h2', { id: 'gw-home-live-gaps-title' }, ['What still needs a backend projection']),
+      el('p', {}, [
+        'These placeholders preserve the planned dashboard layout while naming the exact contract each feature needs. They contain no civic result or access grant.',
+      ]),
+    ]),
+    el(
+      'div',
+      { class: 'gw-home-live-gap-grid' },
+      LIVE_HOME_PROJECTION_GAPS.map((definition) => renderProjectionGap(definition)),
+    ),
+  ]);
+}
+
+function renderLiveAdvanced(
+  root: HTMLElement,
+  data: ReadApiResponse,
+  records: readonly StatementRecord[],
+): void {
+  root.append(
+    liveHomeSummary(data, records),
+    el('div', { class: 'gw-home-live-advanced', 'data-test': 'home-live-advanced' }, [
+      liveRecords(records),
+      liveProjectionGaps(),
+    ]),
+  );
+}
+
+function renderLiveSimple(
+  root: HTMLElement,
+  data: ReadApiResponse,
+  records: readonly StatementRecord[],
+): void {
+  root.append(
+    el('section', { class: 'gw-simple-home', 'data-test': 'home-live-simple' }, [
+      el('header', { class: 'gw-simple-masthead' }, [
+        el('p', {}, ['plain English first · official receipts one tap away']),
+        el('h1', {}, ['Government Watchdog Weekly']),
+        el('blockquote', {}, ['“Facts are stubborn things.” — John Adams']),
+        el('p', {}, ['Live reviewer context · Alpine private beta']),
+      ]),
+      liveHomeSummary(data, records, 'h2'),
+      liveRecords(records),
+      liveProjectionGaps(),
+      el('footer', { class: 'gw-simple-footer' }, [
+        'We Watch. We Report. You Decide. · Advanced changes density and layout, never the authorized facts.',
+      ]),
+    ]),
+  );
+}
+
+/**
+ * Render the private-beta Home directly from one normalized reviewer response.
+ *
+ * No CardFeed, AgendaBoard, newsletter, location, URL, or storage-derived civic
+ * model is accepted here. Both reading modes enumerate the exact same records
+ * in server order and use the shared record card for every trust surface.
+ */
+export function renderHomeReadModel(root: HTMLElement, data: ReadApiResponse): void {
+  ensureHomeStyle();
+  ensureStyle();
+  if (data.access !== 'reviewer_internal') {
+    renderReviewerContextState(root, 'denied');
+    return;
+  }
+  root.className = 'gw-home-root gw-home-live-root';
+  root.replaceChildren();
+  const records = data.records ?? [];
+  if (readMode() === 'simple') renderLiveSimple(root, data, records);
+  else renderLiveAdvanced(root, data, records);
+}
+
 export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-root{font-family:var(--gw-font);color:var(--gw-text);line-height:var(--gw-leading)}
 .gw-home-root *{box-sizing:border-box}
@@ -611,8 +881,28 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-simple-things{border:2px solid var(--gw-rule-strong);padding:var(--gw-space-5);margin-bottom:var(--gw-space-5)}.gw-simple-thing{display:grid;grid-template-columns:2rem 1fr;gap:var(--gw-space-3);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-simple-thing span{font:800 1.4rem/1 var(--gw-font-serif)}
 .gw-simple-layout{display:grid;grid-template-columns:260px minmax(0,1fr) 280px;gap:var(--gw-space-5);align-items:start}.gw-simple-feature{border-top:3px solid var(--gw-rule-strong);border-bottom:3px solid var(--gw-rule-strong);padding:var(--gw-space-5) 0}.gw-simple-feature h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.05;margin:0}.gw-simple-dek{color:var(--gw-text-secondary);font-style:italic}.gw-simple-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4);border-top:var(--gw-border-w) solid var(--gw-border);padding-top:var(--gw-space-4)}.gw-simple-columns h3{font-family:var(--gw-font);font-size:var(--gw-text-kicker);letter-spacing:1.2px;text-transform:uppercase}.gw-simple-rail{display:grid;gap:var(--gw-space-4)}.gw-home-edition-history{display:grid;gap:var(--gw-space-2);border-top:var(--gw-border-w) solid var(--gw-border);margin-top:var(--gw-space-4);padding-top:var(--gw-space-4);font-family:var(--gw-font)}.gw-home-edition-history p{margin:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}.gw-simple-local-boxes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gw-space-5);margin-top:var(--gw-space-5)}.gw-simple-footer{text-align:center;border-top:3px double var(--gw-rule-strong);margin-top:var(--gw-space-5);padding-top:var(--gw-space-5);color:var(--gw-text-secondary)}
 .gw-home-advanced-briefing,.gw-simple-accountability{display:grid;gap:var(--gw-space-5);margin-top:var(--gw-space-6);padding-top:var(--gw-space-6);border-top:3px double var(--gw-rule-strong)}.gw-home-advanced-briefing-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.5fr);gap:var(--gw-space-5);align-items:start}.gw-home-advanced-briefing .gw-simple-things{margin-bottom:0}.gw-simple-accountability .gw-home-weather{margin-bottom:0}
+.gw-home-live-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-4)}
+.gw-home-live-root .gw-home-live-summary{margin-bottom:var(--gw-space-5)}
+.gw-home-live-root .gw-simple-home>.gw-home-live-summary{margin-top:var(--gw-space-5)}
+.gw-home-live-advanced{display:grid;gap:var(--gw-space-6)}
+.gw-home-live-records{min-width:0;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);padding:var(--gw-space-5)}
+.gw-home-live-records-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.7fr);gap:var(--gw-space-5);align-items:end;padding-bottom:var(--gw-space-4);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
+.gw-home-live-records-head h2,.gw-home-live-gaps-head h2{margin:0;font-size:var(--gw-text-xl);line-height:var(--gw-leading-tight)}
+.gw-home-live-records-head>p,.gw-home-live-gaps-head>p{margin:0;color:var(--gw-text-secondary)}
+.gw-home-live-record-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-4);margin-top:var(--gw-space-4)}
+.gw-home-live-record{min-width:0}.gw-home-live-record>.gw-card{height:100%;margin:0;background:var(--gw-card-bg)}
+.gw-home-live-gaps{display:grid;gap:var(--gw-space-4)}
+.gw-home-live-gaps-head{max-width:850px}.gw-home-live-gaps-head>p:last-child{margin:.45rem 0 0}
+.gw-home-live-gap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-4)}
+.gw-simple-home .gw-home-live-records{margin-top:var(--gw-space-5);border:2px solid var(--gw-rule-strong);border-radius:0}
+.gw-simple-home .gw-home-live-records-head,.gw-simple-home .gw-home-live-gaps-head{font-family:var(--gw-font-serif)}
+.gw-simple-home .gw-home-live-record-list{grid-template-columns:1fr}
+.gw-simple-home .gw-home-live-gaps{margin-top:var(--gw-space-6);padding-top:var(--gw-space-5);border-top:3px double var(--gw-rule-strong)}
+.gw-simple-home .gw-home-live-gap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (max-width:980px){.gw-home-weather{grid-template-columns:1fr}.gw-home-weather-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-home-grid{grid-template-columns:1fr 1fr}.gw-home-col:first-child{grid-column:1/-1}.gw-simple-tools,.gw-simple-layout,.gw-home-advanced-briefing-grid{grid-template-columns:1fr}.gw-simple-local-boxes{grid-template-columns:1fr}.gw-simple-columns{grid-template-columns:1fr}}
-@media (max-width:640px){.gw-home-weather-grid,.gw-home-grid{grid-template-columns:1fr}.gw-home-issue-row{grid-template-columns:1fr}.gw-home-timeline li{grid-template-columns:1fr}.gw-simple-home{padding:var(--gw-space-4)}}`;
+@media (max-width:980px){.gw-home-live-gap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.gw-home-live-record-list,.gw-simple-home .gw-home-live-gap-grid{grid-template-columns:1fr}.gw-home-live-records-head{grid-template-columns:1fr}}
+@media (max-width:640px){.gw-home-weather-grid,.gw-home-grid,.gw-home-live-gap-grid{grid-template-columns:1fr}.gw-home-issue-row{grid-template-columns:1fr}.gw-home-timeline li{grid-template-columns:1fr}.gw-simple-home{padding:var(--gw-space-4)}}`;
 
 let styleInjected = false;
 function ensureHomeStyle(): void {
