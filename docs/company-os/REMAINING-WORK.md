@@ -86,9 +86,25 @@ Before filing:
   route were both drafted as open P0/P1 gaps and are now shipped (`0e67580`).
 - Dedupe against the 15 existing website and 9+ backend issues.
 - Website → `xXKillerNoobYT/Government-watchdog-website`, backend →
-  `xXKillerNoobYT/Government-Watchdog` (**note:** the backend clone has *no git remote* —
-  see §5.2 before assuming `gh` can reach it).
+  `xXKillerNoobYT/Government-Watchdog`. **Both repos are live on GitHub and `gh` reaches
+  both.** An earlier draft of this document said backend filing was blocked for want of a
+  remote; that was wrong. The *local clone* at `/Users/IA/GitHub/Government-Watchdog` has no
+  remote (§5.2 still applies to it), but the GitHub repo exists and is actively merging.
+- **Re-dedupe against work that shipped 2026-07-24 evening before filing anything.** Four
+  backend PRs merged during the authoring session and may close or shrink drafts:
+  `#141` (B3, gated supplied-file intake API, fail-closed), `#139` (B4, linkage +
+  gap-detection, closes `no_primary_source`), `#140` (B5, versioning + red-flag on supersede,
+  both versions retained), `#142` (B6, web-safe supplied-file read projection — the sole
+  Backend→Website crossing). Prime suspects among the drafts:
+  `source-version-history-and-deterministic-diff`, `public-content-digest-and-vault-ledger`,
+  `v1-view-api-envelope`. Version history shipping does **not** mean a deterministic diff
+  shipped — check the diff, not the title.
+- Skip website drafts this branch already closed: `timeline-lanes-primitive-wiring` and
+  `timeline-issue-deeplink` both shipped in `cfbd9e6`. `explainer-route-and-demo-chip` is
+  *partial* — the route and the ▶ Demo control shipped in `0e67580`, the Home widget link
+  did not.
 - File with `gh issue create` from the terminal, one at a time, capturing numbers.
+  `gh issue create` **fails on an unknown label**, so confirm labels exist first.
 
 ---
 
@@ -105,7 +121,7 @@ flag + the `SYNTHETIC DESIGN FIXTURE — not a live read` banner. `COMING SOON` 
 | 2.2 | **Fast Agenda** `src/ui/fast-agenda-design.ts` | NEXT MEETING board, full municode agenda, 17-card 7-column Issue Tracker, issue-card modal | **Wires `kanban.ts`**, which is currently built-but-unused. "Remind me" → Coming Soon |
 | 2.3 | **Boards** `renderBoardsDirectory` | 18-body directory + detail pane | Add `/boards` to `SHELL_DESIGN_FIXTURE_ROUTES` or the origin banner lies |
 | 2.4 | **Power Tracker** `design-pages.ts:729` | 10 placeholder officials, score donut, consent interstitial, vote-detail modal, quote ledger | Reviewed branch must keep `not.toMatch(/score\|verdict\|influence\|pledge/i)` |
-| 2.5 | **Source Vault** | Stat chips, transparency alerts, version compare via `diff-view.ts`, vault ledger | **Blocked on PR #67** — it adds a 5th `suppliedFiles` param to `renderSourceVault`; build on their contract, don't rewrite it |
+| 2.5 | **Source Vault** | Stat chips, transparency alerts, version compare via `diff-view.ts`, vault ledger | PR #67 is now `OPEN`/`MERGEABLE` and its backend dependency (B6, backend `#142`) **merged 2026-07-24**. It adds a 5th `suppliedFiles` param to `renderSourceVault` — build on that contract, don't rewrite it. Rebase once #67 lands |
 | 2.6 | **Newsletter** new `src/ui/newsletter-design.ts` | Issue No. 21, Roundtable via `debate-player.ts`, municode story with v1/v2 diff, 6-lens grid | |
 | 2.7 | **Location** `design-pages.ts:1542` | USA/WY/town grids, lean colouring, selection ring | "fund your area" → Coming Soon |
 | 2.8 | **Alerts + Watchlist** `design-pages.ts:2027/1182` | Severity cards, read persistence, consume `alerts-fixture.ts` | DELIVERY toggles → Coming Soon notes |
