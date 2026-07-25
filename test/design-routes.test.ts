@@ -107,7 +107,19 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     }
 
-    for (const route of ['/boards', '/vault', '/newsletter', '/timeline']) {
+    // Timeline now has its own gated design fixture, so the shell must call it
+    // a fixture. Its banner lives in the page module, not the shared one.
+    window.location.hash = '#/timeline';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+    });
+    expect(app.querySelector('[data-test="timeline-design-banner"]')?.textContent)
+      .toContain('SYNTHETIC DESIGN FIXTURE');
+
+    // Routes with no design fixture yet must stay reviewed, never claim one.
+    for (const route of ['/boards', '/vault', '/newsletter']) {
       window.location.hash = `#${route}`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       await vi.waitFor(() => {

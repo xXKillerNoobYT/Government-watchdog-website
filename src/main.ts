@@ -56,6 +56,7 @@ import {
 import type { UploadReviewState } from './types/upload-intake';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderExplainer } from './ui/explainer';
+import { renderTimelineDesign } from './ui/timeline-design';
 import { renderShell, type ShellOrigin } from './ui/shell';
 import {
   loadDigestResponse,
@@ -523,6 +524,15 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
 async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchParams): Promise<void> {
   const demo = query.get('demo');
   const access = query.get('access');
+  // The design fixture is a separate renderer so the reviewed lane can never
+  // borrow one of its synthetic rows.
+  if (designPreviewActive(query)) {
+    renderTimelineDesign(mount, query, {
+      access: access ?? 'reviewer_internal',
+      fixture: true,
+    });
+    return;
+  }
   if (demo !== 'graph') render(mount, loading<ReadApiResponse>());
   const { state, notice } =
     demo === 'graph'
@@ -751,6 +761,7 @@ const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
 const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/home',
   '/agenda',
+  '/timeline',
   '/power',
   '/watchlist',
   '/location',
