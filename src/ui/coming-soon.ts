@@ -30,7 +30,7 @@ export const COMING_SOON_STYLE = `${GW_TOKENS}
 .gw-coming-soon-chip{display:inline-flex;align-items:center;gap:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-pill);background:var(--gw-caution-bg);padding:var(--gw-space-1) var(--gw-space-3);font-size:var(--gw-text-badge);line-height:1.3}
 .gw-coming-soon-chip strong{color:var(--gw-caution-text);font:700 var(--gw-text-badge)/1.3 var(--gw-font-mono);letter-spacing:.05em}
 .gw-coming-soon-chip span{color:var(--gw-text-secondary)}
-.gw-coming-soon-note{border:var(--gw-border-w) dashed var(--gw-caution-line);border-radius:var(--gw-radius-md);background:var(--gw-caution-bg);padding:var(--gw-space-4);display:grid;gap:var(--gw-space-2);justify-items:start}
+.gw-coming-soon-note{border:var(--gw-border-w) dashed var(--gw-caution-line);border-radius:var(--gw-radius-md);background:var(--gw-caution-bg);padding:var(--gw-space-4);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-2);justify-items:start}
 .gw-coming-soon-note strong{color:var(--gw-caution-text);font:700 var(--gw-text-badge)/1.3 var(--gw-font-mono);letter-spacing:.06em}
 .gw-coming-soon-note h3{font-size:var(--gw-text-lg);color:var(--gw-text)}
 .gw-coming-soon-note p{margin:0;color:var(--gw-text-secondary);max-width:60ch}

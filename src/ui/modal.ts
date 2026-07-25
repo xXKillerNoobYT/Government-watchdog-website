@@ -53,7 +53,7 @@ export interface ModalHandle {
 
 export const MODAL_STYLE = `${GW_TOKENS}
 .gw-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:var(--gw-space-5);background:rgba(3,6,10,.76)}
-.gw-modal{width:min(800px,96vw);max-height:90vh;overflow:auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-lg);box-shadow:0 24px 80px rgba(0,0,0,.45);padding:var(--gw-space-6);display:grid;gap:var(--gw-space-4)}
+.gw-modal{width:min(800px,96vw);max-height:90vh;overflow:auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-lg);box-shadow:0 24px 80px rgba(0,0,0,.45);padding:var(--gw-space-6);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-4)}
 .gw-modal-head{display:flex;align-items:start;justify-content:space-between;gap:var(--gw-space-4)}
 .gw-modal-head h2{font-size:var(--gw-text-xl)}
 .gw-modal-close{flex:none;width:var(--gw-tap-min);height:var(--gw-tap-min);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:transparent;color:var(--gw-text);font-size:1.4rem}

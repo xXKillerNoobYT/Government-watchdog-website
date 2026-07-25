@@ -61,13 +61,13 @@ export interface KanbanLaneSpec {
 export const KANBAN_STYLE = `${GW_TOKENS}
 .gw-kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(var(--gw-lane-min),1fr);gap:var(--gw-space-3);overflow-x:auto;padding:var(--gw-space-3);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg)}
 .gw-kanban-lane{display:flex;flex-direction:column;gap:var(--gw-space-3);background:var(--gw-lane-bg);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius-md);padding:var(--gw-space-3);min-width:var(--gw-lane-min)}
-.gw-kanban-lane-head{display:grid;gap:var(--gw-space-1);background:var(--gw-lane-header-bg);border-radius:var(--gw-radius-sm);padding:var(--gw-space-2) var(--gw-space-3)}
+.gw-kanban-lane-head{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-1);background:var(--gw-lane-header-bg);border-radius:var(--gw-radius-sm);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-kanban-lane-title{display:flex;align-items:center;justify-content:space-between;gap:var(--gw-space-2)}
 .gw-kanban-lane-name{font:800 var(--gw-text-kicker)/1.3 var(--gw-font);letter-spacing:.09em;color:var(--gw-text-secondary);text-transform:uppercase}
 .gw-kanban-lane-count{font:700 var(--gw-text-badge)/1 var(--gw-font-mono);color:var(--gw-text-muted)}
 .gw-kanban-lane-note{margin:0;font-size:var(--gw-text-badge);color:var(--gw-text-muted)}
-.gw-kanban-lane-body{display:grid;gap:var(--gw-space-3);align-content:start}
-.gw-kanban-card{position:relative;background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-md);padding:var(--gw-space-3) var(--gw-space-3) var(--gw-space-3) var(--gw-space-4);display:grid;gap:var(--gw-space-2)}
+.gw-kanban-lane-body{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3);align-content:start}
+.gw-kanban-card{position:relative;background:var(--gw-card-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-md);padding:var(--gw-space-3) var(--gw-space-3) var(--gw-space-3) var(--gw-space-4);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-2)}
 .gw-kanban-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--gw-radius-md) 0 0 var(--gw-radius-md);background:var(--gw-neutral-border)}
 .gw-kanban-card[data-level="town"]::before{background:var(--gw-level-town)}
 .gw-kanban-card[data-level="county"]::before{background:var(--gw-level-county)}
@@ -77,7 +77,7 @@ export const KANBAN_STYLE = `${GW_TOKENS}
 .gw-kanban-meta span{display:inline-flex;align-items:center}
 .gw-kanban-flags{display:flex;flex-wrap:wrap;gap:var(--gw-space-1);list-style:none;margin:0;padding:0}
 .gw-kanban-flags li{border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-sm);background:var(--gw-caution-bg);color:var(--gw-caution-text);padding:0 var(--gw-space-2);font-size:var(--gw-text-badge)}
-.gw-kanban-track{display:grid;gap:2px;font-size:var(--gw-text-badge);color:var(--gw-text-secondary)}
+.gw-kanban-track{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;font-size:var(--gw-text-badge);color:var(--gw-text-secondary)}
 .gw-kanban-track b{font-weight:700;color:var(--gw-text-muted);letter-spacing:.04em}
 .gw-kanban-actions{display:flex;flex-wrap:wrap;gap:var(--gw-space-2)}
 .gw-kanban-empty{margin:0;padding:var(--gw-space-3);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius-sm);color:var(--gw-text-muted);font-size:var(--gw-text-sm)}

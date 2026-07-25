@@ -88,9 +88,9 @@ export function axisPercent(date: string, start: string, end: string): number {
 }
 
 export const TIMELINE_LANES_STYLE = `${GW_TOKENS}
-.gw-tl{position:relative;display:grid;gap:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);background:var(--gw-surface);padding:var(--gw-space-4)}
+.gw-tl{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-lg);background:var(--gw-surface);padding:var(--gw-space-4)}
 .gw-tl-axis{display:flex;justify-content:space-between;font:500 var(--gw-text-badge)/1 var(--gw-font-mono);color:var(--gw-text-muted)}
-.gw-tl-stack{position:relative;display:grid;gap:var(--gw-space-2)}
+.gw-tl-stack{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-2)}
 .gw-tl-connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .gw-tl-lane{position:relative;display:grid;grid-template-columns:5.5rem minmax(0,1fr);align-items:center;gap:var(--gw-space-3);min-height:2.75rem}
 .gw-tl-lane-name{font:800 var(--gw-text-kicker)/1.3 var(--gw-font);letter-spacing:.09em;text-transform:uppercase;color:var(--gw-text-secondary)}
