@@ -268,6 +268,64 @@ them before the fidelity work that depends on real reads.
 
 ---
 
+## 6.5. Pipeline tuning pass — *low priority, do after the beta ships*
+
+A method Isaac has already used successfully elsewhere, recorded here verbatim in intent so it
+can be run against this system when there is slack. **Not scheduled. Do not start it while
+§1–§4 are open** — tuning a pipeline that is still changing shape wastes the pass.
+
+### The principle
+**The best optimization is deletion.** Before automating any step, first ask whether it needs
+to exist at all.
+
+> **Remove > merge > simplify > automate — in that order.**
+
+Never add new tools, layers, or complexity in the name of automation. If a "speedup" makes the
+system bigger or harder to understand, it is not less-is-more and we do not do it.
+
+### The pass, run continuously in one sitting
+1. **Map the full pipeline.** Every step start to finish, in order. For each: automated or
+   manual, how long it takes, and *what breaks if it is removed*.
+2. **Delete the waste.** Remove every step whose answer to "what breaks without it" is
+   "nothing." Merge steps that always run together. Kill duplicate work — anything checked,
+   generated, or processed twice.
+3. **Close the gaps.** Find every pause, wait, and handoff delay. Classify each:
+   - **Dead pauses** — waiting on nothing; a step simply does not trigger the next one.
+     Eliminate, so each step auto-triggers its successor.
+   - **Load-bearing pauses** — a check that actually catches errors before they spread.
+     Keep, but make as fast and automatic as possible. **Never silently deleted.** If a check
+     is removed, name it and say why removal was safe.
+4. **Automate the manual.** Every remaining human-touch step: automate it if routine, or batch
+   it into a single review point if it genuinely needs judgment. Target: runs start-to-finish
+   on its own, with **at most one place a human looks at anything**.
+5. **Prove it.** Run the streamlined pipeline end to end once. Confirm output quality is
+   *unchanged* — same results, just faster and simpler. If anything degraded, restore the
+   smallest thing that fixes it.
+
+### Report format (short)
+Steps before → steps after · what was deleted · what was automated · where the one human
+touchpoint is · any check removed and why · the biggest remaining bottleneck not fixed.
+
+### Where it would apply here
+The candidate pipeline is: **audit gap → GitHub issue → Paperclip issue → agent checkout →
+work → review → PR → merge → deploy**, plus the heartbeat/wake layer that moves issues between
+those states. Known suspects going in, to be confirmed by the map rather than assumed:
+
+- Gaps are currently written up **twice** — once as a GitHub issue, once as a Paperclip issue.
+  That is duplicate work by the step-2 test unless one of them is load-bearing.
+- Only the CEO has a timed heartbeat (12 h); every other agent is wake-on-demand. Any state
+  transition that depends on the CEO waking is a **dead pause up to 12 hours long**.
+- `GOV-1597` exists solely because `GOV-821` was blocked with nothing owning the next action —
+  a liveness incident is evidence of a dead pause the system had to detect after the fact.
+- Stage 5 is `active` with zero active sub-goals. A stage that cannot advance is a stall the
+  gate logic should have caught at entry.
+- Isaac is currently the review point for design, deploy go/no-go, campaign sends, and project
+  descriptions. Step 4 says those should collapse toward **one** batched touchpoint — with the
+  explicit carve-out that **per-send email approval is legally load-bearing and is never
+  batched or automated** (see §4.1).
+
+---
+
 ## 7. New since the original plan — needs planning, not just doing
 
 These surfaced during execution and have no plan section yet:
