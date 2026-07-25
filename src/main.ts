@@ -55,6 +55,7 @@ import {
 } from './ui/gated-upload';
 import type { UploadReviewState } from './types/upload-intake';
 import { mountThemeToggle } from './ui/theme-toggle';
+import { renderExplainer } from './ui/explainer';
 import { renderShell, type ShellOrigin } from './ui/shell';
 import {
   loadDigestResponse,
@@ -800,7 +801,10 @@ type ShellHandler = (ctx: { mount: HTMLElement; path: string; query: URLSearchPa
 function gated(handler: ShellHandler): RouteHandler {
   return ({ path, query }) =>
     renderGatedApp(root!, accessFor(query), () => {
-      const mount = renderShell(root!, { active: path, origin: shellOriginFor(path, query) });
+      // One origin decision feeds both the banner and the Alerts badge, so the
+      // chip can never claim a count on a route the banner calls reviewed.
+      const origin = shellOriginFor(path, query);
+      const mount = renderShell(root!, { active: path, origin, fixture: origin === 'fixture' });
       handler({ mount, path, query });
     });
 }
@@ -814,6 +818,9 @@ router.register('/', ({ query }) => renderEntry(query));
 // prior chronological long-list timeline stays reachable at `#/timeline` (and the
 // GOV-354 single-list card feed at `#/cards`) for continuity + regression.
 router.register('/home', gated(({ mount, query }) => renderHomeRoute(mount, query)));
+// Designed slot for the handoff's promo walkthrough. Carries no civic data, so
+// it needs no fixture gate — only the Coming Soon statement that it is unbuilt.
+router.register('/explainer', gated(({ mount }) => renderExplainer(mount)));
 router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mount, query)));
 router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
