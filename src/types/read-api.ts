@@ -516,3 +516,66 @@ export interface SuppliedFilesProjection {
   /** Count of files still in review; content of those files is never projected. */
   pending_review_count?: number | null;
 }
+
+// --- Supersede before/after (GOV-1566 F3, consumes the B6 web-safe projection) -
+
+/**
+ * Coarse, web-safe reprocessing lane for the records being re-reviewed after a
+ * supersede. This is DELIBERATELY NOT the backend `review_state` (which is on
+ * `RAW_PATH_FORBIDDEN_KEYS` and must never cross the wire). It is a separate
+ * public status the reviewer can honestly show:
+ *  - `queued`    — the new version is preserved; re-review has not started.
+ *  - `reviewing` — records are being re-reviewed; the new version is NOT yet
+ *                  web-safe, so its content is absent from `after`.
+ *  - `complete`  — re-review finished; `after` is the web-safe new version.
+ */
+export type SupersedeReprocessingStatus = 'queued' | 'reviewing' | 'complete';
+
+/**
+ * One supersede event, as projected by the Backend **B6 web-safe read endpoint**
+ * from a **B5 supersede mark** (GOV-1566 §7). B5 preserves every version and
+ * marks which one supersedes which; B6 projects only the web-safe shape below.
+ * Invariants baked into the type (mirroring {@link SuppliedSourceFile}):
+ *
+ *  - `before` is the previously-shown reviewed file — it was already web-safe,
+ *    so showing it again on supersede is honest. `after` is present ONLY when
+ *    the new version is itself `web_safe`; while re-review is in flight it is
+ *    absent (never the not-yet-reviewed content). Presence of `after` IS the
+ *    "new version cleared" verdict — there is no per-file review flag to read.
+ *  - `reprocessing_record_count` is a bare integer: how many records are being
+ *    re-reviewed. Content-free by construction — never a record's text.
+ *  - No raw diff, no `review_state`, no raw/vault path, no uploader PII. The
+ *    "red flag" is a coarse boolean + short enum reason, never free-text detail.
+ */
+export interface SupersedeEvent {
+  /** Stable web-safe id for the supersede event (NOT a raw path or raw sha). */
+  supersede_id: string;
+  /** Preserved-version group these files belong to (matches SuppliedSourceFile). */
+  version_group_id: string;
+  /** The previously-shown reviewed file, now superseded (web-safe ref). */
+  before: SuppliedSourceFile;
+  /** The new reviewed file that supersedes it — present ONLY when itself web_safe. */
+  after?: SuppliedSourceFile | null;
+  /** Coarse web-safe reprocessing lane (see {@link SupersedeReprocessingStatus}). */
+  reprocessing_status?: SupersedeReprocessingStatus | null;
+  /** Count of records being re-reviewed because of this supersede; content-free. */
+  reprocessing_record_count?: number | null;
+  /** Whether this supersede materially changed previously-shown info (red flag). */
+  flagged?: boolean | null;
+  /** Coarse reason label, e.g. `source_replaced` | `content_changed`; never prose. */
+  flag_reason?: string | null;
+  /** Public date the supersede was recorded (never a raw timestamp of raw bytes). */
+  superseded_at?: string | null;
+}
+
+/**
+ * The B6 web-safe supersede projection consumed by F3. `events` are already
+ * web-safe (B6 filters server-side); the client never re-derives a review state
+ * it cannot see. An empty array is the honest "nothing superseded yet" state.
+ */
+export interface SupersedeProjection {
+  /** Same gate as the read API — supersede rows render only reviewer-internal. */
+  access?: AccessState | null;
+  /** Web-safe supersede events only. Empty array = honestly nothing superseded. */
+  events: SupersedeEvent[];
+}

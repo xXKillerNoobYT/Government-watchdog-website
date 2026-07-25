@@ -1,0 +1,60 @@
+{
+  "access": "reviewer_internal",
+  "events": [
+    {
+      "supersede_id": "sup_148_packet",
+      "version_group_id": "vg_packet_148",
+      "flagged": true,
+      "flag_reason": "content_changed",
+      "superseded_at": "2026-06-18",
+      "reprocessing_status": "complete",
+      "reprocessing_record_count": 3,
+      "before": {
+        "file_id": "sf_2f1a9c",
+        "title": "Town Council agenda packet — regular meeting (v1)",
+        "source_type": "agenda_packet",
+        "meeting_id": 148,
+        "agenda_item_id": "ai_148_03",
+        "source_date": "2026-06-09",
+        "published_by": "Town of Alpine Clerk",
+        "version_group_id": "vg_packet_148",
+        "version": 1,
+        "original_url": "https://watchdog.isaac4alpine.com/reviewed/sf_2f1a9c.pdf"
+      },
+      "after": {
+        "file_id": "sf_9d4e21",
+        "title": "Town Council agenda packet — regular meeting (v2, amended)",
+        "source_type": "agenda_packet",
+        "meeting_id": 148,
+        "agenda_item_id": "ai_148_03",
+        "source_date": "2026-06-17",
+        "published_by": "Town of Alpine Clerk",
+        "version_group_id": "vg_packet_148",
+        "version": 2,
+        "original_url": "https://watchdog.isaac4alpine.com/reviewed/sf_9d4e21.pdf"
+      }
+    },
+    {
+      "supersede_id": "sup_148_minutes",
+      "version_group_id": "vg_minutes_148",
+      "flagged": true,
+      "flag_reason": "source_replaced",
+      "superseded_at": "2026-06-24",
+      "reprocessing_status": "reviewing",
+      "reprocessing_record_count": 2,
+      "before": {
+        "file_id": "sf_7b3e04",
+        "title": "Draft minutes — regular meeting (v1)",
+        "source_type": "minutes",
+        "meeting_id": 148,
+        "agenda_item_id": null,
+        "source_date": "2026-06-23",
+        "published_by": "Town of Alpine Clerk",
+        "version_group_id": "vg_minutes_148",
+        "version": 1,
+        "original_url": "https://watchdog.isaac4alpine.com/reviewed/sf_7b3e04.pdf"
+      },
+      "after": null
+    }
+  ]
+}

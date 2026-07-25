@@ -59,7 +59,7 @@ import {
 import type { CardFeed } from './ui/card-feed';
 import { idle, loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
-import type { ReadApiResponse, SuppliedFilesProjection } from './types/read-api';
+import type { ReadApiResponse, SuppliedFilesProjection, SupersedeProjection } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
 import conceptGraphDemoData from './fixtures/concept-graph-demo.json';
@@ -69,6 +69,7 @@ import newsletterDigestData from './fixtures/alpine-newsletter-digest.json';
 import agendaBoardData from './fixtures/agenda-board-projection.json';
 import agendaBoardSampleData from './fixtures/agenda-board-projection.sample.dev.json';
 import suppliedFilesData from './fixtures/alpine-supplied-files.json';
+import supersedeData from './fixtures/alpine-supersede-events.json';
 import type { AgendaBoard } from './types/agenda-board';
 
 /**
@@ -154,6 +155,18 @@ const BOARD_SAMPLE_NOTICE =
  * other fixtures; when B6 lands this constant is swapped for the live read.
  */
 const SUPPLIED_FILES: SuppliedFilesProjection = assertWebSafe(suppliedFilesData as SuppliedFilesProjection);
+
+/**
+ * GOV-1566 F3 — before/after supersede view, consuming the same B6 web-safe
+ * projection contract (built from a B5 supersede mark). CONTRACT fixture (B5/B6
+ * not built yet): it exercises the fail-closed renderer against the exact shape
+ * B6 will emit — before/after are both `web_safe` file refs, the coarse
+ * `reprocessing_status` lane is NOT the raw `review_state`, and an in-re-review
+ * event carries `after: null` so its unreviewed content is never shown. Swept
+ * for raw paths on load like every other fixture; swapped for the live read when
+ * B5 (GOV-1578) + B6 (GOV-1579) land.
+ */
+const SUPERSEDE_EVENTS: SupersedeProjection = assertWebSafe(supersedeData as SupersedeProjection);
 
 /**
  * GOV-462 — the Stage 4.05 reviewer-internal Alpine newsletter digest object,
@@ -521,7 +534,7 @@ function renderIssueDetailRoute(mount: HTMLElement, query: URLSearchParams): voi
 function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): void {
   const access = query.get('access');
   const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE, SUPPLIED_FILES);
+  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE, SUPPLIED_FILES, SUPERSEDE_EVENTS);
 }
 
 /**
