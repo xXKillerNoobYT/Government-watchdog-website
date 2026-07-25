@@ -47,7 +47,12 @@ import {
   type DesignPageOptions,
 } from './ui/design-pages';
 import { renderTopicTreeView } from './ui/topic-tree-view';
-import { renderGatedUpload, DEFAULT_INTAKE_CONSTRAINTS, type UploadPhase } from './ui/gated-upload';
+import {
+  renderGatedUpload,
+  createHttpIntakeTransport,
+  DEFAULT_INTAKE_CONSTRAINTS,
+  type UploadPhase,
+} from './ui/gated-upload';
 import type { UploadReviewState } from './types/upload-intake';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell, type ShellOrigin } from './ui/shell';
@@ -557,8 +562,10 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
  * so this handler runs only once approved. `?ustate=` forces a phase for
  * review/screenshots (idle | validating | uploading | received | held | error),
  * and `?rstatus=` picks the projected receipt bucket for the `received` shot.
- * The intake backend (B3) is not wired, so the scaffold transport (fail-closed)
- * is used and the surface labels itself non-functional scaffolding.
+ * The intake backend (B3 GOV-1576) is `done`, so the real authenticated transport
+ * is wired: submitting streams the file to `/api/beta/intake/upload` (fail-closed;
+ * an unreachable/flag-off backend yields the honest "not open" error, never a fake
+ * receipt). The transport projects B3's raw `review_state` to a coarse bucket.
  */
 function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
   const forced = query.get('ustate');
@@ -571,6 +578,7 @@ function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
   const forcedReceiptStatus: UploadReviewState | undefined =
     rstatus === 'received' || rstatus === 'review_pending' || rstatus === 'held' ? rstatus : undefined;
   renderGatedUpload(mount, {
+    transport: createHttpIntakeTransport(),
     constraints: DEFAULT_INTAKE_CONSTRAINTS,
     forcedPhase,
     forcedReceiptStatus,

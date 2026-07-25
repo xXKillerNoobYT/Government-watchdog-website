@@ -137,15 +137,33 @@ export type IntakeOutcome =
   | { ok: false; rejection: IntakeRejection };
 
 /**
- * The injectable B3 client — the SINGLE live-swap seam. Until B3 (GOV-1576)
- * lands, `main.ts` injects the fail-closed scaffold transport (`wired: false`),
- * and the surface labels itself non-functional scaffolding (mirrors the beta
- * gate's `SCAFFOLDING_NOTE`). When B3 ships, this is replaced by the real
- * authenticated POST — the DOM, validation, ARIA, and copy all stay unchanged.
+ * A minimal, structural reader for the raw file bytes. A browser `File`/`Blob`
+ * satisfies it as-is, but the interface is DOM-free so the transport stays
+ * unit-testable with a plain stub. Kept OFF {@link StagedUpload} on purpose: the
+ * pure validator/presenter never touch bytes — only the transport does, and only
+ * to stream them (never to inspect, hash, or derive anything from them).
+ */
+export interface IntakeBytesSource {
+  /** Resolve the file's raw bytes for transfer. */
+  arrayBuffer(): Promise<ArrayBuffer>;
+}
+
+/**
+ * The injectable B3 client — the SINGLE live-swap seam. As of GOV-1576 (B3,
+ * `done`), `main.ts` injects the real authenticated transport
+ * ({@link IntakeBytesSource}-backed POST to `/api/beta/intake/upload`). The
+ * fail-closed scaffold transport (`wired: false`) remains for tests and for any
+ * surface deliberately kept non-functional; swapping between them changes no DOM,
+ * validation, ARIA, or copy.
  */
 export interface UploadIntakeTransport {
   /** True ONLY when a real, authorized intake backend is wired. */
   readonly wired: boolean;
-  /** Attempt an authenticated intake. Always resolves to an {@link IntakeOutcome}. */
-  submit(staged: StagedUpload): Promise<IntakeOutcome>;
+  /**
+   * Attempt an authenticated intake. Always resolves to an {@link IntakeOutcome}
+   * (never rejects — a thrown/unknown failure is caught as fail-closed). `source`
+   * carries the raw bytes to stream; it is absent only for the scaffold path,
+   * which ignores it and always fails closed.
+   */
+  submit(staged: StagedUpload, source?: IntakeBytesSource): Promise<IntakeOutcome>;
 }

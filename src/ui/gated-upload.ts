@@ -15,13 +15,18 @@
  *     {@link projectReviewState} (fail-closed), and there is no verified/published
  *     value it can render.
  *
- * The intake backend (B3) is not wired yet, so `main.ts` injects
- * {@link scaffoldIntakeTransport} (`wired: false`) and the surface labels itself
- * non-functional scaffolding — mirroring the beta gate's `SCAFFOLDING_NOTE`. The
- * live swap when B3 lands is a single line: inject the real transport.
+ * The intake backend (B3 GOV-1576) is now `done`, so `main.ts` injects the real
+ * {@link createHttpIntakeTransport} (`wired: true`) — an authenticated POST to
+ * `/api/beta/intake/upload`. The raw backend `review_state` it returns is
+ * PROJECTED to the coarse web-safe bucket inside the transport
+ * ({@link projectBackendReviewState}) and never crosses into the receipt DOM. The
+ * fail-closed {@link scaffoldIntakeTransport} (`wired: false`) is retained for
+ * tests and any deliberately non-functional surface; swapping the two changes no
+ * DOM, validation, ARIA, or copy.
  */
 
 import type {
+  IntakeBytesSource,
   IntakeConstraints,
   IntakeOutcome,
   IntakeReceipt,
@@ -222,10 +227,12 @@ export const UPLOAD_SCAFFOLDING_NOTE =
   'intake API lands, submitting will transfer for review with no other changes.';
 
 /**
- * The fail-closed scaffold transport used until B3 (GOV-1576) is wired. It NEVER
- * reports success — every submit resolves to a `backend_unavailable` rejection,
- * so the surface can only ever reach its honest error state, never a fake
- * receipt. Swapped for the real authenticated POST when B3 lands.
+ * The fail-closed scaffold transport. It NEVER reports success — every submit
+ * resolves to a `backend_unavailable` rejection, so the surface can only ever
+ * reach its honest error state, never a fake receipt. Retained for tests and any
+ * surface deliberately kept non-functional; the live route uses
+ * {@link createHttpIntakeTransport}. The `source` arg is ignored (no bytes are
+ * ever sent).
  */
 export const scaffoldIntakeTransport: UploadIntakeTransport = {
   wired: false,
@@ -233,6 +240,165 @@ export const scaffoldIntakeTransport: UploadIntakeTransport = {
     return { ok: false, rejection: { reason: 'backend_unavailable' } };
   },
 };
+
+/** B3's intake route (GOV-1576). Same-origin so the beta session cookie rides. */
+export const INTAKE_UPLOAD_ROUTE = '/api/beta/intake/upload';
+
+/**
+ * The `area` (jurisdiction scope) tag sent with every intake. Alpine-first
+ * (expansion is gated), so this is a fixed deployment scope, NOT a civic value
+ * derived from the file — it never implies anything about the document's content.
+ */
+export const INTAKE_AREA = 'alpine';
+
+/**
+ * Project B3's RAW internal `review_state` (`pending | reviewing | web_safe |
+ * held | rejected`, per `0028_supplied_file_records.sql`) to the coarse web-safe
+ * bucket the uploader may see — VERBATIM and FAIL-CLOSED, exactly like
+ * {@link projectReviewState} but for the write-side receipt. The raw string is
+ * consumed here and NEVER returned, so it cannot reach the DOM (it is on
+ * `RAW_PATH_FORBIDDEN_KEYS`). A fresh accept is always `pending` ⇒ `received`;
+ * anything not explicitly mapped collapses to the conservative `review_pending`
+ * and can NEVER be upgraded toward a verified/published value (none exists here).
+ */
+export function projectBackendReviewState(raw: unknown): UploadReviewState {
+  switch (raw) {
+    case 'pending':
+      return 'received';
+    case 'held':
+      return 'held';
+    // 'reviewing' / 'web_safe' / 'rejected' / unknown / absent: never surface an
+    // upgraded value on the upload receipt — fail closed to the conservative bucket.
+    default:
+      return CONSERVATIVE_UPLOAD_REVIEW_STATE;
+  }
+}
+
+/** Chunked base64 of raw bytes — safe for the 25 MiB cap (no stack blow-up). */
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const CHUNK = 0x8000; // 32 KiB argument-count-safe window
+  for (let offset = 0; offset < bytes.length; offset += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + CHUNK));
+  }
+  return btoa(binary);
+}
+
+/** Map a B3 HTTP status to a fail-closed rejection reason. */
+function statusToRejectionReason(status: number): IntakeRejectionReason {
+  switch (status) {
+    case 401:
+    case 403:
+    case 404: // flag-off ⇒ 404, or the surface isn't open here: not authorized.
+      return 'unauthorized';
+    case 413:
+      return 'too_large';
+    case 415:
+      return 'unsupported_type';
+    case 503:
+      return 'backend_unavailable';
+    // 400 (bad body) and 422 (known-bad) and any other non-2xx: unconfirmed ⇒
+    // the generic "nothing was saved" line; never blame, never leak the denylist.
+    default:
+      return 'unknown';
+  }
+}
+
+/** Options for {@link createHttpIntakeTransport} (all injectable for tests). */
+export interface HttpIntakeTransportOptions {
+  /** Intake endpoint. Default {@link INTAKE_UPLOAD_ROUTE} (same-origin). */
+  endpoint?: string;
+  /** Jurisdiction scope tag. Default {@link INTAKE_AREA}. */
+  area?: string;
+  /** Injected `fetch` (tests). Default `globalThis.fetch`. */
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * The real, authenticated B3 intake transport (GOV-1576). It streams the staged
+ * file to `/api/beta/intake/upload` with the beta session cookie
+ * (`credentials: 'include'`) and returns a coarse, web-safe {@link IntakeOutcome}.
+ *
+ * Honesty invariants enforced here (F0 §6, parent plan):
+ *  - The request body carries ONLY what B3 requires plus the uploader's own
+ *    words; `supplied_by` is NEVER sent (B3 derives it from the session — a
+ *    caller cannot forge who supplied a file).
+ *  - The 201 `review_state` is projected to a coarse bucket
+ *    ({@link projectBackendReviewState}); the raw value is dropped, so no internal
+ *    state, path, hash, or `file_id` can reach the receipt DOM.
+ *  - Every failure — non-2xx, network error, malformed body, or a success with no
+ *    bytes to send — resolves to a rejection, never an optimistic receipt.
+ */
+export function createHttpIntakeTransport(
+  options: HttpIntakeTransportOptions = {},
+): UploadIntakeTransport {
+  const endpoint = options.endpoint ?? INTAKE_UPLOAD_ROUTE;
+  const area = options.area ?? INTAKE_AREA;
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+
+  return {
+    wired: true,
+    async submit(staged: StagedUpload, source?: IntakeBytesSource): Promise<IntakeOutcome> {
+      const file = staged.file;
+      // Defensive: the renderer validates before calling, but never send a claim
+      // we can't back with bytes.
+      if (!file || !source) {
+        return { ok: false, rejection: { reason: 'unknown' } };
+      }
+
+      let contentBase64: string;
+      try {
+        const buffer = await source.arrayBuffer();
+        contentBase64 = bytesToBase64(new Uint8Array(buffer));
+      } catch {
+        return { ok: false, rejection: { reason: 'unknown' } };
+      }
+
+      // B3's required body (scripts/beta/intake_api.py). `source_type` and
+      // `origin_url` carry the uploader's OWN words verbatim — user-supplied
+      // input, never a derived or invented civic value. `supplied_by` is omitted
+      // deliberately (server-derived from the session).
+      const originText = staged.provenance.sourceOrigin.trim();
+      const body: Record<string, string> = {
+        area,
+        source_type: staged.provenance.description.trim(),
+        original_filename: file.name,
+        mime: file.mimeType,
+        content_base64: contentBase64,
+      };
+      if (originText) body.origin_url = originText;
+
+      let response: Response;
+      try {
+        response = await fetchImpl(endpoint, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch {
+        // Network failure / offline / DNS: the service isn't reachable.
+        return { ok: false, rejection: { reason: 'backend_unavailable' } };
+      }
+
+      if (!response.ok) {
+        return { ok: false, rejection: { reason: statusToRejectionReason(response.status) } };
+      }
+
+      // Parse the receipt defensively; a malformed 2xx body is still a success
+      // (bytes were accepted) but projects fail-closed to the conservative bucket.
+      let rawStatus: unknown;
+      try {
+        const json = (await response.json()) as { review_state?: unknown };
+        rawStatus = json?.review_state;
+      } catch {
+        rawStatus = undefined;
+      }
+      const receipt: IntakeReceipt = { status: projectBackendReviewState(rawStatus) };
+      return { ok: true, receipt };
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // DOM renderer
@@ -393,6 +559,10 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
 
   // Mutable staged state (only the metadata the pure validator needs).
   const staged: StagedUpload = { file: null, provenance: { sourceOrigin: '', description: '' } };
+  // The real File is held OFF the pure `staged` type — only the transport reads
+  // its bytes. Persists across validation re-renders (the <input type=file> is
+  // recreated empty by the browser, but the retained handle keeps the choice).
+  let rawFile: File | null = null;
 
   const announce = (msg: string): void => {
     live.textContent = msg;
@@ -420,6 +590,7 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
     }) as HTMLInputElement;
     fileInput.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
+      rawFile = f ?? null;
       staged.file = f ? { name: f.name, sizeBytes: f.size, mimeType: f.type } : null;
       submitBtn.disabled = !staged.file;
     });
@@ -497,7 +668,7 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
     announce(UPLOAD_COPY.uploadingStatus);
     let outcome: IntakeOutcome;
     try {
-      outcome = await transport.submit(staged);
+      outcome = await transport.submit(staged, rawFile ?? undefined);
     } catch {
       // Any thrown/unknown failure is fail-closed: nothing was saved.
       outcome = { ok: false, rejection: { reason: 'unknown' } };
@@ -513,6 +684,7 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
   const resetToForm = (): void => {
     staged.file = null;
     staged.provenance = { sourceOrigin: '', description: '' };
+    rawFile = null;
     showForm();
     announce('');
   };

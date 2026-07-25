@@ -26,6 +26,10 @@ import {
   rejectionMessage,
   formatBytes,
   scaffoldIntakeTransport,
+  createHttpIntakeTransport,
+  projectBackendReviewState,
+  INTAKE_UPLOAD_ROUTE,
+  INTAKE_AREA,
   renderGatedUpload,
 } from '../src/ui/gated-upload';
 import {
@@ -165,11 +169,134 @@ describe('GOV-1569 web-safe boundary', () => {
   });
 });
 
-describe('GOV-1569 scaffold transport is fail-closed until B3 lands', () => {
+describe('GOV-1569 scaffold transport is fail-closed (retained for non-wired surfaces)', () => {
   it('never reports a fake receipt', async () => {
     expect(scaffoldIntakeTransport.wired).toBe(false);
     const outcome = await scaffoldIntakeTransport.submit(staged());
     expect(outcome.ok).toBe(false);
+  });
+});
+
+// --- Real B3 (GOV-1576) transport ------------------------------------------
+//
+// A minimal bytes source (a File/Blob satisfies this structurally) and a
+// recording fake fetch, so the wire behaviour is proved without a browser.
+function bytesSource(text: string): { arrayBuffer(): Promise<ArrayBuffer> } {
+  const bytes = new TextEncoder().encode(text);
+  return { async arrayBuffer() { return bytes.buffer.slice(0, bytes.byteLength); } };
+}
+
+interface FetchCall { url: string; init: RequestInit }
+function recordingFetch(
+  reply: { ok?: boolean; status: number; body?: unknown; throws?: boolean },
+): { fetchImpl: typeof fetch; calls: FetchCall[] } {
+  const calls: FetchCall[] = [];
+  const fetchImpl = (async (url: string, init: RequestInit) => {
+    calls.push({ url, init });
+    if (reply.throws) throw new Error('network down');
+    return {
+      ok: reply.ok ?? (reply.status >= 200 && reply.status < 300),
+      status: reply.status,
+      async json() { return reply.body ?? {}; },
+    };
+  }) as unknown as typeof fetch;
+  return { fetchImpl, calls };
+}
+
+describe('GOV-1569 projectBackendReviewState — raw review_state never surfaces', () => {
+  it('maps a fresh accept (pending) to the honest received bucket', () => {
+    expect(projectBackendReviewState('pending')).toBe('received');
+  });
+  it('maps held verbatim', () => {
+    expect(projectBackendReviewState('held')).toBe('held');
+  });
+  it('never upgrades: reviewing / web_safe / rejected / unknown all fail closed', () => {
+    for (const raw of ['reviewing', 'web_safe', 'rejected', 'verified', '', undefined, null, 42]) {
+      expect(projectBackendReviewState(raw)).toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
+    }
+  });
+});
+
+describe('GOV-1569 http transport — wired POST to B3, fail-closed', () => {
+  it('POSTs the required B3 body with the session cookie, projecting the receipt', async () => {
+    const { fetchImpl, calls } = recordingFetch({ status: 201, body: { file_id: 'file-abc', sha256: 'a'.repeat(64), review_state: 'pending', deduped: false } });
+    const t = createHttpIntakeTransport({ fetchImpl });
+    expect(t.wired).toBe(true);
+    const outcome = await t.submit(staged(), bytesSource('hello pdf bytes'));
+
+    // One call, to the same-origin B3 route, cookie-bearing, JSON.
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe(INTAKE_UPLOAD_ROUTE);
+    expect(calls[0].init.method).toBe('POST');
+    expect(calls[0].init.credentials).toBe('include');
+    expect((calls[0].init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+
+    const sent = JSON.parse(calls[0].init.body as string);
+    expect(sent.area).toBe(INTAKE_AREA);
+    expect(sent.original_filename).toBe('minutes.pdf');
+    expect(sent.mime).toBe('application/pdf');
+    expect(sent.source_type).toBe('June minutes'); // uploader's own words, verbatim
+    expect(sent.origin_url).toBe('Town clerk email');
+    // content_base64 is the real bytes, base64-encoded.
+    expect(atob(sent.content_base64)).toBe('hello pdf bytes');
+    // supplied_by is NEVER sent (server-derived, un-forgeable); review_state never echoed.
+    expect(sent).not.toHaveProperty('supplied_by');
+    expect(sent).not.toHaveProperty('review_state');
+
+    // The receipt carries ONLY the coarse projected bucket — no raw state/id/hash.
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.receipt.status).toBe('received');
+      expect(Object.keys(outcome.receipt)).toEqual(['status']);
+      expect(() => assertWebSafe(outcome.receipt)).not.toThrow();
+      for (const forbidden of ['review_state', 'file_id', 'sha256', 'deduped']) {
+        expect(outcome.receipt).not.toHaveProperty(forbidden);
+      }
+    }
+  });
+
+  it('omits origin_url when the uploader gave no origin text', async () => {
+    const { fetchImpl, calls } = recordingFetch({ status: 201, body: { review_state: 'pending' } });
+    const t = createHttpIntakeTransport({ fetchImpl });
+    await t.submit(staged({ provenance: { sourceOrigin: '   ', description: 'June minutes' } }), bytesSource('x'));
+    const sent = JSON.parse(calls[0].init.body as string);
+    expect(sent).not.toHaveProperty('origin_url');
+  });
+
+  it('a malformed 2xx body still succeeds but fails closed to review_pending', async () => {
+    const { fetchImpl } = recordingFetch({ status: 201, body: { review_state: 'reviewing' } });
+    const outcome = await createHttpIntakeTransport({ fetchImpl }).submit(staged(), bytesSource('x'));
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) expect(outcome.receipt.status).toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
+  });
+
+  it('maps each B3 status code to a fail-closed rejection reason', async () => {
+    const cases: Array<[number, string]> = [
+      [401, 'unauthorized'], [403, 'unauthorized'], [404, 'unauthorized'],
+      [413, 'too_large'], [415, 'unsupported_type'], [503, 'backend_unavailable'],
+      [400, 'unknown'], [422, 'unknown'], [500, 'unknown'],
+    ];
+    for (const [status, reason] of cases) {
+      const { fetchImpl } = recordingFetch({ status });
+      const outcome = await createHttpIntakeTransport({ fetchImpl }).submit(staged(), bytesSource('x'));
+      expect(outcome.ok).toBe(false);
+      if (!outcome.ok) expect(outcome.rejection.reason).toBe(reason);
+    }
+  });
+
+  it('a network failure is backend_unavailable, never a fake receipt', async () => {
+    const { fetchImpl } = recordingFetch({ status: 0, throws: true });
+    const outcome = await createHttpIntakeTransport({ fetchImpl }).submit(staged(), bytesSource('x'));
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.rejection.reason).toBe('backend_unavailable');
+  });
+
+  it('refuses to send (fail-closed unknown) when no bytes source is provided', async () => {
+    const { fetchImpl, calls } = recordingFetch({ status: 201, body: { review_state: 'pending' } });
+    const outcome = await createHttpIntakeTransport({ fetchImpl }).submit(staged(), undefined);
+    expect(calls).toHaveLength(0);
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.rejection.reason).toBe('unknown');
   });
 });
 
