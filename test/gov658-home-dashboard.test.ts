@@ -62,7 +62,7 @@ const HOME_BASELINE_SLOTS = [
   'home-timeline-preview',
   'home-latest-verdict-unavailable',
   'home-source-vault',
-  'home-explainer-video-unavailable',
+  'home-explainer-video',
   'home-language-watch-unavailable',
   'home-simple-90-day-tools',
   'home-simple-things',
@@ -131,9 +131,12 @@ describe('GOV-658 Home dashboard — Advanced mode honesty map', () => {
     expect(root.querySelector('[data-test="home-language-watch-unavailable"]')?.textContent).toContain(
       'No reviewed language-watch flags are available',
     );
-    expect(root.querySelector('[data-test="home-explainer-video-unavailable"]')?.textContent).toContain(
-      'Explainer video is not published in this app yet',
-    );
+    const explainer = root.querySelector('[data-test="home-explainer-video"]');
+    expect(explainer?.getAttribute('data-origin')).toBe('coming-soon');
+    expect(explainer?.querySelector('[data-test="coming-soon-note"]')?.textContent).toContain('COMING SOON');
+    expect(explainer?.querySelector('[data-test="home-explainer-link"]')?.getAttribute('href')).toBe('#/explainer');
+    // An unbuilt feature must not borrow the language of a missing civic record.
+    expect(explainer?.textContent).not.toMatch(/no video URL|playback status|Source:/i);
   });
 
   it('keeps unsupported civic values absent while preserving their designed slots', () => {
