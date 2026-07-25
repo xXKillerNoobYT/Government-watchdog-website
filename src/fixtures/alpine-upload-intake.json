@@ -1,0 +1,13 @@
+{
+  "_note": "GOV-1566 F1 CONTRACT fixture for the Backend B3 gated-intake API (GOV-1576, not built yet). It documents the EXACT web-safe shapes F1 consumes: the mime+size constraints the form mirrors, and the three coarse receipt buckets a success may project. NO raw path, no hash, no reviewer note, and NO internal `review_state` key — those are denylisted and would trip assertWebSafe. Swept for raw paths on load like every other fixture; when B3 lands the live authenticated POST replaces the scaffold transport with no shape change.",
+  "constraints": {
+    "acceptedMimeTypes": ["application/pdf", "image/png", "image/jpeg", "text/plain"],
+    "acceptedLabel": "PDF, PNG or JPEG image, or plain text",
+    "maxBytes": 26214400
+  },
+  "sampleReceipts": [
+    { "status": "received" },
+    { "status": "review_pending" },
+    { "status": "held" }
+  ]
+}

@@ -47,6 +47,8 @@ import {
   type DesignPageOptions,
 } from './ui/design-pages';
 import { renderTopicTreeView } from './ui/topic-tree-view';
+import { renderGatedUpload, DEFAULT_INTAKE_CONSTRAINTS, type UploadPhase } from './ui/gated-upload';
+import type { UploadReviewState } from './types/upload-intake';
 import { mountThemeToggle } from './ui/theme-toggle';
 import { renderShell, type ShellOrigin } from './ui/shell';
 import {
@@ -70,6 +72,7 @@ import agendaBoardData from './fixtures/agenda-board-projection.json';
 import agendaBoardSampleData from './fixtures/agenda-board-projection.sample.dev.json';
 import suppliedFilesData from './fixtures/alpine-supplied-files.json';
 import supersedeData from './fixtures/alpine-supersede-events.json';
+import uploadIntakeContract from './fixtures/alpine-upload-intake.json';
 import type { AgendaBoard } from './types/agenda-board';
 
 /**
@@ -167,6 +170,16 @@ const SUPPLIED_FILES: SuppliedFilesProjection = assertWebSafe(suppliedFilesData 
  * B5 (GOV-1578) + B6 (GOV-1579) land.
  */
 const SUPERSEDE_EVENTS: SupersedeProjection = assertWebSafe(supersedeData as SupersedeProjection);
+
+/**
+ * GOV-1566 F1 — the gated upload surface's B3 intake CONTRACT fixture (Backend
+ * B3 GOV-1576 is not built yet). It carries the mime+size constraints the form
+ * mirrors and the three coarse web-safe receipt buckets — NO raw path and NO
+ * internal `review_state` key, so it passes the same load-time raw-path sweep as
+ * every other fixture. The form runs against the fail-closed SCAFFOLD transport
+ * until B3 lands (one-line live swap in the route below).
+ */
+assertWebSafe(uploadIntakeContract);
 
 /**
  * GOV-462 — the Stage 4.05 reviewer-internal Alpine newsletter digest object,
@@ -538,6 +551,33 @@ function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): voi
 }
 
 /**
+ * GOV-1566 F1 gated upload route: the authorized-cohort file-intake surface. The
+ * outer `gated()` wrapper is the authority — a non-approved state renders the
+ * existing gate panel with ZERO upload affordance (the honest gated-out state),
+ * so this handler runs only once approved. `?ustate=` forces a phase for
+ * review/screenshots (idle | validating | uploading | received | held | error),
+ * and `?rstatus=` picks the projected receipt bucket for the `received` shot.
+ * The intake backend (B3) is not wired, so the scaffold transport (fail-closed)
+ * is used and the surface labels itself non-functional scaffolding.
+ */
+function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
+  const forced = query.get('ustate');
+  const forcedPhase: UploadPhase | undefined =
+    forced === 'validating' || forced === 'uploading' || forced === 'received' ||
+    forced === 'held' || forced === 'error' || forced === 'idle'
+      ? forced
+      : undefined;
+  const rstatus = query.get('rstatus');
+  const forcedReceiptStatus: UploadReviewState | undefined =
+    rstatus === 'received' || rstatus === 'review_pending' || rstatus === 'held' ? rstatus : undefined;
+  renderGatedUpload(mount, {
+    constraints: DEFAULT_INTAKE_CONSTRAINTS,
+    forcedPhase,
+    forcedReceiptStatus,
+  });
+}
+
+/**
  * GOV-462 newsletter route (gated): `#/newsletter` opens the archive plus the
  * honest-empty current-edition baseline, and `?id=` deep-links a digest. The
  * response has no current/featured marker, so the client never guesses one.
@@ -771,6 +811,7 @@ router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mou
 router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
 router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
 router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
+router.register('/upload', gated(({ mount, query }) => renderUploadRoute(mount, query)));
 router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
 router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
 router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
