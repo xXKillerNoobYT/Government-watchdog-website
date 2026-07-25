@@ -60,8 +60,10 @@ export const UPLOAD_COPY = {
   fileLabel: 'Choose a file',
   originLabel: 'Where did this file come from?',
   originHint: 'e.g. “Town of Alpine clerk, emailed 2026-06-09”',
-  descriptionLabel: 'What is this file?',
-  descriptionHint: 'e.g. “Signed minutes for the June regular meeting”',
+  /** GOV-1609 §3.2 — the kind picker replaces the old free-text "What is this file?". */
+  descriptionLabel: 'What kind of file is this?',
+  /** GOV-1609 §3.1 — non-value placeholder option; no kind is preselected (W1). */
+  descriptionPlaceholderOption: 'Choose a kind…',
   submitLabel: 'Upload for review',
   /** C2 — transfer only; never "processing/analyzing/verifying". */
   uploadingStatus: 'Uploading… please don’t close this tab.',
@@ -77,6 +79,33 @@ export const UPLOAD_COPY = {
   retry: 'Try again',
   provenanceEchoHeading: 'What you told us about this file',
 } as const;
+
+/**
+ * GOV-1609 §3.1 — the closed document-kind taxonomy for `source_type`.
+ *
+ * Each entry is a claim the **uploader** makes about their OWN file — like
+ * choosing the file itself — and asserts NOTHING about the document's content
+ * truth (W1-safe: none of these are values lifted from a fixture or `.dc.html`
+ * reference). The list is deliberately short with an always-available escape
+ * hatch (`Other document`) so no upload is ever blocked by taxonomy. The chosen
+ * label is sent to B3 as `source_type` **verbatim** — a taxonomy value, never
+ * prose — so files can be grouped/filtered by kind. There is no preselected
+ * default (that would fabricate an assertion about the file), and `Other
+ * document` does NOT open a secondary free-text field (prose belongs in the
+ * free-text origin field, never back in this taxonomy column).
+ */
+export const UPLOAD_KIND_OPTIONS = [
+  'Meeting minutes',
+  'Agenda or meeting packet',
+  'Ordinance or resolution',
+  'Notice or public announcement',
+  'Correspondence (letter or email)',
+  'Financial or budget document',
+  'Report or study',
+  'Other document',
+] as const;
+
+export type UploadKind = (typeof UPLOAD_KIND_OPTIONS)[number];
 
 /**
  * Client mirror of B3's mime allow-list + size cap. PLACEHOLDER values until B3
@@ -151,7 +180,8 @@ export function validateStagedUpload(
   }
   if (!staged.provenance.description.trim()) {
     result.ok = false;
-    result.descriptionError = 'Say what this file is before uploading.';
+    // GOV-1609 §3.2 — the description is now a bounded kind selection.
+    result.descriptionError = 'Pick what kind of file this is before uploading.';
   }
   return result;
 }
@@ -592,7 +622,8 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
       const f = fileInput.files && fileInput.files[0];
       rawFile = f ?? null;
       staged.file = f ? { name: f.name, sizeBytes: f.size, mimeType: f.type } : null;
-      submitBtn.disabled = !staged.file;
+      // GOV-1609 §3.1 — submit stays disabled until BOTH a file and a kind exist.
+      submitBtn.disabled = !staged.file || !staged.provenance.description;
     });
 
     const originInput = el('input', {
@@ -607,16 +638,33 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
       staged.provenance.sourceOrigin = originInput.value;
     });
 
-    const descInput = el('input', {
-      type: 'text',
+    // GOV-1609 §3 — bounded document-kind picker (was a free-text input). A
+    // taxonomy field fed prose can never group/filter; a `<select>` keeps
+    // `source_type` a real kind. No kind is preselected (W1): the first option is
+    // a valueless placeholder, so `staged.provenance.description` stays '' — which
+    // the pure validator already treats as "missing provenance".
+    const descSelect = el('select', {
       id: 'gw-up-desc',
-      class: 'gw-up-input',
+      class: 'gw-up-select',
       'data-test': 'upload-provenance-description',
-      placeholder: UPLOAD_COPY.descriptionHint,
-    }) as HTMLInputElement;
-    descInput.value = staged.provenance.description;
-    descInput.addEventListener('input', () => {
-      staged.provenance.description = descInput.value;
+    }) as HTMLSelectElement;
+    const placeholderOpt = el('option', { value: '', disabled: 'disabled' }, [
+      UPLOAD_COPY.descriptionPlaceholderOption,
+    ]) as HTMLOptionElement;
+    descSelect.append(placeholderOpt);
+    for (const kind of UPLOAD_KIND_OPTIONS) {
+      descSelect.append(el('option', { value: kind }, [kind]));
+    }
+    // Reflect any retained selection across a validation re-render; '' ⇒ the
+    // placeholder is shown and nothing is chosen.
+    descSelect.value = staged.provenance.description;
+    if (validation?.descriptionError) {
+      descSelect.setAttribute('aria-invalid', 'true');
+      descSelect.setAttribute('aria-describedby', 'upload-error-description');
+    }
+    descSelect.addEventListener('change', () => {
+      staged.provenance.description = descSelect.value;
+      submitBtn.disabled = !staged.file || !staged.provenance.description;
     });
 
     const submitBtn = el(
@@ -624,10 +672,18 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
       { type: 'submit', class: 'gw-up-btn', 'data-test': 'upload-submit' },
       [UPLOAD_COPY.submitLabel],
     ) as HTMLButtonElement;
-    submitBtn.disabled = !staged.file;
+    submitBtn.disabled = !staged.file || !staged.provenance.description;
 
+    // Inline field error: icon + text + colour (colour is never the sole error
+    // carrier — W6/A4). The icon is `aria-hidden` so a screen reader announces
+    // only the message; `id === data-test` so a control can `aria-describedby` it.
     const fieldErr = (test: string, msg?: string): HTMLElement | null =>
-      msg ? el('p', { class: 'gw-up-field-err', 'data-test': test, role: 'alert' }, [msg]) : null;
+      msg
+        ? el('p', { class: 'gw-up-field-err', id: test, 'data-test': test, role: 'alert' }, [
+            el('span', { class: 'gw-up-err-icon', 'aria-hidden': 'true' }, ['⚠']),
+            msg,
+          ])
+        : null;
 
     form.append(
       el('label', { class: 'gw-up-label', for: 'gw-up-file' }, [UPLOAD_COPY.fileLabel]),
@@ -643,7 +699,7 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
     const oe = fieldErr('upload-error-origin', validation?.originError);
     if (oe) form.append(oe);
 
-    form.append(el('label', { class: 'gw-up-label', for: 'gw-up-desc' }, [UPLOAD_COPY.descriptionLabel]), descInput);
+    form.append(el('label', { class: 'gw-up-label', for: 'gw-up-desc' }, [UPLOAD_COPY.descriptionLabel]), descSelect);
     const de = fieldErr('upload-error-description', validation?.descriptionError);
     if (de) form.append(de);
 
@@ -741,9 +797,11 @@ export const GATED_UPLOAD_STYLE = `${GW_TOKENS}
 .gw-up-form{display:flex;flex-direction:column;gap:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-5);background:var(--gw-surface)}
 .gw-up-label{font-weight:600;margin-top:var(--gw-space-3)}
 .gw-up-constraints{font-size:.82rem;margin:0}
-.gw-up-file,.gw-up-input{font:inherit;padding:var(--gw-space-2) var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-page-bg);color:var(--gw-text);min-height:var(--gw-tap-min);box-sizing:border-box}
-.gw-up-input:focus-visible,.gw-up-file:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
-.gw-up-field-err{color:var(--gw-stop-text);font-size:.85rem;margin:0}
+.gw-up-file,.gw-up-input,.gw-up-select{font:inherit;padding:var(--gw-space-2) var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius);background:var(--gw-page-bg);color:var(--gw-text);min-height:var(--gw-tap-min);box-sizing:border-box}
+.gw-up-select{align-self:flex-start;max-width:100%}
+.gw-up-input:focus-visible,.gw-up-file:focus-visible,.gw-up-select:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
+.gw-up-field-err{display:flex;align-items:center;gap:var(--gw-space-1);color:var(--gw-stop-text);font-size:.85rem;margin:0}
+.gw-up-err-icon{font-size:.9rem;line-height:1}
 .gw-up-btn{align-self:flex-start;margin-top:var(--gw-space-4);min-height:var(--gw-tap-min);padding:var(--gw-space-2) var(--gw-space-5);font:600 1rem/1 var(--gw-font);color:var(--gw-accent-text-on);background:var(--gw-accent);border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius);cursor:pointer}
 .gw-up-btn:disabled{opacity:.5;cursor:not-allowed}
 .gw-up-btn:focus-visible,.gw-up-btn-ghost:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}

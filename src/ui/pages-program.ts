@@ -21,6 +21,7 @@ import { ensureStyle, gapCardSection, recordCard } from './render';
 import {
   groupSuppliedFilesByMeeting,
   pendingReviewNotice,
+  safeHttpUrl,
   suppliedFileMeta,
 } from './supplied-files';
 import {
@@ -1413,6 +1414,11 @@ export function renderSuppliedFiles(
 /** One reviewed file rendered as a source-drawer card (present-only metadata). */
 function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
   const meta = suppliedFileMeta(file);
+  // GOV-1609 §4.2 — display-safety: only auto-linkify a provenance URL that
+  // actually parses as http(s). Prose that landed in a URL-named field renders
+  // as no link, never a bare/broken hyperlink.
+  const originalHref = safeHttpUrl(file.original_url);
+  const archiveHref = safeHttpUrl(file.archive_url);
   return el('article', {
     class: 'gw-card',
     'data-test': 'supplied-file-row',
@@ -1421,8 +1427,8 @@ function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
   }, [
     el('h3', {}, [file.title]),
     ...meta.map((row) => el('p', { class: 'gw-muted', 'data-test': `supplied-file-${row.key}` }, [`${row.label}: ${row.value}`])),
-    ...(file.original_url ? [el('a', { href: file.original_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),
-    ...(file.archive_url ? [el('a', { href: file.archive_url, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-archive' }, ['Archived copy ↗'])] : []),
+    ...(originalHref ? [el('a', { href: originalHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),
+    ...(archiveHref ? [el('a', { href: archiveHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-archive' }, ['Archived copy ↗'])] : []),
   ]);
 }
 
