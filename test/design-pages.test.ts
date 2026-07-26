@@ -14,6 +14,10 @@ import {
   renderWatchlist,
   type DesignPageOptions,
 } from '../src/ui/design-pages';
+import {
+  PRIVATE_INFO_NOTES,
+  type PrivateInfoNoteId,
+} from '../src/ui/private-info-note';
 import type { ReadApiResponse } from '../src/types/read-api';
 
 const ALLOWED: DesignPageOptions = { access: 'reviewer_internal', fixture: true };
@@ -74,9 +78,113 @@ const MATERIAL_STATUS_DATA: ReadApiResponse = {
   ],
 };
 const renderers = [renderPowerTracker, renderWatchlist, renderLocation, renderAlerts] as const;
+const NOTE_CASES = [
+  {
+    name: 'Power Tracker',
+    renderer: renderPowerTracker,
+    overview: 'power-overview',
+    live: [
+      'power-jurisdiction',
+      'power-roster',
+      'power-score',
+      'power-match',
+      'power-ledgers',
+      'reviewed-record-trust',
+      'reviewed-source-receipts',
+    ],
+    fixture: [
+      'power-jurisdiction',
+      'power-roster',
+      'power-score',
+      'power-match',
+      'power-ledgers',
+    ],
+  },
+  {
+    name: 'Watchlist',
+    renderer: renderWatchlist,
+    overview: 'watchlist-overview',
+    live: [
+      'watchlist-local-state',
+      'watchlist-add',
+      'watchlist-timing',
+      'watchlist-record-types',
+      'watchlist-delivery',
+      'reviewed-record-trust',
+      'reviewed-source-receipts',
+    ],
+    fixture: [
+      'watchlist-local-state',
+      'watchlist-add',
+      'watchlist-record-types',
+      'watchlist-delivery',
+    ],
+  },
+  {
+    name: 'Location',
+    renderer: renderLocation,
+    overview: 'location-overview',
+    live: [
+      'location-saved-scope',
+      'location-directory',
+      'location-coverage',
+      'location-change-policy',
+      'location-history',
+      'reviewed-record-trust',
+      'reviewed-source-receipts',
+    ],
+    fixture: [
+      'location-saved-scope',
+      'location-directory',
+      'location-coverage',
+      'location-change-policy',
+    ],
+  },
+  {
+    name: 'Alerts',
+    renderer: renderAlerts,
+    overview: 'alerts-overview',
+    live: [
+      'alerts-feed',
+      'alerts-read-state',
+      'alerts-triggers',
+      'alerts-delivery',
+      'alerts-tracking',
+      'alerts-freshness',
+    ],
+    fixture: [
+      'alerts-feed',
+      'alerts-read-state',
+      'alerts-triggers',
+      'alerts-delivery',
+      'alerts-tracking',
+    ],
+  },
+] as const satisfies readonly {
+  name: string;
+  renderer: typeof renderPowerTracker;
+  overview: PrivateInfoNoteId;
+  live: readonly PrivateInfoNoteId[];
+  fixture: readonly PrivateInfoNoteId[];
+}[];
 
 let root: HTMLElement;
 let store: Map<string, string>;
+
+function infoNoteIds(): Set<string> {
+  return new Set(
+    [...root.querySelectorAll<HTMLElement>('[data-info-note]')]
+      .map((node) => node.dataset.infoNote ?? ''),
+  );
+}
+
+function infoNoteText(id: PrivateInfoNoteId): string {
+  const trigger = root.querySelector<HTMLButtonElement>(`[data-info-note="${id}"]`);
+  expect(trigger, id).not.toBeNull();
+  const panelId = trigger!.getAttribute('aria-controls');
+  expect(panelId, id).toBeTruthy();
+  return root.querySelector(`#${panelId}`)?.textContent ?? '';
+}
 
 beforeEach(() => {
   store = new Map();
@@ -90,6 +198,7 @@ beforeEach(() => {
       return store.size;
     },
   });
+  localStorage.setItem('gw_home_mode', 'advanced');
   document.documentElement.removeAttribute('data-theme');
   document.head.replaceChildren();
   document.body.replaceChildren();
@@ -161,6 +270,124 @@ describe('synthetic design pages — hard fixture gate', () => {
     const unavailableTools = root.querySelectorAll('[data-test="watchlist-advanced-workbench"] button:disabled');
     expect(unavailableTools).toHaveLength(3);
     expect(root.textContent).toContain('unsupported record types stay disabled');
+  });
+});
+
+describe('design page contextual information notes', () => {
+  it('covers every major live and fixture group in both reading modes', () => {
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      for (const definition of NOTE_CASES) {
+        definition.renderer(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+        const liveIds = infoNoteIds();
+        for (const id of [definition.overview, ...definition.live]) {
+          expect(liveIds.has(id), `${definition.name} live ${mode}: ${id}`).toBe(true);
+        }
+        expect(
+          root.querySelector(`.gw-dp-page-head [data-info-note="${definition.overview}"]`),
+          `${definition.name} live ${mode} route header`,
+        ).not.toBeNull();
+
+        const liveTriggers = [...root.querySelectorAll<HTMLButtonElement>('[data-info-note]')];
+        const livePanelIds = liveTriggers.map((trigger) => trigger.getAttribute('aria-controls'));
+        const liveLabels = liveTriggers.map((trigger) => trigger.getAttribute('aria-label'));
+        expect(new Set(livePanelIds).size, `${definition.name} live ${mode} panel ids`)
+          .toBe(livePanelIds.length);
+        expect(new Set(liveLabels).size, `${definition.name} live ${mode} accessible labels`)
+          .toBe(liveLabels.length);
+        for (const trigger of liveTriggers) {
+          const panelId = trigger.getAttribute('aria-controls');
+          const text = panelId ? root.querySelector(`#${panelId}`)?.textContent ?? '' : '';
+          expect(text, `${definition.name} live ${mode}: ${trigger.dataset.infoNote}`)
+            .toMatch(/What this is.*Filled from.*Filed under.*Review and updates.*Current state.*Limits.*Expected result/s);
+        }
+
+        definition.renderer(root, ALLOWED);
+        const fixtureIds = infoNoteIds();
+        for (const id of [definition.overview, ...definition.fixture]) {
+          expect(fixtureIds.has(id), `${definition.name} fixture ${mode}: ${id}`).toBe(true);
+        }
+        expect(
+          root.querySelector(`.gw-dp-page-head [data-info-note="${definition.overview}"]`),
+          `${definition.name} fixture ${mode} route header`,
+        ).not.toBeNull();
+        const fixtureTriggers = [
+          ...root.querySelectorAll<HTMLButtonElement>('[data-info-note]'),
+        ];
+        const fixtureLabels = fixtureTriggers.map((trigger) => trigger.getAttribute('aria-label'));
+        expect(new Set(fixtureLabels).size, `${definition.name} fixture ${mode} accessible labels`)
+          .toBe(fixtureLabels.length);
+      }
+    }
+  });
+
+  it('puts a structured registered explanation inside every unavailable slot', () => {
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      for (const definition of NOTE_CASES) {
+        definition.renderer(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+        const slots = [...root.querySelectorAll<HTMLElement>('.gw-dp-unavailable-slot')];
+        expect(slots.length, `${definition.name} ${mode} unavailable slot count`).toBeGreaterThan(0);
+        for (const slot of slots) {
+          const trigger = slot.querySelector<HTMLButtonElement>('[data-info-note]');
+          expect(trigger, `${definition.name} ${mode}: ${slot.dataset.test}`).not.toBeNull();
+          const id = trigger?.dataset.infoNote as PrivateInfoNoteId | undefined;
+          expect(id && PRIVATE_INFO_NOTES[id], `${definition.name} ${mode}: registered note`).toBeTruthy();
+          const panelId = trigger?.getAttribute('aria-controls');
+          const text = panelId ? slot.querySelector(`#${panelId}`)?.textContent ?? '' : '';
+          expect(text, `${definition.name} ${mode}: ${slot.dataset.test}`)
+            .toMatch(/Current state.*Expected result/s);
+        }
+      }
+    }
+  });
+
+  it('visibly identifies every grouped fixture explanation beside its control', () => {
+    for (const definition of NOTE_CASES) {
+      definition.renderer(root, ALLOWED);
+      for (const item of root.querySelectorAll<HTMLElement>('[data-info-note-item]')) {
+        const id = item.dataset.infoNoteItem as PrivateInfoNoteId;
+        expect(item.querySelector('.gw-dp-info-note-label')?.textContent, id)
+          .toBe(PRIVATE_INFO_NOTES[id].label);
+        expect(item.querySelector(`[data-info-note="${id}"]`), id).not.toBeNull();
+      }
+    }
+  });
+
+  it('explains score and coverage methods plus local monitoring and notification boundaries', () => {
+    renderPowerTracker(root, REVIEWED_OPTIONS, REVIEWED_DATA, REVIEWED_NOTICE);
+    expect(infoNoteText('power-score')).toMatch(/Method version.*Inputs.*Exclusions.*Denominator.*Update cadence.*Missing data/s);
+    expect(infoNoteText('power-score')).toMatch(/no live score or denominator/i);
+
+    renderLocation(root, ALLOWED);
+    expect(infoNoteText('location-coverage')).toMatch(/design-preview percentages are synthetic geometry only/i);
+    expect(infoNoteText('location-coverage')).toMatch(/eligible source\/record population has not been supplied/i);
+
+    renderWatchlist(root, ALLOWED);
+    expect(infoNoteText('watchlist-overview')).toMatch(/does not create a subscription, alert, reminder, background monitor/i);
+    expect(infoNoteText('watchlist-delivery')).toMatch(/Device-local keys are not monitored/i);
+
+    renderAlerts(root, ALLOWED);
+    expect(infoNoteText('alerts-overview')).toMatch(/separate from account-workflow notifications/i);
+    expect(infoNoteText('alerts-feed')).toMatch(/no statement\/account notification becomes a civic alert/i);
+  });
+
+  it('renders no private trigger or registry copy for direct non-reviewer calls', () => {
+    for (const definition of NOTE_CASES) {
+      definition.renderer(
+        root,
+        { access: 'public', fixture: true },
+        { ...REVIEWED_DATA, access: 'public' },
+        REVIEWED_NOTICE,
+      );
+      expect(root.querySelector('[data-info-note]'), definition.name).toBeNull();
+      expect(root.textContent, definition.name).not.toContain(
+        PRIVATE_INFO_NOTES[definition.overview].what,
+      );
+      for (const id of [...definition.live, ...definition.fixture]) {
+        expect(root.textContent, `${definition.name}: ${id}`).not.toContain(PRIVATE_INFO_NOTES[id].what);
+      }
+    }
   });
 });
 
@@ -534,7 +761,11 @@ describe('accessibility and claim-safety invariants', () => {
   it('does not assert live monitoring, security, identity, or delivery guarantees', () => {
     for (const renderer of renderers) {
       renderer(root, ALLOWED);
-      const text = root.textContent ?? '';
+      const visibleCopy = root.cloneNode(true) as HTMLElement;
+      for (const explanatoryPanel of visibleCopy.querySelectorAll('.gw-info-panel')) {
+        explanatoryPanel.remove();
+      }
+      const text = visibleCopy.textContent ?? '';
       expect(text).not.toMatch(/encrypted|secure account|verified identity|real-time monitoring|guaranteed delivery/i);
     }
   });

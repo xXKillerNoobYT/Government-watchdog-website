@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vitest/config';
+import type { Plugin } from 'vite';
 
 // Minimal ambient `process` — this config runs in Node, but the repo omits
 // @types/node on purpose (tests read source-as-text without node types). We only
@@ -22,14 +23,85 @@ const apiProxy = {
   },
 };
 
-export default defineConfig({
-  // Reviewer-internal/local only: bind to localhost, never expose publicly.
-  server: { host: '127.0.0.1', port: 5173, proxy: apiProxy },
-  preview: { host: '127.0.0.1', port: 4173, proxy: apiProxy },
-  build: { outDir: 'dist/client' },
-  test: {
-    globals: true,
-    environment: 'node',
-    include: ['test/**/*.test.ts'],
-  },
+export const PUBLIC_LOCAL_MODULES = new Set([
+  '/public-entry/index.html',
+  '/src/public-main.ts',
+  '/src/ui/fonts.ts',
+  '/src/ui/info-note.ts',
+  '/src/ui/public-landing.ts',
+  '/src/ui/tokens.ts',
+]);
+
+/** Return the repository-local portion of a Vite/Rollup module ID, if any. */
+export function publicRepositoryModulePath(id: string, repositoryRoot: string): string | null {
+  const normalized = id.replaceAll('\\', '/').split('?', 1)[0] ?? id;
+  const normalizedRoot = repositoryRoot.replaceAll('\\', '/').replace(/\/+$/, '');
+  if (!normalized.startsWith(`${normalizedRoot}/`)) return null;
+  const localPath = normalized.slice(normalizedRoot.length);
+  if (localPath.startsWith('/node_modules/')) return null;
+  return localPath;
+}
+
+/**
+ * Enforce the public graph from Rollup's parsed-module hook. This catches a
+ * newly imported private helper even when minification removes every marker the
+ * completed-asset denylist knows about.
+ */
+export function publicModuleBoundary(): Plugin {
+  let repositoryRoot = '';
+  return {
+    name: 'government-watchdog-public-module-boundary',
+    apply: 'build',
+    configResolved(config) {
+      const normalizedRoot = config.root.replaceAll('\\', '/').replace(/\/+$/, '');
+      repositoryRoot = normalizedRoot.endsWith('/public-entry')
+        ? normalizedRoot.slice(0, -'/public-entry'.length)
+        : normalizedRoot;
+    },
+    moduleParsed(moduleInfo) {
+      const localPath = publicRepositoryModulePath(moduleInfo.id, repositoryRoot);
+      if (localPath && !PUBLIC_LOCAL_MODULES.has(localPath)) {
+        this.error(
+          `Public build discovered disallowed local module ${localPath}. `
+          + 'Add public behavior through the reviewed public entry graph; do not import private application modules.',
+        );
+      }
+    },
+  };
+}
+
+/**
+ * The public and private-beta builds intentionally start from different module
+ * graphs. Hiding private routes in the DOM is not an asset boundary: if both
+ * lanes shared `src/main.ts`, Rollup would still package reviewer fixtures and
+ * local bypass code into browser-downloadable JavaScript.
+ *
+ * `mode` is selected by the build command running on the server/CI. It is never
+ * read from a browser URL, local storage, or a visual Simple/Advanced toggle.
+ */
+export default defineConfig(({ mode }) => {
+  const publicLane = mode === 'public';
+
+  return {
+    plugins: publicLane ? [publicModuleBoundary()] : [],
+    // A real HTML root selects the module graph before Rollup discovers imports.
+    // An HTML transform is too late for this security boundary: it can rewrite
+    // the generated tag while leaving the already-discovered private graph.
+    root: publicLane ? 'public-entry' : '.',
+    publicDir: publicLane ? false : 'public',
+    // Private development stays loopback-only. The public lane is a static
+    // production artifact; choosing it does not expose the local API proxy.
+    server: { host: '127.0.0.1', port: 5173, proxy: apiProxy },
+    preview: { host: '127.0.0.1', port: 4173, proxy: apiProxy },
+    build: {
+      outDir: publicLane ? '../dist/public' : 'dist/client',
+      emptyOutDir: true,
+      sourcemap: false,
+    },
+    test: {
+      globals: true,
+      environment: 'node',
+      include: ['test/**/*.test.ts'],
+    },
+  };
 });

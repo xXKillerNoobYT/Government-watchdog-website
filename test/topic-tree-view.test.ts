@@ -21,6 +21,13 @@ beforeEach(() => {
 describe('topic-tree view — nested tree + human-label-first nodes', () => {
   beforeEach(() => renderTopicTreeView(root, TOPIC_TREE, { focusTopicId: 'topic:fire' }));
 
+  it('starts at h2 so the containing Topics route remains the sole h1 owner', () => {
+    expect(root.querySelectorAll('h1')).toHaveLength(0);
+    expect(root.querySelector('h2')?.textContent).toBe('Civic topic tree');
+    expect([...root.querySelectorAll('h2, h3, h4')].every((heading) =>
+      Number(heading.tagName.slice(1)) >= 2)).toBe(true);
+  });
+
   it('renders one node per topic with the human label as the primary text', () => {
     const labels = [...root.querySelectorAll('[data-test="tt-node-label"]')].map((n) => n.textContent);
     expect(labels).toContain('general safety');

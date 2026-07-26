@@ -2,7 +2,9 @@
  * Minimal public landing + gated-beta entry (GOV-799).
  *
  * Isaac directive 2026-07-18: "minimal is key... make it look good but dont
- * explain anything at all. Just a few buttons."
+ * explain anything at all. Just a few buttons." The later contextual-help
+ * requirement is met with one compact `?` control, keeping the gate itself
+ * visually minimal and keeping its detailed copy collapsed by default.
  *
  * Anonymous state renders: name + "In Beta" badge + Login + Sign up.
  * No mission copy, no scope explanation, no gated-beta note.
@@ -19,6 +21,7 @@ import { GW_TOKENS } from './tokens';
 import { applyThemePref, readThemePref } from './theme-toggle';
 import { renderWaitlistForm, WAITLIST_STYLE } from './waitlist-form';
 import { renderMagicLinkForm, MAGIC_LINK_STYLE } from './magic-link-form';
+import { renderPrivateInfoNote } from './private-info-note';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -92,13 +95,24 @@ function anonymousLandingEl(): HTMLElement {
   return el(
     'section',
     { class: 'gw-gate-panel', 'data-test': 'gate-panel', 'data-state': 'anonymous' },
-    [ctaRow, mlSection, waitlistSection, scaffoldNote],
+    [
+      el('div', { class: 'gw-gate-info', 'data-test': 'beta-access-info' }, [
+        renderPrivateInfoNote('beta-access'),
+      ]),
+      ctaRow,
+      mlSection,
+      waitlistSection,
+      scaffoldNote,
+    ],
   );
 }
 
 /** Compact gate panel for non-anonymous states (unchanged behavior). */
 function gatePanelEl(panel: GatePanel): HTMLElement {
   const children: (Node | string)[] = [
+    el('div', { class: 'gw-gate-info', 'data-test': 'beta-access-info' }, [
+      renderPrivateInfoNote('beta-access'),
+    ]),
     el('span', { class: `gw-gate-badge gw-gate-${panel.state}`, 'data-test': 'gate-badge', 'data-state': panel.state }, [
       panel.badge,
     ]),
@@ -195,6 +209,7 @@ html{background:var(--gw-page-bg)}
 .gw-beta-badge{display:inline-block;font-size:var(--gw-text-badge);font-weight:700;border-radius:var(--gw-radius-pill);padding:.2rem var(--gw-space-3);background:var(--gw-caution-bg);color:var(--gw-caution-text);border:var(--gw-border-w) solid var(--gw-caution-text);white-space:nowrap;letter-spacing:.04em}
 .gw-muted{color:var(--gw-text-muted)}
 .gw-gate-panel,.gw-gated-app{border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-5) 1.1rem;margin:0;background:var(--gw-surface)}
+.gw-gate-info{display:flex;justify-content:flex-end;min-height:28px;margin-bottom:var(--gw-space-1)}
 .gw-gate-badge{display:inline-block;font-size:var(--gw-text-badge);font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem var(--gw-space-3);border:var(--gw-border-w) solid;white-space:nowrap}
 .gw-gate-anonymous{background:var(--gw-surface-accent-tint);color:var(--gw-accent);border-color:var(--gw-accent)}
 .gw-gate-waitlisted{background:var(--gw-tone-info-well);color:var(--gw-info-text);border-color:var(--gw-tone-info-line)}

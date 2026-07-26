@@ -35,6 +35,11 @@ import { GW_TOKENS } from './tokens';
 import { statusTone, uiStatusLabel, AI_LABEL_TEXT } from './state-view';
 import type { TrustTone } from './state-view';
 import { readMode } from './shell';
+import {
+  renderPrivateInfoNote,
+  renderPrivateUnavailableInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 import { assertDigestWebSafe } from '../data/web-safe';
 import type { UiStatus } from '../types/read-api';
 import {
@@ -224,6 +229,18 @@ export function resolveItems(digest: NewsletterDigest, ids: string[]): Newslette
 /** The reviewer-internal / Alpine-only header (never implies other coverage). */
 const ALPINE_KICKER = 'Reviewer-internal · Town of Alpine, Wyoming';
 
+function headingWithInfo<K extends 'h1' | 'h2' | 'h3'>(
+  tag: K,
+  attrs: Record<string, string>,
+  text: string,
+  noteId: PrivateInfoNoteId,
+): HTMLDivElement {
+  return el('div', { class: 'gw-nl-heading-with-info' }, [
+    el(tag, attrs, [text]),
+    renderPrivateInfoNote(noteId),
+  ]);
+}
+
 function claimBadges(p: ClaimPresentation): HTMLElement[] {
   const out: HTMLElement[] = [
     el(
@@ -274,7 +291,12 @@ function noneAffordance(sectionKey: string): HTMLElement {
 
 /** Wrap a section in a titled, testable container (always emitted, even when empty). */
 function section(key: string, title: string, body: (Node | string)[], isEmpty: boolean): HTMLElement {
-  return el('section', { class: 'gw-nl-section', 'data-test': `section-${key}`, 'data-empty': String(isEmpty) }, [
+  return el('section', {
+    class: 'gw-nl-section',
+    'data-test': `section-${key}`,
+    'data-empty': String(isEmpty),
+    'aria-label': `${title} newsletter section`,
+  }, [
     el('h3', { class: 'gw-nl-section-title' }, [title]),
     ...(isEmpty ? [noneAffordance(key)] : body),
   ]);
@@ -356,10 +378,24 @@ function sourceTrailEntryRow(entry: SourceTrailEntry): HTMLElement {
   }
   const links: (Node | string)[] = [];
   if (entry.originalUrl) {
-    links.push(el('a', { class: 'gw-nl-deeplink', href: entry.originalUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-original' }, ['View original']));
+    links.push(el('a', {
+      class: 'gw-nl-deeplink',
+      href: entry.originalUrl,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-test': 'source-original',
+      'aria-label': `View original source ${entry.sourceId}`,
+    }, ['View original']));
   }
   if (entry.archiveUrl) {
-    links.push(el('a', { class: 'gw-nl-deeplink', href: entry.archiveUrl, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'source-archive' }, ['View archive']));
+    links.push(el('a', {
+      class: 'gw-nl-deeplink',
+      href: entry.archiveUrl,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-test': 'source-archive',
+      'aria-label': `View archived source ${entry.sourceId}`,
+    }, ['View archive']));
   }
   const children: (Node | string)[] = [el('div', { class: 'gw-nl-item-head' }, parts)];
   const receiptDetails: HTMLElement[] = [];
@@ -391,15 +427,33 @@ function sourceTrailSection(digest: NewsletterDigest): HTMLElement {
  * prose, debate, agenda diffs, lenses, and meeting states require a typed backend
  * value; this renderer never derives them from summaries or ids.
  */
+function designedGapInfo(testId: string, title: string, message: string): HTMLDivElement {
+  return renderPrivateUnavailableInfoNote({
+    id: testId,
+    title,
+    what: `This reserved newsletter slot is unavailable because ${message.charAt(0).toLowerCase()}${message.slice(1)}`,
+    source: 'The current reviewer-only NewsletterDigestResponse and the design baseline identify the slot, but do not supply its required typed values.',
+    filedUnder: `Newsletter · Designed gap · ${title}`,
+    review: 'The module stays explanatory and disabled until the backend supplies a typed projection, the reviewer policy validates it, and the route receives an explicit access decision.',
+    lifecycle: 'Current state: designed gap in the reviewer-only newsletter baseline.',
+    limits: 'This note does not create a civic finding, current-edition claim, comparison, subscription, delivery promise, or release date.',
+    expectedResult: `A reviewed backend projection will replace this placeholder with ${title.toLowerCase()}, preserving edition version, trust state, and direct source receipts.`,
+  });
+}
+
 function designedGap(testId: string, title: string, message: string): HTMLElement {
   return el('div', {
     class: 'gw-nl-designed-gap',
     'data-test': testId,
     'data-state': 'unavailable',
     'data-origin': 'designed-gap',
-    role: 'status',
+    role: 'region',
+    'aria-label': `${title} unavailable newsletter module`,
   }, [
-    el('strong', { class: 'gw-nl-gap-title' }, [title]),
+    el('div', { class: 'gw-nl-gap-heading' }, [
+      el('strong', { class: 'gw-nl-gap-title' }, [title]),
+      designedGapInfo(testId, title, message),
+    ]),
     el('p', { class: 'gw-nl-gap-copy' }, [message]),
   ]);
 }
@@ -420,6 +474,11 @@ function meetingPairBoard(digest?: NewsletterDigest): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['NEWS BY MEETING']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Pre-meeting / post-meeting pairs']),
       ]),
+      designedGapInfo(
+        'newsletter-meeting-pair-board-help',
+        'Pre-meeting and post-meeting edition pairing',
+        meetingCopy,
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['UNAVAILABLE IN DIGEST']),
     ]),
     el('p', { class: 'gw-nl-baseline-intro' }, [meetingCopy]),
@@ -466,6 +525,11 @@ function roundtableSlot(): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['THE ROUNDTABLE']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Record-supplied debate and player']),
       ]),
+      designedGapInfo(
+        'newsletter-roundtable-help',
+        'Record-supplied roundtable',
+        'No reviewed debate script, speaker turns, playback state, transcript, or line-level receipt projection is supplied.',
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['NOT SUPPLIED']),
     ]),
     el('p', { class: 'gw-nl-baseline-intro' }, [
@@ -515,6 +579,11 @@ function agendaFeatureSlot(): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['FEATURED AGENDA']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Agenda analysis workspace']),
       ]),
+      designedGapInfo(
+        'newsletter-agenda-feature-help',
+        'Agenda analysis workspace',
+        'No typed agenda structure, agenda versions, reviewed analysis, questions, or outcome projection is supplied.',
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['DESIGNED GAP']),
     ]),
     el('p', { class: 'gw-nl-baseline-intro' }, [
@@ -574,6 +643,11 @@ function lensGridSlot(): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['SIX-LENS GRID']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Perspective checks']),
       ]),
+      designedGapInfo(
+        'newsletter-six-lens-grid-help',
+        'Six-lens perspective checks',
+        'No reviewed lens conclusion, method version, comparison inputs, exclusions, or citations are supplied.',
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['NO REVIEWED CONCLUSIONS']),
     ]),
     el('p', { class: 'gw-nl-baseline-intro' }, [
@@ -586,7 +660,14 @@ function lensGridSlot(): HTMLElement {
         'data-state': 'unavailable',
         'data-origin': 'designed-gap',
       }, [
-        el('strong', {}, [label]),
+        el('div', { class: 'gw-nl-gap-heading' }, [
+          el('strong', {}, [label]),
+          designedGapInfo(
+            `newsletter-lens-${index + 1}`,
+            `${label} lens`,
+            'No reviewed conclusion, method, evidence set, or citation is supplied for this perspective.',
+          ),
+        ]),
         el('span', {}, ['No reviewed lens conclusion supplied.']),
       ]),
     )),
@@ -606,6 +687,11 @@ function meetingLedgerSlot(digest?: NewsletterDigest): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['MEETING LEDGER']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Agenda → pre → post status']),
       ]),
+      designedGapInfo(
+        'newsletter-meeting-ledger-help',
+        'Meeting edition-status ledger',
+        'No typed meeting dates, agenda state, pre-meeting edition state, post-meeting edition state, or pairing contract is supplied.',
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['NO STATUS ROWS']),
     ]),
     el('p', { class: 'gw-nl-baseline-intro' }, [
@@ -648,6 +734,11 @@ function historyHonestyReferenceSlot(digest?: NewsletterDigest): HTMLElement {
         el('p', { class: 'gw-nl-baseline-kicker' }, ['HISTORY · HONESTY · REFERENCES']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['What this edition can and cannot establish']),
       ]),
+      designedGapInfo(
+        'newsletter-history-honesty-help',
+        'Newsletter history and publication-honesty comparison',
+        'No prior-edition relationship, completeness window, balance method, or approved composite score is supplied.',
+      ),
       el('span', { class: 'gw-nl-unavailable-chip' }, ['NO COMPOSITE SCORE']),
     ]),
     el('div', { class: 'gw-nl-history-grid' }, [
@@ -672,14 +763,35 @@ function historyHonestyReferenceSlot(digest?: NewsletterDigest): HTMLElement {
           ? references.map((entry) => el('article', { class: 'gw-nl-reference', 'data-test': 'newsletter-reference' }, [
               el('strong', {}, [entry.sourceId]),
               el('span', { class: 'gw-muted' }, [[entry.sourceType, entry.verificationStatus, entry.scanDate].filter(Boolean).join(' · ')]),
-              ...(entry.originalUrl ? [el('a', { href: entry.originalUrl, target: '_blank', rel: 'noopener noreferrer' }, ['Open supplied original'])] : []),
-              ...(entry.archiveUrl ? [el('a', { href: entry.archiveUrl, target: '_blank', rel: 'noopener noreferrer' }, ['Open supplied archive'])] : []),
+              ...(entry.originalUrl ? [el('a', {
+                href: entry.originalUrl,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                'aria-label': `Open supplied original for ${entry.sourceId}`,
+              }, ['Open supplied original'])] : []),
+              ...(entry.archiveUrl ? [el('a', {
+                href: entry.archiveUrl,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                'aria-label': `Open supplied archive for ${entry.sourceId}`,
+              }, ['Open supplied archive'])] : []),
             ]))
-          : [el('p', { class: 'gw-nl-gap-copy' }, ['No source-trail entries are supplied.'])]),
+          : [designedGap(
+              'newsletter-reference-rail-empty',
+              'Source reference rail',
+              'No source-trail entries are supplied.',
+            )]),
       ]),
     ]),
     el('div', { class: 'gw-nl-delivery-slot', 'data-test': 'newsletter-delivery-unavailable', 'data-state': 'unavailable' }, [
-      el('strong', {}, ['Edition delivery unavailable']),
+      el('div', { class: 'gw-nl-gap-heading' }, [
+        el('strong', {}, ['Edition delivery unavailable']),
+        designedGapInfo(
+          'newsletter-delivery-unavailable-help',
+          'Edition delivery',
+          'No recipient, subscription, sender, schedule, consent, or delivery service contract is connected.',
+        ),
+      ]),
       el('p', {}, ['No recipient, subscription, sender, schedule, or delivery service is connected.']),
       el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['Email delivery · unavailable']),
     ]),
@@ -692,7 +804,12 @@ function baselineSlots(digest?: NewsletterDigest): HTMLElement {
   return el('div', {
     class: `gw-nl-baseline-stack gw-nl-baseline-${mode}`,
     'data-test': 'newsletter-baseline-structure',
+    role: 'region',
+    'aria-label': `${simple ? 'Simple' : 'Advanced'} newsletter baseline and designed gaps`,
   }, [
+    el('div', { class: 'gw-nl-baseline-context' }, [
+      renderPrivateInfoNote('newsletter-gaps'),
+    ]),
     el('section', {
       class: simple ? 'gw-nl-simple-edition' : 'gw-nl-advanced-workbench',
       'data-test': simple ? 'newsletter-simple-edition' : 'newsletter-advanced-workbench',
@@ -708,6 +825,11 @@ function baselineSlots(digest?: NewsletterDigest): HTMLElement {
             el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['Pre / post pair · unavailable']),
             el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['Town / county / state · unavailable']),
             el('button', { type: 'button', disabled: '', 'aria-disabled': 'true' }, ['All-history search · unavailable']),
+            designedGapInfo(
+              'newsletter-workbench-tools-help',
+              'Advanced newsletter workbench tools',
+              'No edition pairing, multi-jurisdiction selection, entitlement, or all-history search projection is supplied.',
+            ),
           ]),
           el('div', { class: 'gw-nl-workbench-lead' }, [meetingPairBoard(digest), roundtableSlot()]),
           agendaFeatureSlot(),
@@ -738,8 +860,16 @@ function renderSections(host: HTMLElement, digest: NewsletterDigest): void {
 // ---------------------------------------------------------------------------
 
 function reviewedOrigin(notice?: string): HTMLElement {
-  return el('div', { class: 'gw-nl-reviewed-origin', 'data-test': 'newsletter-reviewed-origin', role: 'status' }, [
-    el('strong', {}, ['REVIEWER-INTERNAL DIGEST CAPTURE — trust labels shown per record']),
+  return el('div', {
+    class: 'gw-nl-reviewed-origin',
+    'data-test': 'newsletter-reviewed-origin',
+    role: 'region',
+    'aria-label': 'Newsletter trust and reviewed-origin notice',
+  }, [
+    el('div', { class: 'gw-nl-origin-with-info' }, [
+      el('strong', {}, ['REVIEWER-INTERNAL DIGEST CAPTURE — trust labels shown per record']),
+      renderPrivateInfoNote('newsletter-trust'),
+    ]),
     ...(notice ? [el('div', { class: 'gw-notice' }, [notice])] : []),
   ]);
 }
@@ -778,10 +908,17 @@ export function renderNewsletterArchive(
 
   root.append(
     reviewedOrigin(notice),
-    el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-archive' }, [
+    el('section', {
+      class: 'gw-nl-header',
+      'data-test': 'newsletter-archive',
+      'aria-label': 'Alpine reviewed newsletter archive overview',
+    }, [
       el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
-      el('h1', { class: 'gw-nl-h1' }, ['Alpine Weekly broadsheet archive']),
-      el('p', { class: 'gw-muted' }, ['Reviewed weekly digest rows by Alpine coverage period. Reviewer-internal archive only.']),
+      headingWithInfo('h1', { class: 'gw-nl-h1' }, 'Alpine Weekly broadsheet archive', 'newsletter-overview'),
+      el('div', { class: 'gw-nl-context-row' }, [
+        el('p', { class: 'gw-muted' }, ['Reviewed weekly digest rows by Alpine coverage period. Reviewer-internal archive only.']),
+        renderPrivateInfoNote('newsletter-archive'),
+      ]),
     ]),
   );
 
@@ -799,10 +936,20 @@ export function renderNewsletterArchive(
     return;
   }
 
-  const list = el('div', { class: 'gw-nl-archive-list' });
+  const list = el('div', {
+    class: 'gw-nl-archive-list',
+    role: 'navigation',
+    'aria-label': 'Reviewed Alpine newsletter editions',
+  });
   for (const row of rows) {
     list.append(
-      el('a', { class: 'gw-nl-archive-row', href: row.href, 'data-test': 'archive-row', 'data-id': row.newsletterId }, [
+      el('a', {
+        class: 'gw-nl-archive-row',
+        href: row.href,
+        'data-test': 'archive-row',
+        'data-id': row.newsletterId,
+        'aria-label': `Open reviewed newsletter edition ${row.newsletterId}, ${row.periodLabel}`,
+      }, [
         el('div', { class: 'gw-nl-archive-main' }, [
           el('span', { class: 'gw-nl-archive-id' }, [row.newsletterId]),
           el('span', { class: 'gw-nl-archive-period gw-muted' }, [row.periodLabel]),
@@ -829,12 +976,17 @@ export function renderNewsletterArchive(
 
 function detailArchiveStrip(response: NewsletterDigestResponse, currentId: string): HTMLElement {
   const rows = archiveRows(response);
-  return el('section', { class: 'gw-nl-detail-archive', 'data-test': 'newsletter-detail-archive' }, [
+  return el('section', {
+    class: 'gw-nl-detail-archive',
+    'data-test': 'newsletter-detail-archive',
+    'aria-label': 'Reviewed newsletter edition archive',
+  }, [
     el('div', { class: 'gw-nl-baseline-head' }, [
       el('div', {}, [
         el('p', { class: 'gw-nl-baseline-kicker' }, ['ARCHIVED EDITIONS']),
         el('h2', { class: 'gw-nl-baseline-title' }, ['Reviewed digest archive']),
       ]),
+      renderPrivateInfoNote('newsletter-archive'),
       el('a', { href: '#/newsletter?view=archive', class: 'gw-nl-deeplink', 'data-test': 'open-full-archive' }, ['Open full archive']),
     ]),
     ...(rows.length
@@ -867,25 +1019,55 @@ export function renderNewsletterDetail(
 
   if (!digest) {
     root.append(
-      el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-detail-missing' }, [
+      el('section', {
+        class: 'gw-nl-header',
+        'data-test': 'newsletter-detail-missing',
+        'aria-label': 'Newsletter edition not found',
+      }, [
         el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
-        el('h1', { class: 'gw-nl-h1' }, ['Digest not found']),
-        el('p', { class: 'gw-muted' }, [`No Alpine digest with id "${newsletterId}".`]),
+        headingWithInfo('h1', { class: 'gw-nl-h1' }, 'Digest not found', 'newsletter-edition'),
+        designedGap(
+          'newsletter-detail-not-found',
+          'Requested newsletter edition',
+          `No reviewed Alpine digest with id "${newsletterId}" is supplied by this response.`,
+        ),
         el('p', {}, [el('a', { class: 'gw-nl-deeplink', href: '#/newsletter?view=archive', 'data-test': 'back-to-archive' }, ['← Back to archive'])]),
       ]),
     );
     return;
   }
 
-  const printButton = el('button', { type: 'button', class: 'gw-nl-action', 'data-test': 'newsletter-print' }, ['Print / save PDF']);
+  const printButton = el('button', {
+    type: 'button',
+    class: 'gw-nl-action',
+    'data-test': 'newsletter-print',
+    'aria-label': `Print or save reviewed newsletter edition ${digest.newsletterId} as PDF`,
+  }, ['Print / save PDF']);
   printButton.addEventListener('click', () => window.print());
 
   root.append(
-    el('section', { class: 'gw-nl-header', 'data-test': 'newsletter-detail', 'data-id': digest.newsletterId }, [
-      el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
-      el('h1', { class: 'gw-nl-h1' }, [`Alpine Weekly broadsheet — ${coveragePeriodLabel(digest.coveragePeriod)}`]),
+    el('section', {
+      class: 'gw-nl-header',
+      'data-test': 'newsletter-detail',
+      'data-id': digest.newsletterId,
+      'aria-label': `Reviewed newsletter edition ${digest.newsletterId}`,
+    }, [
+      el('div', { class: 'gw-nl-context-row' }, [
+        el('p', { class: 'gw-landing-kicker' }, [ALPINE_KICKER]),
+        renderPrivateInfoNote('newsletter-overview'),
+      ]),
+      headingWithInfo(
+        'h1',
+        { class: 'gw-nl-h1' },
+        `Alpine Weekly broadsheet — ${coveragePeriodLabel(digest.coveragePeriod)}`,
+        'newsletter-edition',
+      ),
       el('p', { class: 'gw-muted' }, [digest.newsletterId]),
-      el('div', { class: 'gw-nl-header-actions' }, [
+      el('div', {
+        class: 'gw-nl-header-actions',
+        role: 'group',
+        'aria-label': `Tools for reviewed newsletter edition ${digest.newsletterId}`,
+      }, [
         el('a', { class: 'gw-nl-deeplink', href: '#/newsletter?view=archive', 'data-test': 'back-to-archive' }, ['Browse archive']),
         printButton,
       ]),
@@ -897,7 +1079,7 @@ export function renderNewsletterDetail(
   const sections = el('div', { class: 'gw-nl-sections', 'data-test': 'newsletter-digest-sections' }, [
     el('div', { class: 'gw-nl-sections-heading' }, [
       el('p', { class: 'gw-nl-baseline-kicker' }, ['SUPPLIED DIGEST']),
-      el('h2', { class: 'gw-nl-baseline-title' }, ['Reviewed data contract']),
+      headingWithInfo('h2', { class: 'gw-nl-baseline-title' }, 'Reviewed data contract', 'newsletter-sections'),
       el('p', { class: 'gw-muted' }, ['Every typed section is retained below, including explicit empty states.']),
     ]),
   ]);
@@ -924,9 +1106,19 @@ export function renderNewsletterState(
   const c = copy[kind];
   root.append(
     reviewedOrigin(),
-    el('section', { class: 'gw-state', 'data-test': 'newsletter-state', 'data-state': kind }, [
-      el('h1', { class: 'gw-nl-h1' }, [c.heading]),
+    el('section', {
+      class: 'gw-state',
+      'data-test': 'newsletter-state',
+      'data-state': kind,
+      'aria-label': `${c.heading} newsletter state`,
+    }, [
+      headingWithInfo('h1', { class: 'gw-nl-h1' }, c.heading, 'newsletter-overview'),
       el('p', { class: 'gw-muted' }, [c.message]),
+      designedGapInfo(
+        `newsletter-state-${kind}`,
+        `${kind} newsletter archive state`,
+        c.message,
+      ),
     ]),
   );
 }
@@ -942,6 +1134,12 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-root[data-mode="simple"]{font-family:var(--gw-font-serif);max-width:64rem;background:var(--gw-surface)}
 .gw-nl-root[data-mode="simple"] .gw-nl-baseline-kicker,.gw-nl-root[data-mode="simple"] .gw-nl-unavailable-chip,.gw-nl-root[data-mode="simple"] .gw-nl-player,.gw-nl-root[data-mode="simple"] .gw-nl-count,.gw-nl-root[data-mode="simple"] .gw-badge{font-family:var(--gw-font)}
 .gw-nl-h1{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-2);line-height:var(--gw-leading-tight)}
+.gw-nl-heading-with-info,.gw-nl-context-row,.gw-nl-origin-with-info,.gw-nl-gap-heading{display:flex;align-items:flex-start;gap:var(--gw-space-2)}
+.gw-nl-heading-with-info,.gw-nl-context-row{justify-content:center}
+.gw-nl-heading-with-info .gw-nl-h1,.gw-nl-heading-with-info .gw-nl-baseline-title,.gw-nl-context-row p{margin-top:0}
+.gw-nl-origin-with-info{justify-content:space-between}
+.gw-nl-gap-heading{justify-content:space-between}
+.gw-nl-gap-heading>strong{min-width:0}
 .gw-nl-root[data-mode="simple"] .gw-nl-h1{font-size:var(--gw-text-display);font-weight:600}
 .gw-nl-header{margin-bottom:var(--gw-space-5);border-top:3px solid var(--gw-rule-strong);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);padding:var(--gw-space-5) 0;text-align:center}
 .gw-nl-header-actions{display:flex;justify-content:center;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;margin-top:var(--gw-space-3)}
@@ -966,6 +1164,7 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-archive-meta{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);align-items:center}
 .gw-nl-count{font-size:var(--gw-text-sm);font-weight:700;color:var(--gw-text-secondary)}
 .gw-nl-baseline-stack{display:flex;flex-direction:column;gap:var(--gw-space-5);margin-bottom:var(--gw-space-6)}
+.gw-nl-baseline-context{display:flex;justify-content:flex-end;margin-bottom:calc(-1 * var(--gw-space-3))}
 .gw-nl-simple-edition,.gw-nl-advanced-workbench{display:grid;gap:var(--gw-space-5)}
 .gw-nl-root[data-mode="simple"] .gw-nl-simple-edition{border-top:4px double var(--gw-rule-strong);border-bottom:4px double var(--gw-rule-strong);padding:var(--gw-space-5) 0}
 .gw-nl-root[data-mode="simple"] .gw-nl-baseline-card{border-left:0;border-right:0;border-radius:0;box-shadow:none;background:transparent}
@@ -1027,7 +1226,7 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-framing{background:var(--gw-caution-bg-soft);border-left:3px solid var(--gw-caution-line);padding:var(--gw-space-1) var(--gw-space-3);border-radius:var(--gw-radius-sm);margin:var(--gw-space-2) 0}
 .gw-nl-detail-archive{margin-top:var(--gw-space-6);padding-top:var(--gw-space-5);border-top:3px double var(--gw-rule-strong)}.gw-nl-detail-archive-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-nl-detail-archive-row{display:grid;gap:var(--gw-space-1);min-height:var(--gw-tap-min);padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface);color:var(--gw-text);text-decoration:none}.gw-nl-detail-archive-row[aria-current="page"]{border-color:var(--gw-accent);background:var(--gw-surface-accent-tint)}
 @media(max-width:900px){.gw-nl-editorial-lead,.gw-nl-editorial-secondary,.gw-nl-workbench-lead,.gw-nl-workbench-secondary,.gw-nl-history-grid{grid-template-columns:1fr}}
-@media(max-width:760px){.gw-nl-root{padding:var(--gw-space-4)}.gw-nl-pair-grid,.gw-nl-agenda-grid,.gw-nl-lens-grid,.gw-nl-roundtable-meta{grid-template-columns:1fr}.gw-nl-meeting-reference{grid-template-columns:1fr}.gw-nl-ledger-table{display:block;overflow-x:auto}.gw-nl-player-status{width:100%;margin-left:0}.gw-nl-baseline-card{padding:var(--gw-space-4)}}
+@media(max-width:760px){.gw-nl-root{padding:var(--gw-space-4)}.gw-nl-pair-grid,.gw-nl-agenda-grid,.gw-nl-lens-grid,.gw-nl-roundtable-meta{grid-template-columns:1fr}.gw-nl-meeting-reference{grid-template-columns:1fr}.gw-nl-ledger-table{display:block;overflow-x:auto}.gw-nl-player-status{width:100%;margin-left:0}.gw-nl-baseline-card{padding:var(--gw-space-4)}.gw-nl-heading-with-info,.gw-nl-context-row{align-items:center}.gw-nl-origin-with-info{align-items:center}}
 `;
 
 let styleInjected = false;

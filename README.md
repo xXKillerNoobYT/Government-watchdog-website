@@ -76,9 +76,10 @@ eligibility are release gates; visual polish cannot substitute for them.
 
 ## Local development
 
-The app is Alpine-first and reviewer-internal while the backend authorization
-and public projection are completed. The MOTY baseline now defines the visual
-direction; fixture behavior remains explicitly separated from reviewed data.
+The app is Alpine-first while backend authorization and the public projection
+are completed. It now has an isolated Anonymous Free artifact plus the existing
+private-beta artifact. The MOTY baseline defines the visual direction; fixture
+behavior remains explicitly separated from reviewed data.
 
 ```bash
 npm install            # first time
@@ -86,9 +87,16 @@ cp .env.example .env   # optional; defaults to fixture mode
 npm run dev            # vite dev server at http://127.0.0.1:5173
 npm run typecheck      # tsc --noEmit
 npm test               # vitest (web-safe, adapter, state, render)
-npm run build          # tsc + vite production build
+npm run build          # private-beta Sites artifact (legacy/default deploy lane)
+npm run build:public   # Anonymous Free artifact + compiled-asset safety scan
+npm run build:all      # build and verify both isolated browser lanes
 npm run preview        # serve the production build locally
 ```
+
+The lane boundary and its asset-level acceptance check are documented in
+[`docs/public-private-asset-lanes.md`](docs/public-private-asset-lanes.md).
+Simple/Advanced remains a reading-layout preference; it cannot switch the build
+lane, plan, account entitlement, geographic grant, or public coverage state.
 
 Force the full-app data state for review/screenshots: `#/app?state=loading|empty|error`
 (see "Preview launch vs full app" below for how to reach the gated app).

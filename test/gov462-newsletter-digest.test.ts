@@ -57,6 +57,26 @@ function root(): HTMLElement {
   return r;
 }
 
+function expectAccessibleInfoNotes(host: HTMLElement): void {
+  const triggers = Array.from(host.querySelectorAll<HTMLButtonElement>('.gw-info-trigger'));
+  expect(triggers.length).toBeGreaterThan(0);
+
+  const labels = triggers.map((trigger) => trigger.getAttribute('aria-label') ?? '');
+  const controls = triggers.map((trigger) => trigger.getAttribute('aria-controls') ?? '');
+  expect(labels.every(Boolean)).toBe(true);
+  expect(controls.every(Boolean)).toBe(true);
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(new Set(controls).size).toBe(controls.length);
+
+  triggers.forEach((trigger, index) => {
+    const panel = document.getElementById(controls[index]);
+    expect(panel, `panel controlled by ${labels[index]}`).toBeTruthy();
+    expect(panel?.getAttribute('role')).toBe('note');
+    expect(panel?.getAttribute('aria-label')).toBe(labels[index]);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+}
+
 beforeEach(() => {
   document.head.querySelectorAll('style').forEach((s) => s.remove());
 });
@@ -338,5 +358,111 @@ describe('GOV-462 — archive rows + state override', () => {
   it('resolveDigest returns the verbatim digest or undefined (never fabricates)', () => {
     expect(resolveDigest(RESPONSE, RESPONSE.digests[0].newsletterId)).toBe(RESPONSE.digests[0]);
     expect(resolveDigest(RESPONSE, 'nope')).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GOV-53 — contextual information-note coverage and private-lane isolation
+// ---------------------------------------------------------------------------
+describe('GOV-53 — newsletter contextual information notes', () => {
+  it('labels archive, trust, baseline, and every designed gap with unique accessible controls', () => {
+    const r = root();
+    renderNewsletterArchive(r, RESPONSE);
+
+    const staticNotes = new Set(
+      Array.from(r.querySelectorAll<HTMLElement>('[data-info-note]')).map((node) =>
+        node.getAttribute('data-info-note'),
+      ),
+    );
+    for (const id of ['newsletter-overview', 'newsletter-archive', 'newsletter-trust', 'newsletter-gaps']) {
+      expect(staticNotes.has(id), id).toBe(true);
+    }
+
+    r.querySelectorAll<HTMLElement>('.gw-nl-designed-gap').forEach((gap) => {
+      expect(gap.querySelector('[data-info-note^="private-gap-"]'), gap.getAttribute('data-test') ?? 'gap').toBeTruthy();
+    });
+    expect(r.querySelector('[data-test="newsletter-baseline-structure"]')?.getAttribute('aria-label')).toContain('newsletter baseline');
+    expect(r.querySelector('[data-test="newsletter-reviewed-origin"]')?.getAttribute('aria-label')).toContain('trust');
+    r.querySelectorAll<HTMLElement>('[data-test="archive-row"]').forEach((row) => {
+      expect(row.getAttribute('aria-label')).toMatch(/^Open reviewed newsletter edition /);
+    });
+    expectAccessibleInfoNotes(r);
+  });
+
+  it('labels edition, supplied sections, source receipts, and detail archive without recomputing data', () => {
+    const digest = RESPONSE.digests.find((candidate) => candidate.sections.sourceTrail.length > 0)!;
+    const r = root();
+    renderNewsletterDetail(r, RESPONSE, digest.newsletterId);
+
+    const expectedStaticIds = [
+      'newsletter-overview',
+      'newsletter-archive',
+      'newsletter-edition',
+      'newsletter-sections',
+      'newsletter-trust',
+      'newsletter-gaps',
+    ];
+    for (const id of expectedStaticIds) {
+      expect(r.querySelectorAll(`[data-info-note="${id}"]`).length, id).toBe(1);
+    }
+
+    expect(r.querySelector('[data-test="newsletter-detail"]')?.getAttribute('aria-label')).toContain(digest.newsletterId);
+    expect(r.querySelector('[data-test="newsletter-digest-sections"] [data-info-note="newsletter-sections"]')).toBeTruthy();
+    expect(r.querySelector('[data-test="newsletter-detail-archive"] [data-info-note="newsletter-archive"]')).toBeTruthy();
+    expect(r.querySelector('[data-test="section-sourceTrail"]')?.getAttribute('aria-label')).toBe('Source trail newsletter section');
+    r.querySelectorAll<HTMLElement>('[data-test="source-original"], [data-test="source-archive"]').forEach((link) => {
+      expect(link.getAttribute('aria-label')).toMatch(/source /);
+    });
+    expectAccessibleInfoNotes(r);
+  });
+
+  it('explains not-found and async states honestly with route-unique placeholder notes', () => {
+    const missing = root();
+    renderNewsletterDetail(missing, RESPONSE, 'alpine-historical-9999-99');
+    expect(missing.querySelector('[data-info-note="newsletter-edition"]')).toBeTruthy();
+    expect(missing.querySelector('[data-info-note="private-gap-newsletter-detail-not-found"]')).toBeTruthy();
+    expect(missing.textContent).toContain('No reviewed Alpine digest');
+    expectAccessibleInfoNotes(missing);
+
+    for (const kind of ['loading', 'empty', 'error'] as const) {
+      const state = root();
+      renderNewsletterState(state, kind);
+      expect(state.querySelector(`[data-info-note="private-gap-newsletter-state-${kind}"]`)).toBeTruthy();
+      expect(state.querySelector('[data-test="newsletter-state"]')?.getAttribute('aria-label')).toContain('newsletter state');
+      expectAccessibleInfoNotes(state);
+    }
+  });
+
+  it('creates no private information notes before the newsletter reviewer lane is admitted', () => {
+    const denied = { ...RESPONSE, access: 'public' };
+    const renderers = [
+      (host: HTMLElement) => renderNewsletterArchive(host, denied),
+      (host: HTMLElement) => renderNewsletterDetail(host, denied, RESPONSE.digests[0].newsletterId),
+      (host: HTMLElement) => renderNewsletterState(host, 'empty', 'public'),
+    ];
+
+    for (const render of renderers) {
+      const r = root();
+      render(r);
+      expect(r.querySelector('[data-test="state-reviewer-gated"]')).toBeTruthy();
+      expect(r.querySelectorAll('[data-info-note]').length).toBe(0);
+      expect(r.querySelectorAll('.gw-info-panel').length).toBe(0);
+      expect(r.textContent).not.toContain('NewsletterDigest');
+    }
+  });
+
+  it('supports click-open disclosure while keeping trigger-to-panel ownership exact', () => {
+    const r = root();
+    renderNewsletterArchive(r, RESPONSE);
+    const trigger = r.querySelector<HTMLButtonElement>('[data-info-note="newsletter-archive"]')!;
+    const panel = document.getElementById(trigger.getAttribute('aria-controls')!)!;
+
+    expect(panel.hasAttribute('hidden')).toBe(true);
+    trigger.click();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(panel.hasAttribute('hidden')).toBe(false);
+    expect(panel.textContent).toContain('Filled from');
+    expect(panel.textContent).toContain('Current state');
+    expect(panel.textContent).toContain('Expected result');
   });
 });

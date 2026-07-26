@@ -6,7 +6,7 @@
 // sample under ?demo=sample) and may never fabricate verdict, language, archive,
 // search, price, or media data.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHome } from '../src/ui/home';
+import { renderHome, renderHomeReadModel } from '../src/ui/home';
 import { applyMode } from '../src/ui/shell';
 import { loadDigestResponse } from '../src/ui/newsletter';
 import cardFeedData from '../src/fixtures/alpine-card-feed.json';
@@ -15,6 +15,7 @@ import agendaBoardSampleData from '../src/fixtures/agenda-board-projection.sampl
 import newsletterDigestData from '../src/fixtures/alpine-newsletter-digest.json';
 import type { CardFeed } from '../src/ui/card-feed';
 import type { AgendaBoard } from '../src/types/agenda-board';
+import type { ReadApiResponse } from '../src/types/read-api';
 
 function installMemoryLocalStorage(): void {
   const store = new Map<string, string>();
@@ -71,6 +72,28 @@ const HOME_BASELINE_SLOTS = [
   'home-local-edition-gaps',
 ] as const;
 
+function expectHomeInfoNotes(requiredIds: readonly string[]): HTMLButtonElement[] {
+  const triggers = [...root.querySelectorAll<HTMLButtonElement>('.gw-info-trigger')];
+  const labels = triggers.map((trigger) => trigger.getAttribute('aria-label') ?? '');
+  const controls = triggers.map((trigger) => trigger.getAttribute('aria-controls') ?? '');
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(new Set(controls).size).toBe(controls.length);
+  for (const id of requiredIds) {
+    expect(root.querySelector(`[data-info-note="${id}"]`), id).not.toBeNull();
+  }
+  for (const trigger of triggers) {
+    expect(trigger.textContent).toBe('?');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    const panel = document.getElementById(trigger.getAttribute('aria-controls') ?? '');
+    expect(panel).not.toBeNull();
+    expect(panel?.hidden).toBe(true);
+    expect(panel?.textContent).toContain('Current state');
+    expect(panel?.textContent).toContain('Filed under');
+    expect(panel?.textContent).toContain('Expected result');
+  }
+  return triggers;
+}
+
 describe('GOV-658 Home dashboard — Simple/Advanced information parity', () => {
   it.each(['advanced', 'simple'] as const)(
     'preserves every reviewed fact and designed-gap group in %s mode',
@@ -81,6 +104,59 @@ describe('GOV-658 Home dashboard — Simple/Advanced information parity', () => 
       for (const slot of HOME_BASELINE_SLOTS) {
         expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(1);
       }
+    },
+  );
+
+  it.each([
+    ['advanced', [
+      'home-overview',
+      'home-summary',
+      'home-jurisdiction-filter',
+      'home-fast-agenda',
+      'home-transparency-alerts',
+      'home-active-issues',
+      'home-timeline-preview',
+      'home-source-vault',
+      'home-latest-verdict',
+      'home-language-watch',
+      'home-explainer',
+      'home-briefing',
+      'home-search',
+      'home-simple-things',
+      'home-featured-story',
+      'reviewed-source-receipts',
+      'home-edition-history',
+      'home-honesty-metrics',
+      'home-local-editions',
+    ]],
+    ['simple', [
+      'home-overview',
+      'home-summary',
+      'home-jurisdiction-filter',
+      'home-search',
+      'home-simple-things',
+      'home-fast-agenda',
+      'home-transparency-alerts',
+      'home-featured-story',
+      'reviewed-source-receipts',
+      'home-edition-history',
+      'home-honesty-metrics',
+      'home-local-editions',
+      'home-accountability',
+      'home-active-issues',
+      'home-timeline-preview',
+      'home-source-vault',
+      'home-latest-verdict',
+      'home-language-watch',
+      'home-explainer',
+    ]],
+  ] as const)(
+    'renders unique, structured contextual notes in %s mode',
+    (mode, requiredIds) => {
+      applyMode(mode);
+      renderHome(root, opts());
+      const notes = expectHomeInfoNotes(requiredIds);
+      expect(notes.some((note) => note.dataset.infoNote?.startsWith('private-gap-home-'))).toBe(true);
     },
   );
 
@@ -204,7 +280,51 @@ describe('GOV-658 Home dashboard — Advanced mode honesty map', () => {
     expect(root.querySelector('[data-test="home-issue-row"]')).toBeNull();
     expect(root.querySelector('[data-test="home-timeline-event"]')).toBeNull();
     expect(root.querySelector('[data-origin="fixture"]')).toBeNull();
+    expect(root.querySelector('.gw-info-trigger')).toBeNull();
+    expect(root.textContent).not.toContain('Filed under');
   });
+});
+
+describe('GOV-53 Home live reviewer-model contextual notes', () => {
+  const liveResponse: ReadApiResponse = {
+    scope: 'alpine',
+    access: 'reviewer_internal',
+    records: [{
+      statement_id: 'home-info-record',
+      statement_text: 'A reviewed Alpine statement for note coverage.',
+      ui_status: 'source-backed',
+      provenance_status: 'grounded',
+      verification_status: 'human_verified',
+      produced_by: 'human',
+      evidence: [{
+        to_source_id: 'home-info-source',
+        relation: 'supports',
+        original_url: 'https://www.alpinewy.gov/home-info-source',
+        verification_status: 'human_verified',
+      }],
+    }],
+  };
+
+  it.each(['advanced', 'simple'] as const)(
+    'keeps the live %s route, method, record, and gap notes unique',
+    (mode) => {
+      applyMode(mode);
+      renderHomeReadModel(root, liveResponse);
+
+      const notes = expectHomeInfoNotes([
+        'home-overview',
+        'home-summary',
+        'home-records',
+        'home-gaps',
+      ]);
+      expect(notes.filter((note) => note.dataset.infoNote?.startsWith('private-projection-'))).toHaveLength(6);
+      const methodPanel = document.getElementById(
+        root.querySelector<HTMLButtonElement>('[data-info-note="home-summary"]')?.getAttribute('aria-controls') ?? '',
+      );
+      expect(methodPanel?.textContent).toContain('Method version');
+      expect(methodPanel?.textContent).toContain('Missing data');
+    },
+  );
 });
 
 describe('GOV-658 Home dashboard — Simple broadsheet mode', () => {
@@ -269,20 +389,49 @@ describe('GOV-658 Home dashboard — Simple broadsheet mode', () => {
 });
 
 describe('GOV-658 Home route access scoping', () => {
-  it('keeps #/home?reviewer=1&access=public inside the shell but renders zero civic records', async () => {
+  it('narrows the shared live context to denied for access=public and renders zero civic rows', async () => {
     vi.resetModules();
     document.body.replaceChildren();
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      text: async () => JSON.stringify({
+        reviewer_internal_records: [{
+          statement_id: 'home-live-sentinel',
+          statement_text: 'Live Home route sentinel',
+          ui_status: 'source-backed',
+          verification_status: 'reviewed_source_linked',
+          provenance_status: 'grounded',
+          publication_state: 'publishable',
+          produced_by: 'human',
+          evidence: [{
+            to_source_id: 'home-live-source',
+            verification_status: 'human_verified',
+            original_url: 'https://www.alpinewy.gov/home-live-source',
+          }],
+        }],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
     window.location.hash = '#/home?reviewer=1&access=public';
 
     await import('../src/main');
 
     expect(app.querySelector('[data-test="app-shell"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="home-issue-row"]')).toBeNull();
-    expect(app.querySelector('[data-test="home-timeline-event"]')).toBeNull();
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="reviewer-context-denied"]')).not.toBeNull();
+    });
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
+    expect(app.querySelector('[data-test="home-live-record"]')).toBeNull();
+    expect(app.textContent).not.toContain('Live Home route sentinel');
     expect(app.querySelector('[data-origin="fixture"]')).toBeNull();
   });
 });
