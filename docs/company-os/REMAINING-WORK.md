@@ -137,7 +137,29 @@ anything is pushed — after the PR opens, this is a force-push instead of a reb
 was writing it as of 22:58. Confirm the workflow finished, review the file, then commit it
 with the split above.
 
-### 1.3 File the 54 audit gaps as GitHub issues
+### 1.3 File the audit gaps as GitHub issues — **DONE 2026-07-25**
+
+**51 filed, 0 failures.** Website **#69–#93** (25). Backend **#143–#168** (26).
+
+Two skipped as verifiably shipped in PR #68: `explainer-route-and-demo-chip`,
+`shell-search-scope-overclaim`.
+
+Four filed with a **prepended scope correction** so nobody redoes finished work:
+
+| Issue | What already shipped | What remains |
+|---|---|---|
+| #80 | Three-lane primitive wired behind `?demo=design` | The reviewed lane still uses the old single-lane renderer |
+| #81 | `?issue=` honored + fail-closed on the fixture | Still **silently ignored** on the reviewed lane |
+| #145 | PR #140 retains both versions and produces a real deterministic 9-field **metadata** diff | Document-**content** diff, and registry-side version history |
+| #148 | PR #142 strips raw filesystem locations, fail-closed on `web_safe` | The **digest** — `hashlib` is not imported by `file_read_api.py` at all |
+
+**Load-bearing dedupe finding:** there is **no `/v1` namespace anywhere in the backend** — a
+repo-wide search for `/v1/` returns zero hits, and the only route family is `/api/beta/*`.
+Every `v1-*` draft was therefore filed unchanged. The single new endpoint across all four
+merged PRs is `POST /api/beta/intake/upload`, and its response carries no shared envelope
+(no builder, no schema, no cross-surface validator).
+
+<details><summary>Original filing instructions (retained for provenance)</summary>
 The batched drafting workflow completed. **28 website + 26 backend** filing-ready bodies are
 in `…/tasks/wn8g1vnch.output` (229 KB JSON, key `toFile[]`, each entry `{slug, repo, title,
 labels, body}`).
@@ -165,7 +187,10 @@ Before filing:
   *partial* — the route and the ▶ Demo control shipped in `0e67580`, the Home widget link
   did not.
 - File with `gh issue create` from the terminal, one at a time, capturing numbers.
-  `gh issue create` **fails on an unknown label**, so confirm labels exist first.
+  `gh issue create` **fails on an unknown label**, so confirm labels exist first. (Both repos
+  carry only the nine GitHub defaults; the drafts used `documentation` once, which exists.)
+
+</details>
 
 ---
 
