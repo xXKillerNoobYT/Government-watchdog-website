@@ -100,8 +100,21 @@ describe('Fast Agenda fixture content and disclosure', () => {
       expect(row.querySelectorAll('[data-test="process-ladder"] li').length).toBeGreaterThanOrEqual(3);
     }
 
-    expect(root.querySelectorAll('[data-test="issue-stage"]')).toHaveLength(7);
-    expect(root.querySelector('[data-test="issue-tracker"]')?.getAttribute('tabindex')).toBe('0');
+    // The tracker renders through the shared kanban primitive, not a second
+    // hand-rolled board — so lane geometry, the level colour bar, the empty
+    // state, and print behaviour cannot drift from every other board.
+    const tracker = root.querySelector('[data-test="issue-tracker"]');
+    expect(tracker?.getAttribute('tabindex')).toBe('0');
+    expect(tracker?.querySelector('[data-test="kanban-board"]')).not.toBeNull();
+    expect(tracker?.querySelectorAll('[data-test="kanban-lane"]')).toHaveLength(7);
+    expect(tracker?.querySelectorAll('[data-test="kanban-card"]').length).toBe(15);
+
+    // Every card still carries its track toggle and its synthetic-receipt
+    // disclosure; moving to the primitive must not drop either.
+    expect(tracker?.querySelectorAll('[data-test="track-toggle"]').length).toBe(15);
+    for (const card of tracker?.querySelectorAll('[data-test="kanban-card"]') ?? []) {
+      expect(card.textContent).toContain('synthetic references only');
+    }
   });
 });
 

@@ -9,6 +9,7 @@
 
 import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
 import { readTracked, writeTracked } from '../state/local-store';
+import { type KanbanCardSpec, kanbanBoard } from './kanban';
 import { closeModal, openModal } from './modal';
 import { readMode, type ShellMode } from './shell';
 import { GW_TOKENS } from './tokens';
@@ -1011,30 +1012,35 @@ function reviewedAgendaStages(board: AgendaBoard): HTMLElement {
   ]);
 }
 
-function issueCard(
+/**
+ * Maps one fixture issue onto the shared kanban primitive.
+ *
+ * `level` drives only the card's colour bar. It is never a claim about the
+ * record itself — a town-coloured card asserts nothing beyond which lane the
+ * fixture placed it in.
+ */
+function issueCardSpec(
   root: HTMLElement,
   issue: IssueCard,
   tracked: Record<string, boolean>,
-): HTMLElement {
-  const children: (Node | string)[] = [
-    el('h4', {}, [issue.title]),
-    el('p', { class: 'gw-fa-muted' }, [issue.body]),
-    el('span', { class: `gw-fa-level is-${issue.jurisdiction}` }, [JURISDICTION_LABEL[issue.jurisdiction]]),
-  ];
-  if (issue.flag) children.push(el('span', { class: 'gw-fa-issue-flag' }, [issue.flag]));
-  children.push(
-    el('dl', {}, [
-      el('div', {}, [el('dt', {}, ['Last']), el('dd', {}, [issue.last])]),
-      el('div', {}, [el('dt', {}, ['Next']), el('dd', {}, [issue.next])]),
-    ]),
-    el('p', { class: 'gw-fa-row-receipt' }, [`Receipts (${issue.receipts}) · synthetic references only`]),
-    trackButton(root, tracked, issue.issueKey, issue.title),
-  );
-  return el('article', {
-    class: 'gw-fa-issue-card',
-    'data-level': issue.jurisdiction,
-    'data-test': 'issue-card',
-  }, children);
+  index: number,
+): KanbanCardSpec {
+  return {
+    id: `${issue.issueKey}-${index}`,
+    title: issue.title,
+    level: issue.jurisdiction,
+    board: issue.body,
+    area: JURISDICTION_LABEL[issue.jurisdiction],
+    last: issue.last,
+    next: issue.next,
+    ...(issue.flag ? { flags: [issue.flag] } : {}),
+    actions: [
+      el('span', { class: 'gw-fa-row-receipt' }, [
+        `Receipts (${issue.receipts}) · synthetic references only`,
+      ]),
+      trackButton(root, tracked, issue.issueKey, issue.title),
+    ],
+  };
 }
 
 function issueTracker(root: HTMLElement, tracked: Record<string, boolean>): HTMLElement {
@@ -1045,23 +1051,21 @@ function issueTracker(root: HTMLElement, tracked: Record<string, boolean>): HTML
     tabindex: '0',
     'data-test': 'issue-tracker',
   });
-  const columns: HTMLElement[] = [];
-  for (let index = 0; index < ISSUE_STAGES.length; index += 1) {
-    const stageIssues = ISSUE_CARDS.filter((issue) => issue.stage === index);
-    const column = el('section', {
-      class: 'gw-fa-issue-column',
-      'data-stage-index': String(index),
-      'data-test': 'issue-stage',
-    }, [
-      el('header', {}, [
-        el('h3', {}, [`${index + 1}. ${ISSUE_STAGES[index]}`]),
-        el('span', { 'data-stage-count': String(index) }, [String(stageIssues.length)]),
-      ]),
-      el('div', { class: 'gw-fa-issue-stack' }, stageIssues.map((issue) => issueCard(root, issue, tracked))),
-    ]);
-    columns.push(column);
-    rail.append(column);
-  }
+  // The seven design stages render through the shared kanban primitive rather
+  // than a second hand-rolled board, so lane geometry, the level colour bar,
+  // the empty state, and print behaviour stay identical to every other board.
+  const board = kanbanBoard(
+    ISSUE_STAGES.map((label, index) => ({
+      id: `stage-${index}`,
+      label: `${index + 1}. ${label}`,
+      cards: ISSUE_CARDS
+        .filter((issue) => issue.stage === index)
+        .map((issue, cardIndex) => issueCardSpec(root, issue, tracked, cardIndex)),
+    })),
+    'Seven-stage issue tracker',
+  );
+  rail.append(board);
+  const columns = [...board.querySelectorAll<HTMLElement>('[data-test="kanban-lane"]')];
 
   const filters = el('div', {
     class: 'gw-fa-filters',
@@ -1084,12 +1088,12 @@ function issueTracker(root: HTMLElement, tracked: Record<string, boolean>): HTML
       for (const filter of filters.querySelectorAll<HTMLButtonElement>('button')) {
         filter.setAttribute('aria-pressed', filter === button ? 'true' : 'false');
       }
-      for (const card of rail.querySelectorAll<HTMLElement>('[data-test="issue-card"]')) {
+      for (const card of rail.querySelectorAll<HTMLElement>('[data-test="kanban-card"]')) {
         card.hidden = choice.value !== 'all' && card.dataset.level !== choice.value;
       }
-      for (let stageIndex = 0; stageIndex < columns.length; stageIndex += 1) {
-        const visible = columns[stageIndex]?.querySelectorAll<HTMLElement>('[data-test="issue-card"]:not([hidden])').length ?? 0;
-        const count = columns[stageIndex]?.querySelector<HTMLElement>('[data-stage-count]');
+      for (const column of columns) {
+        const visible = column.querySelectorAll<HTMLElement>('[data-test="kanban-card"]:not([hidden])').length;
+        const count = column.querySelector<HTMLElement>('[data-test="kanban-lane-count"]');
         if (count) count.textContent = String(visible);
       }
     });
