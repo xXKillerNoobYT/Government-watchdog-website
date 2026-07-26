@@ -10,6 +10,11 @@
 import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
 import { readMode, type ShellMode } from './shell';
 import { GW_TOKENS } from './tokens';
+import {
+  renderPrivateInfoNote,
+  renderPrivateUnavailableInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 
 export interface FastAgendaDesignOptions {
   access?: string;
@@ -296,6 +301,20 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function titleWithInfo(
+  title: HTMLElement,
+  noteId: PrivateInfoNoteId,
+): HTMLElement {
+  return el('div', { class: 'gw-fa-title-with-note' }, [
+    title,
+    renderPrivateInfoNote(noteId),
+  ]);
+}
+
+function safeInfoKey(value: string): string {
+  return value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function kicker(text: string): HTMLElement {
   return el('p', { class: 'gw-fa-kicker' }, [text]);
 }
@@ -547,7 +566,10 @@ function meetingBoard(): HTMLElement {
       kicker('NEXT MEETING · JULY 21 DESIGN BOARD'),
       el('span', { class: 'gw-fa-due' }, ['SYNTHETIC SCHEDULE']),
     ]),
-    el('h2', { id: 'gw-fa-meeting-title' }, ['Alpine Town Council']),
+    titleWithInfo(
+      el('h2', { id: 'gw-fa-meeting-title' }, ['Alpine Town Council']),
+      'agenda-meeting',
+    ),
     el('p', { class: 'gw-fa-meeting-time' }, ['Tuesday, July 21, 2026 · 6:30 PM']),
     el('p', { class: 'gw-fa-muted' }, ['Alpine Town Hall · 250 River Circle · fixture says streamed online']),
     el('div', { class: 'gw-fa-status-grid' }, [
@@ -598,7 +620,10 @@ function simpleMeetingDigest(): HTMLElement {
     'data-test': 'simple-meeting-digest',
   }, [
     kicker('NEXT MEETING · SYNTHETIC SCHEDULE'),
-    el('h2', { id: 'gw-fa-simple-meeting-title' }, ['Alpine Town Council']),
+    titleWithInfo(
+      el('h2', { id: 'gw-fa-simple-meeting-title' }, ['Alpine Town Council']),
+      'agenda-meeting',
+    ),
     el('p', { class: 'gw-fa-meeting-time' }, ['Tuesday, July 21, 2026 · 6:30 PM']),
     el('p', { class: 'gw-fa-muted' }, ['Alpine Town Hall · 250 River Circle']),
     el('p', { class: 'gw-fa-simple-lede' }, [
@@ -657,7 +682,10 @@ function agendaBoard(root: HTMLElement, tracked: Record<string, boolean>): HTMLE
     el('div', { class: 'gw-fa-section-head' }, [
       el('div', {}, [
         kicker("WHAT'S ON THE AGENDA — JULY 21"),
-        el('h2', { id: 'gw-fa-agenda-title' }, ['Plain English first; official numbering preserved']),
+        titleWithInfo(
+          el('h2', { id: 'gw-fa-agenda-title' }, ['Plain English first; official numbering preserved']),
+          'agenda-sources',
+        ),
       ]),
       el('span', { class: 'gw-fa-muted' }, ['8 synthetic design rows']),
     ]),
@@ -711,7 +739,10 @@ function simpleAgendaDigest(root: HTMLElement, tracked: Record<string, boolean>)
     'data-test': 'simple-agenda-digest',
   }, [
     kicker("WHAT'S ON THE AGENDA — JULY 21"),
-    el('h2', { id: 'gw-fa-simple-agenda-title' }, ['Eight items in plain language']),
+    titleWithInfo(
+      el('h2', { id: 'gw-fa-simple-agenda-title' }, ['Eight items in plain language']),
+      'agenda-sources',
+    ),
     el('p', { class: 'gw-fa-board-disclosure' }, [
       'These are AI-presented synthetic design summaries, not independently verified reporting or a live agenda.',
     ]),
@@ -738,7 +769,10 @@ function reviewedMeetingReadiness(board: AgendaBoard): HTMLElement {
     'data-test': 'reviewed-meeting-readiness',
   }, [
     kicker('MEETING READINESS · REVIEWED PROJECTION'),
-    el('h2', { id: 'gw-fa-reviewed-meeting-title' }, ['Reviewed meeting readiness']),
+    titleWithInfo(
+      el('h2', { id: 'gw-fa-reviewed-meeting-title' }, ['Reviewed meeting readiness']),
+      'agenda-meeting',
+    ),
     el('p', { class: 'gw-fa-muted' }, [
       cards.length
         ? 'Agenda-anchored meeting context is listed below exactly as supplied by the reviewed projection.'
@@ -791,13 +825,29 @@ function reviewedMeetingReadiness(board: AgendaBoard): HTMLElement {
   ]);
 }
 
-function reviewedGapSlot(test: string, title: string, detail: string): HTMLElement {
+function reviewedGapSlot(
+  test: string,
+  title: string,
+  detail: string,
+  instance = test,
+  noteTitle = title,
+): HTMLElement {
   return el('section', {
     class: 'gw-fa-reviewed-slot is-unavailable',
     'data-test': test,
     role: 'note',
   }, [
-    el('h3', {}, [title]),
+    el('div', { class: 'gw-fa-title-with-note' }, [
+      el('h3', {}, [title]),
+      renderPrivateUnavailableInfoNote({
+        id: `agenda-${safeInfoKey(instance)}`,
+        title: noteTitle,
+        what: detail,
+        source: 'Required source: an authorized, typed agenda or meeting projection carrying the missing fields and exact web-safe receipts.',
+        filedUnder: 'Fast Agenda · Reviewed projection · Honest gap',
+        expectedResult: `This slot will replace the explanation with reviewed ${title.toLocaleLowerCase()} data, its status, freshness, limitations, and direct source receipts.`,
+      }),
+    ]),
     el('p', {}, [detail]),
   ]);
 }
@@ -809,6 +859,8 @@ function reviewedAnalysisSlot(card?: AgendaBoardCard): HTMLElement {
     card
       ? 'AgendaBoard does not supply analysis text for this item; no analysis has been invented.'
       : 'No agenda-anchored reviewed item is present to analyze.',
+    `reviewed-analysis-slot-${card?.cardId ?? 'empty'}`,
+    card ? `Analysis for ${card.agendaItemTitle ?? card.agendaItemId}` : 'Analysis unavailable',
   );
 }
 
@@ -819,6 +871,8 @@ function reviewedLanguageSlot(card?: AgendaBoardCard): HTMLElement {
     card
       ? 'AgendaBoard does not supply a language-watch block for this item; no wording assessment has been invented.'
       : 'No agenda-anchored reviewed item is present for a language-watch assessment.',
+    `reviewed-language-slot-${card?.cardId ?? 'empty'}`,
+    card ? `Language watch for ${card.agendaItemTitle ?? card.agendaItemId}` : 'Language watch unavailable',
   );
 }
 
@@ -828,6 +882,7 @@ function reviewedProcessSlot(card?: AgendaBoardCard): HTMLElement {
       'reviewed-process-slot',
       'Item process unavailable',
       'No agenda-anchored reviewed item is present to place in a per-item process.',
+      'reviewed-process-slot-empty',
     );
   }
 
@@ -882,6 +937,8 @@ function reviewedReceiptSlot(card?: AgendaBoardCard): HTMLElement {
       card
         ? 'No web-safe source reference was supplied for this agenda item.'
         : 'No agenda-anchored reviewed item is present to carry a receipt.',
+      `reviewed-receipts-slot-${card?.cardId ?? 'empty'}`,
+      card ? `Receipts for ${card.agendaItemTitle ?? card.agendaItemId}` : 'Receipts unavailable',
     );
   }
 
@@ -920,6 +977,10 @@ function reviewedDecisionContextSlot(card?: AgendaBoardCard): HTMLElement {
     card
       ? 'Past-meeting analyses, connected issue ids, and a policy-cleared decision-maker record are not supplied for this item.'
       : 'No agenda-anchored reviewed item is present for past-meeting, connected-issue, or decision-maker context.',
+    `reviewed-decision-context-slot-${card?.cardId ?? 'empty'}`,
+    card
+      ? `Decision context for ${card.agendaItemTitle ?? card.agendaItemId}`
+      : 'Decision context unavailable',
   );
 }
 
@@ -1040,7 +1101,10 @@ function reviewedAgendaArea(board: AgendaBoard): HTMLElement {
     el('div', { class: 'gw-fa-section-head' }, [
       el('div', {}, [
         kicker('AGENDA CONTENT · REVIEWED PROJECTION'),
-        el('h2', { id: 'gw-fa-reviewed-agenda-title' }, ['Agenda items and evidence slots']),
+        titleWithInfo(
+          el('h2', { id: 'gw-fa-reviewed-agenda-title' }, ['Agenda items and evidence slots']),
+          'agenda-sources',
+        ),
       ]),
       el('span', { class: 'gw-fa-muted', 'data-test': 'reviewed-card-count' }, [String(board.cardCount)]),
     ]),
@@ -1076,7 +1140,10 @@ function reviewedAgendaStages(board: AgendaBoard): HTMLElement {
     el('div', { class: 'gw-fa-section-head' }, [
       el('div', {}, [
         kicker('AGENDA LIFECYCLE · SUPPLIED PROJECTION'),
-        el('h2', { id: 'gw-fa-reviewed-stages-title' }, ['Where reviewed agenda items stand']),
+        titleWithInfo(
+          el('h2', { id: 'gw-fa-reviewed-stages-title' }, ['Where reviewed agenda items stand']),
+          'agenda-lifecycle',
+        ),
       ]),
     ]),
     el('div', {
@@ -1091,7 +1158,7 @@ function reviewedAgendaStages(board: AgendaBoard): HTMLElement {
       'The six supplied AgendaBoard lanes describe agenda-card lifecycle. They are not substituted for the baseline issue-thread stages; typed cross-meeting issue ids and edges are required.',
     ),
     el('section', { class: 'gw-fa-reviewed-disclosures', role: 'note', 'data-test': 'reviewed-disclosures' }, [
-      el('h3', {}, ['Projection limits']),
+      titleWithInfo(el('h3', {}, ['Projection limits']), 'agenda-gaps'),
       el('ul', {}, [
         el('li', { 'data-test': 'reviewed-disclosure-decisions' }, [board.disclosures.decisions]),
         el('li', { 'data-test': 'reviewed-disclosure-categories' }, [board.disclosures.categories]),
@@ -1188,12 +1255,16 @@ function issueTracker(root: HTMLElement, tracked: Record<string, boolean>): HTML
     });
     filters.append(button);
   }
+  filters.append(renderPrivateInfoNote('agenda-filters'));
 
   return el('section', { class: 'gw-fa-tracker', 'aria-labelledby': 'gw-fa-tracker-title' }, [
     el('div', { class: 'gw-fa-section-head' }, [
       el('div', {}, [
         kicker('ISSUE TRACKER · WHERE EVERYTHING STANDS'),
-        el('h2', { id: 'gw-fa-tracker-title' }, ['Seven stages, one shared tracking state']),
+        titleWithInfo(
+          el('h2', { id: 'gw-fa-tracker-title' }, ['Seven stages, one shared tracking state']),
+          'agenda-lifecycle',
+        ),
       ]),
       filters,
     ]),
@@ -1227,7 +1298,10 @@ function pageHeader(mode: ShellMode): HTMLElement {
   return el('header', { class: 'gw-fa-page-head' }, [
     el('div', {}, [
       kicker('GOVERNMENT WATCHDOG · MEETINGS & AGENDAS'),
-      el('h1', {}, [mode === 'simple' ? 'What your council will discuss next' : 'Fast Agenda']),
+      titleWithInfo(
+        el('h1', {}, [mode === 'simple' ? 'What your council will discuss next' : 'Fast Agenda']),
+        'agenda-overview',
+      ),
       el('p', {}, [
         mode === 'simple'
           ? 'A plain-language reading view of the July 21 synthetic meeting fixture.'
@@ -1244,7 +1318,10 @@ function reviewedPageHeader(mode: ShellMode, board: AgendaBoard): HTMLElement {
   return el('header', { class: 'gw-fa-page-head' }, [
     el('div', {}, [
       kicker('GOVERNMENT WATCHDOG · MEETINGS & AGENDAS'),
-      el('h1', {}, [mode === 'simple' ? 'What the reviewed agenda can support' : 'Fast Agenda']),
+      titleWithInfo(
+        el('h1', {}, [mode === 'simple' ? 'What the reviewed agenda can support' : 'Fast Agenda']),
+        'agenda-overview',
+      ),
       el('p', {}, [
         mode === 'simple'
           ? `A plain-language view of the reviewed ${board.scope} agenda projection and its disclosed gaps.`
@@ -1353,6 +1430,7 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa h1{font-size:var(--gw-text-xl);line-height:var(--gw-leading-tight);margin-bottom:var(--gw-space-2)}
 .gw-fa h2{font-size:var(--gw-text-lg);line-height:var(--gw-leading-tight);margin-bottom:var(--gw-space-2)}
 .gw-fa h3{font-size:var(--gw-text-body);line-height:1.35;margin-bottom:0}
+.gw-fa-title-with-note{display:flex;align-items:flex-start;gap:var(--gw-space-2);min-width:0}.gw-fa-title-with-note>h1,.gw-fa-title-with-note>h2,.gw-fa-title-with-note>h3{min-width:0}.gw-fa-title-with-note>.gw-info-note{flex:0 0 auto}
 .gw-fa-fixture-banner{display:flex;justify-content:center;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;background:var(--gw-caution-bg);border-bottom:var(--gw-border-w) solid var(--gw-caution-line);color:var(--gw-caution-text-strong);padding:var(--gw-space-2) var(--gw-space-5);font:var(--gw-text-sm)/1.4 var(--gw-font-mono);text-align:center}
 .gw-fa-fixture-banner strong{letter-spacing:.04em}.gw-fa-notice{border-left:var(--gw-border-w) solid var(--gw-caution-line);padding-left:var(--gw-space-3)}
 .gw-fa-reviewed-banner{display:flex;justify-content:center;align-items:center;gap:var(--gw-space-3);flex-wrap:wrap;background:var(--gw-surface-subtle);border-bottom:var(--gw-border-w) solid var(--gw-border-strong);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-5);font:var(--gw-text-sm)/1.4 var(--gw-font-mono);text-align:center}.gw-fa-reviewed-banner strong{color:var(--gw-accent);letter-spacing:.04em}.gw-fa-reviewed-banner .gw-fa-notice{border-color:var(--gw-border-strong)}

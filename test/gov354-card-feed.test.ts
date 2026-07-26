@@ -192,6 +192,8 @@ describe('GOV-354 reviewer-internal invariant (§5) — no public leak', () => {
     expect(html).not.toContain('SECRET-SPEAKER-LABEL');
     // No provenance badge synthesized off-lane.
     expect(root.querySelector('[data-test="provenance-badge"]')).toBeNull();
+    expect(root.querySelector('[data-info-note="cards-overview"]')).toBeNull();
+    expect(html).not.toContain('About the reviewed Cards view');
   });
 
   it('REVIEWER-INTERNAL lane DOM renders the card with its head, badge, provenance + gap card', () => {
@@ -206,6 +208,21 @@ describe('GOV-354 reviewer-internal invariant (§5) — no public leak', () => {
     expect(root.querySelector('[data-test="completeness-gap-card"]')).not.toBeNull();
     // the reviewer-internal text IS present on this lane (it is allowed here)
     expect(root.innerHTML).toContain('SECRET-REVIEWED-SUMMARY-TEXT');
+    expect(root.querySelectorAll('[data-info-note="cards-overview"]')).toHaveLength(1);
+    expect(root.querySelector(
+      '[data-test="record-surface-context-heading"] [data-info-note="cards-overview"]',
+    )).not.toBeNull();
+  });
+
+  it('keeps the feed title as the only h1 when the admitted feed is empty', () => {
+    renderCardFeed(root, feed([]));
+
+    const headings = root.querySelectorAll('h1');
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.textContent).toBe('Alpine card feed (reviewer-internal)');
+    expect(root.querySelector('[data-test="state-empty"] h1')).toBeNull();
+    expect(root.querySelector('[data-test="state-empty"] h2')?.textContent)
+      .toBe('Nothing to show yet');
   });
 });
 

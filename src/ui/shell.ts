@@ -10,7 +10,7 @@
  *  - `main.ts` remains the beta-gate authority; this module never authenticates.
  *  - the account chrome is visibly labelled as a preview.
  *  - notifications mount only inside the approved gated shell and consume the
- *    server/fixture response contract without recomputing unread state.
+ *    typed same-origin response contract without recomputing unread state.
  *  - AI analysis is disclosed as machine-generated and source-verification is
  *    repeated in the footer.
  *  - a refreshed timestamp is shown only when the caller supplies a real one.
@@ -19,9 +19,11 @@
 import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { mountNotificationPanel } from './notification-panel';
+import { renderInfoNote } from './info-note';
+import { renderPrivateInfoNote } from './private-info-note';
 
 export type ShellMode = 'simple' | 'advanced';
-export type ShellOrigin = 'fixture' | 'reviewed_snapshot';
+export type ShellOrigin = 'fixture' | 'reviewed_snapshot' | 'live_server';
 
 /** Shared per-user reading mode used by the approved page designs. */
 const MODE_KEY = 'gw_home_mode';
@@ -72,7 +74,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** Read the persisted reading mode, defaulting to the dense Advanced view. */
+/** Read the persisted reading mode, defaulting new visitors to the quick Simple view. */
 export function readMode(): ShellMode {
   try {
     const value = localStorage.getItem(MODE_KEY);
@@ -80,7 +82,7 @@ export function readMode(): ShellMode {
   } catch {
     /* Storage can be unavailable in private/non-browser contexts. */
   }
-  return 'advanced';
+  return 'simple';
 }
 
 function persistMode(mode: ShellMode): void {
@@ -127,6 +129,13 @@ function brand(): HTMLAnchorElement {
   ]);
 }
 
+function brandWithAiNote(): HTMLDivElement {
+  return el('div', { class: 'gw-shell-brand-group' }, [
+    brand(),
+    renderPrivateInfoNote('shell-ai'),
+  ]);
+}
+
 /** Disclosure, not a certification or a claim that a human reviewed the output. */
 function aiDisclosure(): HTMLElement {
   return el('small', {
@@ -137,9 +146,15 @@ function aiDisclosure(): HTMLElement {
   }, ['AI-POWERED ANALYSIS']);
 }
 
-/** A real route link; the location screen owns any later picker behavior. */
-function locationLink(): HTMLAnchorElement {
-  let locationLabel = 'Alpine, WY';
+/**
+ * A real route link; the location screen owns any later picker behavior.
+ *
+ * A saved place is only a device preference. Live server routes therefore keep
+ * the Alpine endpoint context primary and disclose a non-Alpine saved view
+ * separately instead of letting it visually relabel authorized civic rows.
+ */
+function locationLink(origin?: ShellOrigin): HTMLAnchorElement {
+  let savedLocationLabel = '';
   try {
     const stored = JSON.parse(localStorage.getItem('gw_location') ?? 'null') as {
       town?: unknown;
@@ -147,26 +162,55 @@ function locationLink(): HTMLAnchorElement {
     } | null;
     const town = typeof stored?.town === 'string' ? stored.town.trim() : '';
     const state = typeof stored?.state === 'string' ? stored.state.trim() : '';
-    if (town && state) locationLabel = `${town}, ${state}`;
-    else if (state) locationLabel = state;
+    if (town && state) savedLocationLabel = `${town}, ${state}`;
+    else if (town) savedLocationLabel = town;
+    else if (state) savedLocationLabel = state;
   } catch {
     /* Invalid preview storage falls back to the known Alpine design location. */
   }
-  return el('a', {
+  const live = origin === 'live_server';
+  const locationLabel = live ? 'Alpine endpoint' : (savedLocationLabel || 'Alpine, WY');
+  const nonAlpineSavedView = live
+    && savedLocationLabel.length > 0
+    && !savedLocationLabel.toLocaleLowerCase().startsWith('alpine');
+  const ariaLabel = nonAlpineSavedView
+    ? `Open location settings. Live records remain in the Alpine endpoint context. Saved view: ${savedLocationLabel}; it does not change authorized records.`
+    : live
+      ? 'Open location settings. Live records are in the Alpine endpoint context.'
+      : `Change location. Current preview location: ${locationLabel}.`;
+  const attrs: Record<string, string> = {
     class: 'gw-shell-location',
     href: '#/location',
-    title: 'Change your place',
-    'aria-label': `Change location. Current preview location: ${locationLabel}.`,
+    title: live ? 'Live context and saved location view' : 'Change your place',
+    'aria-label': ariaLabel,
     'data-test': 'shell-jurisdiction',
+  };
+  if (live) attrs['data-authoritative-context'] = 'alpine';
+  if (nonAlpineSavedView) attrs['data-saved-location'] = savedLocationLabel;
+
+  return el('a', {
+    ...attrs,
   }, [
     el('span', { class: 'gw-shell-location-dot', 'aria-hidden': 'true' }, []),
-    el('span', {}, [locationLabel]),
+    el('span', { class: 'gw-shell-location-copy' }, [
+      el('span', { class: 'gw-shell-location-primary' }, [locationLabel]),
+      ...(nonAlpineSavedView
+        ? [el('small', { class: 'gw-shell-location-saved' }, [`Saved view: ${savedLocationLabel}`])]
+        : []),
+    ]),
     el('span', { class: 'gw-shell-location-arrow', 'aria-hidden': 'true' }, ['›']),
   ]);
 }
 
+function locationControl(origin?: ShellOrigin): HTMLDivElement {
+  return el('div', { class: 'gw-shell-location-control' }, [
+    locationLink(origin),
+    renderPrivateInfoNote('shell-location'),
+  ]);
+}
+
 function timelineSearchHash(query: string): string {
-  return `#/timeline?search=${encodeURIComponent(query.trim())}&reviewer=1`;
+  return `#/timeline?search=${encodeURIComponent(query.trim())}`;
 }
 
 function searchControl(): HTMLFormElement {
@@ -199,7 +243,7 @@ function searchControl(): HTMLFormElement {
     'aria-hidden': 'true',
   }, ['⌘K']);
 
-  form.append(label, submit, input, shortcut);
+  form.append(label, submit, input, shortcut, renderPrivateInfoNote('shell-search'));
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     window.location.hash = timelineSearchHash(input.value);
@@ -289,10 +333,22 @@ function printControl(): HTMLButtonElement {
 
 /** Keep the server-authoritative notification panel in both reading modes. */
 function shellActions(mode: ShellMode, includePrint = false): HTMLDivElement {
-  const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [accountChip()]);
+  const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [
+    accountChip(),
+    renderPrivateInfoNote('shell-account'),
+  ]);
   mountNotificationPanel(actions);
-  actions.append(modeToggle(mode));
-  if (includePrint) actions.append(printControl());
+  actions.append(
+    renderPrivateInfoNote('shell-notifications'),
+    modeToggle(mode),
+    renderInfoNote('shell-mode'),
+  );
+  if (includePrint) {
+    actions.append(
+      printControl(),
+      renderPrivateInfoNote('shell-print'),
+    );
+  }
   return actions;
 }
 
@@ -312,12 +368,13 @@ function tabRow(path: string): HTMLElement {
     if (isActive(tab, path)) attrs['aria-current'] = 'page';
     nav.append(el('a', attrs, [tab.label]));
   }
+  nav.append(renderPrivateInfoNote('shell-navigation'));
   return nav;
 }
 
 function simpleMasthead(): HTMLDivElement {
   return el('div', { class: 'gw-shell-simple-masthead', 'data-test': 'shell-simple-masthead' }, [
-    brand(),
+    brandWithAiNote(),
     el('div', { class: 'gw-shell-simple-headline' }, [
       el('div', { class: 'gw-shell-simple-title' }, ['Government Watchdog Updates']),
       el('div', { class: 'gw-shell-simple-deck' }, [
@@ -348,20 +405,20 @@ function localDateIso(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function advancedBar(mode: ShellMode): HTMLElement {
+function advancedBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
   return el('div', { class: 'gw-shell-bar gw-shell-advanced-bar' }, [
-    brand(),
-    locationLink(),
+    brandWithAiNote(),
+    locationControl(origin),
     searchControl(),
     shellActions(mode),
   ]);
 }
 
-function simpleUtilityBar(mode: ShellMode): HTMLElement {
+function simpleUtilityBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
   const today = new Date();
   return el('div', { class: 'gw-shell-simple-utility', 'data-test': 'shell-simple-utility' }, [
     el('div', { class: 'gw-shell-simple-place' }, [
-      locationLink(),
+      locationControl(origin),
       el('time', {
         datetime: localDateIso(today),
         'data-test': 'shell-local-date',
@@ -382,23 +439,32 @@ function simpleTools(): HTMLElement {
 
 function originBanner(origin: ShellOrigin, refreshedAt?: string): HTMLElement {
   const fixture = origin === 'fixture';
+  const live = origin === 'live_server';
   const children: (Node | string)[] = [
-    el('strong', {}, [fixture ? 'SYNTHETIC DESIGN FIXTURE' : 'REVIEWED SNAPSHOT']),
+    el('strong', {}, [
+      fixture ? 'SYNTHETIC DESIGN FIXTURE' : live ? 'LIVE SERVER CONTEXT' : 'REVIEWED SNAPSHOT',
+    ]),
     el('span', {}, [
       fixture
         ? 'visual-review sample · not a live read'
-        : 'reviewer-internal archived projection · not a live read',
+        : live
+          ? 'same-origin authorization and reviewed records · no captured fallback'
+          : 'reviewer-internal archived projection · not a live read',
     ]),
   ];
   if (refreshedAt) {
     children.push(el('time', { datetime: refreshedAt }, [`snapshot generated ${refreshedAt}`]));
   }
-  return el('div', {
-    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : 'reviewed'}`,
+  const status = el('div', {
+    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : live ? 'live' : 'reviewed'}`,
     role: 'status',
     'data-test': 'shell-origin-banner',
     'data-origin': origin,
   }, children);
+  return el('div', { class: 'gw-shell-origin-wrap' }, [
+    status,
+    renderPrivateInfoNote('shell-origin'),
+  ]);
 }
 
 function footer(mode: ShellMode, refreshedAt?: string): HTMLElement {
@@ -463,8 +529,8 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   const bannerSlot = el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' });
   if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt));
   const headerChildren = mode === 'simple'
-    ? [simpleUtilityBar(mode), simpleMasthead(), simpleTools(), tabRow(opts.active)]
-    : [advancedBar(mode), tabRow(opts.active)];
+    ? [simpleUtilityBar(mode, opts.origin), simpleMasthead(), simpleTools(), tabRow(opts.active)]
+    : [advancedBar(mode, opts.origin), tabRow(opts.active)];
 
   root.append(
     bannerSlot,
@@ -488,14 +554,18 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-root[data-mode="simple"]{font-family:var(--gw-font-serif);font-size:16px}
 .gw-shell-banner-slot:empty{display:none}
 .gw-shell-banner-slot{width:100%;position:relative;z-index:30}
+.gw-shell-origin-wrap{position:relative;width:100%}
+.gw-shell-origin-wrap>.gw-info-note{position:absolute;right:10px;top:50%;transform:translateY(-50%)}
 .gw-shell-origin{width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;padding:5px 16px;border-bottom:var(--gw-border-w) solid var(--gw-tone-info-line);background:var(--gw-tone-info-well);color:var(--gw-info-text);font:500 11.5px/1.35 var(--gw-font-mono);letter-spacing:.03em;text-align:center}
+.gw-shell-origin-wrap .gw-shell-origin{padding-right:58px}
 .gw-shell-origin strong{font-weight:800;letter-spacing:.06em}
 .gw-shell-origin time{color:var(--gw-text-muted)}
 .gw-shell-origin-fixture{border-bottom-color:var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text)}
 .gw-shell-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .gw-shell-header{position:sticky;top:0;z-index:20;background:var(--gw-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-shell-bar{display:flex;align-items:center;gap:18px;max-width:1460px;margin:0 auto;padding:14px 28px}
-.gw-shell-brand{display:inline-flex;align-items:center;gap:11px;flex:none;text-decoration:none;color:var(--gw-text)}
+.gw-shell-brand-group,.gw-shell-location-control{display:inline-flex;align-items:center;gap:6px;flex:none}
+.gw-shell-brand{display:inline-flex;align-items:center;gap:11px;flex:none;min-height:var(--gw-tap-min);text-decoration:none;color:var(--gw-text)}
 .gw-shell-logo{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--gw-text);color:var(--gw-page-bg);font-weight:800;font-size:15px;letter-spacing:-.5px;flex:none}
 .gw-shell-wordmark{display:flex;flex-direction:column;line-height:1.05}
 .gw-shell-wordmark b{font-size:16.5px;font-weight:800;letter-spacing:.2px}
@@ -504,10 +574,14 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-location{display:inline-flex;align-items:center;gap:8px;flex:none;min-height:var(--gw-tap-min);padding:7px 14px;color:var(--gw-text-secondary);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none}
 .gw-shell-location:hover{border-color:var(--gw-accent);color:var(--gw-text)}
 .gw-shell-location-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-level-town);flex:none}
+.gw-shell-location-copy{display:grid;gap:1px;min-width:0}
+.gw-shell-location-primary{white-space:nowrap}
+.gw-shell-location-saved{display:block;max-width:190px;overflow:hidden;color:var(--gw-text-muted);font-size:10px;font-weight:600;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
 .gw-shell-location-arrow{color:var(--gw-text-muted);font-size:18px;line-height:1}
 .gw-shell-search{position:relative;display:flex;align-items:center;gap:10px;flex:1 1 280px;max-width:560px;min-width:220px;min-height:var(--gw-tap-min);padding:0 10px;background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:10px;color:var(--gw-text-muted)}
+.gw-shell-search>.gw-info-note{margin-left:auto}
 .gw-shell-search:focus-within{border-color:var(--gw-accent);outline:2px solid var(--gw-accent);outline-offset:1px}
-.gw-shell-search-submit{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 18px/1 var(--gw-font);padding:6px;cursor:pointer}
+.gw-shell-search-submit{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:var(--gw-tap-min);min-height:var(--gw-tap-min);border:0;background:transparent;color:var(--gw-text-muted);font:700 18px/1 var(--gw-font);padding:6px;cursor:pointer}
 .gw-shell-search-submit:hover{color:var(--gw-accent)}
 .gw-shell-search-submit:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px;border-radius:var(--gw-radius-sm)}
 .gw-shell-search-input{flex:1;min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--gw-text);font:500 var(--gw-text-badge)/1.3 var(--gw-font)}
@@ -522,7 +596,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-account-copy b{font-size:11px;letter-spacing:.65px}
 .gw-shell-account-copy small{margin-top:2px;color:var(--gw-text-muted);font-size:10.5px}
 .gw-shell-mode{display:inline-flex;flex:none;background:var(--gw-surface-well);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);padding:2px}
-.gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:calc(var(--gw-tap-min) - 4px);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
+.gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:var(--gw-tap-min);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn:hover{color:var(--gw-text)}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
 .gw-shell-print{appearance:none;min-height:var(--gw-tap-min);padding:6px 13px;border:1.5px solid var(--gw-rule-strong);border-radius:8px;background:transparent;color:var(--gw-text);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
@@ -544,6 +618,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-simple-tools-label{flex:none;color:var(--gw-text-secondary);font-size:12px;font-weight:700;letter-spacing:.25px}
 .gw-shell-simple-tools .gw-shell-search{margin-left:auto;max-width:520px;background:var(--gw-surface-subtle)}
 .gw-shell-tabs{display:flex;align-items:stretch;gap:30px;max-width:1460px;margin:0 auto;padding:0 28px;overflow-x:auto;scrollbar-width:none;font-family:var(--gw-font)}
+.gw-shell-tabs>.gw-info-note{align-self:center;margin-left:auto}
 .gw-shell-tabs::-webkit-scrollbar{display:none}
 .gw-shell-tab{display:inline-flex;align-items:center;flex:none;min-height:var(--gw-tap-min);padding:4px 2px 9px;color:var(--gw-text-muted);border-bottom:2px solid transparent;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
 .gw-shell-tab:hover{color:var(--gw-text)}
@@ -555,7 +630,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
 .gw-shell-preview-note{font-style:italic}
 .gw-shell-refreshed{grid-column:1/-1;font-family:var(--gw-font-mono);font-size:11px;color:var(--gw-text-muted)}
 .gw-shell-footer-links{display:flex;align-items:center;justify-content:flex-end;gap:16px;font-family:var(--gw-font)}
-.gw-shell-footer-links a{color:var(--gw-text-secondary);font-weight:600;text-decoration:none}
+.gw-shell-footer-links a{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);color:var(--gw-text-secondary);font-weight:600;text-decoration:none}
 .gw-shell-footer-links a:hover{text-decoration:underline;text-underline-offset:3px}
 .gw-shell-root[data-mode="simple"] .gw-shell-header{position:relative;border-top:2px solid var(--gw-rule-strong);border-bottom:2px solid var(--gw-rule-strong)}
 .gw-shell-simple-title{font:600 var(--gw-text-display)/1 var(--gw-font-serif);letter-spacing:-.5px}
@@ -573,13 +648,23 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-simple-masthead{grid-template-columns:auto minmax(0,1fr)}
   .gw-shell-simple-quote{display:none}
 }
+@media (max-width:900px){
+  .gw-shell-simple-utility{align-items:stretch;flex-direction:column}
+  .gw-shell-simple-place,.gw-shell-simple-utility .gw-shell-actions{justify-content:space-between}
+  .gw-shell-simple-utility .gw-shell-actions{margin-left:0;overflow-x:auto;padding-bottom:2px}
+  .gw-shell-simple-tools{display:block}
+  .gw-shell-simple-tools-label{display:block;margin-bottom:7px}
+  .gw-shell-simple-tools .gw-shell-search{margin:0;max-width:none}
+  .gw-shell-root[data-mode="simple"] .gw-shell-tabs{justify-content:flex-start}
+}
 @media (max-width:760px){
   .gw-shell-bar{padding:10px 14px;gap:10px}
   .gw-shell-wordmark b{font-size:14px}
   .gw-shell-wordmark span{font-size:10px;letter-spacing:2.6px}
-  .gw-shell-location{order:2;padding:6px 10px}
+  .gw-shell-location-control{order:2}
+  .gw-shell-location{padding:6px 10px}
   .gw-shell-search{order:4;flex-basis:100%;min-width:0}
-  .gw-shell-actions{order:3;width:100%;margin-left:0;justify-content:space-between;gap:6px}
+  .gw-shell-actions{order:3;width:100%;max-width:100%;margin-left:0;justify-content:space-between;gap:6px;overflow-x:auto;overflow-y:hidden}
   .gw-shell-account{padding:4px 8px}
   .gw-shell-account-copy small{display:none}
   .gw-shell-mode-btn{padding-left:10px;padding-right:10px}
@@ -595,6 +680,7 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-simple-tools-label{display:block;margin-bottom:7px}
   .gw-shell-simple-tools .gw-shell-search{margin:0;max-width:none}
   .gw-shell-tabs,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{position:fixed;bottom:0;left:0;right:0;z-index:60;justify-content:flex-start;max-width:none;margin:0;padding:0 8px env(safe-area-inset-bottom);gap:0;background:var(--gw-header-bg);border-top:var(--gw-border-w) solid var(--gw-border);border-bottom:0;overflow-x:auto}
+  .gw-shell-tabs>.gw-info-note{margin-left:0;min-width:var(--gw-tap-min);justify-content:center}
   .gw-shell-tab,.gw-shell-root[data-mode="simple"] .gw-shell-tab{flex:0 0 auto;justify-content:center;min-width:96px;min-height:var(--gw-tap-min);padding:4px 10px;border-top:2px solid transparent;border-bottom:0;font-size:12px;letter-spacing:0;text-transform:none}
   .gw-shell-tab[aria-current="page"],.gw-shell-root[data-mode="simple"] .gw-shell-tab[aria-current="page"]{border-top-color:var(--gw-accent);border-bottom-color:transparent;color:var(--gw-accent)}
   .gw-shell-content,.gw-shell-root[data-mode="simple"] .gw-shell-content{padding:14px 14px calc(var(--gw-tap-min) + 28px);border:0}
@@ -610,6 +696,9 @@ export const SHELL_STYLE = `${GW_TOKENS}
   .gw-shell-account-copy b{font-size:10px}
   .gw-shell-search-shortcut{display:none}
   .gw-shell-simple-place time{font-size:10.5px}
+  .gw-shell-actions,.gw-shell-simple-utility .gw-shell-actions{justify-content:flex-start;flex-wrap:wrap;overflow:visible}
+  .gw-shell-simple-masthead{grid-template-columns:1fr;align-items:start}
+  .gw-shell-simple-headline{width:100%}
 }
 `;
 

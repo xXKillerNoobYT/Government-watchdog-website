@@ -3,15 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Government Watchdog frontend — reviewer-internal/local Alpine timeline skeleton (Stage 1 Slice 4 A).",
+  "description": "Government Watchdog frontend — isolated Alpine Free preview and private-beta civic research lanes.",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-no-direct-exposure.mjs && tsc --noEmit && node scripts/prepare-sites-build.mjs --clean && vite build && node scripts/prepare-sites-build.mjs",
+    "build": "node scripts/prepare-sites-build.mjs --clean && npm run build:private-beta",
+    "build:all": "npm run build:public && npm run build:private-beta",
+    "build:private-beta": "node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode private-beta && node scripts/prepare-sites-build.mjs",
+    "build:public": "node scripts/prepare-sites-build.mjs --clean && node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode public && node scripts/check-public-bundle.mjs",
     "build:integrated": "npm run fetch:artifact && npm run build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "fetch:artifact": "node scripts/fetch-artifact.mjs",
     "check:exposure": "node scripts/check-no-direct-exposure.mjs",
+    "check:public-bundle": "node scripts/check-public-bundle.mjs",
     "e2e:local": "bash scripts/local_e2e.sh",
     "test": "vitest run",
     "test:smoke": "vitest run test/integration-smoke.test.ts"
@@ -19,12 +23,15 @@
   "devDependencies": {
     "jsdom": "^24.1.1",
     "typescript": "^5.5.4",
-    "vite": "^5.4.2",
-    "vitest": "^2.0.5"
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/newsreader": "^5.2.10",
     "@fontsource/public-sans": "^5.2.7"
+  },
+  "overrides": {
+    "postcss": "8.5.18"
   }
 }

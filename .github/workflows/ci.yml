@@ -28,5 +28,8 @@ jobs:
       - name: Integration smoke — 5 assertions (raw-path / label / link / rollup / cycle)
         run: npm run test:smoke
 
-      - name: Production build
-        run: npm run build
+      - name: Public + private-beta production builds
+        run: npm run build:all
+
+      - name: Public downloadable-asset safety boundary
+        run: npm run check:public-bundle

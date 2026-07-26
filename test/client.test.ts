@@ -25,13 +25,20 @@ function mockFetch(body: unknown, ok = true, status = 200): typeof fetch {
 }
 
 describe('readConfig', () => {
-  it('defaults to fixture mode', () => {
-    expect(readConfig({})).toEqual({ useFixtures: true, readApiUrl: '' });
-  });
-  it('enables live mode only when explicitly false + URL present', () => {
-    expect(readConfig({ VITE_USE_FIXTURES: 'false', VITE_READ_API_URL: 'http://127.0.0.1:8787/read' })).toEqual({
+  it('defaults to the live same-origin reviewer endpoint', () => {
+    expect(readConfig({})).toEqual({
       useFixtures: false,
-      readApiUrl: 'http://127.0.0.1:8787/read',
+      readApiUrl: '/api/reviewer-internal',
+    });
+  });
+  it('enables fixture mode only when explicit and never accepts a cross-origin read URL', () => {
+    expect(readConfig({
+      VITE_USE_FIXTURES: 'true',
+      VITE_API_BASE: 'https://evil.example/api',
+      VITE_READ_API_URL: 'https://evil.example/read',
+    })).toEqual({
+      useFixtures: true,
+      readApiUrl: '/api/reviewer-internal',
     });
   });
 });
@@ -85,20 +92,46 @@ describe('loadReadModel — adapter reads the read-API sample', () => {
     }
   });
 
-  it('falls back to the labeled fixture on a live-read failure (visible notice)', async () => {
+  it('keeps a live-read failure fail-closed and never substitutes a fixture', async () => {
     const { state, notice } = await loadReadModel({
       config: { useFixtures: false, readApiUrl: 'http://127.0.0.1:8787/read' },
       fetchImpl: mockFetch(null, false, 503),
     });
-    expect(state.mode).toBe('fixture');
-    expect(state.status).toBe('ready');
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
     expect(notice).toMatch(/Live read-API unavailable/);
+    expect(notice).toMatch(/No private capture or synthetic sample was substituted/);
   });
 
   it('uses the labeled fixture in fixture mode (default)', async () => {
     const { state } = await loadReadModel({ config: { useFixtures: true, readApiUrl: '' } });
     expect(state.mode).toBe('fixture');
     expect(state.data).toBe(FIXTURE);
+  });
+
+  it('fails closed when live mode is selected without an API URL', async () => {
+    const { state, notice } = await loadReadModel({
+      config: { useFixtures: false, readApiUrl: '' },
+      fetchImpl: mockFetch(sample),
+    });
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
+    expect(state.error).toContain('same-origin reviewer endpoint is not configured');
+    expect(notice).toContain('No private capture or synthetic sample was substituted');
+  });
+
+  it('fails closed when live mode has no fetch implementation', async () => {
+    const { state, notice } = await loadReadModel({
+      config: { useFixtures: false, readApiUrl: '/api/reviewer-internal' },
+      fetchImpl: null,
+    });
+    expect(state.mode).toBe('live');
+    expect(state.status).toBe('error');
+    expect(state.data).toBeUndefined();
+    expect(state.error).toContain('fetch is not available');
+    expect(notice).toContain('No private capture or synthetic sample was substituted');
   });
 });
 
