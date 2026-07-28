@@ -1158,6 +1158,59 @@ function reviewedAgendaStages(board: AgendaBoard): HTMLElement {
  * record itself — a town-coloured card asserts nothing beyond which lane the
  * fixture placed it in.
  */
+
+/**
+ * Issue-card modal behind "Open card \u203a" — the card-detail half of the
+ * design's kanban interaction. Same shared modal primitive as the agenda
+ * analysis popup (\u2715 / backdrop / Escape close), and the follow control is
+ * the same trackButton store the cards use, so toggling in the modal syncs
+ * every rendered toggle for that issue.
+ */
+function openIssueCard(
+  root: HTMLElement,
+  issue: IssueCard,
+  index: number,
+  tracked: Record<string, boolean>,
+  trigger: HTMLElement,
+): void {
+  const titleId = `gw-fa-card-modal-title-${issue.issueKey}-${index}`;
+  const tile = (label: string, value: string): HTMLElement =>
+    el('div', { class: 'gw-fa-card-tile', 'data-test': 'issue-card-modal-tile' }, [
+      el('b', {}, [label]),
+      el('span', {}, [value]),
+    ]);
+
+  openModal(root, {
+    testId: 'issue-card-modal',
+    labelledById: titleId,
+    closeLabel: 'Close issue card',
+    trigger,
+    className: 'gw-fa-modal',
+    header: el('div', {}, [
+      kicker(`ISSUE TRACKER \u00b7 ${ISSUE_STAGES[issue.stage].toUpperCase()}`),
+      el('h2', { id: titleId }, [issue.title]),
+      el('p', { class: 'gw-fa-muted' }, [`${issue.body} \u00b7 ${JURISDICTION_LABEL[issue.jurisdiction]}`]),
+    ]),
+    body: [
+      ...(issue.flag ? [el('p', { class: 'gw-fa-issue-flag', 'data-test': 'issue-card-modal-flag' }, [issue.flag])] : []),
+      el('div', { class: 'gw-fa-card-tiles' }, [tile('Last', issue.last), tile('Next', issue.next)]),
+      trackButton(root, tracked, issue.issueKey, issue.title),
+      el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [
+        `Receipts (${issue.receipts}) \u00b7 synthetic design placeholders \u2014 not a live read.`,
+      ]),
+      el('footer', { class: 'gw-fa-modal-actions' }, [
+        el('span', {}, ['Links unavailable \u2014 synthetic fixture reference only']),
+        el('button', {
+          type: 'button',
+          class: 'gw-fa-secondary',
+          'data-test': 'issue-card-modal-close',
+          'data-modal-close': '',
+        }, ['Close']),
+      ]),
+    ],
+  });
+}
+
 function issueCardSpec(
   root: HTMLElement,
   issue: IssueCard,
@@ -1178,6 +1231,15 @@ function issueCardSpec(
         `Receipts (${issue.receipts}) · synthetic references only`,
       ]),
       trackButton(root, tracked, issue.issueKey, issue.title),
+      (() => {
+        const open = el('button', {
+          type: 'button',
+          class: 'gw-fa-secondary',
+          'data-test': 'issue-card-open',
+        }, ['Open card \u203a']);
+        open.addEventListener('click', () => openIssueCard(root, issue, index, tracked, open));
+        return open;
+      })(),
     ],
   };
 }
@@ -1455,6 +1517,9 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-stand-row{break-inside:avoid;display:grid;gap:2px;margin-bottom:var(--gw-space-3)}
 .gw-fa-stand-row strong{font-size:var(--gw-text-md)}
 .gw-fa-stand-stage{color:var(--gw-text-muted);font-size:var(--gw-text-badge)}
+.gw-fa-card-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-3)}
+.gw-fa-card-tile{border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius-sm);padding:var(--gw-space-2) var(--gw-space-3);display:grid;gap:2px}
+.gw-fa-card-tile b{font-size:var(--gw-text-badge);letter-spacing:.05em;text-transform:uppercase;color:var(--gw-text-muted)}
 [data-mode="simple"] .gw-fa-ai,.gw-fa-simple-item .gw-fa-ai{background:#FFF8E4;border-left:3px solid #D9A400;color:#3d3306}
 .gw-fa-simple-item .gw-fa-ai .gw-fa-ai-label{color:#8a6d00}
 .gw-fa-public-comment h2{font-size:var(--gw-text-sm);color:var(--gw-accent)}.gw-fa-public-comment p{margin-bottom:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}

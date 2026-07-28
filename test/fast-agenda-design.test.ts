@@ -179,6 +179,31 @@ describe('Fast Agenda fixture content and disclosure', () => {
     expect(root.querySelector('[data-test="reviewed-nearby-meetings-gap"]')).not.toBeNull();
   });
 
+  it('opens the issue-card modal from a kanban card and shares one tracking store', () => {
+    renderFixture();
+
+    const card = root.querySelector('[data-test="kanban-card"]');
+    const open = card?.querySelector<HTMLButtonElement>('[data-test="issue-card-open"]');
+    expect(open?.textContent).toContain('Open card');
+    open?.click();
+
+    const modal = root.querySelector('[data-test="issue-card-modal"]');
+    expect(modal).not.toBeNull();
+    expect(modal?.querySelectorAll('[data-test="issue-card-modal-tile"]')).toHaveLength(2);
+    expect(modal?.textContent).toContain('Last');
+    expect(modal?.textContent).toContain('Next');
+    expect(modal?.querySelector('[data-test="receipts-disclaimer"]')?.textContent).toContain('not a live read');
+
+    // One store: toggling inside the modal syncs the card's own toggle.
+    const modalTrack = modal?.querySelector<HTMLButtonElement>('[data-test="track-toggle"]');
+    modalTrack?.click();
+    expect(card?.querySelector('[data-test="track-toggle"]')?.getAttribute('aria-pressed')).toBe('true');
+
+    // Shared modal semantics: the footer close button dismisses it.
+    modal?.querySelector<HTMLButtonElement>('[data-test="issue-card-modal-close"]')?.click();
+    expect(root.querySelector('[data-test="issue-card-modal"]')).toBeNull();
+  });
+
   it('closes Simple mode with the where-things-stand digest at Advanced-tracker parity', () => {
     localStorage.setItem('gw_home_mode', 'simple');
     renderFixture();
