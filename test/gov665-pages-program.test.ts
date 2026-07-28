@@ -35,6 +35,27 @@ beforeEach(() => {
   document.body.append(root);
 });
 
+function expectRouteInfoNotes(required: readonly string[]): void {
+  const triggers = [...root.querySelectorAll<HTMLButtonElement>('[data-info-note]')];
+  const ids = triggers.map((node) => node.dataset.infoNote!);
+  const labels = triggers.map((node) => node.getAttribute('aria-label'));
+  const panelIds = triggers.map((node) => node.getAttribute('aria-controls'));
+
+  expect([...ids].sort()).toEqual([...required].sort());
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(new Set(panelIds).size).toBe(panelIds.length);
+  for (const panelId of panelIds) {
+    expect(panelId).toBeTruthy();
+    const panel = root.querySelector<HTMLElement>(`#${panelId}`);
+    expect(panel).not.toBeNull();
+    expect(panel?.textContent).toContain('What this is');
+    expect(panel?.textContent).toContain('Filled from');
+    expect(panel?.textContent).toContain('Filed under');
+    expect(panel?.textContent).toContain('Current state');
+    expect(panel?.textContent).toContain('Expected result');
+  }
+}
+
 describe('GOV-665 Fast Agenda page', () => {
   it('renders the honest empty next-meeting hero from the real projection', () => {
     renderFastAgenda(root, REAL_BOARD, 'real');
@@ -51,17 +72,34 @@ describe('GOV-665 Fast Agenda page', () => {
 
   it('uses the shell-owned shared mode preference without rendering a duplicate page switch', () => {
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(readPageMode()).toBe('advanced');
-    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
+    expect(readPageMode()).toBe('simple');
+    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
 
-    localStorage.setItem('gw_home_mode', 'simple');
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(SAMPLE_BOARD.cardCount);
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
   });
 
+  it('keeps complete contextual note coverage in both reading modes', () => {
+    const required = [
+      'agenda-overview',
+      'agenda-meeting',
+      'agenda-lifecycle',
+      'agenda-filters',
+      'agenda-sources',
+      'agenda-gaps',
+    ];
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderFastAgenda(root, SAMPLE_BOARD, 'sample', true);
+      expectRouteInfoNotes(required);
+    }
+  });
+
   it('does not let Advanced mode override an explicit light theme choice', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     localStorage.setItem('gw-theme', 'light');
     document.documentElement.setAttribute('data-theme', 'light');
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
@@ -74,6 +112,8 @@ describe('GOV-665 Fast Agenda page', () => {
     expect(root.querySelector('[data-test="fast-agenda-card"]')).toBeNull();
     expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
     expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
+    expect(root.textContent).not.toContain('Meeting and item identity');
   });
 });
 
@@ -87,7 +127,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
     expect(root.querySelectorAll('[data-test="record-card"]')).toHaveLength(GRAPH_REAL.records!.length);
     expect(root.querySelector('[data-test="timeline-hybrid-intro"]')?.textContent).toContain('fail-closed record cards');
     expect(root.querySelector('[data-test="timeline-filter-form"]')).not.toBeNull();
-    expect(root.textContent).toContain('County and State lanes remain unavailable');
+    expect(root.textContent).toContain('does not assign them to Town, County, or State government');
     expect(root.querySelector('[data-test="timeline-map"]')?.getAttribute('data-mode')).toBe('advanced');
     const receiptCount = [...root.querySelectorAll<HTMLElement>('[data-test="timeline-map-event"]')]
       .reduce((sum, marker) => sum + Number(marker.dataset.recordCount), 0);
@@ -99,6 +139,31 @@ describe('GOV-665 Timeline levels and event filters', () => {
     expect(root.querySelector('[data-test="timeline-connector-gap"]')?.textContent).toContain('typed cross-record issue edges');
     expect(root.querySelector('[data-test="timeline-tools-unavailable"]')?.textContent).toContain('typed backend fields');
     expect(root.querySelector('[data-test="timeline-map"]')?.textContent).toContain('ordering date, not a typed civic event date');
+  });
+
+  it('keeps control, calculation, record, and gap notes in both Timeline modes', () => {
+    const required = [
+      'timeline-overview',
+      'timeline-filters',
+      'timeline-date-basis',
+      'timeline-map',
+      'timeline-records',
+      'timeline-gaps',
+    ];
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(), 'real');
+      expectRouteInfoNotes(required);
+      const methodTrigger = root.querySelector<HTMLButtonElement>(
+        '[data-info-note="timeline-date-basis"]',
+      )!;
+      const methodPanel = root.querySelector<HTMLElement>(
+        `#${methodTrigger.getAttribute('aria-controls')}`,
+      );
+      expect(methodPanel?.textContent).toContain('TIMELINE-ORDER/v1');
+      expect(methodPanel?.textContent).toContain('Missing data');
+      expect(methodPanel?.textContent).toContain('remains Undated');
+    }
   });
 
   it('keeps map-marker navigation on the Timeline route and focuses the reviewed card', () => {
@@ -177,7 +242,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
         }
       }
     }
-    expect(root.querySelector('[data-test="timeline-map-town-events"]')?.getAttribute('style'))
+    expect(root.querySelector('[data-test="timeline-map-record-events"]')?.getAttribute('style'))
       .toMatch(/--gw-timeline-rows:[5-9]/);
   });
 
@@ -295,12 +360,16 @@ describe('GOV-665 Timeline levels and event filters', () => {
   it('keeps all level, event-type, event-window, and sort slots visible without inventing support', () => {
     renderTimelineLevels(root, GRAPH_REAL, new URLSearchParams(), 'real');
 
-    const suppliedTown = root.querySelector<HTMLElement>('[data-test="timeline-level-town"]');
-    expect(suppliedTown?.tagName).toBe('SPAN');
-    expect(suppliedTown?.dataset.state).toBe('supplied');
-    expect(suppliedTown?.textContent).toContain('Town · supplied');
+    const unavailableTown = root.querySelector<HTMLButtonElement>(
+      '[data-test="timeline-level-town-unavailable"]',
+    );
+    expect(unavailableTown?.disabled).toBe(true);
+    expect(unavailableTown?.textContent).toContain('Town · unavailable');
     expect(root.querySelector<HTMLButtonElement>('[data-test="timeline-level-county-unavailable"]')?.disabled).toBe(true);
     expect(root.querySelector<HTMLButtonElement>('[data-test="timeline-level-state-unavailable"]')?.disabled).toBe(true);
+    expect(root.querySelector('[data-test="timeline-map-unscoped"]')).not.toBeNull();
+    expect(root.textContent).not.toContain('Town supplied');
+    expect(root.textContent).not.toContain('TOWN · ALPINE');
     for (const testId of [
       'timeline-type-meeting-unavailable',
       'timeline-type-document-unavailable',
@@ -372,7 +441,7 @@ describe('GOV-665 Timeline levels and event filters', () => {
     level.value = 'day';
     root.querySelector<HTMLFormElement>('[data-test="timeline-filter-form"]')!
       .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(window.location.hash).toBe('#/timeline?search=water+main&level=day&reviewer=1');
+    expect(window.location.hash).toBe('#/timeline?search=water+main&level=day');
   });
 
   it('renders zero timeline cards outside reviewer-internal access', () => {
@@ -380,11 +449,14 @@ describe('GOV-665 Timeline levels and event filters', () => {
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="record-card"]')).toBeNull();
     expect(root.querySelector('[data-test="timeline-map"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
+    expect(root.textContent).not.toContain('Derived ordering metadata');
   });
 });
 
 describe('GOV-665 Boards directory and detail', () => {
   it('never relabels reviewed civic topics as government body cards', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
     expect(root.querySelector('[data-test="boards-advanced-workbench"]')).not.toBeNull();
@@ -395,6 +467,20 @@ describe('GOV-665 Boards directory and detail', () => {
     expect(root.querySelector('[data-test="boards-cadence-gap"]')).not.toBeNull();
     expect(root.querySelector('[data-test="boards-members-gap"]')).not.toBeNull();
     expect(root.querySelector('[data-test="boards-links-gap"]')).not.toBeNull();
+  });
+
+  it('keeps directory, topic, and body-detail notes in both Boards modes', () => {
+    const required = [
+      'boards-overview',
+      'boards-directory',
+      'boards-topic',
+      'boards-body',
+    ];
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderBoardsDirectory(root, GRAPH_REAL, new URLSearchParams(), 'real');
+      expectRouteInfoNotes(required);
+    }
   });
 
   it('rejects a topic id as a body detail while preserving its Timeline path', () => {
@@ -410,6 +496,8 @@ describe('GOV-665 Boards directory and detail', () => {
     expect(root.querySelector('[data-test="board-directory-card"]')).toBeNull();
     expect(root.querySelector('[data-test="boards-topic-context-card"]')).toBeNull();
     expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
+    expect(root.textContent).not.toContain('Government-level directory');
   });
 
   it('shows supplied topic aliases as sourced context without relabeling them as boards', () => {
@@ -432,6 +520,7 @@ describe('GOV-665 Boards directory and detail', () => {
   });
 
   it('preserves the jurisdiction directory and body-detail tool geometry as explicit gaps in both modes', () => {
+    localStorage.setItem('gw_home_mode', 'advanced');
     const contractGapIds = [
       'boards-bodies-gap',
       'boards-cadence-gap',

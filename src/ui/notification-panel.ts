@@ -7,9 +7,10 @@
  * in the shell header, which only draws past the beta gate), so no notification
  * content ever reaches an unauthenticated visitor.
  *
- * Honesty: titles/bodies are shown verbatim from the server; the unread count is
- * the server's number, not a client recompute. A DEV-sample notice is shown in
- * the drawer whenever the data is not a live read.
+ * Honesty: titles/bodies are shown verbatim from the validated server envelope;
+ * the unread count is the server's number, not a client recompute. Every
+ * non-ready live state clears the badge and rows. Development sample mode is
+ * visibly labelled beside the closed bell as well as inside the drawer.
  *
  * Accessibility (AC-7): the bell is a `<button>` with an accessible name +
  * `aria-haspopup`/`aria-expanded`/`aria-controls`; the unread count is announced
@@ -18,8 +19,12 @@
  * accessible name and each row's timestamp uses a machine-readable `<time>`.
  */
 
-import { loadNotifications, type LoadNotificationsResult } from '../data/notifications';
-import type { NotificationItem, NotificationKind, NotificationResponse } from '../types/notification';
+import {
+  loadNotifications,
+  notificationFailureResult,
+  type LoadNotificationsResult,
+} from '../data/notifications';
+import type { NotificationItem, NotificationKind } from '../types/notification';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -93,21 +98,50 @@ function notificationRow(item: NotificationItem): HTMLElement {
   );
 }
 
-/** Build the drawer's inner content for a loaded response (+ optional notice). */
-export function renderNotificationList(data: NotificationResponse, notice?: string): HTMLElement {
-  const wrap = el('div', { class: 'gw-ntf-list-wrap' });
+const FAILURE_MESSAGE: Record<'denied' | 'unavailable' | 'invalid', string> = {
+  denied: 'This session cannot load account notifications.',
+  unavailable: 'The account-notification service could not be reached.',
+  invalid: 'The account-notification response did not pass safety validation.',
+};
+
+/** Build the drawer's inner content for one typed load result. */
+export function renderNotificationList(result: LoadNotificationsResult): HTMLElement {
+  const { data, notice, state } = result;
+  const liveData = state === 'ready' || state === 'demo'
+    ? data
+    : { notifications: [], unread_count: 0 };
+  const countLabel =
+    state === 'demo'
+      ? `${liveData.unread_count} sample unread`
+      : state === 'ready'
+        ? `${liveData.unread_count} unread`
+        : 'Count unavailable';
+  const wrap = el('div', {
+    class: 'gw-ntf-list-wrap',
+    'data-notification-state': state,
+  });
   wrap.append(
     el('div', { class: 'gw-ntf-drawer-head' }, [
       el('h2', { id: 'gw-ntf-title', class: 'gw-ntf-heading' }, ['Notifications']),
       el('span', { class: 'gw-ntf-count', 'data-test': 'notification-unread-count' }, [
-        `${data.unread_count} unread`,
+        countLabel,
       ]),
     ]),
   );
   if (notice) {
     wrap.append(el('p', { class: 'gw-ntf-notice', 'data-test': 'notification-notice' }, [notice]));
   }
-  if (data.notifications.length === 0) {
+  if (state === 'denied' || state === 'unavailable' || state === 'invalid') {
+    wrap.append(
+      el('p', {
+        class: 'gw-ntf-unavailable',
+        'data-test': 'notification-unavailable',
+        role: 'status',
+      }, [FAILURE_MESSAGE[state]]),
+    );
+    return wrap;
+  }
+  if (liveData.notifications.length === 0) {
     wrap.append(
       el('p', { class: 'gw-ntf-empty', 'data-test': 'notification-empty' }, [
         "You're all caught up — no notifications yet.",
@@ -120,7 +154,7 @@ export function renderNotificationList(data: NotificationResponse, notice?: stri
     'data-test': 'notification-list',
     'aria-label': 'Your notifications',
   });
-  for (const item of data.notifications) list.append(notificationRow(item));
+  for (const item of liveData.notifications) list.append(notificationRow(item));
   wrap.append(list);
   return wrap;
 }
@@ -160,8 +194,16 @@ export function mountNotificationPanel(
     ],
   ) as HTMLButtonElement;
   const badge = bell.querySelector('.gw-ntf-badge') as HTMLElement;
+  const demoChip = el('span', {
+    class: 'gw-ntf-demo-chip',
+    'data-test': 'notification-demo-chip',
+    hidden: 'hidden',
+  }, ['DEV SAMPLE']);
 
-  const drawerBody = el('div', { class: 'gw-ntf-drawer-body', 'data-test': 'notification-drawer-body' }, [
+  const drawerBody = el('div', {
+    class: 'gw-ntf-drawer-body',
+    'data-test': 'notification-drawer-body',
+  }, [
     el('p', { class: 'gw-ntf-loading' }, ['Loading…']),
   ]);
   const closeBtn = el(
@@ -177,7 +219,7 @@ export function mountNotificationPanel(
       'data-test': 'notification-drawer',
       role: 'dialog',
       'aria-modal': 'false',
-      'aria-labelledby': 'gw-ntf-title',
+      'aria-label': 'Notifications',
       hidden: 'hidden',
     },
     [el('div', { class: 'gw-ntf-drawer-topbar' }, [closeBtn]), drawerBody],
@@ -195,12 +237,52 @@ export function mountNotificationPanel(
     }
   };
 
-  let loadedOnce = false;
-  const refresh = async (): Promise<void> => {
-    const { data, notice } = await load();
-    applyCount(data.unread_count);
-    drawerBody.replaceChildren(renderNotificationList(data, notice));
-    loadedOnce = true;
+  const applyResult = (result: LoadNotificationsResult): void => {
+    if (result.state === 'ready') {
+      demoChip.setAttribute('hidden', 'hidden');
+      applyCount(result.data.unread_count);
+      return;
+    }
+    applyCount(0);
+    if (result.state === 'demo') {
+      demoChip.removeAttribute('hidden');
+      bell.setAttribute('aria-label', 'Notifications development sample');
+    } else {
+      demoChip.setAttribute('hidden', 'hidden');
+      bell.setAttribute('aria-label', 'Notifications unavailable');
+    }
+  };
+
+  let requestVersion = 0;
+  const safeLoad = async (): Promise<LoadNotificationsResult> => {
+    try {
+      return await load();
+    } catch {
+      return notificationFailureResult('unavailable');
+    }
+  };
+  const refresh = async (paintDrawer: boolean): Promise<void> => {
+    const version = ++requestVersion;
+    if (paintDrawer) {
+      demoChip.setAttribute('hidden', 'hidden');
+      applyCount(0);
+      bell.setAttribute('aria-label', 'Notifications loading');
+      drawerBody.setAttribute('aria-busy', 'true');
+      drawerBody.replaceChildren(
+        el('p', {
+          class: 'gw-ntf-loading',
+          'data-test': 'notification-loading',
+          role: 'status',
+        }, ['Refreshing account notifications…']),
+      );
+    }
+    const result = await safeLoad();
+    if (version !== requestVersion || !bell.isConnected) return;
+    applyResult(result);
+    if (paintDrawer) {
+      drawerBody.replaceChildren(renderNotificationList(result));
+      drawerBody.removeAttribute('aria-busy');
+    }
   };
 
   const isOpen = (): boolean => !drawer.hasAttribute('hidden');
@@ -209,27 +291,29 @@ export function mountNotificationPanel(
   // change never accumulates stray document listeners.
   const onOutsideClick = (evt: MouseEvent): void => {
     const target = evt.target as Node;
-    if (!drawer.contains(target) && !bell.contains(target)) close();
+    if (!drawer.contains(target) && !bell.contains(target)) close(false);
   };
   const open = (): void => {
     drawer.removeAttribute('hidden');
     bell.setAttribute('aria-expanded', 'true');
-    void refresh();
+    void refresh(true);
     // Defer so the click that opened the drawer doesn't immediately close it.
-    setTimeout(() => document.addEventListener('click', onOutsideClick), 0);
+    setTimeout(() => {
+      if (isOpen()) document.addEventListener('click', onOutsideClick);
+    }, 0);
     // Move focus into the drawer for keyboard users.
     closeBtn.focus();
   };
-  const close = (): void => {
+  const close = (restoreFocus = true): void => {
     drawer.setAttribute('hidden', 'hidden');
     bell.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', onOutsideClick);
-    bell.focus();
+    if (restoreFocus) bell.focus();
   };
   const toggle = (): void => (isOpen() ? close() : open());
 
   bell.addEventListener('click', toggle);
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', () => close());
   drawer.addEventListener('keydown', (evt) => {
     if ((evt as KeyboardEvent).key === 'Escape') {
       evt.stopPropagation();
@@ -237,15 +321,15 @@ export function mountNotificationPanel(
     }
   });
 
-  // Prime the badge on mount WITHOUT opening the drawer, so the unread count is
-  // visible immediately. Failures are swallowed by loadNotifications (fixture
-  // fallback), so this never throws.
-  void load().then(({ data }) => {
-    if (!loadedOnce) applyCount(data.unread_count);
-  });
-
-  const shellSlot = el('div', { class: 'gw-ntf-anchor', 'data-test': 'notification-panel' }, [bell, drawer]);
+  // Prime the badge on mount WITHOUT opening the drawer. A later open request
+  // supersedes this one, preventing stale data from repainting a newer state.
+  const shellSlot = el(
+    'div',
+    { class: 'gw-ntf-anchor', 'data-test': 'notification-panel' },
+    [bell, demoChip, drawer],
+  );
   container.append(shellSlot);
+  void refresh(false);
   return bell;
 }
 
@@ -258,6 +342,8 @@ export const NOTIFICATION_STYLE = `
 .gw-ntf-bell:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}
 .gw-ntf-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;box-sizing:border-box;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;font:700 var(--gw-text-xs)/1 var(--gw-font);color:var(--gw-accent-text-on);background:var(--gw-stop-text);border-radius:var(--gw-radius-pill)}
 .gw-ntf-badge[hidden]{display:none}
+.gw-ntf-demo-chip{align-self:center;padding:2px 6px;color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius-pill);font:800 var(--gw-text-xs)/1.4 var(--gw-font);letter-spacing:.04em}
+.gw-ntf-demo-chip[hidden]{display:none}
 .gw-ntf-drawer{position:absolute;top:calc(100% + var(--gw-space-2));right:0;z-index:70;width:min(360px,92vw);max-height:min(70vh,520px);overflow-y:auto;background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-lg);padding:var(--gw-space-3) var(--gw-space-4) var(--gw-space-4)}
 .gw-ntf-drawer[hidden]{display:none}
 .gw-ntf-drawer-topbar{display:flex;justify-content:flex-end}
@@ -267,7 +353,7 @@ export const NOTIFICATION_STYLE = `
 .gw-ntf-heading{font-size:var(--gw-text-lg);margin:0}
 .gw-ntf-count{font-size:var(--gw-text-sm);color:var(--gw-text-secondary)}
 .gw-ntf-notice{font-size:var(--gw-text-xs);color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-2) var(--gw-space-3);margin:0 0 var(--gw-space-3)}
-.gw-ntf-empty,.gw-ntf-loading{font-size:var(--gw-text-body);color:var(--gw-text-secondary);margin:var(--gw-space-3) 0}
+.gw-ntf-empty,.gw-ntf-loading,.gw-ntf-unavailable{font-size:var(--gw-text-body);color:var(--gw-text-secondary);margin:var(--gw-space-3) 0}
 .gw-ntf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--gw-space-2)}
 .gw-ntf-item{display:flex;gap:var(--gw-space-2);align-items:flex-start;padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface-subtle)}
 .gw-ntf-item.is-unread{border-color:var(--gw-accent);background:var(--gw-surface-accent-tint)}
@@ -279,7 +365,7 @@ export const NOTIFICATION_STYLE = `
 .gw-ntf-time{font-family:var(--gw-font-mono);font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
 .gw-ntf-title{font-size:var(--gw-text-body);font-weight:700;margin:var(--gw-space-1) 0 0}
 .gw-ntf-body{font-size:var(--gw-text-sm);color:var(--gw-text-secondary);margin:var(--gw-space-1) 0 0}
-@media (max-width:640px){
+@media (max-width:760px){
   .gw-ntf-drawer{position:fixed;top:auto;bottom:calc(var(--gw-tap-min) + var(--gw-space-3));right:var(--gw-space-3);left:var(--gw-space-3);width:auto;max-height:70vh}
 }
 `;

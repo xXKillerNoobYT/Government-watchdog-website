@@ -13,6 +13,33 @@ import digestData from '../src/fixtures/alpine-newsletter-digest.json';
 const GRAPH_REAL = graphRealData as unknown as ReadApiResponse;
 const DIGEST = loadDigestResponse(digestData);
 
+function stubLiveReviewerContext(statementId: string, sourceId: string) {
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers({ 'content-type': 'application/json' }),
+    text: async () => JSON.stringify({
+      reviewer_internal_records: [{
+        statement_id: statementId,
+        statement_text: `Live route sentinel ${statementId}`,
+        ui_status: 'source-backed',
+        verification_status: 'reviewed_source_linked',
+        provenance_status: 'grounded',
+        publication_state: 'publishable',
+        produced_by: 'human',
+        evidence: [{
+          to_source_id: sourceId,
+          verification_status: 'human_verified',
+          original_url: `https://www.alpinewy.gov/${sourceId}`,
+        }],
+      }],
+    }),
+  }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 let root: HTMLElement;
 let store: Record<string, string>;
 
@@ -29,9 +56,31 @@ beforeEach(() => {
       clear: () => { store = {}; },
     },
   });
+  localStorage.setItem('gw_home_mode', 'advanced');
   root = document.createElement('div');
   document.body.append(root);
 });
+
+function expectRouteInfoNotes(required: readonly string[]): void {
+  const triggers = [...root.querySelectorAll<HTMLButtonElement>('[data-info-note]')];
+  const ids = triggers.map((node) => node.dataset.infoNote!);
+  const labels = triggers.map((node) => node.getAttribute('aria-label'));
+  const panelIds = triggers.map((node) => node.getAttribute('aria-controls'));
+
+  expect([...ids].sort()).toEqual([...required].sort());
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(new Set(panelIds).size).toBe(panelIds.length);
+  for (const panelId of panelIds) {
+    expect(panelId).toBeTruthy();
+    const panel = root.querySelector<HTMLElement>(`#${panelId}`);
+    expect(panel).not.toBeNull();
+    expect(panel?.textContent).toContain('What this is');
+    expect(panel?.textContent).toContain('Filled from');
+    expect(panel?.textContent).toContain('Filed under');
+    expect(panel?.textContent).toContain('Current state');
+    expect(panel?.textContent).toContain('Expected result');
+  }
+}
 
 describe('GOV-668 Issue Detail', () => {
   it('keeps the complete trust bundle and source receipts in both Simple and Advanced', () => {
@@ -61,17 +110,36 @@ describe('GOV-668 Issue Detail', () => {
     expect(root.querySelector('[data-test="issue-dossier-card"]')).not.toBeNull();
   });
 
+  it('keeps overview, supplied trust, and proof explanations in both Issue modes', () => {
+    const required = ['issue-overview', 'issue-trust', 'issue-proof'];
+    const record = GRAPH_REAL.records![0];
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderIssueDetail(root, GRAPH_REAL, new URLSearchParams(`id=${record.statement_id}`), 'real');
+      expectRouteInfoNotes(required);
+      const trustTrigger = root.querySelector<HTMLButtonElement>('[data-info-note="issue-trust"]')!;
+      const trustPanel = root.querySelector<HTMLElement>(
+        `#${trustTrigger.getAttribute('aria-controls')}`,
+      );
+      expect(trustPanel?.textContent).toContain('never calculates confidence');
+      expect(trustPanel?.textContent).toContain('not a verdict');
+    }
+  });
+
   it('does not leak statement detail outside reviewer-internal access', () => {
     renderIssueDetail(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'reviewer capture notice');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="issue-dossier-card"]')).toBeNull();
     expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
+    expect(root.textContent).not.toContain('Issue research · Trust bundle');
   });
 
   it('missing id is honest-empty, never a fabricated dossier', () => {
     renderIssueDetail(root, GRAPH_REAL, new URLSearchParams('id=nope'), 'real');
     expect(root.querySelector('[data-test="issue-missing"]')?.textContent).toContain('not found');
     expect(root.querySelector('[data-test="issue-dossier-card"]')).toBeNull();
+    expectRouteInfoNotes(['issue-overview', 'issue-missing']);
   });
 });
 
@@ -102,6 +170,43 @@ describe('GOV-668 Source Vault', () => {
     expect(root.querySelectorAll('[data-test="source-vault-row"]').length).toBeGreaterThan(0);
     expect(root.querySelector('[data-test="source-version-compare-empty"]')).not.toBeNull();
     expect(root.querySelector('[data-test="source-third-party-verification-empty"]')).not.toBeNull();
+  });
+
+  it('keeps every Source Vault control, calculation, source, and gap note in both modes', () => {
+    const required = [
+      'vault-overview',
+      'vault-source-count',
+      'vault-filters',
+      'vault-source-rows',
+      'vault-diff',
+      'vault-ledger',
+      'vault-video',
+      'vault-transparency',
+      'vault-verification',
+    ];
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+      expectRouteInfoNotes(required);
+      const countTrigger = root.querySelector<HTMLButtonElement>(
+        '[data-info-note="vault-source-count"]',
+      )!;
+      const countPanel = root.querySelector<HTMLElement>(
+        `#${countTrigger.getAttribute('aria-controls')}`,
+      );
+      expect(countPanel?.textContent).toContain('VAULT-RECEIPT-DEDUP/v1');
+      expect(countPanel?.textContent).toContain('to_source_id, original_url, archive_url');
+      expect(countPanel?.textContent).toContain('per-record fallback key');
+
+      const verificationTrigger = root.querySelector<HTMLButtonElement>(
+        '[data-info-note="vault-verification"]',
+      )!;
+      const verificationPanel = root.querySelector<HTMLElement>(
+        `#${verificationTrigger.getAttribute('aria-controls')}`,
+      );
+      expect(verificationPanel?.textContent).toContain('VAULT-LINK-PRESENCE/v1');
+      expect(verificationPanel?.textContent).toContain('no verification percentage denominator');
+    }
   });
 
   it('preserves the search, compare, ledger, video, manifest, and verification geometry in both modes', () => {
@@ -160,12 +265,15 @@ describe('GOV-668 Source Vault', () => {
     expect(root.querySelector('[data-test="source-notice"]')).toBeNull();
     expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
     expect(root.querySelector('[data-test="source-vault-row"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
+    expect(root.textContent).not.toContain('Current-response statistics');
   });
 
   it('does not leak source rows outside reviewer-internal access', () => {
     renderSourceVault(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
     expect(root.querySelector('[data-test="source-vault-row"]')).toBeNull();
+    expect(root.querySelector('[data-info-note]')).toBeNull();
   });
 
   it('is registered at canonical #/vault, with #/sources retained only as an alias', async () => {
@@ -174,16 +282,49 @@ describe('GOV-668 Source Vault', () => {
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
+    const fetchMock = stubLiveReviewerContext('vault-live-sentinel', 'vault-live-source');
+    const routeNoteIds = () => [...app.querySelectorAll<HTMLElement>(
+      '[data-test="source-vault-page"] [data-info-note]',
+    )].map((node) => node.dataset.infoNote).sort();
+    const expectedNoteIds = [
+      'vault-overview',
+      'vault-source-count',
+      'vault-filters',
+      'vault-source-rows',
+      'vault-diff',
+      'vault-ledger',
+      'vault-video',
+      'vault-transparency',
+      'vault-verification',
+    ].sort();
 
     window.location.hash = '#/vault?reviewer=1';
     await import('../src/main');
-    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="source-vault-row"][data-source-id="vault-live-source"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(routeNoteIds()).toEqual(expectedNoteIds);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
 
     window.location.hash = '#/sources?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(app.querySelector('[data-test="source-vault-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="source-vault-row"][data-source-id="vault-live-source"]'),
+      ).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="tab-source-vault"]')?.getAttribute('aria-current')).toBe('page');
+    expect(routeNoteIds()).toEqual(expectedNoteIds);
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
   });
 
   it('keeps canonical #/vault fail-closed before the reviewer gate', async () => {
@@ -290,19 +431,44 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
     expect(root.querySelector('[data-test="source-timestamp"]')?.textContent).toBe('Timestamp: 125s');
   });
 
-  it('keeps #/newsletter?reviewer=1&access=public inside the shell but renders zero civic records', async () => {
+  it('shows the detailed live projection gap by default and the archive only in demo=snapshot', async () => {
     vi.resetModules();
     document.body.replaceChildren();
     const app = document.createElement('div');
     app.id = 'app';
     document.body.append(app);
-    window.location.hash = '#/newsletter?reviewer=1&access=public';
+    const fetchMock = stubLiveReviewerContext('newsletter-live-sentinel', 'newsletter-live-source');
+    window.history.replaceState(null, '', '#/newsletter?reviewer=1');
 
     await import('../src/main');
 
     expect(app.querySelector('[data-test="app-shell"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="state-reviewer-gated"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        app.querySelector('[data-test="reviewer-projection-gap"][data-projection="newsletter-digest"]'),
+      ).not.toBeNull();
+    });
+    const gap = app.querySelector('[data-projection="newsletter-digest"]');
+    expect(gap?.textContent).toContain('Not available yet');
+    expect(gap?.textContent).toContain('What this will do');
+    expect(gap?.textContent).toContain('Required backend projection');
+    expect(gap?.textContent).toContain('How it will work');
+    expect(gap?.textContent).toContain('Expected result');
     expect(app.querySelector('[data-test="archive-row"]')).toBeNull();
-    expect(app.querySelector('[data-test="newsletter-reviewed-origin"]')).toBeNull();
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
+
+    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelectorAll('[data-test="archive-row"]')).toHaveLength(DIGEST.digests.length);
+    });
+    expect(app.querySelector('[data-projection="newsletter-digest"]')).toBeNull();
+    expect(fetchMock.mock.calls.filter(
+      (call) => (call as unknown[])[0] === '/api/reviewer-internal',
+    ))
+      .toHaveLength(1);
   });
 });

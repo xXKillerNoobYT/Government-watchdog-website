@@ -24,6 +24,7 @@ function memoryStorage(): Storage {
 
 beforeEach(() => {
   vi.stubGlobal('localStorage', memoryStorage());
+  localStorage.setItem('gw_home_mode', 'advanced');
   document.head.replaceChildren();
   document.body.replaceChildren();
   root = document.createElement('main');
@@ -51,6 +52,36 @@ function renderReviewed(board: AgendaBoard = REVIEWED_BOARD, access = 'reviewer_
   });
 }
 
+function expectAccessibleInfoNotes(
+  host: HTMLElement,
+  requiredIds: readonly string[],
+): HTMLButtonElement[] {
+  const triggers = [...host.querySelectorAll<HTMLButtonElement>('.gw-info-trigger')];
+  const labels = triggers.map((trigger) => trigger.getAttribute('aria-label') ?? '');
+  const controlledIds = triggers.map((trigger) => trigger.getAttribute('aria-controls') ?? '');
+  expect(triggers.length).toBeGreaterThanOrEqual(requiredIds.length);
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(new Set(controlledIds).size).toBe(controlledIds.length);
+  for (const id of requiredIds) {
+    expect(host.querySelector(`[data-info-note="${id}"]`)).not.toBeNull();
+  }
+  for (const trigger of triggers) {
+    expect(trigger.textContent).toBe('?');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.getAttribute('aria-label')).toBeTruthy();
+    const controlled = trigger.getAttribute('aria-controls');
+    const panel = controlled ? document.getElementById(controlled) : null;
+    expect(panel).not.toBeNull();
+    expect(panel?.hidden).toBe(true);
+    expect(panel?.textContent).toContain('Current state');
+    expect(panel?.textContent).toContain('Filed under');
+    expect(panel?.textContent).toContain('Expected result');
+  }
+  const domIds = [...host.querySelectorAll<HTMLElement>('[id]')].map((node) => node.id);
+  expect(new Set(domIds).size).toBe(domIds.length);
+  return triggers;
+}
+
 describe('Fast Agenda design gate', () => {
   it.each([
     {},
@@ -66,6 +97,8 @@ describe('Fast Agenda design gate', () => {
     expect(root.textContent).not.toContain('SYNTHETIC DESIGN FIXTURE');
     expect(root.textContent).not.toContain('Alpine Town Council');
     expect(root.textContent).not.toContain('July 21, 2026');
+    expect(root.querySelector('.gw-info-trigger')).toBeNull();
+    expect(root.textContent).not.toContain('Filed under');
   });
 });
 
@@ -115,6 +148,14 @@ describe('Fast Agenda fixture content and disclosure', () => {
     for (const card of tracker?.querySelectorAll('[data-test="kanban-card"]') ?? []) {
       expect(card.textContent).toContain('synthetic references only');
     }
+
+    expectAccessibleInfoNotes(root, [
+      'agenda-overview',
+      'agenda-meeting',
+      'agenda-sources',
+      'agenda-lifecycle',
+      'agenda-filters',
+    ]);
   });
 });
 
@@ -161,6 +202,14 @@ describe('Fast Agenda reviewed projection baseline', () => {
       expect(root.querySelector('[data-test="reviewed-issue-tracker-gap"]')?.textContent).toContain(
         'not substituted for the baseline issue-thread stages',
       );
+      const notes = expectAccessibleInfoNotes(root, [
+        'agenda-overview',
+        'agenda-meeting',
+        'agenda-sources',
+        'agenda-lifecycle',
+        'agenda-gaps',
+      ]);
+      expect(notes.filter((note) => note.dataset.infoNote?.startsWith('private-gap-agenda-')).length).toBeGreaterThanOrEqual(11);
 
       expect(root.querySelector('[data-test="fixture-banner"]')).toBeNull();
       expect(root.querySelectorAll('[data-test="agenda-row"]')).toHaveLength(0);
@@ -241,6 +290,15 @@ describe('Fast Agenda reviewed projection baseline', () => {
     expect(root.querySelectorAll('[data-test="reviewed-gap-badge"]')).toHaveLength(4);
     expect(root.querySelector('[data-test="reviewed-gap-badges"]')?.textContent).toContain('Low source confidence');
     expect(root.textContent).not.toContain('SYNTHETIC DESIGN FIXTURE');
+    const notes = expectAccessibleInfoNotes(root, [
+      'agenda-overview',
+      'agenda-meeting',
+      'agenda-sources',
+      'agenda-lifecycle',
+      'agenda-gaps',
+    ]);
+    expect(notes.some((note) => note.getAttribute('aria-label')?.startsWith('About Analysis for '))).toBe(true);
+    expect(notes.some((note) => note.getAttribute('aria-label')?.startsWith('About Decision context for '))).toBe(true);
   });
 
   it.each([
@@ -254,6 +312,7 @@ describe('Fast Agenda reviewed projection baseline', () => {
     expect(root.querySelector('[data-test="reviewed-agenda-area"]')).toBeNull();
     expect(root.querySelector('[data-test="reviewed-unanchored-disclosure"]')).toBeNull();
     expect(root.textContent).not.toContain(board.generatedFrom);
+    expect(root.querySelector('.gw-info-trigger')).toBeNull();
   });
 });
 
@@ -349,6 +408,7 @@ describe('Fast Agenda reading mode', () => {
     expect(root.querySelector('[data-test="issue-tracker"]')).toBeNull();
     expect(root.querySelector('[data-test="language-watch"]')).toBeNull();
     expect(root.querySelector('[data-test="process-ladder"]')).toBeNull();
+    expectAccessibleInfoNotes(root, ['agenda-overview', 'agenda-meeting', 'agenda-sources']);
 
     const unavailable = [...root.querySelectorAll<HTMLButtonElement>('[data-test="unavailable-tool"]')];
     expect(unavailable).toHaveLength(3);

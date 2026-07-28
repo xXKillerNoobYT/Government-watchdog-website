@@ -26,6 +26,11 @@ import {
   verificationStatusLabel,
 } from './statement-presenter';
 import { trustLabel } from './state-view';
+import {
+  PRIVATE_INFO_NOTES,
+  renderPrivateInfoNote,
+  type PrivateInfoNoteId,
+} from './private-info-note';
 
 export interface DesignPageOptions {
   access?: string;
@@ -106,6 +111,40 @@ interface PageFrame {
   fixture: boolean;
 }
 
+type InfoHeadingTag = 'h1' | 'h2' | 'h3' | 'h4';
+
+function headingWithInfo(
+  tag: InfoHeadingTag,
+  title: string,
+  infoId: PrivateInfoNoteId,
+  attrs: Record<string, string> = {},
+): HTMLElement {
+  return el('div', { class: 'gw-dp-heading-with-info' }, [
+    el(tag, attrs, [title]),
+    renderPrivateInfoNote(infoId, { contextLabel: title }),
+  ]);
+}
+
+function infoNoteGroup(
+  label: string,
+  ids: readonly PrivateInfoNoteId[],
+): HTMLElement {
+  return el('div', {
+    class: 'gw-dp-info-note-group',
+    role: 'group',
+    'aria-label': label,
+  }, [
+    el('span', { class: 'gw-dp-muted' }, [label]),
+    ...ids.map((id) => el('span', {
+      class: 'gw-dp-info-note-item',
+      'data-info-note-item': id,
+    }, [
+      el('span', { class: 'gw-dp-info-note-label' }, [PRIVATE_INFO_NOTES[id].label]),
+      renderPrivateInfoNote(id, { contextLabel: label }),
+    ])),
+  ]);
+}
+
 function fixtureBanner(): HTMLElement {
   return el('div', {
     class: 'gw-dp-fixture',
@@ -127,6 +166,7 @@ function beginPage(
   pageId: string,
   title: string,
   subtitle: string,
+  infoId: PrivateInfoNoteId,
   options: DesignPageOptions,
   sourceNotice?: string,
 ): PageFrame | null {
@@ -178,7 +218,7 @@ function beginPage(
           el('p', { class: 'gw-dp-kicker' }, [mode === 'simple'
             ? (fixture ? 'PLAIN-ENGLISH PREVIEW' : 'PLAIN-ENGLISH REVIEWED VIEW')
             : (fixture ? 'REVIEWER DESIGN PREVIEW' : 'REVIEWER EVIDENCE WORKBENCH')]),
-          el('h1', { class: 'gw-dp-title' }, [title]),
+          headingWithInfo('h1', title, infoId, { class: 'gw-dp-title' }),
           el('p', { class: 'gw-dp-subtitle' }, [subtitle]),
         ]),
       ]),
@@ -189,11 +229,17 @@ function beginPage(
   return { page, content, mode, fixture };
 }
 
-function panel(title: string, kicker: string, children: (Node | string)[], attrs: Record<string, string> = {}): HTMLElement {
+function panel(
+  title: string,
+  kicker: string,
+  children: (Node | string)[],
+  attrs: Record<string, string> = {},
+  infoId?: PrivateInfoNoteId,
+): HTMLElement {
   return el('section', { class: 'gw-dp-panel', ...attrs }, [
     el('header', { class: 'gw-dp-panel-head' }, [
       el('p', { class: 'gw-dp-kicker' }, [kicker]),
-      el('h2', {}, [title]),
+      infoId ? headingWithInfo('h2', title, infoId) : el('h2', {}, [title]),
     ]),
     ...children,
   ]);
@@ -227,7 +273,7 @@ function reviewedReceipts(record: StatementRecord, pageId: string): HTMLElement 
       role: 'status',
       'data-test': `${pageId}-receipt-gap`,
     }, [
-      el('h3', {}, ['Source trail unavailable']),
+      headingWithInfo('h3', 'Source trail unavailable', 'reviewed-source-receipts'),
       el('p', {}, ['This reviewed record did not supply a web-safe receipt. No source was inferred on the client.']),
     ]);
   }
@@ -355,12 +401,17 @@ function reviewedRecordCard(record: StatementRecord, pageId: string, includeRece
   ]);
 }
 
-function unavailableSlot(title: string, body: string, testId: string): HTMLElement {
+function unavailableSlot(
+  title: string,
+  body: string,
+  testId: string,
+  infoId: PrivateInfoNoteId,
+): HTMLElement {
   return el('section', {
     class: 'gw-dp-empty gw-dp-unavailable-slot',
     role: 'status',
     'data-test': testId,
-  }, [el('h3', {}, [title]), el('p', {}, [body])]);
+  }, [headingWithInfo('h3', title, infoId), el('p', {}, [body])]);
 }
 
 interface FixtureOfficial {
@@ -488,6 +539,7 @@ function openPowerDetailModal(page: HTMLElement, opener: HTMLButtonElement, offi
     'data-test': 'power-ai-gate',
   }, [
     el('strong', {}, ['AI-GENERATED ANALYSIS — READ FIRST']),
+    infoNoteGroup('How this match and score are filed', ['power-match', 'power-score']),
     el('p', {}, [
       'This match is synthetic and was prepared to demonstrate an AI-assisted review flow. AI can hallucinate, omit context, or make an inaccurate match. Treat the result as a lead and inspect every receipt before drawing a conclusion.',
     ]),
@@ -561,7 +613,7 @@ function reviewedPowerLevelFilterGap(): HTMLElement {
       'data-level': level.toLowerCase(),
     }, [`${level} · unavailable`]))),
     el('p', { class: 'gw-dp-muted' }, ['Level filtering requires a reviewed official roster with stable jurisdiction identifiers.']),
-  ], { 'data-test': 'power-level-filter-unavailable', 'aria-disabled': 'true' });
+  ], { 'data-test': 'power-level-filter-unavailable', 'aria-disabled': 'true' }, 'power-jurisdiction');
 }
 
 function reviewedPowerRosterGap(): HTMLElement {
@@ -582,7 +634,7 @@ function reviewedPowerRosterGap(): HTMLElement {
       ]),
     ]),
     el('p', { class: 'gw-dp-muted' }, ['No name, office, level, ranking, or promise count is inferred from statement evidence.']),
-  ], { 'data-test': 'power-roster-unavailable', 'aria-disabled': 'true' });
+  ], { 'data-test': 'power-roster-unavailable', 'aria-disabled': 'true' }, 'power-roster');
 }
 
 function reviewedPowerProfileGap(): HTMLElement {
@@ -607,8 +659,9 @@ function reviewedPowerProfileGap(): HTMLElement {
       'Scores and rankings unavailable',
       'The reviewed statement projection does not contain a policy-cleared official roster or backend score product. No score, ranking, or comparison was inferred.',
       'power-score-unavailable',
+      'power-score',
     ),
-  ], { 'data-test': 'power-profile-unavailable', 'aria-disabled': 'true' });
+  ], { 'data-test': 'power-profile-unavailable', 'aria-disabled': 'true' }, 'power-roster');
 }
 
 function reviewedPowerPromiseActionGap(): HTMLElement {
@@ -617,6 +670,7 @@ function reviewedPowerPromiseActionGap(): HTMLElement {
       'Promise/action verdict unavailable',
       'A reviewed power-profile contract with backend-supplied promises, actions, typed matches, verdict labels, and receipts is required before this slot can open.',
       'power-verdict-unavailable',
+      'power-match',
     ),
     el('div', {
       class: 'gw-dp-toolbox',
@@ -653,7 +707,7 @@ function reviewedPowerLedgerGap(
         ]),
       ]),
     ]),
-  ], { 'data-test': testId, 'aria-disabled': 'true' });
+  ], { 'data-test': testId, 'aria-disabled': 'true' }, 'power-ledgers');
 }
 
 function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
@@ -689,7 +743,12 @@ function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
       'No reviewed evidence records available',
       'The reviewer projection supplied no statement records. The baseline remains visible without inventing an official or civic claim.',
       'power-records-unavailable',
+      'reviewed-record-trust',
     );
+  const recordNotes = infoNoteGroup('How reviewed evidence is filed', [
+    'reviewed-record-trust',
+    'reviewed-source-receipts',
+  ]);
 
   if (frame.mode === 'simple') {
     frame.content.append(el('section', {
@@ -704,7 +763,7 @@ function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
       levelFilterGap,
       rosterGap,
       profileGap,
-      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
+      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordNotes, recordList]),
       promiseActionGap,
       quoteLedgerGap,
       promiseLedgerGap,
@@ -720,7 +779,7 @@ function renderReviewedPower(frame: PageFrame, data?: ReadApiResponse): void {
     el('div', { class: 'gw-dp-stack' }, [
       levelFilterGap,
       rosterGap,
-      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordList]),
+      panel('Reviewed evidence records', 'SOURCE-BACKED INPUTS', [recordNotes, recordList]),
     ]),
     el('div', { class: 'gw-dp-stack' }, [
       profileGap,
@@ -745,6 +804,7 @@ export function renderPowerTracker(
     options.fixture
       ? 'A consent-first preview of promise/action review. Placeholder people and synthetic records only.'
       : 'The baseline power workbench populated only by reviewed statement records and their web-safe receipts.',
+    'power-overview',
     responseScopedOptions(options, data),
     sourceNotice,
   );
@@ -765,6 +825,13 @@ export function renderPowerTracker(
   if (frame.mode === 'simple') {
     frame.content.append(
       el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'power-simple-edition' }, [
+        infoNoteGroup('Power Tracker fixture explanations', [
+          'power-jurisdiction',
+          'power-roster',
+          'power-score',
+          'power-match',
+          'power-ledgers',
+        ]),
         el('div', { class: 'gw-dp-newspaper-rule' }, [
           el('span', {}, ['WHO HOLDS POWER']),
           el('span', {}, ['PLAIN-LANGUAGE FIXTURE EDITION']),
@@ -849,6 +916,11 @@ export function renderPowerTracker(
     openButton.addEventListener('click', () => openPowerDetailModal(frame.page, openButton, official));
 
     profileMount.replaceChildren(panel(official.name, 'PLACEHOLDER PROFILE', [
+      infoNoteGroup('How this synthetic profile is filed', [
+        'power-score',
+        'power-match',
+        'power-ledgers',
+      ]),
       el('div', { class: 'gw-dp-profile-head' }, [
         el('span', { class: `gw-dp-avatar gw-dp-avatar-large gw-dp-level-${official.level}`, 'aria-hidden': 'true' }, [official.initials]),
         el('div', {}, [
@@ -870,15 +942,18 @@ export function renderPowerTracker(
         ]),
         el('p', {}, ['Placeholder quote entry — no real speaker, quotation, source, or attribution is asserted.']),
       ]),
-    ], { 'data-test': 'power-profile' }));
+    ], { 'data-test': 'power-profile' }, 'power-roster'));
   };
   renderSelection();
 
-  frame.content.append(levelTools, el('div', { class: 'gw-dp-power-grid' }, [
+  frame.content.append(
+    infoNoteGroup('Power Tracker filter explanation', ['power-jurisdiction']),
+    levelTools,
+    el('div', { class: 'gw-dp-power-grid' }, [
     panel('Placeholder officials', 'BROKEN-FIRST SORT PREVIEW', [
       officialsMount,
       el('p', { class: 'gw-dp-muted' }, ['Visual ordering only. No real comparison, score, or outcome ranking is produced.']),
-    ]),
+    ], {}, 'power-roster'),
     profileMount,
   ]));
 }
@@ -968,6 +1043,7 @@ function reviewedWatchlistItemStatusGap(): HTMLElement {
         ]),
       ]),
     ]),
+    infoNoteGroup('How timing and alert fields are filed', ['watchlist-timing', 'watchlist-delivery']),
   ]);
 }
 
@@ -977,8 +1053,9 @@ function reviewedWatchlistRecentHistoryGap(): HTMLElement {
       'No reviewed history supplied',
       'The statement projection does not include reviewed change, vote, deadline, or delivery events. No recent alert is inferred.',
       'watchlist-recent-history-unavailable',
+      'watchlist-delivery',
     ),
-  ], { 'data-test': 'watchlist-history-unavailable', 'aria-disabled': 'true' });
+  ], { 'data-test': 'watchlist-history-unavailable', 'aria-disabled': 'true' }, 'watchlist-delivery');
 }
 
 function reviewedWatchlistDeliverySettingsGap(): HTMLElement {
@@ -993,6 +1070,7 @@ function reviewedWatchlistDeliverySettingsGap(): HTMLElement {
       'Delivery settings unavailable',
       'No account, verified destination, subscription state, cadence, or delivery policy was supplied. Watching locally does not send a message.',
       'watchlist-delivery-settings-unavailable',
+      'watchlist-delivery',
     ),
     el('div', { class: 'gw-dp-stack', 'data-test': 'watchlist-settings-geometry' }, settings.map(([name, detail]) => el('button', {
       type: 'button',
@@ -1004,7 +1082,7 @@ function reviewedWatchlistDeliverySettingsGap(): HTMLElement {
       el('span', { class: 'gw-dp-switch-copy' }, [el('b', {}, [name]), el('small', {}, [detail])]),
       el('b', {}, ['Unavailable']),
     ]))),
-  ], { 'data-test': 'watchlist-delivery-settings-panel', 'aria-disabled': 'true' });
+  ], { 'data-test': 'watchlist-delivery-settings-panel', 'aria-disabled': 'true' }, 'watchlist-delivery');
 }
 
 function reviewedWatchlistDeadlinesGap(): HTMLElement {
@@ -1013,6 +1091,7 @@ function reviewedWatchlistDeadlinesGap(): HTMLElement {
       'No reviewed deadlines supplied',
       'The statement projection has no reviewed deadline, meeting date, countdown, place, or action window. No due date is inferred.',
       'watchlist-deadlines-unavailable',
+      'watchlist-timing',
     ),
     el('article', { class: 'gw-dp-stat', 'data-test': 'watchlist-deadline-row-unavailable' }, [
       el('strong', {}, ['Deadline row unavailable']),
@@ -1024,7 +1103,7 @@ function reviewedWatchlistDeadlinesGap(): HTMLElement {
       disabled: '',
       'data-test': 'watchlist-deadlines-control-unavailable',
     }, ['See all deadlines · unavailable']),
-  ], { 'data-test': 'watchlist-deadlines-panel', 'aria-disabled': 'true' });
+  ], { 'data-test': 'watchlist-deadlines-panel', 'aria-disabled': 'true' }, 'watchlist-timing');
 }
 
 function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void {
@@ -1072,6 +1151,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         'No reviewed records watched on this device',
         'This local reading list is empty. No sample issue was inserted.',
         'watchlist-real-empty',
+        'watchlist-local-state',
       );
 
     const unresolved = unresolvedCount
@@ -1114,12 +1194,18 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         'No additional reviewed records available',
         'The current reviewer projection has no other record that can be added to this device-local list.',
         'watchlist-candidates-unavailable',
+        'watchlist-add',
       );
 
     const watchedPanel = panel(
       frame.mode === 'simple' ? 'Stories you are following' : 'Watched reviewed records',
       frame.mode === 'simple' ? 'YOUR LOCAL NEWS FILE' : 'DEVICE-LOCAL WATCHLIST',
       [
+        infoNoteGroup('How Watchlist records and receipts are filed', [
+          'watchlist-local-state',
+          'reviewed-record-trust',
+          'reviewed-source-receipts',
+        ]),
         el('div', { class: 'gw-dp-count-line' }, [
           el('span', {}, ['Matched reviewed selections']),
           el('strong', { 'data-test': 'watchlist-real-count' }, [`${watched.length}`]),
@@ -1143,7 +1229,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
           'info',
           { 'data-test': 'watchlist-real-local-notice' },
         ),
-        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
+        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList], {}, 'watchlist-add'),
         panel('Watch controls', 'UNAVAILABLE RECORD TYPES', [
           el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Unavailable watchlist record types' }, [
             el('span', { class: 'gw-dp-tool-pill', 'data-test': 'watchlist-selected-record-type', 'data-selected': 'true' }, ['Reviewed statements · selected']),
@@ -1151,7 +1237,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
           ]),
-        ]),
+        ], {}, 'watchlist-record-types'),
         reviewedWatchlistRecentHistoryGap(),
         reviewedWatchlistDeliverySettingsGap(),
         reviewedWatchlistDeadlinesGap(),
@@ -1165,7 +1251,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
     }, [
       watchedPanel,
       el('div', { class: 'gw-dp-stack' }, [
-        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList]),
+        panel('Add reviewed records', 'AVAILABLE IN THIS PROJECTION', [candidateList], {}, 'watchlist-add'),
         panel('Watch controls', 'ADVANCED TOOLS', [
           el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Watchlist record types' }, [
             el('span', { class: 'gw-dp-tool-pill', 'data-test': 'watchlist-selected-record-type', 'data-selected': 'true' }, ['Reviewed statements · selected']),
@@ -1173,7 +1259,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Officials · unavailable']),
             el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '' }, ['Documents · unavailable']),
           ]),
-        ]),
+        ], {}, 'watchlist-record-types'),
         reviewedWatchlistRecentHistoryGap(),
         reviewedWatchlistDeliverySettingsGap(),
         reviewedWatchlistDeadlinesGap(),
@@ -1198,6 +1284,7 @@ export function renderWatchlist(
     options.fixture
       ? 'A device-local digest of issue keys shared through gw_tracked.'
       : 'A device-local reading list that resolves titles and receipts only from the reviewed projection.',
+    'watchlist-overview',
     responseScopedOptions(options, data),
     sourceNotice,
   );
@@ -1214,6 +1301,12 @@ export function renderWatchlist(
     'info',
     { 'data-test': 'watchlist-local-notice' },
   ));
+  frame.content.append(infoNoteGroup('Watchlist fixture explanations', [
+    'watchlist-local-state',
+    'watchlist-add',
+    'watchlist-record-types',
+    'watchlist-delivery',
+  ]));
 
   let tracked = readTracked();
   const count = el('strong', { 'data-test': 'watchlist-count' });
@@ -1284,7 +1377,7 @@ export function renderWatchlist(
     ]),
     list,
     status,
-  ], { 'data-test': 'watchlist-panel' });
+  ], { 'data-test': 'watchlist-panel' }, 'watchlist-local-state');
 
   if (frame.mode === 'simple') {
     frame.content.append(el('div', { class: 'gw-dp-newspaper-section', 'data-test': 'watchlist-simple-edition' }, [
@@ -1308,13 +1401,13 @@ export function renderWatchlist(
           el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs the source monitoring service' }, ['Documents · unavailable']),
         ]),
         el('p', { class: 'gw-dp-muted' }, ['The full tool layout is present, but unsupported record types stay disabled instead of being filled with synthetic civic facts.']),
-      ]),
+      ], {}, 'watchlist-record-types'),
       panel('Recent activity', 'REVIEWED ALERT HISTORY', [
         el('div', { class: 'gw-dp-empty' }, [
           el('h3', {}, ['No connected alert history']),
           el('p', {}, ['Recent changes, votes, deadlines, and missing-record events will appear here only when the alerts backend supplies them.']),
         ]),
-      ]),
+      ], {}, 'watchlist-delivery'),
     ]),
   ]));
 }
@@ -1425,11 +1518,13 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
     'Coverage measurements unavailable',
     'The reviewed statement projection does not include a coverage directory, completeness percentage, processing backlog, or geographic availability decision.',
     'location-coverage-unavailable',
+    'location-coverage',
   );
   const identityPolicyGap = unavailableSlot(
     'Place identity lock and change policy unavailable',
     'No reviewed canonical place identifier, locked jurisdiction chain, or change-place policy was supplied. The device label below is not treated as official identity.',
     'location-identity-policy-unavailable',
+    'location-change-policy',
   );
   const recordsSlot = scopedRecords.length
     ? el('div', { class: 'gw-dp-stack', 'data-test': 'location-real-records' }, scopedRecords.map((record) => reviewedRecordCard(record, 'location')))
@@ -1439,11 +1534,17 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
         ? 'The device-local selection does not match the supplied Alpine projection, so no civic records are shown.'
         : 'The supplied reviewer response contains no statement rows. No location content was fabricated.',
       'location-records-unavailable',
+      'location-saved-scope',
     );
+  const recordNotes = infoNoteGroup('How scoped records and receipts are filed', [
+    'location-saved-scope',
+    'reviewed-record-trust',
+    'reviewed-source-receipts',
+  ]);
 
   const selection = el('section', { class: 'gw-dp-panel', 'data-test': 'location-real-picker' }, [
     el('p', { class: 'gw-dp-kicker' }, ['DEVICE-LOCAL SELECTION']),
-    el('h2', {}, [savedLabel]),
+    headingWithInfo('h2', savedLabel, 'location-saved-scope'),
     el('p', { class: 'gw-dp-muted' }, [location
       ? 'This label comes only from this device. It does not establish official coverage.'
       : 'The location-directory backend is not connected, so the app does not choose a place on your behalf.']),
@@ -1461,7 +1562,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
       disabledSelect('Town'),
     ]),
     el('p', { class: 'gw-dp-muted' }, ['The baseline picker stays visible, but unsupported geography controls remain disabled instead of implying coverage.']),
-  ]);
+  ], {}, 'location-directory');
   const coverageDiagnostics = (): HTMLElement => panel('Coverage diagnostics', 'REVIEWED COVERAGE CONTRACT', [
     el('p', { class: 'gw-dp-muted' }, [
       'The three government-level positions remain visible, but no percentage, availability state, or service-health conclusion is available.',
@@ -1476,7 +1577,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
         el('small', { class: 'gw-dp-muted' }, ['No reviewed denominator or freshness value']),
       ])),
     ]),
-  ]);
+  ], {}, 'location-coverage');
   const disabledDirectoryTiles = (): HTMLElement => {
     const tileGroup = (title: string, step: string, count: number): HTMLElement => panel(title, step, [
       el('p', { class: 'gw-dp-muted' }, [`${title} entries require stable reviewed location identifiers.`]),
@@ -1493,7 +1594,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
         disabled: '',
         'aria-label': `${title} slot ${index + 1} unavailable`,
       }, ['—']))),
-    ]);
+    ], {}, 'location-directory');
     return el('section', { class: 'gw-dp-location-directory-workbench', 'data-test': 'location-real-directory-workbench' }, [
       tileGroup('State directory', 'STEP 1 · DIRECTORY UNAVAILABLE', 11),
       el('div', { class: 'gw-dp-location-grid' }, [
@@ -1506,6 +1607,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
     'Coverage history and backlog unavailable',
     'No reviewed per-level freshness, backlog, funding, or processing-speed contract was supplied.',
     'location-history-unavailable',
+    'location-history',
   );
 
   if (frame.mode === 'simple') {
@@ -1518,6 +1620,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
         el('span', {}, [alpineScope ? 'REVIEWED ALPINE SCOPE' : 'SCOPE UNAVAILABLE']),
       ]),
       selection,
+      recordNotes,
       recordsSlot,
       disabledPlaceControls(),
       coverageDiagnostics(),
@@ -1533,7 +1636,10 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
     class: 'gw-dp-workbench-grid',
     'data-test': 'location-real-advanced-workbench',
   }, [
-    el('div', { class: 'gw-dp-stack' }, [selection, panel('Reviewed records in scope', 'BACKEND STATEMENT PROJECTION', [recordsSlot])]),
+    el('div', { class: 'gw-dp-stack' }, [
+      selection,
+      panel('Reviewed records in scope', 'BACKEND STATEMENT PROJECTION', [recordNotes, recordsSlot], {}, 'location-saved-scope'),
+    ]),
     el('div', { class: 'gw-dp-stack' }, [
       disabledPlaceControls(),
       coverageDiagnostics(),
@@ -1558,6 +1664,7 @@ export function renderLocation(
     options.fixture
       ? 'A valid state, county, region, and town selection stored only on this device.'
       : 'The baseline location workspace with device-local selection and only backend-reviewed records in scope.',
+    'location-overview',
     responseScopedOptions(options, data),
     sourceNotice,
   );
@@ -1684,10 +1791,17 @@ export function renderLocation(
       'info',
       { 'data-test': 'location-saved-notice' },
     );
+    const fixtureLocationNotes = (): HTMLElement => infoNoteGroup('Location fixture explanations', [
+      'location-saved-scope',
+      'location-directory',
+      'location-coverage',
+      'location-change-policy',
+    ]);
 
     if (frame.mode === 'simple') {
       mount.replaceChildren(
         el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'location-simple-edition' }, [
+          fixtureLocationNotes(),
           breadcrumbs,
           el('h2', {}, ['Your local edition']),
           el('p', { class: 'gw-dp-newspaper-deck' }, ['Choose the place whose public records you want to read.']),
@@ -1698,6 +1812,7 @@ export function renderLocation(
             'caution',
             { 'data-test': 'location-coverage-disclaimer' },
           ),
+          infoNoteGroup('How synthetic coverage figures are filed', ['location-coverage']),
           el('div', { class: 'gw-dp-coverage-grid' }, [
             el('article', { class: 'gw-dp-stat', 'data-test': 'location-coverage-figure' }, [
               el('strong', {}, ['Town 62%']),
@@ -1715,10 +1830,10 @@ export function renderLocation(
           panel('Pick your state', 'STEP 1 · SYNTHETIC COVERAGE MAP', [
             el('p', { class: 'gw-dp-muted' }, ['The tiles demonstrate selection behavior. They do not represent voting patterns, availability, or current coverage.']),
             stateGrid,
-          ]),
+          ], {}, 'location-directory'),
           el('div', { class: 'gw-dp-location-grid' }, [
-            panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid]),
-            panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid]),
+            panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid], {}, 'location-directory'),
+            panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid], {}, 'location-directory'),
           ]),
           savedNotice,
         ]),
@@ -1730,6 +1845,7 @@ export function renderLocation(
       class: 'gw-dp-location-advanced',
       'data-test': 'location-advanced-workbench',
     }, [
+      fixtureLocationNotes(),
       breadcrumbs,
       locationSelects,
       notice(
@@ -1738,6 +1854,7 @@ export function renderLocation(
         'caution',
         { 'data-test': 'location-coverage-disclaimer' },
       ),
+      infoNoteGroup('How synthetic coverage figures are filed', ['location-coverage']),
       el('div', { class: 'gw-dp-coverage-grid' }, [
         el('article', { class: 'gw-dp-stat', 'data-test': 'location-coverage-figure' }, [
           el('strong', {}, ['Town 62%']),
@@ -1755,10 +1872,10 @@ export function renderLocation(
       panel('Pick your state', 'STEP 1 · SYNTHETIC COVERAGE MAP', [
         el('p', { class: 'gw-dp-muted' }, ['The tiles demonstrate selection behavior. They do not represent voting patterns, availability, or current coverage.']),
         stateGrid,
-      ]),
+      ], {}, 'location-directory'),
       el('div', { class: 'gw-dp-location-grid' }, [
-        panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid]),
-        panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid]),
+        panel('Pick a county', 'STEP 2 · WYOMING FIXTURE', [countyGrid], {}, 'location-directory'),
+        panel('Pick a town', 'STEP 3 · LINCOLN COUNTY FIXTURE', [townGrid], {}, 'location-directory'),
       ]),
       savedNotice,
     ]));
@@ -1879,21 +1996,25 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
     'Alert history unavailable',
     'The reviewed statement projection contains no alert events, read-state history, document-change events, deadlines, or delivery receipts.',
     'alerts-history-unavailable',
+    'alerts-feed',
   );
   const deliveryGap = unavailableSlot(
     'Delivery settings unavailable',
     'No backend alert-preference or recipient contract was supplied. Email, text, push, reminders, and digests remain disabled.',
     'alerts-delivery-unavailable',
+    'alerts-delivery',
   );
   const triggerGap = unavailableSlot(
     'Trigger rules unavailable',
     'No reviewed alert-trigger contract was supplied, so the page does not infer agenda, document-change, deadline, or meeting events.',
     'alerts-triggers-unavailable',
+    'alerts-triggers',
   );
   const freshnessGap = unavailableSlot(
     'Alert freshness unavailable',
     'No civic-alert response supplied a generated-at value, event timestamp, source freshness, or delivery receipt timestamp.',
     'alerts-freshness-unavailable',
+    'alerts-freshness',
   );
   const trackingNote = notice(
     'Device-local watch diagnostics only',
@@ -1926,7 +2047,7 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
     el('span', { class: 'gw-dp-alert-icon', 'aria-hidden': 'true' }, ['◌']),
     el('div', { class: 'gw-dp-alert-copy' }, [
       el('span', { class: 'gw-dp-chip' }, ['SEVERITY / LEVEL UNAVAILABLE']),
-      el('h3', {}, ['Alert row schema — no civic event supplied']),
+      headingWithInfo('h3', 'Alert row schema — no civic event supplied', 'alerts-feed'),
       el('p', {}, ['A reviewed alert row will require an event type, explanation, source receipt, stable id, and read state.']),
       el('time', {}, ['Event time and freshness unavailable']),
       el('span', { class: 'gw-dp-muted' }, ['Receipt link unavailable']),
@@ -1953,7 +2074,7 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
       ])),
     ]),
     triggerGap,
-  ]);
+  ], {}, 'alerts-triggers');
   const receiptPolicy = (): HTMLElement => notice(
     'No alert without a receipt',
     'A future civic alert must carry a reviewed event id, exact source receipt, event time, and freshness before it can appear here. Statement rows and account notifications are never substituted.',
@@ -1970,11 +2091,13 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
     'Civic alert feed not connected',
     'No civic-alert response is connected. Statement records and account-workflow notifications are not converted into alert events.',
     'alerts-feed-unavailable',
+    'alerts-feed',
   );
   const unreadStateGap = (): HTMLElement => unavailableSlot(
     'Unread count and read state unavailable',
     'Without reviewed alert ids and a read-state contract, the page cannot claim zero unread events or offer a working mark-all action.',
     'alerts-unread-unavailable',
+    'alerts-read-state',
   );
 
   if (frame.mode === 'simple') {
@@ -1989,9 +2112,10 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
       feedConnectionGap(),
       unreadStateGap(),
       emptyAlertSchema(),
+      infoNoteGroup('How local watch diagnostics are filed', ['alerts-tracking']),
       trackingNote,
       historyGap,
-      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap]),
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap], {}, 'alerts-delivery'),
       triggerChecklist(),
       receiptPolicy(),
       freshnessGap,
@@ -2005,6 +2129,7 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
   }, [
     el('div', { class: 'gw-dp-stack' }, [
       panel('Unread', 'REVIEWED ALERT EVENTS', [
+        infoNoteGroup('How civic feed and read state are filed', ['alerts-feed', 'alerts-read-state']),
         el('div', { class: 'gw-dp-panel-actions' }, [
           el('span', { class: 'gw-dp-chip', 'data-test': 'alerts-real-unread-count' }, ['Unread count unavailable']),
           el('button', { type: 'button', class: 'gw-dp-button gw-dp-secondary', disabled: '', 'data-test': 'alerts-real-mark-all' }, ['Mark all read · unavailable']),
@@ -2012,17 +2137,18 @@ function renderReviewedAlerts(frame: PageFrame, data?: ReadApiResponse): void {
         feedConnectionGap(),
         unreadStateGap(),
         emptyAlertSchema(),
-      ]),
-      panel('Earlier', 'REVIEWED ALERT HISTORY', [historyGap]),
+      ], {}, 'alerts-feed'),
+      panel('Earlier', 'REVIEWED ALERT HISTORY', [historyGap], {}, 'alerts-feed'),
     ]),
     el('div', { class: 'gw-dp-stack' }, [
-      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap]),
+      panel('Delivery controls', 'BACKEND REQUIRED', [disabledDelivery, deliveryPolicy(), deliveryGap], {}, 'alerts-delivery'),
       panel('Tracked-item diagnostics', 'DEVICE LOCAL', [
+        infoNoteGroup('How tracked-item diagnostics are filed', ['alerts-tracking']),
         trackingNote,
         ...(watchedIds.length ? [el('ul', { class: 'gw-dp-trigger-list', 'data-test': 'alerts-real-watched-ids' }, watchedIds.map((id) => el('li', {
           'data-record-id': id,
         }, [`Reviewed record ${id}`])))] : []),
-      ]),
+      ], {}, 'alerts-tracking'),
       triggerChecklist(),
       receiptPolicy(),
       freshnessGap,
@@ -2043,6 +2169,7 @@ export function renderAlerts(
     options.fixture
       ? 'A read-state and delivery-settings interaction preview. Nothing here is subscribed or sent.'
       : 'The baseline alerts workspace with unsupported feed, history, trigger, and delivery products kept visibly unavailable.',
+    'alerts-overview',
     responseScopedOptions(options, data),
     sourceNotice,
   );
@@ -2059,6 +2186,13 @@ export function renderAlerts(
     'caution',
     { 'data-test': 'alerts-device-only-notice' },
   ));
+  frame.content.append(infoNoteGroup('Civic Alerts fixture explanations', [
+    'alerts-feed',
+    'alerts-read-state',
+    'alerts-triggers',
+    'alerts-delivery',
+    'alerts-tracking',
+  ]));
 
   let readIds = readAlertIds();
   let delivery = readDeliveryPreview();
@@ -2172,8 +2306,8 @@ export function renderAlerts(
         el('div', { class: 'gw-dp-panel-actions' }, [unreadCount, markAll]),
         unreadMount,
         feedStatus,
-      ]),
-      panel(frame.mode === 'simple' ? 'Earlier notices' : 'Earlier fixture cards', 'EARLIER · READ', [earlierMount]),
+      ], {}, 'alerts-read-state'),
+      panel(frame.mode === 'simple' ? 'Earlier notices' : 'Earlier fixture cards', 'EARLIER · READ', [earlierMount], {}, 'alerts-feed'),
     ]);
 
   if (frame.mode === 'simple') {
@@ -2194,7 +2328,7 @@ export function renderAlerts(
         deliveryMount,
         deliveryStatus,
         el('p', { class: 'gw-dp-muted' }, ['These switches are appearance and persistence tests. They do not register a recipient or promise delivery timing.']),
-      ]),
+      ], {}, 'alerts-delivery'),
       panel('What a future alert could represent', 'TRIGGER EXAMPLES', [
         el('ul', { class: 'gw-dp-trigger-list' }, [
           el('li', {}, ['A fixture document-change event']),
@@ -2206,7 +2340,8 @@ export function renderAlerts(
           el('strong', { 'data-test': 'alerts-tracked-count' }, [String(trackedCount())]),
           '. This count comes from gw_tracked; it does not mean monitoring is active.',
         ]),
-      ]),
+        infoNoteGroup('How local tracked-item counts are filed', ['alerts-tracking']),
+      ], {}, 'alerts-triggers'),
     ]),
   ]));
 }
@@ -2222,6 +2357,12 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-inner,.gw-dp-gated{width:min(100% - 2rem,1200px);margin:0 auto;padding:var(--gw-space-6) 0 2rem}
 .gw-dp-page[data-mode="simple"] .gw-dp-inner{width:min(100% - 2rem,900px);background:var(--gw-surface);padding:var(--gw-space-6);border-inline:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-dp-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--gw-space-5);padding-bottom:var(--gw-space-5);border-bottom:var(--gw-border-w) solid var(--gw-rule-strong);margin-bottom:var(--gw-space-5)}
+.gw-dp-heading-with-info{display:inline-flex;align-items:center;gap:var(--gw-space-2);min-width:0;max-width:100%}
+.gw-dp-heading-with-info>h1,.gw-dp-heading-with-info>h2,.gw-dp-heading-with-info>h3,.gw-dp-heading-with-info>h4{min-width:0}
+.gw-dp-info-note-group{display:flex;align-items:center;flex-wrap:wrap;gap:var(--gw-space-2);max-width:100%;padding:var(--gw-space-2) 0}
+.gw-dp-info-note-group>.gw-dp-muted{font-size:var(--gw-text-badge);font-weight:700}
+.gw-dp-info-note-item{display:inline-flex;align-items:center;gap:var(--gw-space-1);min-height:var(--gw-tap-min);padding-left:var(--gw-space-2);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius-pill);background:var(--gw-surface-well)}
+.gw-dp-info-note-label{max-width:18rem;color:var(--gw-text-secondary);font-size:var(--gw-text-badge);font-weight:700;line-height:var(--gw-leading-tight)}
 .gw-dp-title{font-size:var(--gw-text-display);line-height:var(--gw-leading-tight);margin:.15rem 0}
 .gw-dp-subtitle{max-width:52rem;margin:0;color:var(--gw-text-secondary)}
 .gw-dp-kicker{margin:0;color:var(--gw-accent);font:800 var(--gw-text-kicker)/1.35 var(--gw-font);letter-spacing:1.4px;text-transform:uppercase}

@@ -3,21 +3,22 @@
  *
  * Reads ONLY the GOV-98 read-API (web-safe JSON) or a clearly-labeled local
  * fixture — it never invents data and never recomputes publication/trust state.
- * On any live-read failure it falls back to the labeled fixture with a visible
- * notice, per the static-fixture-mode workflow. Everything it returns has
- * passed {@link assertWebSafe} (defense-in-depth raw-path sweep).
+ * Fixture mode must be selected explicitly. A failed live read stays an error;
+ * it never silently becomes a captured private snapshot. Everything returned
+ * from a successful read has passed {@link assertWebSafe} (defense-in-depth
+ * raw-path sweep).
  */
 
 import type { ReadApiResponse } from '../types/read-api';
 import { assertWebSafe } from './web-safe';
-import { isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
-import { type AsyncState, resolved } from '../state/async-state';
+import { apiBase, isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
+import { type AsyncState, failed, resolved } from '../state/async-state';
 import fixtureData from '../fixtures/alpine-sample.json';
 
 export interface ClientConfig {
-  /** When true (default), read the labeled fixture instead of the live API. */
+  /** When true, read the labeled fixture instead of the live API. */
   useFixtures: boolean;
-  /** Base URL of the local read-API; empty → fixture mode. */
+  /** Same-origin reviewer endpoint used when fixture mode is disabled. */
   readApiUrl: string;
 }
 
@@ -25,9 +26,9 @@ type EnvLike = Record<string, unknown>;
 
 /** Resolve client config from Vite env (overridable for tests). */
 export function readConfig(env: EnvLike = import.meta.env as unknown as EnvLike): ClientConfig {
-  const rawUseFixtures = String(env.VITE_USE_FIXTURES ?? 'true').trim().toLowerCase();
-  const useFixtures = rawUseFixtures !== 'false';
-  const readApiUrl = String(env.VITE_READ_API_URL ?? '').trim();
+  const rawUseFixtures = String(env.VITE_USE_FIXTURES ?? 'false').trim().toLowerCase();
+  const useFixtures = ['1', 'true', 'yes'].includes(rawUseFixtures);
+  const readApiUrl = `${apiBase(env)}/reviewer-internal`;
   return { useFixtures, readApiUrl };
 }
 
@@ -57,11 +58,11 @@ export interface LoadResult {
 export interface LoadOptions {
   config?: ClientConfig;
   /** Injectable fetch (tests / non-browser runtimes). */
-  fetchImpl?: typeof fetch;
+  fetchImpl?: typeof fetch | null;
 }
 
 /** An honest-empty read model — the landing-only surface (§6) shows zero civic data. */
-const LANDING_ONLY_EMPTY: ReadApiResponse = { scope: 'alpine', access: 'reviewer_internal', records: [] };
+const LANDING_ONLY_EMPTY: ReadApiResponse = { scope: 'alpine', access: 'public', records: [] };
 
 async function fetchReadApi(url: string, fetchImpl: typeof fetch): Promise<ReadApiResponse> {
   const res = await fetchImpl(url, { headers: { accept: 'application/json' } });
@@ -79,14 +80,16 @@ const FIXTURE_NOTICE =
   'Showing a captured snapshot of real reviewed records (read_api reviewer-internal serve) — not a live read.';
 
 /**
- * Load the read model. Fixture mode (or no API URL) → labeled fixture. Live
- * mode → fetch the read-API, falling back to the labeled fixture (with a
- * visible notice) on any failure.
+ * Load the read model. Explicit fixture mode → labeled fixture. Live mode
+ * requires both an API URL and fetch implementation and remains fail-closed on
+ * any missing configuration or request failure.
  */
 export async function loadReadModel(opts: LoadOptions = {}): Promise<LoadResult> {
   const config = opts.config ?? readConfig();
   const fetchImpl =
-    opts.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined);
+    opts.fetchImpl === null
+      ? undefined
+      : opts.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined);
 
   // LANDING_ONLY (§6): an explicit, fail-closed build with zero /api surface —
   // never touch the network, render honest-empty civic data.
@@ -97,18 +100,25 @@ export async function loadReadModel(opts: LoadOptions = {}): Promise<LoadResult>
     };
   }
 
-  if (config.useFixtures || !config.readApiUrl || !fetchImpl) {
+  if (config.useFixtures) {
     return { state: resolved(FIXTURE, 'fixture', isEmptyResponse), notice: FIXTURE_NOTICE };
   }
+
+  const liveUnavailable = (reason: string): LoadResult => ({
+    state: failed<ReadApiResponse>(
+      new Error(`Live read-API unavailable (${reason}). No captured snapshot was substituted.`),
+      'live',
+    ),
+    notice: 'Live read-API unavailable. No private capture or synthetic sample was substituted.',
+  });
+  if (!config.readApiUrl) return liveUnavailable('same-origin reviewer endpoint is not configured');
+  if (!fetchImpl) return liveUnavailable('fetch is not available in this runtime');
 
   try {
     const data = await fetchReadApi(config.readApiUrl, fetchImpl);
     return { state: resolved(data, 'live', isEmptyResponse) };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    return {
-      state: resolved(FIXTURE, 'fixture', isEmptyResponse),
-      notice: `Live read-API unavailable (${reason}). ${FIXTURE_NOTICE}`,
-    };
+    return liveUnavailable(reason);
   }
 }

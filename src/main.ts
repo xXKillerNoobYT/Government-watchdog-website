@@ -4,16 +4,18 @@
  * GOV-419 — the DEFAULT entry is the preview-launch LANDING; the full
  * reviewer-internal app is revealed only past the gated-beta entry:
  *  - `/`         preview-launch landing (gate-aware; no civic data pre-gate).
- *  - `/app`      timeline skeleton (GOV-99/100): cards, drawers, trust labels —
- *                GATED (reviewer bypass or `?gate=approved` required).
+ *  - `/home`     live reviewer dashboard over one same-origin authorized model.
+ *  - `/app`      agenda-board contract surface; an honest gap is shown until
+ *                the backend supplies the required projection.
  *  - `/topics`   civic topic tree (GOV-102): rollup filter, derived breadcrumb,
  *                human-label-first nodes + inspectable gov alias, audited move,
  *                cycle-safe degrade — ABOVE the reused B card+drawer timeline.
  *  - `/body`,
- *    `/meeting`  body/meeting surfaces (GOV-102): the same B card+drawer list
- *                under a page-context heading (reuse, not a re-implementation).
+ *    `/meeting`  explicit relationship-contract gaps plus direct authorized
+ *                records that remain visibly unassigned to that context.
  *
- * A `?state=` query override forces loading / empty / error for screenshots.
+ * A `?state=` query override forces loading / empty / error for screenshots on
+ * explicitly supported legacy/demo routes.
  * `/topics` accepts `?topic=<id>` (focus → breadcrumb + rollup highlight) and
  * `?move=<childId>:<newParentId>` (demonstrate an audited re-home).
  */
@@ -26,11 +28,11 @@ import type { RouteHandler } from './router';
 import { renderLanding, renderGatedApp } from './ui/landing';
 import { resolveAccess } from './gate/access';
 import { hostedReviewerAccessActive } from './gate/hosted-access';
-import { loadReadModel, isEmptyResponse } from './data/client';
+import { isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
-import { render, renderCardFeed } from './ui/render';
+import { ensureStyle as ensureRecordStyle, recordCard, render } from './ui/render';
 import { renderBoards } from './ui/board';
-import { renderHome } from './ui/home';
+import { renderHome, renderHomeReadModel } from './ui/home';
 import {
   renderBoardsDirectory,
   renderFastAgenda,
@@ -66,8 +68,18 @@ import {
   type NewsletterStateKind,
 } from './ui/newsletter';
 import type { CardFeed } from './ui/card-feed';
-import { idle, loading, failed, resolved } from './state/async-state';
+import { loading, failed, resolved } from './state/async-state';
 import type { AsyncState } from './state/async-state';
+import { ReviewerContextStore } from './state/reviewer-context';
+import {
+  renderProjectionGap,
+  renderReviewerContextState,
+  type ProjectionGapDefinition,
+} from './ui/reviewer-context-state';
+import {
+  renderPrivateInfoNote,
+  type PrivateInfoNoteId,
+} from './ui/private-info-note';
 import type { ReadApiResponse, SuppliedFilesProjection, SupersedeProjection } from './types/read-api';
 import type { MoveRequest } from './ui/topic-tree';
 import stateMatrixData from './fixtures/state-matrix.json';
@@ -129,9 +141,6 @@ const GRAPH_DEMO_NOTICE =
  * Swept for raw paths at module load exactly like the other fixtures.
  */
 const CARD_FEED: CardFeed = assertWebSafe(cardFeedData as unknown as CardFeed);
-const CARD_FEED_NOTICE =
-  'Verbatim GOV-347 card-feed capture (reviewer-internal, backend HEAD 6d65bd3) — not a live read.';
-
 /**
  * GOV-606 (GOV-599 real-data) — the REAL reviewed-Alpine agenda-board projection,
  * captured VERBATIM from `stage5_agenda_board.agenda_board(conn)` over the reviewed
@@ -204,11 +213,78 @@ const NEWSLETTER_NOTICE =
 const root = document.getElementById('app');
 if (!root) throw new Error('missing #app mount');
 
+/**
+ * One server-authoritative reviewer context for the lifetime of this app boot.
+ *
+ * Every live route reads this same memoized promise/result. Browser routing,
+ * Simple/Advanced mode, and device-local location/watch preferences may only
+ * change presentation or narrow what is shown; none can create a second data
+ * source or widen the server response.
+ */
+const reviewerContext = new ReviewerContextStore();
+const LIVE_CONTEXT_NOTICE =
+  'Live same-origin reviewer context. Allowed record fields, trust labels, and source receipts are rendered exactly from the authorized server response.';
+
+/** `?access=public` is a deliberate fail-closed QA hook; every other value is ignored. */
+function narrowToRequestedAccess(data: ReadApiResponse, query: URLSearchParams): ReadApiResponse {
+  if (query.get('access') !== 'public') return data;
+  return {
+    scope: data.scope,
+    access: 'public',
+    records: [],
+  };
+}
+
+/**
+ * Draw a shared context state, then invoke a route only for the exact ready
+ * model. Detached mounts are ignored so a slow response cannot repaint a route
+ * after navigation.
+ */
+async function withReviewerContext(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  ready: (data: ReadApiResponse) => void,
+): Promise<void> {
+  const initial = reviewerContext.state;
+  if (initial.status !== 'ready') renderReviewerContextState(mount, initial.status);
+  const state = await reviewerContext.load();
+  if (!mount.isConnected || state !== reviewerContext.state) return;
+  if (state.status !== 'ready') {
+    renderReviewerContextState(mount, state.status);
+    return;
+  }
+  ready(narrowToRequestedAccess(state.data, query));
+}
+
+function projectionGapPage(
+  mount: HTMLElement,
+  definition: ProjectionGapDefinition,
+): void {
+  mount.className = 'gw-projection-gap-page';
+  mount.replaceChildren(renderProjectionGap(definition, { headingLevel: 1 }));
+}
+
 function el(tag: string, attrs: Record<string, string> = {}, text?: string): HTMLElement {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
   if (text) node.textContent = text;
   return node;
+}
+
+function contextualRouteHeading(
+  heading: string,
+  noteId: PrivateInfoNoteId,
+  testId: string,
+): HTMLElement {
+  const wrapper = el('div', {
+    class: 'gw-context-heading',
+    'data-test': `${testId}-context-heading`,
+  });
+  wrapper.append(
+    el('h1', { class: 'gw-h1', 'data-test': `${testId}-page-title` }, heading),
+    renderPrivateInfoNote(noteId),
+  );
+  return wrapper;
 }
 
 /**
@@ -344,38 +420,86 @@ function forcedState(forced: string | null): AsyncState<ReadApiResponse> | null 
 
 // Timeline route: ?state= overrides loading/empty/error; ?demo=complete shows
 // the backend-equivalent `complete` completeness state for screenshots.
-async function renderTimeline(mount: HTMLElement, query: URLSearchParams): Promise<void> {
+function renderTimeline(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
   const forced = forcedState(query.get('state'));
-  if (forced) return render(mount, forced);
+  if (forced) {
+    return render(mount, forced, undefined, {
+      infoNoteId: 'legacy-timeline-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
+  }
   if (query.get('demo') === 'matrix') {
-    render(mount, resolved(STATE_MATRIX, 'fixture', isEmptyResponse), 'State-matrix sample — one card per trust state, not real data.');
+    const matrix = narrowToRequestedAccess(STATE_MATRIX, query);
+    render(
+      mount,
+      resolved(matrix, 'fixture', isEmptyResponse),
+      'State-matrix sample — one card per trust state, not real data.',
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: matrix.access,
+      },
+    );
     return;
   }
   if (query.get('demo') === 'complete') {
-    render(mount, resolved(completeDemoBody(), 'fixture', isEmptyResponse), 'Showing a labeled sample — not real data.');
+    const complete = narrowToRequestedAccess(completeDemoBody(), query);
+    render(
+      mount,
+      resolved(complete, 'fixture', isEmptyResponse),
+      'Showing a labeled sample — not real data.',
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: complete.access,
+      },
+    );
     return;
   }
   if (query.get('demo') === 'provenance') {
-    render(mount, resolved(provenanceDemoBody(), 'fixture', isEmptyResponse), PROVENANCE_DEMO_NOTICE);
+    const provenance = narrowToRequestedAccess(provenanceDemoBody(), query);
+    render(
+      mount,
+      resolved(provenance, 'fixture', isEmptyResponse),
+      PROVENANCE_DEMO_NOTICE,
+      {
+        infoNoteId: 'legacy-timeline-overview',
+        access: provenance.access,
+      },
+    );
     return;
   }
-  render(mount, idle<ReadApiResponse>());
-  const { state, notice } = await loadReadModel();
-  render(mount, state, notice);
+  if (!data) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
+  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE, {
+    infoNoteId: 'legacy-timeline-overview',
+    access: data.access,
+  });
 }
 
-/** Render the topics surface: civic topic tree above the reused B card+drawer
- *  timeline. `treeOverride` lets the default view show the REAL tree above a
- *  live/fixture timeline that itself carries no tree. */
+/** Render the topics surface: an optional civic topic tree above the reused
+ *  record timeline. When the live response carries no tree, the tree slot
+ *  explains the missing backend projection instead of grafting a capture. */
 function renderTopicsSurface(
   mount: HTMLElement,
   state: AsyncState<ReadApiResponse>,
+  access: ReadApiResponse['access'],
   notice: string | undefined,
   focusTopicId: string,
   move: MoveRequest | undefined,
   treeOverride?: ReadApiResponse['topic_tree'],
 ): void {
+  if (access !== 'reviewer_internal') {
+    renderReviewerContextState(mount, 'denied');
+    return;
+  }
   mount.replaceChildren();
+
+  mount.append(contextualRouteHeading('Topics', 'topics-overview', 'topics'));
 
   const treeBox = el('div', { class: 'tt-wrap', 'data-test': 'topics-page' });
   mount.append(treeBox);
@@ -383,31 +507,48 @@ function renderTopicsSurface(
   if (topicTree) {
     renderTopicTreeView(treeBox, topicTree, { focusTopicId, move });
   } else {
-    treeBox.append(el('p', { class: 'gw-muted' }, 'No topic tree in this view.'));
+    treeBox.append(renderProjectionGap({
+      id: 'topic-tree',
+      kicker: 'TOPICS · LIVE CONTRACT GAP',
+      title: 'Connected topic tree not available yet',
+      whatItDoes: 'The topic tree will organize the same reviewed records under plain-language civic subjects without relabelling or inventing relationships.',
+      requiredProjection: 'A server-reviewed topic tree with stable topic ids, source-grounded labels, aliases, and explicit record-to-topic relationships.',
+      howItWorks: 'The backend will supply the graph beside this authorized record set; the browser will only navigate and filter those reviewed links.',
+      expectedResult: 'A browsable issue map where each branch leads back to the exact statements and source receipts that support it.',
+      filedUnder: 'Research graph · Topics · Alpine',
+    }));
   }
 
   // Reuse the B card+drawer timeline below the tree.
   const timelineBox = el('div', { 'data-test': 'topics-timeline' });
   mount.append(timelineBox);
-  render(timelineBox, state, notice);
+  render(timelineBox, state, notice, {
+    access,
+    headingLevel: 'h2',
+  });
 }
 
 /** Topic page: civic topic tree above the reused B card+drawer timeline.
- *  - Default `/topics`: REAL reviewed timeline (loadReadModel) with the REAL
- *    GOV-149 topic tree above it — the real concept graph now exists (GOV-150).
+ *  - Default `/topics`: shared live reviewer-context records with an honest
+ *    topic-tree gap when that projection is absent.
  *  - `?demo=graph`: the REAL concept-graph capture (tree + its 6 real records).
  *  - `?demo=graph-synthetic`: the clearly-labeled SYNTHETIC sample so the
  *    deep-nesting + audited-move surfaces the flat real tree cannot exercise
  *    can still be reviewed/screenshotted. (Agenda-thread completeness uses the
  *    same synthetic data via the timeline's `?demo=complete`.) */
-async function renderTopics(mount: HTMLElement, query: URLSearchParams): Promise<void> {
-  render(mount, idle<ReadApiResponse>());
+function renderTopics(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
   const demo = query.get('demo');
 
   if (demo === 'graph-synthetic') {
+    const synthetic = narrowToRequestedAccess(GRAPH_DEMO, query);
     renderTopicsSurface(
       mount,
-      resolved(GRAPH_DEMO, 'fixture', isEmptyResponse),
+      resolved(synthetic, 'fixture', isEmptyResponse),
+      synthetic.access,
       GRAPH_DEMO_NOTICE,
       query.get('topic') ?? DEFAULT_FOCUS,
       parseMove(query),
@@ -415,35 +556,115 @@ async function renderTopics(mount: HTMLElement, query: URLSearchParams): Promise
     return;
   }
 
-  // Default + ?demo=graph: REAL GOV-149 concept-graph capture.
-  const { state, notice } =
-    demo === 'graph'
-      ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
-      : await loadReadModel();
+  // `?demo=graph` is the explicit archived concept-graph capture. The default
+  // route uses only the shared live model and never grafts the captured tree
+  // onto a server response.
+  const selected = demo === 'graph' ? narrowToRequestedAccess(GRAPH_REAL, query) : data;
+  if (!selected) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
+  const state = resolved(selected, demo === 'graph' ? 'fixture' : 'live', isEmptyResponse);
+  const notice = demo === 'graph' ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE;
   renderTopicsSurface(
     mount,
     state,
+    selected.access,
     notice,
-    query.get('topic') ?? REAL_DEFAULT_FOCUS,
+    query.get('topic') ?? (demo === 'graph' ? REAL_DEFAULT_FOCUS : ''),
     parseOptionalMove(query),
-    // Default timeline carries no tree → show the REAL tree above it.
-    GRAPH_REAL.topic_tree,
   );
 }
 
-/** Body / meeting page: the same B card+drawer list under a context heading. */
-async function renderContextPage(mount: HTMLElement, kind: 'body' | 'meeting', query: URLSearchParams): Promise<void> {
+const CONTEXT_RELATIONSHIP_GAPS: Record<'body' | 'meeting', ProjectionGapDefinition> = {
+  body: {
+    id: 'government-body-relationship',
+    kicker: 'GOVERNMENT BODY · LIVE CONTRACT GAP',
+    title: 'Government-body record assignment not available yet',
+    whatItDoes: 'This page will gather the officials, meetings, decisions, responsibilities, source records, and reviewed changes that belong to one identified government body.',
+    requiredProjection: 'A server-authorized government-body response with a stable body id, official name, jurisdiction and level, membership, meeting ids, and explicit statement-to-body relationships.',
+    howItWorks: 'The backend will resolve and authorize the requested body, then return only records connected by reviewed ids. The browser will not infer a body from speaker text, publisher labels, URL parameters, or the Alpine endpoint scope.',
+    expectedResult: 'A sourced body profile whose Simple view answers who and what quickly, while Advanced preserves the same ids, receipts, relationship evidence, and trust states.',
+    filedUnder: 'Civic records · Government bodies · Relationship awaiting backend projection',
+  },
+  meeting: {
+    id: 'meeting-relationship',
+    kicker: 'MEETING RECORD · LIVE CONTRACT GAP',
+    title: 'Meeting-to-record assignment not available yet',
+    whatItDoes: 'This page will assemble one official meeting with its notice, agenda, packet, minutes or transcript, public-comment windows, votes, decisions, and reviewed follow-up.',
+    requiredProjection: 'A server-authorized meeting response with a stable meeting id, body id, official dates, document receipts, agenda-item ids, and explicit statement-to-meeting relationships.',
+    howItWorks: 'The backend will join reviewed records through stable meeting and agenda ids and disclose missing documents. The browser will not assign every Alpine-context row to a requested meeting.',
+    expectedResult: 'One traceable meeting file with fast Simple answers and an Advanced evidence trail over the exact same authorized records.',
+    filedUnder: 'Civic records · Meetings · Relationship awaiting backend projection',
+  },
+};
+
+/**
+ * Body / meeting page: disclose the missing relationship, then show the shared
+ * direct records only in an explicitly unassigned area.
+ */
+function renderContextPage(
+  mount: HTMLElement,
+  kind: 'body' | 'meeting',
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
   const forced = forcedState(query.get('state'));
-  render(mount, idle<ReadApiResponse>());
-  const { state, notice } = forced ? { state: forced, notice: undefined } : await loadReadModel();
+  if (forced) {
+    render(mount, forced, undefined, {
+      infoNoteId: kind === 'body' ? 'body-overview' : 'meeting-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
+    return;
+  }
+  if (!data) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
+  if (data.access !== 'reviewer_internal') {
+    renderReviewerContextState(mount, 'denied');
+    return;
+  }
+
+  ensureRecordStyle();
+  mount.className = 'gw-context-projection-page';
   mount.replaceChildren();
-  const heading = kind === 'body'
-    ? 'Government body — Alpine Town Council (reviewer-internal)'
-    : 'Meeting record (reviewer-internal)';
-  mount.append(el('section', { class: 'gw-page-context', 'data-test': `${kind}-page` }, heading));
-  const timelineBox = el('div', { 'data-test': `${kind}-timeline` });
-  mount.append(timelineBox);
-  render(timelineBox, state, notice);
+  mount.append(contextualRouteHeading(
+    kind === 'body' ? 'Government body' : 'Meeting record',
+    kind === 'body' ? 'body-overview' : 'meeting-overview',
+    kind,
+  ));
+  mount.append(renderProjectionGap(CONTEXT_RELATIONSHIP_GAPS[kind]));
+
+  const directRecords = el('section', {
+    class: 'gw-page-context gw-context-unscoped-records',
+    'data-test': `${kind}-unscoped-records`,
+    'data-relationship': 'unscoped',
+  });
+  directRecords.append(
+    el('p', { class: 'gw-projection-gap-kicker' }, 'AUTHORIZED DIRECT RECORDS'),
+    el(
+      'h2',
+      {},
+      kind === 'body'
+        ? 'Alpine endpoint records — not assigned to this government body'
+        : 'Alpine endpoint records — not assigned to this meeting',
+    ),
+    el(
+      'p',
+      { class: 'gw-muted' },
+      `${LIVE_CONTEXT_NOTICE} No body or meeting relationship is inferred from these ${data.records?.length ?? 0} direct record${data.records?.length === 1 ? '' : 's'}.`,
+    ),
+  );
+  const recordList = el('div', { class: 'gw-timeline', 'data-test': `${kind}-direct-record-list` });
+  for (const record of data.records ?? []) {
+    recordList.append(recordCard(record, undefined, undefined, { reviewerInternal: true }));
+  }
+  if ((data.records?.length ?? 0) === 0) {
+    recordList.append(el('p', { class: 'gw-muted' }, 'No direct authorized records were supplied.'));
+  }
+  directRecords.append(recordList);
+  mount.append(directRecords);
 }
 
 /**
@@ -452,15 +673,27 @@ async function renderContextPage(mount: HTMLElement, kind: 'body' | 'meeting', q
  * `?access=public` forces the public lane (0 cards) so the no-public-leak
  * invariant (§5) can be captured/verified.
  */
-function renderCardFeedRoute(mount: HTMLElement, query: URLSearchParams): void {
+function renderCardFeedRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
   const forced = forcedState(query.get('state'));
   if (forced) {
-    render(mount, forced);
+    render(mount, forced, undefined, {
+      infoNoteId: 'cards-overview',
+      access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+    });
     return;
   }
-  const access = query.get('access');
-  const feed = access ? { ...CARD_FEED, access } : CARD_FEED;
-  renderCardFeed(mount, feed, CARD_FEED_NOTICE);
+  if (!data) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
+  render(mount, resolved(data, 'live', isEmptyResponse), LIVE_CONTEXT_NOTICE, {
+    infoNoteId: 'cards-overview',
+    access: data.access,
+  });
 }
 
 /**
@@ -480,7 +713,7 @@ function renderBoardsRoute(mount: HTMLElement, query: URLSearchParams): void {
     render(mount, forced);
     return;
   }
-  const access = query.get('access') ?? undefined;
+  const access = query.get('access') === 'public' ? 'public' : undefined;
   const sample = query.get('demo') === 'sample';
   const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
   renderBoards(mount, {
@@ -494,8 +727,12 @@ function renderBoardsRoute(mount: HTMLElement, query: URLSearchParams): void {
 /** GOV-665 Fast Agenda page: quick agenda-first read over the same GOV-605
  * projection used by the agenda Kanban. `?demo=sample` is the only populated
  * sample path and stays visibly labeled by the notice. */
-function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access') ?? undefined;
+function renderFastAgendaRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const access = query.get('access') === 'public' ? 'public' : undefined;
   const sample = query.get('demo') === 'sample';
   const board = sample ? BOARD_SAMPLE : BOARD_PROJECTION;
   if (designPreviewActive(query)) {
@@ -511,6 +748,14 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
     renderFastAgenda(mount, scopedBoard, BOARD_SAMPLE_NOTICE, true);
     return;
   }
+  if (data) {
+    renderAuthorizedProjectionGap(mount, data, AGENDA_BOARD_GAP);
+    return;
+  }
+  if (!designPreviewActive(query)) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
   renderFastAgendaDesign(mount, {
     access: access ?? board.access,
     fixture: false,
@@ -521,49 +766,72 @@ function renderFastAgendaRoute(mount: HTMLElement, query: URLSearchParams): void
 
 /** GOV-665 Timeline page: level toggles + event-type filters + simple/advanced
  * (`gw_home_mode`) presentation over the existing reviewed read-model data. */
-async function renderTimelineLevelsRoute(mount: HTMLElement, query: URLSearchParams): Promise<void> {
+function renderTimelineLevelsRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
   const demo = query.get('demo');
-  const access = query.get('access');
   // The design fixture is a separate renderer so the reviewed lane can never
-  // borrow one of its synthetic rows.
+  // borrow one of its synthetic rows. It sits above the shared reviewer
+  // context because the fixture never consumes reviewed data at all.
   if (designPreviewActive(query)) {
     renderTimelineDesign(mount, query, {
-      access: access ?? 'reviewer_internal',
+      access: query.get('access') ?? 'reviewer_internal',
       fixture: true,
     });
     return;
   }
-  if (demo !== 'graph') render(mount, loading<ReadApiResponse>());
-  const { state, notice } =
-    demo === 'graph'
-      ? { state: resolved(GRAPH_REAL, 'fixture', isEmptyResponse), notice: GRAPH_REAL_NOTICE }
-      : await loadReadModel();
-  const data: ReadApiResponse = state.status === 'ready' && state.data ? state.data : GRAPH_REAL;
-  renderTimelineLevels(mount, access ? { ...data, access } : data, query, notice);
+  const selected = demo === 'graph' ? narrowToRequestedAccess(GRAPH_REAL, query) : data;
+  if (!selected) {
+    renderReviewerContextState(mount, 'unavailable');
+    return;
+  }
+  renderTimelineLevels(
+    mount,
+    selected,
+    query,
+    demo === 'graph' ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+  );
 }
 
 /** GOV-665 Boards directory + detail: consumes the REAL GOV-149 concept-graph
  * body/topic nodes; no score/verdict/ranking surface is rendered. */
-function renderBoardsDirectoryRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderBoardsDirectory(mount, data, query, GRAPH_REAL_NOTICE);
+function renderBoardsDirectoryRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data: ReadApiResponse,
+): void {
+  renderBoardsDirectory(mount, data, query, LIVE_CONTEXT_NOTICE);
 }
 
 /** GOV-668 Issue Detail route: one reviewed statement per `#/issue?id=` URL,
  * with Simple dossier and Advanced proof rail over the real GOV-149 capture. */
-function renderIssueDetailRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderIssueDetail(mount, data, query, GRAPH_REAL_NOTICE);
+function renderIssueDetailRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data: ReadApiResponse,
+): void {
+  renderIssueDetail(mount, data, query, LIVE_CONTEXT_NOTICE);
 }
 
-/** GOV-668 Source Vault: real per-record source metadata plus honest-empty
- * ledger/alert rows; packet diff is demo/sample-only. */
-function renderSourceVaultRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderSourceVault(mount, data, query, GRAPH_REAL_NOTICE, SUPPLIED_FILES, SUPERSEDE_EVENTS);
+/** GOV-668 Source Vault: live routes use the server-authorized response and
+ * leave B6-only panels honest-empty. The contract fixtures are available only
+ * on the visibly labeled `?demo=sample` route. */
+function renderSourceVaultRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data: ReadApiResponse,
+): void {
+  const fixture = query.get('demo') === 'sample';
+  renderSourceVault(
+    mount,
+    data,
+    query,
+    fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+    fixture ? SUPPLIED_FILES : null,
+    fixture ? SUPERSEDE_EVENTS : null,
+  );
 }
 
 /**
@@ -605,14 +873,39 @@ function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
  * `#/app` via the shared `gated()` wrapper (§5); this handler only runs once an
  * approved request has been admitted.
  */
-function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const requestedAccess = query.get('access');
-  const newsletter = requestedAccess
-    ? { ...NEWSLETTER_DIGEST, access: requestedAccess }
+function renderNewsletterRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const requestedPublic = query.get('access') === 'public';
+  const newsletter = requestedPublic
+    ? { ...NEWSLETTER_DIGEST, access: 'public' }
     : NEWSLETTER_DIGEST;
   const forced = query.get('state');
   if (forced === 'loading' || forced === 'empty' || forced === 'error') {
     renderNewsletterState(mount, forced as NewsletterStateKind, newsletter.access);
+    return;
+  }
+  if (query.get('demo') !== 'snapshot') {
+    if (!data) {
+      renderReviewerContextState(mount, 'unavailable');
+      return;
+    }
+    if (data.access !== 'reviewer_internal') {
+      renderReviewerContextState(mount, 'denied');
+      return;
+    }
+    projectionGapPage(mount, {
+      id: 'newsletter-digest',
+      kicker: 'NEWSLETTER · LIVE CONTRACT GAP',
+      title: 'Newsletter digest not available yet',
+      whatItDoes: 'The newsletter will turn reviewed Alpine activity into a plain-language edition with direct source receipts and correction status.',
+      requiredProjection: 'A server-reviewed newsletter digest containing stable edition ids, coverage dates, ordered items, source trails, and publication state.',
+      howItWorks: 'The backend will assemble an edition from the same authorized records, preserve every trust label, and return the finished projection through this same-origin session.',
+      expectedResult: 'A browsable archive and edition detail page where every summary opens the exact supporting public record.',
+      filedUnder: 'Civic briefings · Newsletter digest · Alpine',
+    });
     return;
   }
   const id = query.get('id');
@@ -629,7 +922,7 @@ function renderNewsletterRoute(mount: HTMLElement, query: URLSearchParams): void
  * render honest-empty states or DEV samples only behind `?demo=sample`.
  */
 function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const requestedAccess = query.get('access');
+  const requestedAccess = query.get('access') === 'public' ? 'public' : undefined;
   const access = requestedAccess ?? CARD_FEED.access;
   renderHome(mount, {
     access,
@@ -647,38 +940,78 @@ function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
 /** Options shared by design-handoff-only routes. The outer `gated()` wrapper is
  * still the access authority; the explicit public-lane query remains a
  * fail-closed verification hook for tests/review. */
-function designPageOptions(query: URLSearchParams): DesignPageOptions {
+function designPageOptions(
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): DesignPageOptions {
   return {
-    access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+    access: query.get('access') === 'public' ? 'public' : data?.access ?? 'reviewer_internal',
     fixture: designPreviewActive(query),
   };
 }
 
-function renderPowerRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const options = designPageOptions(query);
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderDesignPowerTracker(mount, options, data, GRAPH_REAL_NOTICE);
+function renderPowerRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const fixture = designPreviewActive(query);
+  const selected = fixture ? GRAPH_REAL : data;
+  if (!selected) return renderReviewerContextState(mount, 'unavailable');
+  renderDesignPowerTracker(
+    mount,
+    designPageOptions(query, selected),
+    selected,
+    fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+  );
 }
 
-function renderWatchlistRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const options = designPageOptions(query);
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderDesignWatchlist(mount, options, data, GRAPH_REAL_NOTICE);
+function renderWatchlistRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const fixture = designPreviewActive(query);
+  const selected = fixture ? GRAPH_REAL : data;
+  if (!selected) return renderReviewerContextState(mount, 'unavailable');
+  renderDesignWatchlist(
+    mount,
+    designPageOptions(query, selected),
+    selected,
+    fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+  );
 }
 
-function renderLocationRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const options = designPageOptions(query);
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderDesignLocation(mount, options, data, GRAPH_REAL_NOTICE);
+function renderLocationRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const fixture = designPreviewActive(query);
+  const selected = fixture ? GRAPH_REAL : data;
+  if (!selected) return renderReviewerContextState(mount, 'unavailable');
+  renderDesignLocation(
+    mount,
+    designPageOptions(query, selected),
+    selected,
+    fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+  );
 }
 
-function renderAlertsRoute(mount: HTMLElement, query: URLSearchParams): void {
-  const access = query.get('access');
-  const data = access ? { ...GRAPH_REAL, access } : GRAPH_REAL;
-  renderDesignAlerts(mount, designPageOptions(query), data, GRAPH_REAL_NOTICE);
+function renderAlertsRoute(
+  mount: HTMLElement,
+  query: URLSearchParams,
+  data?: ReadApiResponse,
+): void {
+  const fixture = designPreviewActive(query);
+  const selected = fixture ? GRAPH_REAL : data;
+  if (!selected) return renderReviewerContextState(mount, 'unavailable');
+  renderDesignAlerts(
+    mount,
+    designPageOptions(query, selected),
+    selected,
+    fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
+  );
 }
 
 /**
@@ -747,8 +1080,9 @@ function designPreviewActive(query: URLSearchParams): boolean {
 
 /**
  * Shell-wide provenance follows the explicit demo contract. The design preview
- * is tab-sticky; all other synthetic modes are URL-local. Real captures and the
- * live/default route remain reviewed snapshots rather than being called live.
+ * is tab-sticky; all other synthetic modes are URL-local. Explicit archived
+ * captures remain reviewed snapshots; every normal route is labelled as the
+ * live same-origin server context and never falls back to one of those captures.
  */
 const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/home',
@@ -767,15 +1101,29 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/location',
   '/alerts',
 ]);
+const SHELL_FORCED_STATE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
+  '/timeline-legacy',
+  '/cards',
+  '/newsletter',
+  '/body',
+  '/meeting',
+]);
 function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
   const designFixture = designPreviewActive(query);
   const demo = query.get('demo');
   const explicitFixture =
     (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
     || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
-    || (path === '/topics' && demo === 'graph-synthetic');
+    || (path === '/topics' && demo === 'graph-synthetic')
+    || (
+      SHELL_FORCED_STATE_FIXTURE_ROUTES.has(path)
+      && ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
+    );
   if ((designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) || explicitFixture) return 'fixture';
-  return 'reviewed_snapshot';
+  const reviewedSnapshot =
+    ((path === '/timeline' || path === '/topics') && demo === 'graph')
+    || (path === '/newsletter' && demo === 'snapshot');
+  return reviewedSnapshot ? 'reviewed_snapshot' : 'live_server';
 }
 
 /** Resolve the access state for a request from its query + the live bypass. */
@@ -820,37 +1168,180 @@ function gated(handler: ShellHandler): RouteHandler {
     });
 }
 
+const AGENDA_BOARD_GAP: ProjectionGapDefinition = {
+  id: 'agenda-board',
+  kicker: 'FAST AGENDA · LIVE CONTRACT GAP',
+  title: 'Agenda board not available yet',
+  whatItDoes: 'Fast Agenda will connect meeting notices, official agenda items, reviewed changes, public-comment windows, votes, and later follow-up in one meeting-first workspace.',
+  requiredProjection: 'A server-reviewed agenda-board response with stable meeting and agenda-item ids, lifecycle lanes, source receipts, timestamps, and explicit statement links.',
+  howItWorks: 'The backend will assemble and authorize the board. This page will preserve the supplied order and status without guessing a meeting, deadline, vote, or relationship from statement text.',
+  expectedResult: 'A quick Simple agenda and a denser Advanced workbench that show the same meetings, identifiers, receipts, and trust states.',
+  filedUnder: 'Civic records · Meetings and agendas · Alpine',
+};
+
+function renderAuthorizedProjectionGap(
+  mount: HTMLElement,
+  data: ReadApiResponse,
+  definition: ProjectionGapDefinition,
+): void {
+  if (data.access !== 'reviewer_internal') {
+    renderReviewerContextState(mount, 'denied');
+    return;
+  }
+  projectionGapPage(mount, definition);
+}
+
 // Preview-launch landing is the DEFAULT entry (and the fallback). The full
-// reviewer-internal app lives at `/app` (+ the other surfaces), each gated.
+// reviewer-internal app begins at `/home`; every civic surface remains gated.
 const router = createRouter(({ query }) => renderEntry(query));
 router.register('/', ({ query }) => renderEntry(query));
-// GOV-600 — `#/app` is now the agenda Kanban surface (default: Agendas by
-// meeting), the owner-confirmed primary UX that replaces the long card list. The
-// prior chronological long-list timeline stays reachable at `#/timeline` (and the
-// GOV-354 single-list card feed at `#/cards`) for continuity + regression.
-router.register('/home', gated(({ mount, query }) => renderHomeRoute(mount, query)));
+// `#/app` keeps the owner-confirmed agenda-workspace position without inventing
+// a board from statement rows. Until AgendaBoard is supplied by the shared
+// server response, it renders the detailed contract gap. Direct records remain
+// available at `#/timeline` and `#/cards`.
+router.register('/home', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample' || designPreviewActive(query)) {
+    renderHomeRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderHomeReadModel(mount, data));
+}));
 // Designed slot for the handoff's promo walkthrough. Carries no civic data, so
 // it needs no fixture gate — only the Coming Soon statement that it is unbuilt.
 router.register('/explainer', gated(({ mount }) => renderExplainer(mount)));
-router.register('/app', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
-router.register('/agenda', gated(({ mount, query }) => renderFastAgendaRoute(mount, query)));
-router.register('/boards', gated(({ mount, query }) => renderBoardsDirectoryRoute(mount, query)));
-router.register('/issue', gated(({ mount, query }) => renderIssueDetailRoute(mount, query)));
-router.register('/vault', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
+router.register('/app', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample') {
+    renderBoardsRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) =>
+    renderAuthorizedProjectionGap(mount, data, AGENDA_BOARD_GAP));
+}));
+router.register('/agenda', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample' || designPreviewActive(query)) {
+    renderFastAgendaRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
+}));
+router.register('/boards', gated(({ mount, query }) => {
+  void withReviewerContext(mount, query, (data) => renderBoardsDirectoryRoute(mount, query, data));
+}));
+router.register('/issue', gated(({ mount, query }) => {
+  void withReviewerContext(mount, query, (data) => renderIssueDetailRoute(mount, query, data));
+}));
+router.register('/vault', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample') {
+    renderSourceVaultRoute(mount, query, narrowToRequestedAccess(GRAPH_REAL, query));
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderSourceVaultRoute(mount, query, data));
+}));
 router.register('/upload', gated(({ mount, query }) => renderUploadRoute(mount, query)));
-router.register('/sources', gated(({ mount, query }) => renderSourceVaultRoute(mount, query)));
-router.register('/agenda-boards', gated(({ mount, query }) => renderBoardsRoute(mount, query)));
-router.register('/timeline', gated(({ mount, query }) => void renderTimelineLevelsRoute(mount, query)));
-router.register('/timeline-legacy', gated(({ mount, query }) => void renderTimeline(mount, query)));
-router.register('/cards', gated(({ mount, query }) => renderCardFeedRoute(mount, query)));
-router.register('/newsletter', gated(({ mount, query }) => renderNewsletterRoute(mount, query)));
-router.register('/power', gated(({ mount, query }) => renderPowerRoute(mount, query)));
-router.register('/watchlist', gated(({ mount, query }) => renderWatchlistRoute(mount, query)));
-router.register('/location', gated(({ mount, query }) => renderLocationRoute(mount, query)));
-router.register('/alerts', gated(({ mount, query }) => renderAlertsRoute(mount, query)));
-router.register('/topics', gated(({ mount, query }) => void renderTopics(mount, query)));
-router.register('/body', gated(({ mount, query }) => void renderContextPage(mount, 'body', query)));
-router.register('/meeting', gated(({ mount, query }) => void renderContextPage(mount, 'meeting', query)));
+router.register('/sources', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample') {
+    renderSourceVaultRoute(mount, query, narrowToRequestedAccess(GRAPH_REAL, query));
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderSourceVaultRoute(mount, query, data));
+}));
+router.register('/agenda-boards', gated(({ mount, query }) => {
+  if (query.get('demo') === 'sample') {
+    renderBoardsRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) =>
+    renderAuthorizedProjectionGap(mount, data, AGENDA_BOARD_GAP));
+}));
+router.register('/timeline', gated(({ mount, query }) => {
+  // The gated design fixture consumes no reviewed data, so it must not wait on
+  // (or be masked by) the shared reviewer context — same rule as /home, /agenda.
+  if (designPreviewActive(query)) {
+    renderTimelineLevelsRoute(mount, query);
+    return;
+  }
+  if (query.get('demo') === 'graph') {
+    renderTimelineLevelsRoute(mount, query, GRAPH_REAL);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderTimelineLevelsRoute(mount, query, data));
+}));
+router.register('/timeline-legacy', gated(({ mount, query }) => {
+  if (
+    ['complete', 'matrix', 'provenance'].includes(query.get('demo') ?? '')
+    || ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
+  ) {
+    renderTimeline(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderTimeline(mount, query, data));
+}));
+router.register('/cards', gated(({ mount, query }) => {
+  if (['loading', 'empty', 'error'].includes(query.get('state') ?? '')) {
+    renderCardFeedRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderCardFeedRoute(mount, query, data));
+}));
+router.register('/newsletter', gated(({ mount, query }) => {
+  if (
+    query.get('demo') === 'snapshot'
+    || ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
+  ) {
+    renderNewsletterRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderNewsletterRoute(mount, query, data));
+}));
+router.register('/power', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderPowerRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderPowerRoute(mount, query, data));
+}));
+router.register('/watchlist', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderWatchlistRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderWatchlistRoute(mount, query, data));
+}));
+router.register('/location', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderLocationRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderLocationRoute(mount, query, data));
+}));
+router.register('/alerts', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderAlertsRoute(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderAlertsRoute(mount, query, data));
+}));
+router.register('/topics', gated(({ mount, query }) => {
+  if (['graph', 'graph-synthetic'].includes(query.get('demo') ?? '')) {
+    renderTopics(mount, query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderTopics(mount, query, data));
+}));
+router.register('/body', gated(({ mount, query }) => {
+  if (['loading', 'empty', 'error'].includes(query.get('state') ?? '')) {
+    renderContextPage(mount, 'body', query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderContextPage(mount, 'body', query, data));
+}));
+router.register('/meeting', gated(({ mount, query }) => {
+  if (['loading', 'empty', 'error'].includes(query.get('state') ?? '')) {
+    renderContextPage(mount, 'meeting', query);
+    return;
+  }
+  void withReviewerContext(mount, query, (data) => renderContextPage(mount, 'meeting', query, data));
+}));
 
 // GOV-440 — apply the stored theme preference and mount the dark/light toggle on
 // <body> (outside #app, so it survives route re-renders). GOV-665 page-mode

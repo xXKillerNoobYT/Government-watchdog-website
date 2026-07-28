@@ -9,6 +9,34 @@ import {
   SITES_PRODUCTION_HOST,
 } from '../src/gate/hosted-access';
 
+const REVIEWER_ENVELOPE = {
+  reviewer_internal_records: [{
+    statement_id: 'server-home-record',
+    statement_text: 'The Alpine Town Council approved the published minutes.',
+    ui_status: 'source-backed',
+    verification_status: 'human_verified',
+    provenance_status: 'grounded',
+    publication_state: 'publishable',
+    produced_by: 'human',
+    evidence: [{
+      to_source_id: 'server-home-source',
+      relation: 'supports',
+      original_url: 'https://www.alpinewy.gov/server-home-source',
+      verification_status: 'human_verified',
+    }],
+  }],
+};
+
+function reviewerFetch(): typeof fetch {
+  return vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers({ 'content-type': 'application/json' }),
+    text: async () => JSON.stringify(REVIEWER_ENVELOPE),
+  })) as unknown as typeof fetch;
+}
+
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
   return {
@@ -35,6 +63,8 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-theme');
   vi.stubGlobal('localStorage', memoryStorage());
   vi.stubGlobal('sessionStorage', memoryStorage());
+  vi.stubGlobal('fetch', reviewerFetch());
+  localStorage.setItem('gw_home_mode', 'advanced');
   const root = document.createElement('div');
   root.id = 'app';
   document.body.append(root);
@@ -70,7 +100,9 @@ describe('Sites authenticated-owner entry', () => {
     await vi.waitFor(() => expect(window.location.hash).toBe('#/home'));
     await vi.waitFor(() => {
       expect(document.querySelector('[data-test="app-shell"]')).not.toBeNull();
-      expect(document.querySelector('[data-test="home-grid"]')).not.toBeNull();
+      expect(document.querySelector('[data-test="home-live-advanced"]')).not.toBeNull();
+      expect(document.querySelector('[data-test="home-live-record"][data-record-id="server-home-record"]'))
+        .not.toBeNull();
     });
 
     window.location.hash = '#/home?gate=denied';

@@ -7,8 +7,8 @@
  * §5). This check FAILS THE BUILD if the loopback service host:port leaks into
  * any surface a browser or deploy platform could route to directly:
  *
- *   - client/static sources (`src/`, `public/`, `index.html`)  -> would create a
- *     direct cross-origin call, bypassing the proxy (CORS surface / leak).
+ *   - client/static sources (`src/`, `public/`, `public-entry/`, `index.html`)
+ *     -> would create a direct cross-origin call, bypassing the proxy.
  *   - deploy/hosting config (`.openai/`, `deploy/`)            -> would map the
  *     internal port to the public internet.
  *
@@ -23,8 +23,9 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The loopback service the /api proxy forwards to (default per 1b run.py),
  * plus the fixed in-container service port from the GOV-1543 deploy runbook
@@ -36,7 +37,16 @@ const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '::1'];
 // must NOT appear here. (scripts/ and vite.config.ts are the sanctioned homes.)
 // GOV-1544: the deploy config joins the scan — fly.toml/Dockerfile must never
 // map the service port; the two sanctioned in-container references are below.
-const SCANNED = ['src', 'public', 'index.html', '.openai', 'deploy', 'Dockerfile', 'fly.toml'];
+export const SCANNED = [
+  'src',
+  'public',
+  'public-entry',
+  'index.html',
+  '.openai',
+  'deploy',
+  'Dockerfile',
+  'fly.toml',
+];
 
 // The ONLY sanctioned service-port references inside the deploy surface: the
 // edge server's loopback reverse-proxy target and the entrypoint's --port arg.
@@ -49,7 +59,7 @@ const SANCTIONED = [
 // A direct address to the service: `<loopback>:<port>` or a bare `:<port>` in a
 // public-port / expose list. We match the port next to a host or an "expose"/
 // "port(s)" key so an unrelated number can't trip it.
-function violationsIn(text, relPath) {
+export function violationsIn(text, relPath) {
   const hits = [];
   const sanctioned = SANCTIONED.filter((s) => s.file.test(relPath));
   for (const port of SERVICE_PORTS.map(String)) {
@@ -75,19 +85,23 @@ function* files(root) {
   }
 }
 
-function main() {
+export function scanDirectExposure(repoRoot = REPO_ROOT) {
   const violations = [];
   for (const target of SCANNED) {
-    for (const file of files(join(REPO_ROOT, target))) {
+    for (const file of files(join(repoRoot, target))) {
       // only text-ish files
       if (/\.(png|jpg|jpeg|gif|woff2?|ico|gz|zip|map)$/i.test(file)) continue;
       let text;
       try { text = readFileSync(file, 'utf8'); } catch { continue; }
-      for (const line of violationsIn(text, relative(REPO_ROOT, file)))
-        violations.push(`${relative(REPO_ROOT, file)}: ${line}`);
+      for (const line of violationsIn(text, relative(repoRoot, file)))
+        violations.push(`${relative(repoRoot, file)}: ${line}`);
     }
   }
+  return violations;
+}
 
+function main() {
+  const violations = scanDirectExposure();
   if (violations.length) {
     console.error('\n✗ direct-exposure check FAILED (§5): a loopback service port '
       + `(${SERVICE_PORTS.join('/')}) is reachable outside the /api proxy:\n`);
@@ -99,4 +113,4 @@ function main() {
   console.log(`✓ direct-exposure check passed: no client/static/deploy reference to the loopback service ports ${SERVICE_PORTS.join('/')} (§5).`);
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -2,6 +2,34 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const REVIEWER_ENVELOPE = {
+  reviewer_internal_records: [{
+    statement_id: 'server-route-record',
+    statement_text: 'The Alpine Town Council approved the published minutes.',
+    ui_status: 'source-backed',
+    verification_status: 'human_verified',
+    provenance_status: 'grounded',
+    publication_state: 'publishable',
+    produced_by: 'human',
+    evidence: [{
+      to_source_id: 'server-route-source',
+      relation: 'supports',
+      original_url: 'https://www.alpinewy.gov/server-route-source',
+      verification_status: 'human_verified',
+    }],
+  }],
+};
+
+function reviewerFetch(): typeof fetch {
+  return vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers({ 'content-type': 'application/json' }),
+    text: async () => JSON.stringify(REVIEWER_ENVELOPE),
+  })) as unknown as typeof fetch;
+}
+
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
   return {
@@ -21,6 +49,8 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-theme');
   vi.stubGlobal('localStorage', memoryStorage());
   vi.stubGlobal('sessionStorage', memoryStorage());
+  vi.stubGlobal('fetch', reviewerFetch());
+  localStorage.setItem('gw_home_mode', 'advanced');
   const root = document.createElement('div');
   root.id = 'app';
   document.body.append(root);
@@ -124,7 +154,7 @@ describe('MOTY design-handoff route integration', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       await vi.waitFor(() => {
         expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), route)
-          .toBe('reviewed_snapshot');
+          .toBe('live_server');
       });
       expect(app.querySelector('[data-test="design-fixture-banner"]'), route).toBeNull();
     }
@@ -135,37 +165,45 @@ describe('MOTY design-handoff route integration', () => {
     await import('../src/main');
 
     const app = document.querySelector('#app')!;
-    expect(app.querySelector('[data-test="power-tracker-page"]')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="power-tracker-page"]')).not.toBeNull();
+    });
     expect(app.querySelector('[data-test="power-tracker-gated"]')).toBeNull();
     expect(app.querySelector('[data-test="design-fixture-banner"]')).toBeNull();
     expect(app.querySelector('[data-fixture="true"]')).toBeNull();
     const origin = app.querySelector('[data-test="shell-origin-banner"]');
-    expect(origin?.getAttribute('data-origin')).toBe('reviewed_snapshot');
-    expect(origin?.textContent).toContain('REVIEWED SNAPSHOT');
-    expect(origin?.textContent).toContain('not a live read');
+    expect(origin?.getAttribute('data-origin')).toBe('live_server');
+    expect(origin?.textContent).toContain('LIVE SERVER CONTEXT');
+    expect(origin?.textContent).toContain('same-origin authorization');
 
-    const reviewedRoutes = [
-      ['/agenda', 'fast-agenda-reviewed-advanced', 'reviewed-agenda-empty'],
+    const liveRoutes = [
+      ['/agenda', 'reviewer-projection-gap', 'reviewer-projection-gap'],
       ['/power', 'power-real-advanced-workbench', 'power-score-unavailable'],
       ['/watchlist', 'watchlist-real-advanced-workbench', 'watchlist-history-unavailable'],
       ['/location', 'location-real-advanced-workbench', 'location-coverage-unavailable'],
       ['/alerts', 'alerts-real-advanced-workbench', 'alerts-history-unavailable'],
     ] as const;
-    for (const [route, baselineId, gapId] of reviewedRoutes) {
+    for (const [route, baselineId, gapId] of liveRoutes) {
       window.location.hash = `#${route}?reviewer=1`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
-      expect(app.querySelector(`[data-test="${baselineId}"]`), route).not.toBeNull();
+      await vi.waitFor(() => {
+        expect(app.querySelector(`[data-test="${baselineId}"]`), route).not.toBeNull();
+      });
       expect(app.querySelector(`[data-test="${gapId}"]`), route).not.toBeNull();
+      if (route === '/agenda') {
+        expect(app.querySelector('[data-test="reviewer-projection-gap"]')?.getAttribute('data-projection'))
+          .toBe('agenda-board');
+      }
       expect(app.querySelector('[data-test="design-fixture-banner"]'), route).toBeNull();
       expect(app.querySelector('[data-test="fixture-banner"]'), route).toBeNull();
       expect(app.querySelector('[data-fixture]'), route).toBeNull();
       expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), route)
-        .toBe('reviewed_snapshot');
+        .toBe('live_server');
     }
   });
 
   it('opens the reviewed newsletter archive without guessing a current edition and keeps explicit detail links', async () => {
-    window.location.hash = '#/newsletter?reviewer=1';
+    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot';
     await import('../src/main');
 
     const app = document.querySelector('#app')!;
@@ -174,7 +212,7 @@ describe('MOTY design-handoff route integration', () => {
     expect(app.querySelector('[data-test="newsletter-baseline-structure"]')).not.toBeNull();
     expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
 
-    window.location.hash = '#/newsletter?reviewer=1&id=alpine-historical-2026-18';
+    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot&id=alpine-historical-2026-18';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     expect(app.querySelector('[data-test="newsletter-detail"]')).not.toBeNull();
     expect(app.querySelector('[data-test="newsletter-detail-archive"]')).not.toBeNull();
@@ -188,6 +226,7 @@ describe('MOTY design-handoff route integration', () => {
     const app = document.querySelector('#app')!;
     const fixtureRoutes = [
       ['/app', 'sample'],
+      ['/vault', 'sample'],
       ['/timeline-legacy', 'complete'],
       ['/timeline-legacy', 'matrix'],
       ['/timeline-legacy', 'provenance'],
@@ -200,15 +239,26 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     }
 
-    const reviewedRoutes = [
+    const liveRoutes = [
       ['/power', 'complete'],
       ['/power', 'sample'],
       ['/newsletter', 'sample'],
       ['/cards', 'sample'],
-      ['/topics', 'graph'],
       ['/power', 'live'],
     ] as const;
-    for (const [route, demo] of reviewedRoutes) {
+    for (const [route, demo] of liveRoutes) {
+      window.location.hash = `#${route}?reviewer=1&demo=${demo}`;
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), `${route}:${demo}`)
+        .toBe('live_server');
+    }
+
+    const capturedRoutes = [
+      ['/timeline', 'graph'],
+      ['/topics', 'graph'],
+      ['/newsletter', 'snapshot'],
+    ] as const;
+    for (const [route, demo] of capturedRoutes) {
       window.location.hash = `#${route}?reviewer=1&demo=${demo}`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), `${route}:${demo}`)
