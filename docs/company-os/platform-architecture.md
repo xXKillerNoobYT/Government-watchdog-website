@@ -118,6 +118,10 @@ backups/db/                            dated SQLite backups copied IN
 backups/repo-bundles/                  git bundles of remoteless repos
 ```
 
+A read-only OneDrive share link for the whole folder exists (recorded in the folder's
+README and the "Evidence Storage" page in the Government Watchdog Notion teamspace) so any
+machine can inspect and verify content without a write path.
+
 Two rules enforced by the README that ships in the folder: **the live SQLite database
 never sits inside OneDrive** (sync + SQLite = corruption; the DB lives on local disk and
 only dated backups land here), and **raw files are immutable** (a change is a new file
