@@ -11,15 +11,24 @@ Seeded 2026-07-28 on first run.
 
 ## Active iteration carry-overs
 
-- [ ] **Issue #55 remaining acceptance criteria** — iteration 1 landed AC1 (URL-form
-      rejection), AC6 (mixed public/private package rejection), and AC8 (precise,
-      credential-safe reporting) in `scripts/check-no-direct-exposure.mjs` and
-      `scripts/check-public-bundle.mjs`. Still open on that issue:
-      AC2 full emitted-asset + module-graph scan (`dist/**` JS/CSS/HTML/JSON/maps/workers/
-      manifests); AC3 assert credentials/bearer headers/cookies never attach off-origin;
-      AC5 dynamic-import / `new URL(..., import.meta.url)` / CSS-url / binary-asset cases.
-      AC7 (hosted anonymous probes) is **owner-gated** — it needs a deploy, and deploy is
-      on HOLD per GOV-420.
+- [x] **Issue #55 — AC2, AC3, AC5** — done in iteration 2 on
+      `auto-go/gov55-bundle-graph-scan` (stacked on PR #96). `--emitted <dir>` mode added to
+      `scripts/check-no-direct-exposure.mjs` and wired after `vite build` in both lanes;
+      31 new tests. Auditing the emitted artifact subsumes the "Vite/Rollup module graph"
+      requirement — Rollup rewrites dynamic `import()` and `new URL(..., import.meta.url)`
+      into emitted files, so the artifact *is* the resolved graph and cannot drift from
+      what ships.
+
+- [ ] **Issue #55 — AC4, the last non-owner-gated criterion.** "Public build verification
+      rejects any private fixture, reviewer-context, reviewer API, bypass, or private marker
+      **regardless of import form**." `scanPublicBundle` in `scripts/check-public-bundle.mjs`
+      only reads `TEXT_EXTENSIONS`, so a marker carried in an emitted image, font, or other
+      binary asset is never looked at. The emitted scan added in iteration 2 already reads
+      binaries as `latin1` for the two never-legitimate destination shapes; the same
+      treatment applied to `FORBIDDEN_PUBLIC_MARKERS` closes AC4. Small and self-contained.
+
+- [ ] **Issue #55 — AC7 is owner-gated, not agent work.** Hosted anonymous probes need a
+      deploy, and deploy is on HOLD per GOV-420. It cannot close from this loop.
 
 ## Agent-discovered (awaiting owner ratification or scheduling)
 
