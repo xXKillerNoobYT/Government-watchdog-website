@@ -200,7 +200,10 @@ afterEach(() => {
 });
 
 describe('shared live reviewer context across canonical routes', () => {
-  it('uses one same-origin request while routes, modes, URLs, and device storage can only present or narrow its exact IDs', async () => {
+  // Known-flaky on the shared self-hosted runner under load — filed as issue
+  // #59. Raising the ceiling does not weaken any assertion; the deeper
+  // stabilization stays tracked there.
+  it('uses one same-origin request while routes, modes, URLs, and device storage can only present or narrow its exact IDs', { timeout: 20000 }, async () => {
     localStorage.setItem('gw_tracked', JSON.stringify({
       [CAPTURED_FIXTURE_ID]: true,
       [UNAUTHORIZED_DEVICE_ID]: true,

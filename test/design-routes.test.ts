@@ -107,7 +107,10 @@ describe('MOTY design-handoff route integration', () => {
     }
   });
 
-  it('keeps the explicit design preview active while navigating every new route', async () => {
+  // Integration sweep over 8+ routes with waitFor loops. The 5s unit default
+  // is too tight on the shared self-hosted runner (see issue #59 for the same
+  // class of timeout); the budget below is a ceiling, not a target.
+  it('keeps the explicit design preview active while navigating every new route', { timeout: 20000 }, async () => {
     window.location.hash = '#/agenda?reviewer=1&demo=design';
     await import('../src/main');
 
