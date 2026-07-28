@@ -683,6 +683,35 @@ function simpleAgendaItem(
   ]);
 }
 
+
+/**
+ * Two-column "where things stand" digest — the design's closing element for
+ * the Simple skin, and the Simple-mode parity partner of the Advanced issue
+ * tracker: same fixture facts, one line per issue, no facts dropped between
+ * modes. Derived from ISSUE_CARDS so the two views cannot drift apart.
+ */
+function simpleWhereThingsStand(): HTMLElement {
+  const rows = ISSUE_CARDS.map((issue) => el('li', { class: 'gw-fa-stand-row', 'data-test': 'simple-stand-row' }, [
+    el('strong', {}, [issue.title]),
+    el('span', { class: 'gw-fa-stand-stage' }, [
+      `${ISSUE_STAGES[issue.stage]} \u00b7 next: ${issue.next}`,
+    ]),
+  ]));
+  return el('section', {
+    class: 'gw-fa-simple-stand',
+    'aria-labelledby': 'gw-fa-simple-stand-title',
+    'data-test': 'simple-where-things-stand',
+  }, [
+    kicker('WHERE THINGS STAND'),
+    el('h2', { id: 'gw-fa-simple-stand-title' }, ['Every tracked issue, one line each']),
+    el('p', { class: 'gw-fa-board-disclosure' }, [
+      'Synthetic design fixture \u2014 the same fifteen issues the Advanced tracker shows, in plain language.',
+    ]),
+    el('ul', { class: 'gw-fa-stand-list' }, rows),
+    el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [RECEIPTS_DISCLAIMER]),
+  ]);
+}
+
 function simpleAgendaDigest(root: HTMLElement, tracked: Record<string, boolean>): HTMLElement {
   return el('section', {
     class: 'gw-fa-simple-agenda',
@@ -1322,7 +1351,7 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
 
     const tracked = readTracked();
     const content = mode === 'simple'
-      ? [simpleMeetingDigest(), simpleAgendaDigest(root, tracked)]
+      ? [simpleMeetingDigest(), simpleAgendaDigest(root, tracked), simpleWhereThingsStand()]
       : [
           el('div', { class: 'gw-fa-overview' }, [meetingBoard(), agendaBoard(root, tracked)]),
           issueTracker(root, tracked),
@@ -1420,6 +1449,14 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-nearby-row.is-pending .gw-fa-nearby-glyph{color:var(--gw-text-muted)}
 .gw-fa-nearby-body{color:var(--gw-text)}
 .gw-fa-nearby-status{color:var(--gw-text-muted);font-size:var(--gw-text-badge)}
+.gw-fa-simple-stand{margin-top:var(--gw-space-5)}
+.gw-fa-stand-list{list-style:none;margin:var(--gw-space-3) 0 0;padding:0;columns:2;column-gap:var(--gw-space-5)}
+@media (max-width:760px){.gw-fa-stand-list{columns:1}}
+.gw-fa-stand-row{break-inside:avoid;display:grid;gap:2px;margin-bottom:var(--gw-space-3)}
+.gw-fa-stand-row strong{font-size:var(--gw-text-md)}
+.gw-fa-stand-stage{color:var(--gw-text-muted);font-size:var(--gw-text-badge)}
+[data-mode="simple"] .gw-fa-ai,.gw-fa-simple-item .gw-fa-ai{background:#FFF8E4;border-left:3px solid #D9A400;color:#3d3306}
+.gw-fa-simple-item .gw-fa-ai .gw-fa-ai-label{color:#8a6d00}
 .gw-fa-public-comment h2{font-size:var(--gw-text-sm);color:var(--gw-accent)}.gw-fa-public-comment p{margin-bottom:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}
 .gw-fa-receipts-note{border-left:3px solid var(--gw-neutral-border);padding-left:var(--gw-space-3);margin:var(--gw-space-4) 0 0;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-board-disclosure{background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3);color:var(--gw-caution-text-strong);font-size:var(--gw-text-sm)}

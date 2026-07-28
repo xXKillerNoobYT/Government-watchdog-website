@@ -178,6 +178,23 @@ describe('Fast Agenda fixture content and disclosure', () => {
     expect(root.querySelector('[data-test="nearby-last-meeting"]')).toBeNull();
     expect(root.querySelector('[data-test="reviewed-nearby-meetings-gap"]')).not.toBeNull();
   });
+
+  it('closes Simple mode with the where-things-stand digest at Advanced-tracker parity', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderFixture();
+
+    const digest = root.querySelector('[data-test="simple-where-things-stand"]');
+    expect(digest).not.toBeNull();
+    // Mode parity: one row per issue card the Advanced kanban shows — no facts
+    // dropped between reading modes.
+    expect(digest?.querySelectorAll('[data-test="simple-stand-row"]')).toHaveLength(15);
+    expect(digest?.textContent).toContain('Building and annexation moratorium');
+    expect(digest?.querySelector('[data-test="receipts-disclaimer"]')).not.toBeNull();
+
+    // The digest is the page's closing element per the design.
+    const simpleSections = [...root.querySelectorAll('[data-test="simple-meeting-digest"], [data-test="simple-agenda-digest"], [data-test="simple-where-things-stand"]')];
+    expect(simpleSections.at(-1)?.getAttribute('data-test')).toBe('simple-where-things-stand');
+  });
 });
 
 describe('Fast Agenda reviewed projection baseline', () => {
