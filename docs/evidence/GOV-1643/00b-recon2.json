@@ -1,0 +1,177 @@
+{
+  "390": {
+    "home": {
+      "cw": 390,
+      "docScrollW": 414,
+      "bodyScrollW": 406,
+      "canScrollX": true,
+      "scrolledToX": 24,
+      "offenders": [
+        {
+          "tag": "main",
+          "cls": "gw-shell-content",
+          "right": 414,
+          "left": 8,
+          "w": 406
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-root",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-levels",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "section",
+          "cls": "gw-home-weather",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-grid",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-col",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "section",
+          "cls": "gw-home-widget",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        },
+        {
+          "tag": "section",
+          "cls": "gw-home-widget",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        }
+      ]
+    },
+    "vault": {
+      "cw": 390,
+      "docScrollW": 414,
+      "bodyScrollW": 406,
+      "canScrollX": true,
+      "scrolledToX": 24,
+      "offenders": [
+        {
+          "tag": "main",
+          "cls": "gw-shell-content",
+          "right": 414,
+          "left": 8,
+          "w": 406
+        },
+        {
+          "tag": "div",
+          "cls": "gw-root gw-boards-root",
+          "right": 398,
+          "left": 24,
+          "w": 374
+        }
+      ]
+    }
+  },
+  "1440": {
+    "home": {
+      "cw": 1440,
+      "docScrollW": 1464,
+      "bodyScrollW": 1456,
+      "canScrollX": true,
+      "scrolledToX": 24,
+      "offenders": [
+        {
+          "tag": "main",
+          "cls": "gw-shell-content",
+          "right": 1464,
+          "left": 8,
+          "w": 1456
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-root",
+          "right": 1448,
+          "left": 24,
+          "w": 1424
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-levels",
+          "right": 1448,
+          "left": 24,
+          "w": 1424
+        },
+        {
+          "tag": "section",
+          "cls": "gw-home-weather",
+          "right": 1448,
+          "left": 24,
+          "w": 1424
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-grid",
+          "right": 1448,
+          "left": 24,
+          "w": 1424
+        },
+        {
+          "tag": "div",
+          "cls": "gw-home-col",
+          "right": 1448,
+          "left": 1096,
+          "w": 352
+        },
+        {
+          "tag": "section",
+          "cls": "gw-home-widget",
+          "right": 1448,
+          "left": 1096,
+          "w": 352
+        }
+      ]
+    },
+    "vault": {
+      "cw": 1440,
+      "docScrollW": 1464,
+      "bodyScrollW": 1456,
+      "canScrollX": true,
+      "scrolledToX": 24,
+      "offenders": [
+        {
+          "tag": "main",
+          "cls": "gw-shell-content",
+          "right": 1464,
+          "left": 8,
+          "w": 1456
+        }
+      ]
+    },
+    "vaultInteract": {
+      "found": false
+    }
+  },
+  "publicLane": {
+    "cardCount": 0,
+    "gatePanel": true,
+    "civicLeak": false,
+    "bodyPreview": "FULL APP · GATED This area is behind the beta gate The full Government Watchdog app is reachable only once your beta access is approved. Not signed in Request beta access The full Government Watchdog app is in gated "
+  }
+}

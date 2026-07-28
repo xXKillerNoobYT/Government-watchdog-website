@@ -1,0 +1,438 @@
+{
+  "viewports": {
+    "390": {
+      "shots": [
+        "home-simple",
+        "home-advanced",
+        "timeline",
+        "vault"
+      ],
+      "hscroll": {
+        "home": {
+          "over": 24,
+          "overflow": true
+        },
+        "timeline": {
+          "over": 24,
+          "overflow": true
+        },
+        "vault": {
+          "over": 24,
+          "overflow": true
+        }
+      },
+      "modeReversible": true
+    },
+    "768": {
+      "shots": [
+        "home-simple",
+        "home-advanced",
+        "timeline",
+        "vault"
+      ],
+      "hscroll": {
+        "home": {
+          "over": 24,
+          "overflow": true
+        },
+        "timeline": {
+          "over": 24,
+          "overflow": true
+        },
+        "vault": {
+          "over": 24,
+          "overflow": true
+        }
+      },
+      "modeReversible": true
+    },
+    "1440": {
+      "shots": [
+        "home-simple",
+        "home-advanced",
+        "timeline",
+        "vault"
+      ],
+      "hscroll": {
+        "home": {
+          "over": 24,
+          "overflow": true
+        },
+        "timeline": {
+          "over": 24,
+          "overflow": true
+        },
+        "vault": {
+          "over": 24,
+          "overflow": true
+        }
+      },
+      "modeReversible": true
+    }
+  },
+  "a11y": {
+    "390": {
+      "unnamed": [],
+      "targets": [
+        {
+          "name": "Simple",
+          "w": 68,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Advanced",
+          "w": 86,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Notifications, 2 unread",
+          "w": 44,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "All",
+          "w": 52,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Town",
+          "w": 66,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "County",
+          "w": 79,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "State",
+          "w": 68,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Theme: System. Activate ",
+          "w": 122,
+          "h": 44,
+          "small": false
+        }
+      ],
+      "contrast": [
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Simple",
+          "fontPx": 13,
+          "ratio": 11.31,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Advanced",
+          "fontPx": 13,
+          "ratio": 9.72,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-ntf-badge",
+          "txt": "2",
+          "fontPx": 11.52,
+          "ratio": 6.22,
+          "badgeFontFloorFail": true
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        }
+      ]
+    },
+    "768": {
+      "unnamed": [],
+      "targets": [
+        {
+          "name": "Simple",
+          "w": 68,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Advanced",
+          "w": 86,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Notifications, 2 unread",
+          "w": 44,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "All",
+          "w": 52,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Town",
+          "w": 66,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "County",
+          "w": 79,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "State",
+          "w": 68,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Theme: System. Activate ",
+          "w": 122,
+          "h": 44,
+          "small": false
+        }
+      ],
+      "contrast": [
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Simple",
+          "fontPx": 13,
+          "ratio": 11.31,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Advanced",
+          "fontPx": 13,
+          "ratio": 9.72,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-ntf-badge",
+          "txt": "2",
+          "fontPx": 11.52,
+          "ratio": 6.22,
+          "badgeFontFloorFail": true
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        }
+      ]
+    },
+    "1440": {
+      "unnamed": [],
+      "targets": [
+        {
+          "name": "Simple",
+          "w": 68,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Advanced",
+          "w": 86,
+          "h": 36,
+          "small": true
+        },
+        {
+          "name": "Notifications, 2 unread",
+          "w": 44,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "All",
+          "w": 52,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Town",
+          "w": 66,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "County",
+          "w": 79,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "State",
+          "w": 68,
+          "h": 44,
+          "small": false
+        },
+        {
+          "name": "Theme: System. Activate ",
+          "w": 122,
+          "h": 44,
+          "small": false
+        }
+      ],
+      "contrast": [
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Simple",
+          "fontPx": 13,
+          "ratio": 11.31,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-shell-mode-btn",
+          "txt": "Advanced",
+          "fontPx": 13,
+          "ratio": 9.72,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-ntf-badge",
+          "txt": "2",
+          "fontPx": 11.52,
+          "ratio": 6.22,
+          "badgeFontFloorFail": true
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        },
+        {
+          "cls": "gw-home-chip gw-level-town",
+          "txt": "TOWN",
+          "fontPx": 13,
+          "ratio": 9.86,
+          "badgeFontFloorFail": false
+        }
+      ]
+    }
+  },
+  "hiddenLocks": [
+    {
+      "surface": "notification-panel",
+      "vp": "1440",
+      "opened": true,
+      "escapeClosed": false,
+      "focusAfter": "A.gw-shell-tab"
+    },
+    {
+      "surface": "notification-panel",
+      "vp": "768",
+      "opened": true,
+      "escapeClosed": false,
+      "focusAfter": "A.gw-shell-tab"
+    },
+    {
+      "surface": "notification-panel",
+      "vp": "390",
+      "opened": true,
+      "escapeClosed": false,
+      "focusAfter": "A.gw-shell-tab"
+    }
+  ],
+  "publicLane": {},
+  "errors": [
+    "[1440] locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[class*=\"vault\"] button, button[class*=\"source\"], [class*=\"drawer\"] button, .gw-vault button').first()\n    - locator resolved to <button type=\"button\" class=\"gw-ntf-close\" data-test=\"notification-close\" aria-label=\"Close notifications\">✕</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n      - waiting 100ms\n    46 × waiting for element to be visible, enabled and stable\n       - element is not visible\n     - retrying click action\n       - waiting 500ms\n",
+    "[768] locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[class*=\"vault\"] button, button[class*=\"source\"], [class*=\"drawer\"] button, .gw-vault button').first()\n    - locator resolved to <button type=\"button\" class=\"gw-ntf-close\" data-test=\"notification-close\" aria-label=\"Close notifications\">✕</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n      - waiting 100ms\n    48 × waiting for element to be visible, enabled and stable\n       - element is not visible\n     - retrying click action\n       - waiting 500ms\n",
+    "[390] locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[class*=\"vault\"] button, button[class*=\"source\"], [class*=\"drawer\"] button, .gw-vault button').first()\n    - locator resolved to <button type=\"button\" class=\"gw-ntf-close\" data-test=\"notification-close\" aria-label=\"Close notifications\">✕</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not visible\n    - retrying click action\n      - waiting 100ms\n    47 × waiting for element to be visible, enabled and stable\n       - element is not visible\n     - retrying click action\n       - waiting 500ms\n    - waiting for element to be visible, enabled and stable\n"
+  ],
+  "consoleErrors": []
+}
