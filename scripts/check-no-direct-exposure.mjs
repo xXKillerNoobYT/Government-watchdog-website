@@ -26,6 +26,13 @@
  * *shape* rather than by port number, and each violation names the rule that
  * matched so the failure is actionable rather than a bare grep hit.
  *
+ * Issue #55 also gave the check a second mode. `--emitted <dir>` audits a BUILT
+ * artifact instead of the source tree: emitted JavaScript, CSS, HTML, JSON,
+ * source maps, workers, manifests, and binary assets. Source scanning alone
+ * cannot see a destination introduced by a dependency, a dynamic import, or an
+ * asset reference Rollup rewrote — and the artifact is what a visitor actually
+ * downloads.
+ *
  * Pure + side-effect-free scan; runs in the default build and in CI (no backend
  * required). Exit non-zero on any violation.
  */
@@ -179,6 +186,224 @@ const VALUE_RULES = [
   },
 ];
 
+/* ------------------------------------------------------------------------- *
+ * Emitted-artifact rules (issue #55, AC2/AC3/AC5)
+ *
+ * The rules above read the *source* tree. `files()` below deliberately skips
+ * `dist/`, and the sibling guard (`check-public-bundle.mjs`) reads `dist/` only
+ * for literal private markers — so until now nothing asked whether an off-origin
+ * *destination* survived bundling. That seam is what these rules close.
+ *
+ * Auditing the emitted artifact is a stronger claim than walking the
+ * Vite/Rollup module graph: Rollup rewrites dynamic `import()` and
+ * `new URL(..., import.meta.url)` into emitted files, so the artifact *is* the
+ * resolved graph, and it cannot drift from what actually ships.
+ *
+ * The rules key on *dial position*, never on "contains an absolute URL".
+ * Captured civic records legitimately cite `https://alpinewy.gov/...`, and those
+ * citations are bundled into the artifact verbatim. A citation is evidence; a
+ * `fetch(...)`, `<link href>`, or CSS `url(...)` is a destination. Confusing the
+ * two would fail the build on honest data — the exact outcome the honesty
+ * contract exists to prevent.
+ * ------------------------------------------------------------------------- */
+
+/** A scheme-ful or protocol-relative reference. Both leave this origin; `data:`,
+ * `blob:`, and root-relative paths have no `//` authority and are not matched. */
+const OFF_ORIGIN = String.raw`(?:[a-zA-Z][a-zA-Z0-9+.-]{1,31}:)?\/\/[^\s"'\`)>]{1,300}`;
+const QUOTE = String.raw`["'\`]`;
+const HTTP_METHOD = String.raw`(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)`;
+
+/** How far past a dial to look for an attached credential (AC3). Wide enough to
+ * span a minified options object, narrow enough that unrelated code nearby does
+ * not get blamed. */
+const CREDENTIAL_WINDOW = 400;
+
+/** Credentials, bearer headers, and cookies (AC3). Matched only inside a dial's
+ * window — `credentials: 'same-origin'` on a `/api` call is the correct pattern
+ * and must keep passing. */
+const CREDENTIAL_MARKER =
+  /credentials\s*:\s*["'`]include["'`]|withCredentials\s*[:=]\s*(?:!0|true)|["'`]?(?:Authorization|Cookie|X-Api-Key)["'`]?\s*:|Bearer\s/i;
+
+const CREDENTIALED_WHY =
+  'credentials, a bearer header, or a cookie are attached to an off-origin destination';
+
+/**
+ * Rules applied to a whole emitted artifact.
+ *
+ * `dial: true` marks a rule whose match is a network destination the app
+ * addresses. Those get the AC3 credential lookahead; the others are unsafe by
+ * shape alone and need no context.
+ */
+const EMITTED_RULES = [
+  {
+    id: 'emitted-loopback-host',
+    why: 'a non-routable host:port survived bundling; the browser cannot reach it and must use same-origin /api/*',
+    pattern: new RegExp(
+      `(?:${NON_ROUTABLE_HOSTS.map((h) => h.replace(/[.[\]]/g, '\\$&')).join('|')}|${PRIVATE_HOST_PATTERN})[:\\s]\\d{2,5}\\b`,
+      'g',
+    ),
+  },
+  {
+    id: 'emitted-url-userinfo',
+    why: 'credentials embedded in a URL shipped to the browser and are logged by intermediaries',
+    pattern: /[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/\s"'`]*:[^/\s"'`]*@/g,
+  },
+  {
+    id: 'emitted-off-origin-dial',
+    why: 'a network API is called with an off-origin destination; the browser must talk only to this origin',
+    dial: true,
+    pattern: new RegExp(
+      `\\b(?:fetch|importScripts|sendBeacon|EventSource|WebSocket|SharedWorker|Worker|import)\\s*\\(\\s*${QUOTE}\\s*(?:${OFF_ORIGIN})`,
+      'gi',
+    ),
+  },
+  {
+    id: 'emitted-off-origin-xhr',
+    why: 'XMLHttpRequest is opened against an off-origin destination',
+    dial: true,
+    // The method argument is required, which is what distinguishes an XHR open
+    // from `window.open(...)` navigating to a cited public record.
+    pattern: new RegExp(
+      `\\.open\\s*\\(\\s*${QUOTE}${HTTP_METHOD}${QUOTE}\\s*,\\s*${QUOTE}\\s*(?:${OFF_ORIGIN})`,
+      'gi',
+    ),
+  },
+  {
+    id: 'emitted-off-origin-module',
+    why: 'a static import resolves to an off-origin module rather than an emitted local chunk',
+    dial: true,
+    pattern: new RegExp(`\\bfrom\\s*${QUOTE}\\s*(?:${OFF_ORIGIN})`, 'gi'),
+  },
+  {
+    id: 'emitted-off-origin-asset',
+    why: '`new URL(..., import.meta.url)` names an off-origin asset instead of one Rollup emitted locally',
+    dial: true,
+    pattern: new RegExp(
+      `new\\s+URL\\s*\\(\\s*${QUOTE}\\s*(?:${OFF_ORIGIN})[^)]{0,300}?import\\s*\\.\\s*meta\\s*\\.\\s*url`,
+      'gi',
+    ),
+  },
+  {
+    id: 'emitted-off-origin-css-url',
+    why: 'a stylesheet loads an off-origin resource, leaking every visitor\'s IP and referrer to a third party',
+    dial: true,
+    pattern: new RegExp(`\\burl\\(\\s*${QUOTE}?\\s*(?:${OFF_ORIGIN})`, 'gi'),
+  },
+  {
+    id: 'emitted-off-origin-subresource',
+    why: 'a markup subresource is fetched off-origin; only `<a href>` may cite an external record',
+    dial: true,
+    // `src`/`srcset`/`action` and `<link href>` are loads. A bare `href` is not
+    // matched: that is how a civic citation appears in rendered markup.
+    pattern: new RegExp(
+      `(?:\\b(?:src|srcset|action|formaction|data-src)\\s*=|<link\\b[^>]{0,200}?\\bhref\\s*=)\\s*${QUOTE}?\\s*(?:${OFF_ORIGIN})`,
+      'gi',
+    ),
+  },
+];
+
+/** High-signal rules applied to non-text (binary/image/font) emitted assets.
+ * Only the two shapes that are never legitimate, so metadata inside a PNG or a
+ * font cannot smuggle a destination past the text scan. */
+const BINARY_RULE_IDS = new Set(['emitted-loopback-host', 'emitted-url-userinfo']);
+
+/** Emitted files read as text. Anything else is read as bytes and gets the
+ * high-signal subset — a list of binary extensions would go stale, an
+ * allow-list of text ones does not. */
+export const EMITTED_TEXT_EXTENSIONS = new Set([
+  '.css', '.htm', '.html', '.js', '.json', '.map', '.mjs', '.cjs',
+  '.svg', '.txt', '.webmanifest', '.xml',
+]);
+
+/**
+ * Undo the escaping a minifier or an attacker can put between a rule and a URL.
+ *
+ * Rules are written against readable URLs, so every obfuscated form has to be
+ * normalized back before matching (AC5). Both the raw and decoded texts are
+ * scanned, because decoding can also destroy a match that was plain to begin
+ * with.
+ */
+export function decodeObfuscation(text) {
+  let out = text
+    // Adjacent string literals joined by `+` — `"htt" + "ps://evil"`.
+    .replace(/["'`]\s*\+\s*["'`]/g, '')
+    // JSON/JS escapes: \/ \x2f / \u{2f}
+    .replace(/\\\//g, '/')
+    .replace(/\\x([0-9a-fA-F]{2})/g, (whole, hex) => String.fromCharCode(parseInt(hex, 16)))
+    // `\uXXXX` is exactly four hex digits. A variable-length pattern would eat
+    // the following character whenever it happens to be a hex digit, so
+    // `/evil` would decode to a single wrong code point instead of `/evil`.
+    .replace(/\\u([0-9a-fA-F]{4})/g, (whole, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\\u\{([0-9a-fA-F]{1,6})\}/g, (whole, hex) => {
+      const code = parseInt(hex, 16);
+      return code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+    });
+  // Percent-encoding, repeatedly, so `%252f` collapses the same as `%2f`.
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = out.replace(/%([0-9a-fA-F]{2})/g, (whole, hex) => {
+      const code = parseInt(hex, 16);
+      // Control characters stay encoded: decoding them would splice lines and
+      // manufacture matches that are not in the artifact.
+      return code >= 0x20 && code !== 0x7f ? String.fromCharCode(code) : whole;
+    });
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
+/** A short, readable excerpt centered on a match, for the AC8 report. */
+function excerpt(text, at, length) {
+  const start = Math.max(0, at - 24);
+  const slice = text.slice(start, Math.min(text.length, at + length + 24)).replace(/\s+/g, ' ');
+  return `${start > 0 ? '...' : ''}${slice.trim()}`.slice(0, 160);
+}
+
+/**
+ * Violations in one emitted artifact.
+ *
+ * Whole-text rather than line-by-line: a production bundle is a single line, so
+ * the line-oriented {@link violationsIn} would report the entire chunk as one
+ * value. Matches are deduplicated by rule and excerpt, because a minifier can
+ * repeat the same destination in many chunks and one finding per destination is
+ * what makes the report actionable.
+ *
+ * @param onlyRules optional set of rule ids, used for the binary subset.
+ */
+export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
+  const hits = [];
+  const seen = new Set();
+  const variants = [text];
+  const decoded = decodeObfuscation(text);
+  if (decoded !== text) variants.push(decoded);
+
+  for (const variant of variants) {
+    for (const rule of EMITTED_RULES) {
+      if (onlyRules && !onlyRules.has(rule.id)) continue;
+      const pattern = new RegExp(rule.pattern.source, rule.pattern.flags);
+      pattern.lastIndex = 0;
+      let match = pattern.exec(variant);
+      while (match !== null) {
+        const value = redactCredentials(excerpt(variant, match.index, match[0].length));
+        const credentialed = rule.dial === true
+          && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
+        const id = credentialed ? `${rule.id}-credentialed` : rule.id;
+        // Key on the matched destination, not the report excerpt: the excerpt
+        // carries surrounding context, so one destination repeated across
+        // minified chunks would yield one finding per copy.
+        const key = `${id} ${redactCredentials(match[0])}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          hits.push({ rule: id, why: credentialed ? CREDENTIALED_WHY : rule.why, value });
+        }
+        if (pattern.lastIndex === match.index) pattern.lastIndex += 1;
+        match = pattern.exec(variant);
+      }
+    }
+  }
+  return hits;
+}
+
 /**
  * Violations on one line of a shipped or deploy surface.
  *
@@ -255,7 +480,84 @@ export function scanDirectExposure(repoRoot = REPO_ROOT) {
   return violations;
 }
 
+function extension(path) {
+  const at = path.lastIndexOf('.');
+  return at >= 0 ? path.slice(at).toLowerCase() : '';
+}
+
+/**
+ * Scan a built artifact directory (`dist/public`, `dist/client`) — AC2.
+ *
+ * Text artifacts get every emitted rule; everything else is read as bytes and
+ * gets the two shapes that are never legitimate, so a destination hidden in
+ * image or font metadata is still caught.
+ */
+export function scanEmittedArtifact(root) {
+  const violations = [];
+  for (const file of files(root)) {
+    const isText = EMITTED_TEXT_EXTENSIONS.has(extension(file));
+    let text;
+    try {
+      text = readFileSync(file, isText ? 'utf8' : 'latin1');
+    } catch {
+      continue;
+    }
+    const relPath = relative(root, file);
+    const hits = isText
+      ? emittedViolationsIn(text, relPath)
+      : emittedViolationsIn(text, relPath, BINARY_RULE_IDS);
+    for (const hit of hits) violations.push({ file: relPath, ...hit });
+  }
+  return violations;
+}
+
+/** Repo-relative when the target is inside the repo, absolute otherwise — a
+ * `../../../..` chain is not "the exact file" AC8 asks the report to name. */
+function displayPath(target) {
+  const rel = relative(REPO_ROOT, target);
+  return rel && !rel.startsWith('..') ? rel : target;
+}
+
+function report(violations, headline, remedy) {
+  if (!violations.length) return false;
+  console.error(`\n✗ ${headline}\n`);
+  for (const violation of violations) {
+    console.error(`  [${violation.rule}] ${violation.file}\n      ${violation.value}\n      ${violation.why}\n`);
+  }
+  console.error(`${remedy}\n`);
+  return true;
+}
+
+/**
+ * `--emitted <dir>` audits a built artifact; bare invocation audits the source
+ * tree. Two modes rather than two scripts: both answer the same question — does
+ * a browser-reachable surface name a destination off this origin — from the same
+ * rule vocabulary, and splitting them would let the definitions drift apart.
+ */
+function mainEmitted(root) {
+  if (!existsSync(root)) {
+    console.error(`\n✗ emitted-artifact check FAILED: ${root} does not exist. Build before scanning.\n`);
+    process.exit(1);
+  }
+  const violations = scanEmittedArtifact(root);
+  const failed = report(
+    violations,
+    `emitted-artifact check FAILED (§5): the built artifact at ${displayPath(root)} `
+    + 'addresses a destination off this origin:',
+    'The shipped bundle must dial only this origin via /api/*. Remove the off-origin '
+    + 'destination, or route it through the proxy. Citations of public records are fine — '
+    + 'only fetches, imports, stylesheet loads, and markup subresources are flagged.',
+  );
+  if (failed) process.exit(1);
+  console.log(`✓ emitted-artifact check passed: ${displayPath(root)} names no `
+    + 'off-origin destination in any emitted script, style, markup, map, manifest, or asset (§5).');
+}
+
 function main() {
+  const emittedAt = process.argv.indexOf('--emitted');
+  if (emittedAt >= 0) {
+    return mainEmitted(resolve(REPO_ROOT, process.argv[emittedAt + 1] ?? 'dist'));
+  }
   const violations = scanDirectExposure();
   if (violations.length) {
     console.error('\n✗ direct-exposure check FAILED (§5): a browser-reachable surface names a '
