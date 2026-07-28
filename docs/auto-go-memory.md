@@ -19,7 +19,11 @@
 
 ## What didn't
 
-- *(nothing recorded yet)*
+- **[2026-07-28] Re-running a red CI check to "see if it was flaky" is not evidence and not
+  a fix.** Three re-runs of the same commit produced three different failure sets (4 tests,
+  then 1, then 2). What actually settled it was a controlled A/B on a clean branch: two full
+  suites concurrently, same code, only `--testTimeout` differing — 5s failed both twins, 20s
+  passed both. Reproduce the condition, then change one variable.
 
 ## Patterns
 
@@ -49,6 +53,18 @@
   confidentiality boundary**. `?gate=approved` and `?reviewer=1` intentionally fail *open*.
   Confidentiality rests on the server-side Sites custom-access worker. Do not "fix" the
   client bypasses as if they were the boundary; do not weaken the server-side assumption.
+
+### ci-tooling
+- **The CI runner is self-hosted and single-machine, and every PR push starts TWO concurrent
+  full suites** (`on:` lists `push` and `pull_request` both on `["**"]`). Route-integration
+  tests each `await import('../src/main')`, booting the whole 70-module app in jsdom —
+  ~3.6s idle against Vitest's 5s default. Under the doubled load they time out
+  non-deterministically. Signature: the same sha green on one twin, red on the other.
+  Fixed by `testTimeout: 20_000` in `vite.config.ts` (#59 / PR #98). PR #68 independently
+  removes the doubled trigger; the two fixes compose and neither replaces the other.
+- **Before blaming your own branch for a red check, compare which commit went red.** Here
+  the code commit passed twice and a markdown-only commit failed — that alone ruled the
+  branch out in one look at `gh run list`.
 
 ### honesty-ledger
 - GOV-SPA observed the app has **no literal COMING SOON label** — unbuilt-feature states and
