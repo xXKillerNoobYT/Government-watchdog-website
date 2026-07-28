@@ -2,6 +2,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Every test here is a multi-route integration sweep through the full app
+// entry, not a unit test. Under load on the shared self-hosted runner the 5s
+// unit default produced the #59 flake family (three distinct tests so far,
+// each timing out with zero assertion failures). One honest file-level
+// ceiling replaces per-test whack-a-mole; locally these finish in ~1-2s.
+vi.setConfig({ testTimeout: 20000 });
+
 const SENTINEL_ID = 'server-sentinel-001';
 const COMPANION_ID = 'server-authorized-companion-002';
 const SENTINEL_SOURCE_ID = 'server-source-sentinel-001';
