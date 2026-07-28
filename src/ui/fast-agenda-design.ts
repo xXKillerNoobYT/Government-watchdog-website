@@ -9,6 +9,7 @@
 
 import type { AgendaBoard, AgendaBoardCard } from '../types/agenda-board';
 import { readTracked, writeTracked } from '../state/local-store';
+import { comingSoonChip } from './coming-soon';
 import { type KanbanCardSpec, kanbanBoard } from './kanban';
 import { closeModal, openModal } from './modal';
 import { readMode, type ShellMode } from './shell';
@@ -498,7 +499,49 @@ function meetingBoard(): HTMLElement {
         'The fixture places general comment at item 9 and the annexation hearing at item 4.a. Confirm all times, rules, and participation links against an official source before publication.',
       ]),
     ]),
+    nearbyMeetings(),
     el('p', { class: 'gw-fa-receipts-note', 'data-test': 'receipts-disclaimer' }, [RECEIPTS_DISCLAIMER]),
+  ]);
+}
+
+/**
+ * LAST MEETING row + ALSO COMING UP list — the design's left column does not
+ * end at the public-comment card. Fixture lane only: the reviewed lane keeps
+ * its explicit reviewed-nearby-meetings-gap slot, because official meeting
+ * schedules are civic data this app has not been supplied.
+ *
+ * The design's ◌/✓ glyphs are decorative; the adjacent text carries the
+ * meaning so the status never lives in a glyph alone.
+ */
+function nearbyMeetings(): HTMLElement {
+  const statusRow = (
+    glyph: string,
+    tone: 'ok' | 'pending',
+    body: string,
+    status: string,
+  ): HTMLElement => el('li', { class: `gw-fa-nearby-row is-${tone}`, 'data-test': 'nearby-upcoming-row' }, [
+    el('span', { class: 'gw-fa-nearby-glyph', 'aria-hidden': 'true' }, [glyph]),
+    el('span', { class: 'gw-fa-nearby-body' }, [body]),
+    el('span', { class: 'gw-fa-nearby-status' }, [status]),
+  ]);
+
+  return el('section', { class: 'gw-fa-nearby', 'data-test': 'nearby-meetings' }, [
+    el('section', { class: 'gw-fa-nearby-last', 'data-test': 'nearby-last-meeting' }, [
+      el('h3', {}, ['Last meeting — Jul 7']),
+      el('p', { class: 'gw-fa-muted' }, [
+        'Fixture record: moratorium adopted 4–1, admin-fee ordinance third reading, Boardwalk II second reading.',
+      ]),
+      unavailableMeetingTools(),
+      comingSoonChip('Remind me'),
+    ]),
+    el('section', { class: 'gw-fa-nearby-upcoming' }, [
+      el('h3', {}, ['Also coming up']),
+      el('ul', { class: 'gw-fa-nearby-list' }, [
+        statusRow('◌', 'pending', 'Planning & Zoning · Jul 28', 'agenda pending — fixture due Jul 24'),
+        statusRow('✓', 'ok', 'County Commission · Aug 3', 'agenda posted (synthetic)'),
+        statusRow('◌', 'pending', 'Next Town Council · Aug 4', 'agenda pending'),
+      ]),
+    ]),
   ]);
 }
 
@@ -1367,6 +1410,16 @@ export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
 .gw-fa-stat strong{font-size:1.25rem}.gw-fa-stat span{font-size:.62rem;font-weight:800;letter-spacing:.04em;color:var(--gw-text-muted)}
 .gw-fa-stat.is-caution strong{color:var(--gw-caution-text)}.gw-fa-stat.is-accent strong{color:var(--gw-accent)}
 .gw-fa-public-comment{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4);margin-top:var(--gw-space-4)}
+.gw-fa-nearby{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3);margin-top:var(--gw-space-4)}
+.gw-fa-nearby h3{margin:0 0 var(--gw-space-2);font:700 var(--gw-text-kicker)/1.3 var(--gw-font);letter-spacing:.08em;text-transform:uppercase;color:var(--gw-text-secondary)}
+.gw-fa-nearby-last{border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius-md);padding:var(--gw-space-3);display:grid;gap:var(--gw-space-2);justify-items:start}
+.gw-fa-nearby-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--gw-space-2)}
+.gw-fa-nearby-row{display:flex;align-items:baseline;gap:var(--gw-space-2);font-size:var(--gw-text-sm)}
+.gw-fa-nearby-glyph{flex:none;font-family:var(--gw-font-mono)}
+.gw-fa-nearby-row.is-ok .gw-fa-nearby-glyph{color:var(--gw-ok-text)}
+.gw-fa-nearby-row.is-pending .gw-fa-nearby-glyph{color:var(--gw-text-muted)}
+.gw-fa-nearby-body{color:var(--gw-text)}
+.gw-fa-nearby-status{color:var(--gw-text-muted);font-size:var(--gw-text-badge)}
 .gw-fa-public-comment h2{font-size:var(--gw-text-sm);color:var(--gw-accent)}.gw-fa-public-comment p{margin-bottom:0;color:var(--gw-text-secondary);font-size:var(--gw-text-sm)}
 .gw-fa-receipts-note{border-left:3px solid var(--gw-neutral-border);padding-left:var(--gw-space-3);margin:var(--gw-space-4) 0 0;color:var(--gw-text-muted);font-size:var(--gw-text-sm)}
 .gw-fa-board-disclosure{background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3);color:var(--gw-caution-text-strong);font-size:var(--gw-text-sm)}

@@ -157,6 +157,27 @@ describe('Fast Agenda fixture content and disclosure', () => {
       'agenda-filters',
     ]);
   });
+
+  it('renders LAST MEETING and ALSO COMING UP inside the fixture meeting board', () => {
+    renderFixture();
+
+    const board = root.querySelector('[data-test="meeting-board"]');
+    const last = board?.querySelector('[data-test="nearby-last-meeting"]');
+    expect(last?.textContent).toContain('Last meeting — Jul 7');
+    // "Remind me" is an unbuilt feature, never a data gap.
+    expect(last?.querySelector('[data-test="coming-soon-chip"]')?.textContent).toContain('Remind me');
+
+    const rows = board?.querySelectorAll('[data-test="nearby-upcoming-row"]') ?? [];
+    expect(rows).toHaveLength(3);
+    // Status must never live in a glyph alone — every row carries a text label.
+    for (const row of rows) {
+      expect(row.textContent).toMatch(/agenda (pending|posted)/);
+    }
+    // The reviewed lane keeps its explicit gap and never gains these blocks.
+    renderReviewed();
+    expect(root.querySelector('[data-test="nearby-last-meeting"]')).toBeNull();
+    expect(root.querySelector('[data-test="reviewed-nearby-meetings-gap"]')).not.toBeNull();
+  });
 });
 
 describe('Fast Agenda reviewed projection baseline', () => {
