@@ -59,7 +59,20 @@ function removeSpeech(): void {
   Reflect.deleteProperty(window, 'SpeechSynthesisUtterance');
 }
 
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    removeItem: (key: string) => void values.delete(key),
+    setItem: (key: string, value: string) => void values.set(key, String(value)),
+  };
+}
+
 beforeEach(() => {
+  vi.stubGlobal('localStorage', memoryStorage());
   document.head.innerHTML = '';
   document.body.innerHTML = '';
   localStorage.clear();

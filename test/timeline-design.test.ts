@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi , afterEach } from 'vitest';
 import {
   AXIS_END,
   AXIS_START,
@@ -11,6 +11,22 @@ import {
   renderTimelineDesign,
 } from '../src/ui/timeline-design';
 
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    removeItem: (key: string) => void values.delete(key),
+    setItem: (key: string, value: string) => void values.set(key, String(value)),
+  };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 let root: HTMLElement;
 const REVIEWER = { access: 'reviewer_internal', fixture: true };
 
@@ -19,6 +35,7 @@ function q(search = ''): URLSearchParams {
 }
 
 beforeEach(() => {
+  vi.stubGlobal('localStorage', memoryStorage());
   document.head.innerHTML = '';
   document.body.innerHTML = '';
   localStorage.clear();

@@ -16,7 +16,20 @@ import {
   writeTracked,
 } from '../src/state/local-store';
 
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    removeItem: (key: string) => void values.delete(key),
+    setItem: (key: string, value: string) => void values.set(key, String(value)),
+  };
+}
+
 beforeEach(() => {
+  vi.stubGlobal('localStorage', memoryStorage());
   localStorage.clear();
 });
 
@@ -66,11 +79,17 @@ describe('local-store', () => {
   });
 
   it('does not throw when storage is unavailable', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('quota');
-    });
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
+    // Stub the global directly rather than spying on Storage.prototype: the
+    // hermetic memory stub is a plain object, so prototype spies never reach
+    // it — and CI's Node-injected localStorage is not a Storage instance
+    // either. Throwing methods on the global covers every implementation.
+    vi.stubGlobal('localStorage', {
+      get length() { return 0; },
+      clear: () => { throw new Error('blocked'); },
+      getItem: () => { throw new Error('blocked'); },
+      key: () => { throw new Error('blocked'); },
+      removeItem: () => { throw new Error('blocked'); },
+      setItem: () => { throw new Error('quota'); },
     });
     expect(() => writeTracked({ a: true })).not.toThrow();
     expect(readTracked()).toEqual({});
