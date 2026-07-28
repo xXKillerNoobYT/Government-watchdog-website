@@ -40,3 +40,6 @@ Seeded 2026-07-28 on first run.
       rotation reaches an area that justifies it.
 - [ ] **The GS/DG collapse that GOV-SPA flagged is issue #69**, and #69 is blocked behind
       PR #68. Recorded so the finding is not re-discovered a third time.
+- [ ] **Issue #97** — `VITE_READ_API_URL` is documented in `.env.example` but read by no
+      code. Needs a decision (remove the key, or wire it up through the same root-relative
+      validation as `VITE_API_BASE`); filed rather than guessed.
