@@ -116,6 +116,61 @@ on grounds that hold up:
 
 ---
 
+## 0.6. Full PR/branch review — executed 2026-07-27
+
+Isaac asked for a review of every PR and branch on both repos. Eleven agents read every
+open PR's diff and triaged ~65 branches; every deletion below was then **re-verified
+independently** before execution (ahead_by=0, or commits preserved via PR refs / archive
+tags). Full per-PR detail: the workflow output for run `wf_1f21d5ba-7ce`.
+
+### Merge order for the open PRs — recommendations only, merging is Isaac's
+1. **Backend #125** (P0 security, beta-cookie reviewer gate) — CLEAN, still needed. Watch
+   post-merge CI; its head CI predates ~10 commits of drift.
+2. **Backend #133** (P0 correctness, cohort-cap race) — CLEAN, all six #128 acceptance
+   boxes tested.
+3. **Website #45** (minmax overflow fix) — CLEAN vs post-#94 main, disjoint from #68's
+   files; merging first shrinks the live-bug window.
+4. **Backend #101** (gitignore) — trivial; honor its non-author-merge note.
+5. **Backend #81** (Stage 4.10 QA plan doc) — merge before any stage-4 receipt back-fill.
+6. **Website #68** — the active PR; nothing gates it either way.
+7. **Backend #126** — REBASE FIRST past PR #134's `export_web_artifact.py` change; re-run
+   the 70 artifact tests. ⚠ After merge its activation gates **freeze website BACKEND_REF
+   bumps** until the immutability/ruleset setup on #123 is completed by the owner.
+8. **Backend #132** — REBASE FIRST: renumber migration `0027`→next free slot (main runs
+   through 0031), re-derive the frozen-surface allowlist. ⚠ It front-runs owner decision
+   #131's vocabulary in CHECK constraints — low exposure, but reconcile once #131 is
+   decided.
+
+**Closed:** website #22 — its entire unique payload is byte-identical on main
+(`docs/ui-design-system.md:254`); merging would have regressed three files to June state.
+
+### Branch cleanup — executed
+- **36 branches deleted** (34 website + 2 backend), each proven contained: `ahead_by=0`,
+  or squash-merged with commits permanently reachable via `refs/pull/N/head`, or
+  tag-preserved.
+- **7 archive tags created** for sole-copy work before deletion:
+  `archive/GOV-657-gov654-design-spec` (446-line design spec cited by merged PR #29),
+  four unratified Stage-1 contracts (`GOV-50` QA plan, `GOV-58` traceability, `GOV-61`
+  back-gap, `GOV-64` doc-maintenance — never ratified; later-stage successors exist),
+  plus `archive/GOV-658-pr-29` and `archive/gov-461-frontend-contract` where my
+  verification protocol could not independently confirm the synthesis's containment proof.
+- **Left alone on purpose:** the backend's 4-branch orphan family
+  (`local-orphan-main-20260726`, `GOV-585-handoff-escalation`, `GOV-581-doc-continuity`,
+  `stage4-automation-ai-boundary`) — snapshot policy, no common ancestor with main, cited
+  by main's own docs; and ~15 backend squash-residue branches + website
+  `feat/GOV-35-frontend-surface-contract` — **owner call**, deletable in substance but
+  not by the ahead_by=0 rule.
+- Website repo: ~35 branches → **4**. Backend: 31 → **26**.
+
+### One naming tension the review surfaced
+The reviewer noted backend issue #166's `/v1` paths "must land under `/api/beta/*`, the
+only route family." That treats absence as prohibition — but filed issue **#143 exists
+precisely to create the `/v1` namespace**. This is a real design decision (extend
+`/api/beta/*` vs introduce `/v1`), not a correction; it belongs to the CTO/owner, and the
+platform-architecture plan assumes #143's answer.
+
+---
+
 ## 1. Do these first (they unblock or de-risk everything else)
 
 ### 1.1 Split commit `d8bb3c6` — **defect, fix before the PR**
