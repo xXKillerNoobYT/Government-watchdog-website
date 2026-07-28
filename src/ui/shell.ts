@@ -549,6 +549,12 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
 
 /** Token-mapped recreation of the handoff's Advanced and Simple shared chrome. */
 export const SHELL_STYLE = `${GW_TOKENS}
+/* GOV-1645: zero the default UA <body> margin. The shell mounts on #app (a direct
+   <body> child) and is designed full-bleed — the 8px UA gutter both inset the
+   sticky header/footer off the viewport edges and is the offset any future
+   body-level element would turn into horizontal body scroll. Reset, don't mask:
+   no overflow-x:hidden that would hide a real blowout. */
+html,body{margin:0}
 .gw-shell-root,.gw-shell-root *{box-sizing:border-box}
 .gw-shell-root{font-family:var(--gw-font);font-size:14px;line-height:var(--gw-leading);color:var(--gw-text);background:var(--gw-page-bg);min-height:100vh;display:flex;flex-direction:column;margin:0}
 .gw-shell-root[data-mode="simple"]{font-family:var(--gw-font-serif);font-size:16px}
