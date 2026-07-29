@@ -23,6 +23,7 @@ import {
   pendingReviewNotice,
   safeHttpUrl,
   suppliedFileMeta,
+  suppliedFileProvenanceNote,
 } from './supplied-files';
 import {
   reprocessingNotice,
@@ -1419,6 +1420,10 @@ function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
   // as no link, never a bare/broken hyperlink.
   const originalHref = safeHttpUrl(file.original_url);
   const archiveHref = safeHttpUrl(file.archive_url);
+  // GOV-1634 — the free-text provenance line, distinct from the origin locator.
+  // Rendered VERBATIM as a plain text node and NEVER passed through safeHttpUrl:
+  // a provenance note is prose, not a link, even if it contains a URL substring.
+  const provenanceNote = suppliedFileProvenanceNote(file);
   return el('article', {
     class: 'gw-card',
     'data-test': 'supplied-file-row',
@@ -1427,6 +1432,7 @@ function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
   }, [
     el('h3', {}, [file.title]),
     ...meta.map((row) => el('p', { class: 'gw-muted', 'data-test': `supplied-file-${row.key}` }, [`${row.label}: ${row.value}`])),
+    ...(provenanceNote ? [el('p', { class: 'gw-muted', 'data-test': 'supplied-file-provenance-note' }, [`Provenance: ${provenanceNote}`])] : []),
     ...(originalHref ? [el('a', { href: originalHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),
     ...(archiveHref ? [el('a', { href: archiveHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-archive' }, ['Archived copy ↗'])] : []),
   ]);
