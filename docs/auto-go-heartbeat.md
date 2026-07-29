@@ -1,5 +1,5 @@
 ---
-last_run: 2026-07-28T12:40:00-06:00
+last_run: 2026-07-29T00:40:00-06:00
 last_task: auto-go
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
@@ -26,7 +26,7 @@ current_area_checklist:
   C6_build_warnings_zero: pending
   C7_ui_polish: pending
   C7b_dev_improvement_polish: pending
-  C8_security_reviewed: in_progress
+  C8_security_reviewed: blocked  # issue #55 AC7 needs a hosted deploy; deploy is HOLD per GOV-420 (owner-gated). All seven agent-reachable criteria are closed.
   C9_performance_reviewed: pending
   C10_cross_platform_parity: pending
   C11_github_issues_resolved: pending
@@ -34,8 +34,8 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 2
-day_started_at: 2026-07-28
+iteration_count: 1  # day-scoped and reset by Gate C kickoff; this is iteration 3 overall
+day_started_at: 2026-07-29
 stop_flag: false
 budget_mode: false
 budget_mode_until: null
@@ -80,3 +80,8 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-28T00:54:00-07:00] ITERATION 1 — coordination: recorded the PR #68 dependency on issue #69 (covers the ten-issue honesty+frontend block); filed issue #97 [P3][Hygiene] for the inert `VITE_READ_API_URL` key found in passing; appended the stage transition + blocking finding to the GOV live-state Notion page. `BACKEND_REF` untouched; Stage 98 untouched; nothing outward-facing.
 - [2026-07-28T12:40:00-06:00] ITERATION 2 — area: build-guards — check: C8 (security reviewed) — status: in_progress — todo carry-over outranked the rotation, as designed. Issue #55 AC2 (emitted-artifact scan), AC3 (credentials never off-origin), and AC5 (dynamic import / `new URL(..., import.meta.url)` / CSS url() / binary asset / obfuscated-encoding coverage) landed on `auto-go/gov55-bundle-graph-scan`, stacked on PR #96 so #96 stays independently mergeable. 852 tests / 52 files pass (was 821/51); `tsc --noEmit` clean; `build:all` green on both lanes. Negative control: three destinations injected into a real 826 kB artifact (credentialed `fetch`, off-origin CSS `url()`, loopback host inside a `.woff2`) were all caught with exit 1 and no credential reprinted. #55 now 6 of 8 AC; AC4 partial (binary marker scan) and AC7 owner-gated on a deploy.
 - [2026-07-28T12:40:00-06:00] ITERATION 2 — meta-checks NOT fired, recorded honestly rather than skipped silently: `last_meta_recommender_at`, `last_meta_revise_at`, `last_meta_improver_at`, `last_meta_self_audit_at`, and `last_meta_self_improve_at` are all still null and all now due. Running six meta-checks alongside real carry-over work is the spraying the soul forbids, and `loop-self-improve` has one iteration of metrics to analyze — not enough to mutate the loop on. Deferred to iteration 3, which should open with them. Note for that pass: this repo has **no `CLAUDE.md`**, so `revise-claude-md` has nothing to revise until one is adopted (already in the todo's ratification lane).
+- [2026-07-29T00:40:00-06:00] ITERATION 3 — area: build-guards — check: C8 (security reviewed) — status: **blocked** — issue #55 **AC4 closed**, the last criterion this loop can reach. `scanPublicBundle` filtered on a nine-entry `TEXT_EXTENSIONS` allow-list, so a private marker inside an emitted font, image, `.bin`, or `.wasm` was never read — AC4's "regardless of import form" clause, exactly. Allow-list **deleted**, not extended: every emitted file is now read as `latin1` and matched against the marker's UTF-8 bytes, so there is no list left to go stale. 863 tests / 53 files (was 852/52); `tsc --noEmit` clean; `build`, `build:all`, and the `--package` guard all green on both lanes. Branch `auto-go/gov55-public-bundle-binary-markers`, stacked on PR #100.
+- [2026-07-29T00:40:00-06:00] ITERATION 3 — **negative control first, on the real artifact.** Before the fix, `reviewer_internal` appended to a shipped `.woff2` and `Workspace · Home · Alpine` written to a `.bin` scored **0 violations** against a copy of the real public bundle; after, both are named with their exact file. The 11 new unit tests also fail without the fix, but only as missing-export errors — the artifact control is the evidence, the unit tests are the regression lock.
+- [2026-07-29T00:40:00-06:00] ITERATION 3 — **C8 marked `blocked`, not `done`.** Issue #55 is now **7 of 8 AC**. AC7 (hosted anonymous probes) needs a deploy, deploy is HOLD per GOV-420, and no amount of checking from this loop can close it. Marking C8 `done` would claim a criterion nobody verified; leaving it `in_progress` would imply the loop is still working it. Next iteration's `active_check` is therefore **C1b** (plan-vs-code drift) — note that `docs/plans/` does not exist in this repo yet, which C1b will have to confront.
+- [2026-07-29T00:40:00-06:00] ITERATION 3 — filed **#102** [P2][Security]: the marker match is blind to ASCII-escaped forms (`Workspace · Home`). Found while closing AC4, out of scope for it, and **measured before filing** — the current build emits UTF-8 literally and contains no `\uXXXX` escapes at all, so it is a latent trap (one `esbuild.charset` flag away), not a live leak. Filed rather than half-fixed. `BACKEND_REF` untouched; no backend contract was needed, so no backend issue filed; Stage 98 untouched; nothing outward-facing.
+- [2026-07-29T00:40:00-06:00] ITERATION 3 — **meta-checks: one of six fired.** Gate C kickoff fired (new day), so the Notion hub was read — the backend routine's iteration 4 is logged there and needed nothing from this side. The other five (`recommender`, `revise-claude-md`, `improver`, `self-audit`, `self-improve`) are **still not fired and now two days overdue**, and this is the second iteration in a row recording that. Honest reason: the todo carry-over outranks them by design and it was the last agent-reachable piece of a P1 security issue. **Iteration 4 has no such excuse — C1b is a fresh check, so the meta-checks should go first.** `revise-claude-md` still has nothing to revise: this repo has no `CLAUDE.md`, and the backend routine independently found the same gap in its own repo.

@@ -7,6 +7,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-28 | 1 | build-guards | C8 | in_progress | 4 | 3 | 25 | 1980 | github-issues-sync (global), first-run tracker seeding |
 | 2026-07-28 | 1b | ci-tooling | C5 | done | 1 | 1 | 0 | 1500 | unplanned — CI-blocked follow-through on #59 |
 | 2026-07-28 | 2 | build-guards | C8 | in_progress | 3 | 3 | 31 | 2400 | none fired — carry-over work took the iteration (see heartbeat) |
+| 2026-07-29 | 3 | build-guards | C8 | blocked | 4 | 1 | 11 | 2100 | Notion hub read (Gate C kickoff); five others still not fired — see heartbeat |
 
 ## Findings this iteration
 
@@ -32,3 +33,24 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 8. **Deduplicating findings by report excerpt does not deduplicate.** The excerpt carries
    surrounding context, so one destination repeated across minified chunks produced one
    finding per copy. The key has to be the matched destination itself.
+
+## Findings — iteration 3
+
+9. **The public-bundle guard read nine file extensions and called it "the artifact".**
+   `scanPublicBundle` filtered on a `TEXT_EXTENSIONS` allow-list, so a private marker
+   carried in an emitted font, image, `.bin`, or `.wasm` was never read. Demonstrated on the
+   real public artifact before the fix: `reviewer_internal` appended to a shipped `.woff2`
+   and `Workspace · Home · Alpine` written to a `.bin` scored **0 violations**. Fixed by
+   deleting the allow-list entirely and reading every emitted file as `latin1` (#55 AC4).
+10. **A byte-oriented read needs a byte-oriented needle.** Reading files as `latin1` and then
+    searching for the marker's own JavaScript string silently misses every marker containing
+    a non-ASCII character — `Workspace · Home · Alpine` is 25 characters in the source and
+    27 bytes in the artifact. The needle has to be the marker's UTF-8 bytes read as `latin1`.
+    Half of this fix would have looked complete and caught nothing.
+11. **Markers nest inside other markers.** `reviewer_internal` ⊂ `reviewer_internal_records`
+    and `reviewer-internal` ⊂ `/api/reviewer-internal`, so planting one marker legitimately
+    reports two. A table-driven test asserting a count of exactly 1 failed on the *test's*
+    assumption, not on the code — assert membership, not cardinality, over a marker list.
+12. **The marker match is blind to ASCII-escaped forms** — filed as **#102**, deliberately not
+    fixed. Measured rather than assumed: the current build emits UTF-8 literally and contains
+    no `\uXXXX` escapes at all, so this is a latent trap, not a live leak.
