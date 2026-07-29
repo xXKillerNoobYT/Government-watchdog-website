@@ -186,6 +186,36 @@ const VALUE_RULES = [
   },
 ];
 
+/**
+ * The subset of {@link VALUE_RULES} that judges a value on its *shape as a
+ * destination*, rather than on "is this a root-relative path".
+ *
+ * `api-config-absolute` is the catch-all: it rejects anything not starting with
+ * `/`, which is correct for a key that is declared to hold an endpoint and wrong
+ * for one that is not — `VITE_USE_FIXTURES=false` would trip it. Everything else
+ * in `VALUE_RULES` describes a form that is never legitimate in any value.
+ */
+const DESTINATION_RULES = VALUE_RULES.filter((r) => r.id !== 'api-config-absolute');
+
+/**
+ * Stands in for `api-config-absolute` on keys that are not declared endpoints.
+ *
+ * Requires a real authority — a scheme with `//`, or a dotted host with a port,
+ * or a dotted host followed by a path — so `false`, `8791`, and `local:/path`
+ * stay clean while `https://evil.example` and `evil.example:8787/read` do not.
+ */
+const OFF_ORIGIN_VALUE = [
+  /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
+  /\b[a-z0-9-]+(?:\.[a-z0-9-]+)+:\d{2,5}\b/i,
+  /^[a-z0-9-]+(?:\.[a-z0-9-]+)+\//i,
+];
+
+const DESTINATION_VALUE_RULE = {
+  id: 'api-config-destination-value',
+  why: 'Vite inlines every `VITE_*` value into the shipped bundle, and this one names a destination off this origin',
+  test: (v) => OFF_ORIGIN_VALUE.some((p) => p.test(v)),
+};
+
 /* ------------------------------------------------------------------------- *
  * Emitted-artifact rules (issue #55, AC2/AC3/AC5)
  *
@@ -429,6 +459,20 @@ export function violationsIn(text, relPath) {
  *
  * Only assignments are evaluated — a commented example is documentation, not a
  * shipped destination, and an empty value means "unset".
+ *
+ * Which rules a key gets depends on what the key promises (issue #101):
+ *
+ * - **A declared endpoint** (`*_URL`, `*_BASE`, `*_ENDPOINT`, `*_ORIGIN`, `*_HOST`)
+ *   is contracted to hold a root-relative path, so it gets every rule including
+ *   the `api-config-absolute` catch-all.
+ * - **Any other `VITE_*` key** is still inlined verbatim into the shipped bundle
+ *   by Vite, so it is judged on what its value *contains* — the destination-shaped
+ *   rules plus {@link DESTINATION_VALUE_RULE}. It is not held to "must be a path",
+ *   because most such keys legitimately are not one.
+ * - **Everything else** is build-time only and never reaches the browser.
+ *
+ * That inversion is the point: before, an unrecognized key name was silently
+ * trusted; now an unrecognized key name is still judged on what it actually holds.
  */
 export function apiConfigViolationsIn(text) {
   const hits = [];
@@ -438,10 +482,13 @@ export function apiConfigViolationsIn(text) {
     const at = line.indexOf('=');
     if (at <= 0) continue;
     const key = line.slice(0, at).replace(/^export\s+/, '').trim();
-    if (!URL_VALUED_KEY.test(key)) continue;
+    const declaredEndpoint = URL_VALUED_KEY.test(key);
+    const inlinedIntoBundle = key.startsWith('VITE_');
+    if (!declaredEndpoint && !inlinedIntoBundle) continue;
     const value = line.slice(at + 1).trim().replace(/^(['"])(.*)\1$/, '$2');
     if (!value) continue; // unset
-    const rule = VALUE_RULES.find((r) => r.test(value));
+    const rules = declaredEndpoint ? VALUE_RULES : [...DESTINATION_RULES, DESTINATION_VALUE_RULE];
+    const rule = rules.find((r) => r.test(value));
     if (rule) hits.push({ rule: rule.id, why: rule.why, value: `${key}=${redactCredentials(value)}` });
   }
   return hits;

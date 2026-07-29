@@ -36,6 +36,23 @@
   live today, and covering only the `\uXXXX` variant would have produced a guard that reads
   as complete and still misses `\xXX`. A half guard is worse than a filed issue.
 
+- **[2026-07-29]** Wrote a root `CLAUDE.md` as a **thin router**, not a rulebook. The standing
+  principle is that systems shrink; a CLAUDE.md restating
+  `docs/design-information-type-matrix.md` or the incoming `AGENT-RULEBOOK.md` would be a
+  second source of truth that rots silently. It carries only what an agent needs *before* it
+  knows where to look, then points — and says outright that the linked document wins on
+  conflict, and that it should shrink further once the rulebook lands.
+- **[2026-07-29]** `loop-self-improve` applied **zero mutations on purpose**. Every trigger
+  the loop defines is specified over weeks ("3+ consecutive weeks", ">10 findings/week",
+  "14+ days") and only 4 rows over 2 days existed. Doing nothing and writing down *why*, plus
+  what to watch for, is the correct output of a self-improvement pass with insufficient data —
+  and `~/.claude/commands/auto-go.md` is shared with the backend routine, so a mutation
+  inferred from website data alone would silently retune a second, actively-running loop.
+- **[2026-07-29]** Filed the two structural loop defects (C3 no-op, C7/C10 unsatisfiable) as
+  **Q&A + issue rather than fixing them**, even though the self-improve pass is nominally
+  allowed to toggle a check. Both change what a *required* check means, which is the
+  graduation bar itself — that is the owner's decision, not a tuning knob.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
@@ -50,6 +67,18 @@
   nest inside others (`reviewer_internal` ⊂ `reviewer_internal_records`). The code was right
   and the test's arithmetic was wrong. Over a list of literals, assert **membership**, never
   cardinality.
+
+- **[2026-07-29] A checklist item can be green with no artifact behind it, and nothing notices.**
+  `C1_plan_complete` was recorded `done` from iteration 1 while `docs/plans/` did not exist at
+  all. Four of the six tracker paths the checklist writes to had never been created here, so
+  C1, C2, C11b, and C13 could not persist anything — each pass re-derived the same findings
+  and dropped them. **Before trusting a check's recorded state, verify its artifact exists.**
+- **[2026-07-29] Verify the resemblance before filing the finding.** `EMITTED_TEXT_EXTENSIONS`
+  in the exposure guard looks exactly like the `TEXT_EXTENSIONS` allow-list deleted from
+  `check-public-bundle.mjs` in iteration 3, and reading two comments settled that it is the
+  structural opposite: unlisted files are **not skipped**, they are read as `latin1` and
+  scanned with the high-signal subset. Recorded in the area plan as an explicit non-finding so
+  a later pass does not "discover" it a second time.
 
 ## What didn't
 
@@ -80,6 +109,20 @@
   `Government-watchdog` (same words, one letter's case apart).
 
 ## Per-area notes
+
+### the loop itself
+- **C3 has never run.** It invokes `/hunt-fix-loop`, which does not exist anywhere on disk
+  (`hunt-fix.md` is the separate peer routine, not a callable body). Required for graduation.
+  Issue #106 / `dev-qa.md` Q1.
+- **C7 and C10 can never go green here** — specified over "iOS pages" and "iOS native ↔
+  Tauri", and this repo has zero Tauri references. It *does* have `ios/GovWatchdogApp/`
+  (90 Swift files) but that is a thin auth companion in no npm script. `dev-qa.md` Q2.
+- **`auto-go.md` was generalized to multi-project on 2026-07-27; the SKILL.md bodies it
+  dispatches to were not.** `plan-enforcer`, `usability-enforcer`, and `dev-pipeline-manager`
+  still carry `Features/<area>/`, `swift build`, and "iOS page" verbatim.
+- **Eight scheduled-task scanners are orphaned, and three lie about it** in their own
+  frontmatter ("Wires into C8 dispatch" when the target never mentions them). Do not treat a
+  scanner's self-description as evidence of coverage.
 
 ### build-guards
 - `scripts/check-no-direct-exposure.mjs` is a *source-and-config* scan, not a bundle scan —

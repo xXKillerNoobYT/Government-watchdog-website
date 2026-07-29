@@ -8,6 +8,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-28 | 1b | ci-tooling | C5 | done | 1 | 1 | 0 | 1500 | unplanned — CI-blocked follow-through on #59 |
 | 2026-07-28 | 2 | build-guards | C8 | in_progress | 3 | 3 | 31 | 2400 | none fired — carry-over work took the iteration (see heartbeat) |
 | 2026-07-29 | 3 | build-guards | C8 | blocked | 4 | 1 | 11 | 2100 | Notion hub read (Gate C kickoff); five others still not fired — see heartbeat |
+| 2026-07-29 | 4 | build-guards | C1b | in_progress | 8 | 1 | 5 | 2700 | ALL SIX — github-issues-sync, recommender, revise-claude-md, improver, self-audit, self-improve |
 
 ## Findings this iteration
 
@@ -54,3 +55,28 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 12. **The marker match is blind to ASCII-escaped forms** — filed as **#102**, deliberately not
     fixed. Measured rather than assumed: the current build emits UTF-8 literally and contains
     no `\uXXXX` escapes at all, so this is a latent trap, not a live leak.
+
+## Findings — iteration 4
+
+13. **A checklist item was green with no artifact behind it.** `C1_plan_complete` was recorded
+    `done` from iteration 1 while `docs/plans/` did not exist. Four of the six tracker paths
+    the checklist writes to (`dev-qa.md`, `plans/`, `automation-recommendations.md`,
+    `auto-go-self-improvements.md`) had never been created for this project, so C1, C2, C11b
+    and C13 had nowhere to persist — each pass re-derived findings and dropped them.
+14. **C3 has never run.** It invokes `/hunt-fix-loop`, verified missing everywhere on disk. A
+    check required for area graduation, silently doing nothing. Filed #106.
+15. **C7 and C10 are structurally unsatisfiable on this repo**, so no area can graduate.
+    `grep -ril tauri .` → zero hits. `dev-qa.md` Q2.
+16. **Eight orphaned scanners; three falsely advertise their own wiring** in frontmatter.
+    A scanner's self-description is not evidence of coverage.
+17. **The guard's docstring and code disagreed about scope (#101).** `apiConfigViolationsIn`
+    justified scanning `.env*` because "Vite inlines every `VITE_*` value" while value-scanning
+    only five key suffixes — `VITE_READ_API=https://evil.example` would ship inlined and pass.
+    Fail-open in the guard, not an open door. Fixed and red-proved.
+18. **`EMITTED_TEXT_EXTENSIONS` is a non-finding** — investigated because it resembles the
+    allow-list deleted in iteration 3, and it is the structural opposite: unlisted files are
+    read as bytes and still scanned. Recorded so it is not re-raised.
+19. **`npm run e2e:local` is called by nothing** (#104) — the only end-to-end test of the
+    same-origin `/api` contract.
+20. **CI typechecks 3× and boots the smoke suite 2× per push** (#105), on the same
+    single-machine runner whose concurrent load caused #59.

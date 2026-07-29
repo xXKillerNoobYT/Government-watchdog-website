@@ -1,5 +1,5 @@
 ---
-last_run: 2026-07-29T00:40:00-06:00
+last_run: 2026-07-29T12:46:00-06:00
 last_task: auto-go
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
@@ -16,8 +16,8 @@ areas:
   - ci-tooling
 current_area: build-guards
 current_area_checklist:
-  C1_plan_complete: done
-  C1b_plan_vs_code_drift_clean: pending
+  C1_plan_complete: done  # genuinely, as of iteration 4 — docs/plans/area-build-guards.md now exists. It was recorded done from iteration 1 with no plan file behind it.
+  C1b_plan_vs_code_drift_clean: in_progress  # D1 (#101) fixed; residual drift #102 and #97 filed, not yet closed, so not clean
   C2_qa_resolved: done
   C2b_github_issues_ingested: done
   C3_hunt_fix_clean: pending
@@ -34,17 +34,17 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 1  # day-scoped and reset by Gate C kickoff; this is iteration 3 overall
+iteration_count: 2  # day-scoped and reset by Gate C kickoff; this is iteration 4 overall
 day_started_at: 2026-07-29
 stop_flag: false
 budget_mode: false
 budget_mode_until: null
-last_meta_recommender_at: null
-last_meta_github_sync_at: 2026-07-28T00:20:00-07:00
-last_meta_revise_at: null
-last_meta_improver_at: null
-last_meta_self_audit_at: null
-last_meta_self_improve_at: null
+last_meta_recommender_at: 2026-07-29T12:46:00-06:00
+last_meta_github_sync_at: 2026-07-29T12:46:00-06:00
+last_meta_revise_at: 2026-07-29T12:46:00-06:00
+last_meta_improver_at: 2026-07-29T12:46:00-06:00
+last_meta_self_audit_at: 2026-07-29T12:46:00-06:00
+last_meta_self_improve_at: 2026-07-29T12:46:00-06:00
 ---
 
 # AUTO GO Heartbeat — Government Watchdog website
@@ -85,3 +85,10 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-29T00:40:00-06:00] ITERATION 3 — **C8 marked `blocked`, not `done`.** Issue #55 is now **7 of 8 AC**. AC7 (hosted anonymous probes) needs a deploy, deploy is HOLD per GOV-420, and no amount of checking from this loop can close it. Marking C8 `done` would claim a criterion nobody verified; leaving it `in_progress` would imply the loop is still working it. Next iteration's `active_check` is therefore **C1b** (plan-vs-code drift) — note that `docs/plans/` does not exist in this repo yet, which C1b will have to confront.
 - [2026-07-29T00:40:00-06:00] ITERATION 3 — filed **#102** [P2][Security]: the marker match is blind to ASCII-escaped forms (`Workspace · Home`). Found while closing AC4, out of scope for it, and **measured before filing** — the current build emits UTF-8 literally and contains no `\uXXXX` escapes at all, so it is a latent trap (one `esbuild.charset` flag away), not a live leak. Filed rather than half-fixed. `BACKEND_REF` untouched; no backend contract was needed, so no backend issue filed; Stage 98 untouched; nothing outward-facing.
 - [2026-07-29T00:40:00-06:00] ITERATION 3 — **meta-checks: one of six fired.** Gate C kickoff fired (new day), so the Notion hub was read — the backend routine's iteration 4 is logged there and needed nothing from this side. The other five (`recommender`, `revise-claude-md`, `improver`, `self-audit`, `self-improve`) are **still not fired and now two days overdue**, and this is the second iteration in a row recording that. Honest reason: the todo carry-over outranks them by design and it was the last agent-reachable piece of a P1 security issue. **Iteration 4 has no such excuse — C1b is a fresh check, so the meta-checks should go first.** `revise-claude-md` still has nothing to revise: this repo has no `CLAUDE.md`, and the backend routine independently found the same gap in its own repo.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — **all six meta-checks fired**, clearing the two-day backlog iterations 2 and 3 recorded. This was the loop-infrastructure iteration: four of the six tracker paths the checklist writes to had **never existed** for this project, so C1, C2, C13, and `loop-self-improve` had nowhere to persist and each pass was re-deriving the same findings and dropping them. Created `docs/plans/area-build-guards.md`, `docs/dev-qa.md`, `docs/automation-recommendations.md`, `docs/auto-go-self-improvements.md`, and a root `CLAUDE.md`.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — **`loop-self-audit`, Severity 1: C3 invokes `/hunt-fix-loop`, which does not exist.** Verified by exhaustive search — `find /Users/IA/.claude -iname "*hunt-fix-loop*"` matches only the unrelated `hunt-fix-loop-heartbeat` directory. C3 is required for area graduation and has silently done nothing every time the rotation reached it. Filed as **#106** + `dev-qa.md` Q1; **not fixed autonomously**, because every remedy changes what a required check means. Recommended (c) retire C3 — HUNT FIX already owns hunting on its own schedule, so deleting the claim loses nothing that was happening. Same audit: **eight orphaned scanners**, three of which falsely advertise their own wiring in frontmatter.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — **C7 and C10 are structurally unsatisfiable here, so `build-guards` cannot graduate.** `grep -ril tauri .` returns zero hits repo-wide, and C7/C10 are written over "iOS pages" and "iOS native ↔ Tauri/React". Correcting a standing assumption: this repo **does** contain a native app (`ios/GovWatchdogApp/`, 90 Swift files, own `.xcodeproj`), but it is a thin auth companion wired into no npm script. Filed as `dev-qa.md` Q2 with a recommendation (per-project not-applicable flag) rather than mutated, since `auto-go.md` is shared with the backend routine.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — **`loop-self-improve` applied zero mutations, deliberately.** `auto-go-metrics.md` holds 4 rows over 2 days; every mutation trigger the loop defines is specified over **weeks** ("3+ consecutive weeks", ">10 findings/week", "14+ days"). None is evaluable. Mutating on 4 rows would also retune the backend routine, which shares `~/.claude/commands/auto-go.md` and shipped its own PR #181 today. Recorded in `docs/auto-go-self-improvements.md` with what to watch for next pass.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — area: build-guards — check: **C1b** — status: **in_progress** — C1 was recorded `done` from iteration 1 with **no plan file behind it**; `docs/plans/` did not exist. Wrote the area plan with an AC-by-AC state table, then ran the drift comparison against it. **D1 fixed (#101):** `apiConfigViolationsIn`'s docstring justified scanning `.env*` because "Vite inlines every `VITE_*` value", while the code value-scanned only five key suffixes — so `VITE_READ_API=https://evil.example` would be inlined verbatim and pass every rule. A fail-open in the guard, not an open door. **D2 investigated and cleared:** `EMITTED_TEXT_EXTENSIONS` looks like the allow-list iteration 3 deleted from the sibling guard but is structurally the opposite — unlisted files are read as bytes and still scanned, nothing is skipped. Recorded so a later pass does not re-raise it. C1b left `in_progress`, not `done`: residual drift #102 and #97 are filed and open.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — **the #101 fix could not simply delete the key filter.** `api-config-absolute` tests `!v.startsWith('/') || v.includes(':')`, so applying the full rule set to every `VITE_*` key would fail `VITE_USE_FIXTURES=false`. Instead every `VITE_*` value gets the five destination-specific rules, and the catch-all is replaced for non-endpoint keys by a test requiring a real authority (scheme with `//`, dotted host:port, or dotted host + path). **Red-proved:** reverting only the guard fails 2 of the 5 new tests; the other 3 passed before and after by design — they are over-reach locks asserting the change does not start failing legitimate keys. 868 tests / 53 files (was 863), `tsc --noEmit` clean, `build:all` green on both lanes, and the real `.env.example` still passes.
+- [2026-07-29T12:46:00-06:00] ITERATION 4 — filed **#104** (`npm run e2e:local` is defined and called by nothing — the only end-to-end test of the same-origin `/api` contract runs only if a human remembers) and **#105** (CI typechecks three times and boots the smoke suite twice per push, on the same runner whose concurrent load caused #59). `BACKEND_REF` untouched; Stage 98 untouched; no backend contract was needed, so no backend issue filed; nothing outward-facing.
