@@ -130,6 +130,7 @@ and the backend-supplied trust vocabulary.
 | Major information group | Class | Current binding | Backend contract needed |
 | --- | --- | --- | --- |
 | Source rows and original/archive links | **RV** | Deduplicated web-safe `EvidenceLink` metadata from reviewed statement receipts. Link presence is not called verification. | `GET /v1/sources` for authoritative registry rows, freshness, and pagination. |
+| Supplied-file provenance note | **RV** | Free-text `provenance_note` from the B6 supplied-file projection, rendered verbatim as a plain provenance line distinct from the `original_url` locator. Per GOV-1609 §4.2 it is NEVER auto-linkified (only a validated http(s) `original_url` is clickable); absent when the projection omits it. | Backend `provenance_note` TEXT on the supplied-file record (GOV-1625), emitted web-safe alongside the validated `original_url`. |
 | Source-row count | **RV** | The count describes unique source rows in the admitted response only. | `GET /v1/sources/stats` for an authoritative registry-wide count and freshness. |
 | Hash verification and open-flag stats | **DG** | Hash percentage and transparency-flag count remain unavailable. | `GET /v1/sources/stats` with backend-defined denominator, method, timestamp, and status. |
 | Transparency alerts | **DG** | The slot remains visible; statement status is not converted into a document-change alert. | `GET /v1/transparency-alerts` over reviewed source-version events. |
