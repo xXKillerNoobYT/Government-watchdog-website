@@ -153,3 +153,20 @@ function humanType(type: string | null | undefined): string | undefined {
   if (!present(type)) return undefined;
   return String(type).replace(/_/g, ' ').replace(/^\w/, (character) => character.toUpperCase());
 }
+
+/**
+ * GOV-1634 (GOV-1566 F2 follow-up; consumes the B6 `provenance_note` field added
+ * by GOV-1625). The reviewed file's free-text provenance line, present-only:
+ * the trimmed note, or `undefined` when absent/blank.
+ *
+ * This is prose the backend emits VERBATIM (e.g. "Handed to the Watchdog by the
+ * Town Clerk"). It is deliberately kept OUT of {@link suppliedFileMeta} and OUT
+ * of {@link safeHttpUrl}: unlike `original_url` a provenance note is NOT a
+ * locator and must NEVER be auto-linkified, even if the prose happens to contain
+ * a URL-shaped substring (GOV-1609 §4.2 display-safety — only a validated
+ * http(s) `original_url` is a clickable link). Callers render the returned
+ * string as a plain text node, never as an anchor. Pinned by test (gov1634).
+ */
+export function suppliedFileProvenanceNote(file: SuppliedSourceFile): string | undefined {
+  return present(file.provenance_note) ? String(file.provenance_note).trim() : undefined;
+}

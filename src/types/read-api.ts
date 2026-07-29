@@ -498,6 +498,18 @@ export interface SuppliedSourceFile {
   original_url?: string | null;
   /** Hosted archived copy, when captured (never a raw/vault path). */
   archive_url?: string | null;
+  /**
+   * GOV-1625 (B3) — free-text provenance prose emitted VERBATIM by B6 (e.g.
+   * "Handed to the Watchdog by the Town Clerk; no online source exists"). It is
+   * DISTINCT from `original_url`: the backend guarantees prose never lands in
+   * the URL field and this note is never a locator. Per GOV-1609 §4.2 the read
+   * path must NEVER auto-linkify it — only a validated http(s) `original_url`
+   * is clickable — so it is rendered as plain text even if it contains a
+   * URL-shaped substring. Field name is `provenance_note`, deliberately NOT
+   * `note`/`notes` (those are on `RAW_PATH_FORBIDDEN_KEYS`), so a web-safe
+   * provenance line does not trip `assertWebSafe`.
+   */
+  provenance_note?: string | null;
 }
 
 /**
