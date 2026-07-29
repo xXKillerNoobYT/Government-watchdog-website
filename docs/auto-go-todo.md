@@ -45,9 +45,17 @@ Seeded 2026-07-28 on first run.
       start until it merges. It reports 707 tests green, `tsc` clean, build succeeding, and
       it has no review comments. Merging it (owner-only) unblocks more work than any other
       single action available right now.
-- [ ] **`docs/product/` and `docs/prompts/` are untracked in the owner's working copy at
-      `~/Code/Government-watchdog-website`** but are added by PR #68. Worth confirming the
-      working copy is not holding an uncommitted variant that will conflict on merge.
+- [x] **`docs/product/` and `docs/prompts/` untracked in the owner's working copy — checked
+      in iteration 3, and it is a real snag.** All 11 paths compared against PR #68: 3 are
+      identical, **8 differ and the local copy is the older draft every time** (mtime
+      2026-07-14, missing #68's `Status: … those binding docs win` precedence banner, still
+      writing `Docs/product/*` with a capital D). Because they are untracked, `git merge` /
+      `git pull` of #68 in `~/Code/Government-watchdog-website` will **refuse** with
+      `untracked working tree files would be overwritten` — and #68 is the merge that
+      unblocks the ten-issue P0/P1 block. Nothing local is worth keeping, but untracked
+      files are unrecoverable once deleted, so this was **surfaced, not cleaned**: remedy
+      (`rm -rf docs/product docs/prompts` in the owner's clone) is commented on PR #68 for
+      the owner to run. No files touched.
 - [ ] **No `CLAUDE.md` exists at this repo's root.** The binding contract, the three-command
       verification ritual, and the never-merge/never-main rules currently live only in the
       scheduled-task definition and `docs/company-os/AGENT-RULEBOOK.md` (which is itself
