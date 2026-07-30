@@ -102,6 +102,24 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'node',
       include: ['test/**/*.test.ts'],
+      // Vitest's 5s default is tuned for unit tests. Several suites here are
+      // full route integrations: each case does `await import('../src/main')`,
+      // which transforms and boots the entire 70-module app inside jsdom, then
+      // waits for a render. That is genuinely seconds of work — the slowest
+      // observed case is ~3.6s on an idle machine, leaving under 1.4s of margin.
+      //
+      // The self-hosted CI runner erases that margin. Every PR push currently
+      // triggers `push` and `pull_request` together, so two full suites run
+      // concurrently on one physical machine; identical local runs already vary
+      // 2.3x in total test time (8.8s / 11.1s / 20.3s). The result is #59: the
+      // same commit goes green on one twin and red on the other, and the failing
+      // case differs between runs.
+      //
+      // 20s keeps a true hang failing — well inside the job budget — while
+      // giving a correct-but-slow integration case room to finish under load.
+      // This is headroom for real work, not suppression: the assertions pass
+      // whenever they are allowed to run to completion.
+      testTimeout: 20_000,
     },
   };
 });
