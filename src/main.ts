@@ -57,6 +57,8 @@ import {
 } from './ui/gated-upload';
 import type { UploadReviewState } from './types/upload-intake';
 import { mountThemeToggle } from './ui/theme-toggle';
+import { renderExplainer } from './ui/explainer';
+import { renderTimelineDesign } from './ui/timeline-design';
 import { renderShell, type ShellOrigin } from './ui/shell';
 import {
   loadDigestResponse,
@@ -770,6 +772,16 @@ function renderTimelineLevelsRoute(
   data?: ReadApiResponse,
 ): void {
   const demo = query.get('demo');
+  // The design fixture is a separate renderer so the reviewed lane can never
+  // borrow one of its synthetic rows. It sits above the shared reviewer
+  // context because the fixture never consumes reviewed data at all.
+  if (designPreviewActive(query)) {
+    renderTimelineDesign(mount, query, {
+      access: query.get('access') ?? 'reviewer_internal',
+      fixture: true,
+    });
+    return;
+  }
   const selected = demo === 'graph' ? narrowToRequestedAccess(GRAPH_REAL, query) : data;
   if (!selected) {
     renderReviewerContextState(mount, 'unavailable');
@@ -1083,6 +1095,7 @@ const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
 const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/home',
   '/agenda',
+  '/timeline',
   '/power',
   '/watchlist',
   '/location',
@@ -1147,7 +1160,10 @@ type ShellHandler = (ctx: { mount: HTMLElement; path: string; query: URLSearchPa
 function gated(handler: ShellHandler): RouteHandler {
   return ({ path, query }) =>
     renderGatedApp(root!, accessFor(query), () => {
-      const mount = renderShell(root!, { active: path, origin: shellOriginFor(path, query) });
+      // One origin decision feeds both the banner and the Alerts badge, so the
+      // chip can never claim a count on a route the banner calls reviewed.
+      const origin = shellOriginFor(path, query);
+      const mount = renderShell(root!, { active: path, origin, fixture: origin === 'fixture' });
       handler({ mount, path, query });
     });
 }
@@ -1190,6 +1206,9 @@ router.register('/home', gated(({ mount, query }) => {
   }
   void withReviewerContext(mount, query, (data) => renderHomeReadModel(mount, data));
 }));
+// Designed slot for the handoff's promo walkthrough. Carries no civic data, so
+// it needs no fixture gate — only the Coming Soon statement that it is unbuilt.
+router.register('/explainer', gated(({ mount }) => renderExplainer(mount)));
 router.register('/app', gated(({ mount, query }) => {
   if (query.get('demo') === 'sample') {
     renderBoardsRoute(mount, query);
@@ -1235,6 +1254,12 @@ router.register('/agenda-boards', gated(({ mount, query }) => {
     renderAuthorizedProjectionGap(mount, data, AGENDA_BOARD_GAP));
 }));
 router.register('/timeline', gated(({ mount, query }) => {
+  // The gated design fixture consumes no reviewed data, so it must not wait on
+  // (or be masked by) the shared reviewer context — same rule as /home, /agenda.
+  if (designPreviewActive(query)) {
+    renderTimelineLevelsRoute(mount, query);
+    return;
+  }
   if (query.get('demo') === 'graph') {
     renderTimelineLevelsRoute(mount, query, GRAPH_REAL);
     return;

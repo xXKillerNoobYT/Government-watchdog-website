@@ -88,7 +88,6 @@ describe('GOV-658 shell — approved primary navigation', () => {
     'Source Vault',
     'Newsletter',
     'Watchlist',
-    'Alerts',
   ];
   const approvedRoutes = [
     '/home',
@@ -99,15 +98,25 @@ describe('GOV-658 shell — approved primary navigation', () => {
     '/vault',
     '/newsletter',
     '/watchlist',
-    '/alerts',
   ];
 
-  it('renders the nine approved tabs in exact design order', () => {
+  it('renders the eight approved tabs in exact design order', () => {
     renderShell(root, { active: '/agenda' });
     const labels = [...root.querySelectorAll('[data-test="shell-tabs"] .gw-shell-tab')].map(
       (anchor) => anchor.textContent,
     );
     expect(labels).toEqual(approvedLabels);
+  });
+
+  it('reaches Alerts and the explainer from header controls rather than tabs', () => {
+    renderShell(root, { active: '/home' });
+    const tabHrefs = [...root.querySelectorAll('.gw-shell-tab')].map((a) => a.getAttribute('href'));
+    expect(tabHrefs).not.toContain('#/alerts');
+    expect(tabHrefs).not.toContain('#/explainer');
+
+    expect(root.querySelector('[data-test="shell-alerts-chip"]')?.getAttribute('href')).toBe('#/alerts');
+    expect(root.querySelector('[data-test="shell-demo"]')?.getAttribute('href')).toBe('#/explainer');
+    expect(root.querySelector('[data-test="shell-jurisdiction"]')?.getAttribute('href')).toBe('#/location');
   });
 
   it('exports canonical routes and every rendered href matches them', () => {
@@ -137,7 +146,6 @@ describe('GOV-658 shell — active tab highlights canonical and contextual route
     { path: '/sources', expected: 'Source Vault' },
     { path: '/newsletter', expected: 'Newsletter' },
     { path: '/watchlist', expected: 'Watchlist' },
-    { path: '/alerts', expected: 'Alerts' },
   ];
 
   for (const { path, expected } of cases) {
@@ -190,7 +198,15 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     const form = root.querySelector('[data-test="shell-search-form"]') as HTMLFormElement;
     expect(input.tagName).toBe('INPUT');
     expect(input.type).toBe('search');
-    expect(input.labels?.[0]?.textContent).toMatch(/search agendas/i);
+    // The field must not advertise a population it cannot search. There is no
+    // officials index, no document index, and no archive behind it.
+    expect(input.labels?.[0]?.textContent).toMatch(/reviewed timeline records/i);
+    expect(input.labels?.[0]?.textContent).toMatch(/not an archive search/i);
+    for (const claim of [input.placeholder, input.labels?.[0]?.textContent ?? '']) {
+      expect(claim).not.toMatch(/officials|documents/i);
+    }
+    // ⌘K focuses this field; it must not imply a command palette that does not exist.
+    expect(input.title).toMatch(/focuses this field/i);
 
     input.value = 'water rates & fees';
     form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true }));
@@ -256,17 +272,46 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     });
   }
 
-  it('reveals the active final navigation tab when Alerts is selected', () => {
+  it('reveals the active final navigation tab when Watchlist is selected', () => {
     const scrollIntoView = vi.fn();
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: scrollIntoView,
     });
 
+    renderShell(root, { active: '/watchlist' });
+
+    expect(root.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Watchlist');
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+  });
+
+  it('marks the Alerts chip current on /alerts, leaving no tab selected', () => {
     renderShell(root, { active: '/alerts' });
 
-    expect(root.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Alerts');
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    expect(root.querySelector('.gw-shell-tab[aria-current="page"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-alerts-chip"]')?.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('counts unread Alerts only in fixture mode, never against reviewed data', () => {
+    localStorage.removeItem('gw_alerts_read');
+
+    renderShell(root, { active: '/home', fixture: true });
+    expect(root.querySelector('[data-test="shell-alerts-badge"]')?.textContent).toBe('3');
+
+    renderShell(root, { active: '/home' });
+    expect(root.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-alerts-chip"]')).not.toBeNull();
+  });
+
+  it('drops the badge once every fixture card is read', () => {
+    localStorage.setItem(
+      'gw_alerts_read',
+      JSON.stringify(['fixture-attachment-replaced', 'fixture-meeting-eve', 'fixture-agenda-posted']),
+    );
+
+    renderShell(root, { active: '/home', fixture: true });
+    expect(root.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
+    localStorage.removeItem('gw_alerts_read');
   });
 
   for (const mode of ['advanced', 'simple'] as const) {

@@ -125,7 +125,7 @@ operator should:
 10. confirm the hosted runtime allowlist and the Sites custom access list still
    agree; and
 11. open the stable production URL as the approved owner and smoke-test direct
-   Home entry, the nine-tab navigation through Alerts, Fast Agenda, Timeline,
+   Home entry, the eight-tab navigation plus the header Alerts chip, Fast Agenda, Timeline,
    both modes, the single shell-owned mode switch, and a mobile-width view;
 12. confirm Newsletter opens the reviewed archive with an explicit unavailable
    current-edition slot, and that a supplied digest ID opens detail; and

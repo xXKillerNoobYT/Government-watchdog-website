@@ -62,11 +62,36 @@ describe('MOTY design-handoff route integration', () => {
     await import('../src/main');
     document.documentElement.scrollTop = 620;
 
-    window.location.hash = '#/alerts?reviewer=1';
+    window.location.hash = '#/watchlist?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
 
     expect(document.documentElement.scrollTop).toBe(0);
-    expect(document.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Alerts');
+    expect(document.querySelector('.gw-shell-tab[aria-current="page"]')?.textContent).toBe('Watchlist');
+  });
+
+  it('reaches Alerts and the explainer from the header on every route', async () => {
+    window.location.hash = '#/home?reviewer=1';
+    await import('../src/main');
+
+    for (const route of ['/home', '/timeline', '/newsletter', '/watchlist']) {
+      window.location.hash = `#${route}?reviewer=1`;
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      expect(document.querySelector('[data-test="shell-alerts-chip"]'), route).not.toBeNull();
+      expect(document.querySelector('[data-test="shell-demo"]'), route).not.toBeNull();
+    }
+  });
+
+  it('renders the explainer route as an unbuilt feature, not a data gap', async () => {
+    window.location.hash = '#/home?reviewer=1';
+    await import('../src/main');
+
+    window.location.hash = '#/explainer?reviewer=1';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+    const note = document.querySelector('[data-test="coming-soon-note"]');
+    expect(note?.textContent).toContain('COMING SOON');
+    expect(note?.textContent).toContain('Explainer video');
+    expect(document.querySelector('[data-test="explainer-back"]')?.getAttribute('href')).toBe('#/home');
   });
 
   it('keeps the shared shell as the sole main landmark on every canonical page', async () => {
@@ -82,7 +107,10 @@ describe('MOTY design-handoff route integration', () => {
     }
   });
 
-  it('keeps the explicit design preview active while navigating every new route', async () => {
+  // Integration sweep over 8+ routes with waitFor loops. The 5s unit default
+  // is too tight on the shared self-hosted runner (see issue #59 for the same
+  // class of timeout); the budget below is a ceiling, not a target.
+  it('keeps the explicit design preview active while navigating every new route', { timeout: 20000 }, async () => {
     window.location.hash = '#/agenda?reviewer=1&demo=design';
     await import('../src/main');
 
@@ -112,7 +140,19 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     }
 
-    for (const route of ['/boards', '/vault', '/newsletter', '/timeline']) {
+    // Timeline now has its own gated design fixture, so the shell must call it
+    // a fixture. Its banner lives in the page module, not the shared one.
+    window.location.hash = '#/timeline';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+    });
+    expect(app.querySelector('[data-test="timeline-design-banner"]')?.textContent)
+      .toContain('SYNTHETIC DESIGN FIXTURE');
+
+    // Routes with no design fixture yet must stay reviewed, never claim one.
+    for (const route of ['/boards', '/vault', '/newsletter']) {
       window.location.hash = `#${route}`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       await vi.waitFor(() => {

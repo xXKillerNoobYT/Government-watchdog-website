@@ -2,6 +2,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Every test here is a multi-route integration sweep through the full app
+// entry, not a unit test. Under load on the shared self-hosted runner the 5s
+// unit default produced the #59 flake family (three distinct tests so far,
+// each timing out with zero assertion failures). One honest file-level
+// ceiling replaces per-test whack-a-mole; locally these finish in ~1-2s.
+vi.setConfig({ testTimeout: 20000 });
+
 const SENTINEL_ID = 'server-sentinel-001';
 const COMPANION_ID = 'server-authorized-companion-002';
 const SENTINEL_SOURCE_ID = 'server-source-sentinel-001';
@@ -200,7 +207,10 @@ afterEach(() => {
 });
 
 describe('shared live reviewer context across canonical routes', () => {
-  it('uses one same-origin request while routes, modes, URLs, and device storage can only present or narrow its exact IDs', async () => {
+  // Known-flaky on the shared self-hosted runner under load — filed as issue
+  // #59. Raising the ceiling does not weaken any assertion; the deeper
+  // stabilization stays tracked there.
+  it('uses one same-origin request while routes, modes, URLs, and device storage can only present or narrow its exact IDs', { timeout: 20000 }, async () => {
     localStorage.setItem('gw_tracked', JSON.stringify({
       [CAPTURED_FIXTURE_ID]: true,
       [UNAUTHORIZED_DEVICE_ID]: true,

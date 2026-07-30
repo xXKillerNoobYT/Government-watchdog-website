@@ -133,8 +133,22 @@ describe('Fast Agenda fixture content and disclosure', () => {
       expect(row.querySelectorAll('[data-test="process-ladder"] li').length).toBeGreaterThanOrEqual(3);
     }
 
-    expect(root.querySelectorAll('[data-test="issue-stage"]')).toHaveLength(7);
-    expect(root.querySelector('[data-test="issue-tracker"]')?.getAttribute('tabindex')).toBe('0');
+    // The tracker renders through the shared kanban primitive, not a second
+    // hand-rolled board — so lane geometry, the level colour bar, the empty
+    // state, and print behaviour cannot drift from every other board.
+    const tracker = root.querySelector('[data-test="issue-tracker"]');
+    expect(tracker?.getAttribute('tabindex')).toBe('0');
+    expect(tracker?.querySelector('[data-test="kanban-board"]')).not.toBeNull();
+    expect(tracker?.querySelectorAll('[data-test="kanban-lane"]')).toHaveLength(7);
+    expect(tracker?.querySelectorAll('[data-test="kanban-card"]').length).toBe(15);
+
+    // Every card still carries its track toggle and its synthetic-receipt
+    // disclosure; moving to the primitive must not drop either.
+    expect(tracker?.querySelectorAll('[data-test="track-toggle"]').length).toBe(15);
+    for (const card of tracker?.querySelectorAll('[data-test="kanban-card"]') ?? []) {
+      expect(card.textContent).toContain('synthetic references only');
+    }
+
     expectAccessibleInfoNotes(root, [
       'agenda-overview',
       'agenda-meeting',
@@ -142,6 +156,69 @@ describe('Fast Agenda fixture content and disclosure', () => {
       'agenda-lifecycle',
       'agenda-filters',
     ]);
+  });
+
+  it('renders LAST MEETING and ALSO COMING UP inside the fixture meeting board', () => {
+    renderFixture();
+
+    const board = root.querySelector('[data-test="meeting-board"]');
+    const last = board?.querySelector('[data-test="nearby-last-meeting"]');
+    expect(last?.textContent).toContain('Last meeting — Jul 7');
+    // "Remind me" is an unbuilt feature, never a data gap.
+    expect(last?.querySelector('[data-test="coming-soon-chip"]')?.textContent).toContain('Remind me');
+
+    const rows = board?.querySelectorAll('[data-test="nearby-upcoming-row"]') ?? [];
+    expect(rows).toHaveLength(3);
+    // Status must never live in a glyph alone — every row carries a text label.
+    for (const row of rows) {
+      expect(row.textContent).toMatch(/agenda (pending|posted)/);
+    }
+    // The reviewed lane keeps its explicit gap and never gains these blocks.
+    renderReviewed();
+    expect(root.querySelector('[data-test="nearby-last-meeting"]')).toBeNull();
+    expect(root.querySelector('[data-test="reviewed-nearby-meetings-gap"]')).not.toBeNull();
+  });
+
+  it('opens the issue-card modal from a kanban card and shares one tracking store', () => {
+    renderFixture();
+
+    const card = root.querySelector('[data-test="kanban-card"]');
+    const open = card?.querySelector<HTMLButtonElement>('[data-test="issue-card-open"]');
+    expect(open?.textContent).toContain('Open card');
+    open?.click();
+
+    const modal = root.querySelector('[data-test="issue-card-modal"]');
+    expect(modal).not.toBeNull();
+    expect(modal?.querySelectorAll('[data-test="issue-card-modal-tile"]')).toHaveLength(2);
+    expect(modal?.textContent).toContain('Last');
+    expect(modal?.textContent).toContain('Next');
+    expect(modal?.querySelector('[data-test="receipts-disclaimer"]')?.textContent).toContain('not a live read');
+
+    // One store: toggling inside the modal syncs the card's own toggle.
+    const modalTrack = modal?.querySelector<HTMLButtonElement>('[data-test="track-toggle"]');
+    modalTrack?.click();
+    expect(card?.querySelector('[data-test="track-toggle"]')?.getAttribute('aria-pressed')).toBe('true');
+
+    // Shared modal semantics: the footer close button dismisses it.
+    modal?.querySelector<HTMLButtonElement>('[data-test="issue-card-modal-close"]')?.click();
+    expect(root.querySelector('[data-test="issue-card-modal"]')).toBeNull();
+  });
+
+  it('closes Simple mode with the where-things-stand digest at Advanced-tracker parity', () => {
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderFixture();
+
+    const digest = root.querySelector('[data-test="simple-where-things-stand"]');
+    expect(digest).not.toBeNull();
+    // Mode parity: one row per issue card the Advanced kanban shows — no facts
+    // dropped between reading modes.
+    expect(digest?.querySelectorAll('[data-test="simple-stand-row"]')).toHaveLength(15);
+    expect(digest?.textContent).toContain('Building and annexation moratorium');
+    expect(digest?.querySelector('[data-test="receipts-disclaimer"]')).not.toBeNull();
+
+    // The digest is the page's closing element per the design.
+    const simpleSections = [...root.querySelectorAll('[data-test="simple-meeting-digest"], [data-test="simple-agenda-digest"], [data-test="simple-where-things-stand"]')];
+    expect(simpleSections.at(-1)?.getAttribute('data-test')).toBe('simple-where-things-stand');
   });
 });
 

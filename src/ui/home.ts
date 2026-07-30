@@ -5,6 +5,7 @@ import type { NewsletterDigest, NewsletterDigestResponse, NewsletterItem } from 
 import { GW_TOKENS } from './tokens';
 import { readMode } from './shell';
 import { claimPresentation } from './newsletter';
+import { comingSoonNote } from './coming-soon';
 import { AI_LABEL_TEXT } from './state-view';
 import { ensureStyle, recordCard } from './render';
 import {
@@ -366,13 +367,18 @@ function languageWatch(): HTMLElement {
 }
 
 function explainerVideo(): HTMLElement {
+  // Not a designed gap. A gap says a civic record is missing and names the reviewed
+  // contract that would fill it; this slot is waiting on a video nobody has made.
+  // Promising "no video URL is connected" implies a pipeline that does not exist.
   return widget('How Government Watchdog Works', 'EXPLAINER VIDEO', [
-    honestEmpty(
-      'Explainer video is not published in this app yet',
-      'The baseline keeps a place for the visual walkthrough, but the production route needs an approved media asset, captions, and a text transcript before a play control can be offered.',
-      'Source: product media capability; no video URL or playback status is connected.',
+    comingSoonNote(
+      'Explainer video',
+      'The walkthrough has not been produced. This is a product feature that exists in no lane yet, not a civic record waiting on a reviewed source.',
     ),
-  ], { 'data-test': 'home-explainer-video-unavailable', 'data-origin': 'designed-gap' }, 'home-explainer');
+    el('a', { href: '#/explainer', class: 'gw-home-link', 'data-test': 'home-explainer-link' }, [
+      'What the walkthrough will cover ›',
+    ]),
+  ], { 'data-test': 'home-explainer-video', 'data-origin': 'coming-soon' }, 'home-explainer');
 }
 
 function simpleThings(model: HomeModel): HTMLElement {

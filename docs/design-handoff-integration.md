@@ -47,11 +47,21 @@ The production binding rule is deliberately small:
 Device-local preview state is allowed only where it is labelled as such.
 Synthetic values require the fixture gate described above.
 
-The admitted app has one shared shell on every page. Its canonical nine-tab
+The admitted app has one shared shell on every page. Its canonical eight-tab
 order is Home, Fast Agenda, Timeline, Boards, Power Tracker, Source Vault,
-Newsletter, Watchlist, and Alerts. The shell owns the only Simple/Advanced
-switch. Individual pages read that preference and must not add a second mode
-control, including on Timeline.
+Newsletter, and Watchlist. Alerts and Location are deliberately not tabs: the
+handoff reaches Alerts from a persistent header chip and Location from the
+header place pill, keeping the tab row to the surfaces a reader moves between
+while leaving both personal surfaces one tap away from anywhere. The explainer
+walkthrough is reached from the header Demo control.
+
+The Alerts chip may show an unread count **only** on a route already admitted to
+design-fixture mode, where the number describes device-local sample cards. On a
+reviewed route the chip is a plain link: a count there would assert a
+civic-alert volume the client cannot know, and a zero would assert quiet.
+
+The shell owns the only Simple/Advanced switch. Individual pages read that
+preference and must not add a second mode control, including on Timeline.
 
 ## Existing safe data that can be reused
 

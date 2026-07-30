@@ -214,6 +214,7 @@ const GW_DIMENSIONS = `
      GOV-657 §2.4 adds --gw-radius-lg:14px for the wireframe outer widget cards) */
   --gw-radius-sm:4px;
   --gw-radius:8px;
+  --gw-radius-md:10px;
   --gw-radius-lg:14px;
   --gw-radius-pill:999px;
   --gw-border-w:1px;

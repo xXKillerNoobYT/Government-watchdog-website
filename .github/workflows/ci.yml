@@ -1,9 +1,12 @@
 name: Website CI
 
 # Reviewer-internal/local frontend. Runs on the self-hosted GOV website runner.
+# push+pull_request on ["**"] ran every PR push TWICE, concurrently, on one
+# physical machine — doubling runner load and producing the #59 timeout-flake
+# family (one twin green, one red on the same sha). PR branches now run once.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: ["**"]
   workflow_dispatch:

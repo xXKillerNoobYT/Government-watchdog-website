@@ -18,6 +18,7 @@
 
 import { GW_TOKENS } from './tokens';
 import { setThemePref, applyThemePref, hasExplicitThemePref } from './theme-toggle';
+import { countUnreadFixtureAlerts } from './alerts-fixture';
 import { mountNotificationPanel } from './notification-panel';
 import { renderInfoNote } from './info-note';
 import { renderPrivateInfoNote } from './private-info-note';
@@ -39,6 +40,12 @@ interface NavTab {
 /**
  * Approved information architecture, in its exact handoff order.
  *
+ * Eight primary tabs. Alerts and Location are deliberately NOT tabs: the
+ * handoff reaches both from persistent header controls — the Alerts chip and
+ * the location pill — which keeps the tab row to the eight surfaces a reader
+ * moves between while leaving the two personal surfaces one tap away from
+ * anywhere.
+ *
  * Older reviewer routes remain reachable and highlight the closest canonical
  * parent. This keeps the active-state useful during the route migration without
  * promoting legacy implementation names into the primary navigation.
@@ -52,7 +59,6 @@ export const NAV_TABS: readonly NavTab[] = [
   { route: '/vault', label: 'Source Vault', also: ['/sources'] },
   { route: '/newsletter', label: 'Newsletter' },
   { route: '/watchlist', label: 'Watchlist' },
-  { route: '/alerts', label: 'Alerts' },
 ];
 
 const BRAND_ROUTE = NAV_TABS[0].route;
@@ -220,8 +226,13 @@ function searchControl(): HTMLFormElement {
     'aria-label': 'Search Government Watchdog',
     'data-test': 'shell-search-form',
   });
+  // Names only what is actually searched. Submitting filters the reviewed timeline
+  // records already admitted to this app — there is no officials index, no document
+  // index, and no archive behind this field. Advertising those would let an empty
+  // result read as "Alpine has no such official" instead of "this response has no
+  // matching row".
   const label = el('label', { class: 'gw-shell-sr-only', for: 'gw-shell-search-input' }, [
-    'Search agendas, meetings, documents, officials, and issues',
+    'Filter the reviewed timeline records already admitted to this app. This is not an archive search.',
   ]);
   const submit = el('button', {
     class: 'gw-shell-search-submit',
@@ -235,7 +246,9 @@ function searchControl(): HTMLFormElement {
     type: 'search',
     name: 'search',
     autocomplete: 'off',
-    placeholder: 'Search agendas, meetings, documents, officials, issues…',
+    placeholder: 'Filter reviewed timeline records…',
+    // The shortcut focuses this field; it does not open a command palette.
+    title: 'Filters reviewed timeline records already loaded — not an archive search. ⌘K or Ctrl-K focuses this field.',
     'data-test': 'shell-search',
   });
   const shortcut = el('kbd', {
@@ -331,12 +344,53 @@ function printControl(): HTMLButtonElement {
   return button;
 }
 
+/**
+ * Alerts is a header control rather than a tab.
+ *
+ * The count badge appears only in fixture mode. Outside it the chip is a plain
+ * link: a number rendered against reviewed data would assert a civic-alert
+ * volume the client cannot know, and an empty badge would assert zero.
+ */
+function alertsChip(path: string, fixture: boolean): HTMLAnchorElement {
+  const active = path === '/alerts';
+  const attrs: Record<string, string> = {
+    class: 'gw-shell-alerts',
+    href: '#/alerts',
+    'data-test': 'shell-alerts-chip',
+  };
+  if (active) attrs['aria-current'] = 'page';
+
+  const children: (Node | string)[] = [el('span', {}, ['Alerts'])];
+  if (fixture) {
+    const unread = countUnreadFixtureAlerts();
+    if (unread > 0) {
+      children.push(el('span', {
+        class: 'gw-shell-alerts-badge',
+        'data-test': 'shell-alerts-badge',
+      }, [String(unread)]));
+      attrs['aria-label'] = `Alerts — ${unread} unread fixture card${unread === 1 ? '' : 's'}`;
+    }
+  }
+  return el('a', attrs, children);
+}
+
+/** Opens the explainer walkthrough; the handoff places it beside the tools. */
+function demoButton(): HTMLAnchorElement {
+  return el('a', {
+    class: 'gw-shell-demo',
+    href: '#/explainer',
+    'data-test': 'shell-demo',
+  }, ['▶ Demo']);
+}
+
 /** Keep the server-authoritative notification panel in both reading modes. */
-function shellActions(mode: ShellMode, includePrint = false): HTMLDivElement {
+function shellActions(mode: ShellMode, includePrint = false, nav: NavContext = {}): HTMLDivElement {
   const actions = el('div', { class: 'gw-shell-actions', 'data-test': 'shell-actions' }, [
     accountChip(),
     renderPrivateInfoNote('shell-account'),
   ]);
+  actions.append(demoButton());
+  actions.append(alertsChip(nav.active ?? '', nav.fixture === true));
   mountNotificationPanel(actions);
   actions.append(
     renderPrivateInfoNote('shell-notifications'),
@@ -405,16 +459,16 @@ function localDateIso(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function advancedBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
+function advancedBar(mode: ShellMode, origin: ShellOrigin | undefined, nav: NavContext): HTMLElement {
   return el('div', { class: 'gw-shell-bar gw-shell-advanced-bar' }, [
     brandWithAiNote(),
     locationControl(origin),
     searchControl(),
-    shellActions(mode),
+    shellActions(mode, false, nav),
   ]);
 }
 
-function simpleUtilityBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
+function simpleUtilityBar(mode: ShellMode, origin: ShellOrigin | undefined, nav: NavContext): HTMLElement {
   const today = new Date();
   return el('div', { class: 'gw-shell-simple-utility', 'data-test': 'shell-simple-utility' }, [
     el('div', { class: 'gw-shell-simple-place' }, [
@@ -424,7 +478,7 @@ function simpleUtilityBar(mode: ShellMode, origin?: ShellOrigin): HTMLElement {
         'data-test': 'shell-local-date',
       }, [localDateLabel(today)]),
     ]),
-    shellActions(mode, true),
+    shellActions(mode, true, nav),
   ]);
 }
 
@@ -497,9 +551,22 @@ function footer(mode: ShellMode, refreshedAt?: string): HTMLElement {
   return el('footer', { class: 'gw-shell-footer', 'data-test': 'shell-footer' }, children);
 }
 
+/** Nav-state the header controls need, threaded without widening every helper. */
+interface NavContext {
+  /** Current hash path without `#`. */
+  active?: string;
+  /** True only on a route already admitted to design-fixture mode. */
+  fixture?: boolean;
+}
+
 export interface ShellOptions {
   /** Current hash path without `#`; used only for primary-nav highlighting. */
   active: string;
+  /**
+   * True when the caller has already resolved this route to design-fixture
+   * mode. Gates the Alerts badge; the shell performs no access check itself.
+   */
+  fixture?: boolean;
   /** Current reading mode; defaults to the persisted `gw_home_mode` value. */
   mode?: ShellMode;
   /** Real projection-generation timestamp. Omitted means no stamp is rendered. */
@@ -528,9 +595,10 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   const slot = el('div', { class: 'gw-shell-slot', 'data-test': 'shell-content' });
   const bannerSlot = el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' });
   if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt));
+  const nav: NavContext = { active: opts.active, fixture: opts.fixture === true };
   const headerChildren = mode === 'simple'
-    ? [simpleUtilityBar(mode, opts.origin), simpleMasthead(), simpleTools(), tabRow(opts.active)]
-    : [advancedBar(mode, opts.origin), tabRow(opts.active)];
+    ? [simpleUtilityBar(mode, opts.origin, nav), simpleMasthead(), simpleTools(), tabRow(opts.active)]
+    : [advancedBar(mode, opts.origin, nav), tabRow(opts.active)];
 
   root.append(
     bannerSlot,
@@ -595,6 +663,15 @@ html,body{margin:0}
 .gw-shell-search-input::-webkit-search-cancel-button{cursor:pointer}
 .gw-shell-search-shortcut{flex:none;border:var(--gw-border-w) solid var(--gw-border);border-radius:5px;padding:2px 6px;background:transparent;color:var(--gw-text-muted);font:500 10.5px/1.2 var(--gw-font-mono)}
 .gw-shell-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
+/* Header controls for the two non-tab surfaces (GOV-1520 MOTY eight-tab IA). */
+.gw-shell-demo{display:inline-flex;align-items:center;flex:none;min-height:var(--gw-tap-min);padding:5px 12px;border:var(--gw-border-w) solid var(--gw-accent);border-radius:var(--gw-radius-pill);color:var(--gw-accent);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none;white-space:nowrap}
+.gw-shell-demo:hover{background:var(--gw-surface-accent-tint)}
+.gw-shell-demo:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
+.gw-shell-alerts{position:relative;display:inline-flex;align-items:center;flex:none;min-height:var(--gw-tap-min);padding:5px 12px;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius-pill);color:var(--gw-text-secondary);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:none;white-space:nowrap}
+.gw-shell-alerts:hover{border-color:var(--gw-accent);color:var(--gw-text)}
+.gw-shell-alerts:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
+.gw-shell-alerts[aria-current="page"]{border-color:var(--gw-accent);color:var(--gw-text);background:var(--gw-surface-accent-tint)}
+.gw-shell-alerts-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border-radius:var(--gw-radius-pill);background:var(--gw-stop-text);color:var(--gw-page-bg);font:800 var(--gw-text-badge)/1 var(--gw-font)}
 .gw-shell-account{display:inline-flex;align-items:center;gap:8px;min-height:var(--gw-tap-min);padding:5px 10px;border:var(--gw-border-w) solid var(--gw-border);border-radius:9px;color:var(--gw-text-secondary);font-family:var(--gw-font);cursor:help}
 .gw-shell-account:focus-visible{outline:3px solid var(--gw-accent);outline-offset:3px}
 .gw-shell-account-dot{width:8px;height:8px;border-radius:50%;background:var(--gw-accent);flex:none}
