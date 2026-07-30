@@ -74,8 +74,20 @@ Seeded 2026-07-28 on first run.
       **unblocked** — #69, #70, #75, #76, #80, #82–#87 all cite files that now exist on
       `main` (`src/ui/coming-soon.ts`, `timeline-lanes.ts`, `diff-view.ts`,
       `docs/product/design-reference-inventory.md`). **This is the largest available lane and
-      the natural next iteration's work**, starting with #69 (the P0 COMING SOON binding
-      class), which several of the others depend on.
+      the natural next iteration's work.**
+
+      **Verify, don't duplicate — #69 is mostly already shipped.** Per the GOV live-state page
+      (Owner: GOV-CTO, 2026-07-30), #68 *introduced* the COMING SOON binding class that #69
+      asks for: `src/ui/coming-soon.ts` exports `comingSoonChip(feature)`,
+      `comingSoonNote(feature, detail)`, `COMING_SOON_LABEL`, and `ensureComingSoonStyle`.
+      **Reconcile and wire in against the merged primitive rather than rebuilding it**, then
+      close or narrow #69 to whatever genuinely remains. Treated as hub data and to be
+      re-verified against the code before acting — but it changes the shape of the work from
+      "build" to "wire + reconcile", which is worth knowing before starting.
+
+      Binding-contract reminder for every dependent slot: unbuilt **FEATURE** → COMING SOON
+      marker via `coming-soon.ts`; missing reviewed civic **DATA** → designed-gap copy. Never
+      one in place of the other, and no invented civic claim.
 
 - [ ] **URGENT for the owner's clone — this is now live, not hypothetical.**
       `~/Code/Government-watchdog-website` sits on `main` at `97f23d8`, behind `origin/main`,
