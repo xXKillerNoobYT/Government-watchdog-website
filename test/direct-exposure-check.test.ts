@@ -125,6 +125,55 @@ describe('browser-facing API configuration (#55)', () => {
     expect(apiConfigViolationsIn('BACKEND_REF=local:/path/to/Government-watchdog')).toHaveLength(0);
   });
 
+  // Issue #101: Vite inlines every `VITE_*` value into the shipped bundle, but the
+  // guard used to value-scan only URL/BASE/ENDPOINT/ORIGIN/HOST suffixes — so an
+  // unrecognized key name was silently trusted. It is now judged on what it holds.
+  it('judges a VITE_* key on its value, whatever the key is named', () => {
+    const cases: Array<[string, string]> = [
+      ['VITE_READ_API=https://evil.example', 'api-config-destination-value'],
+      ['VITE_CIVIC_FEED=//evil.example/feed', 'api-config-network-path'],
+      ['VITE_UPLOAD_TARGET=evil.example:8787/read', 'api-config-destination-value'],
+      ['VITE_UPLOAD_TARGET=evil.example/read', 'api-config-destination-value'],
+      ['VITE_ANYTHING=https://user:pw@evil.example', 'api-config-userinfo'],
+      ['VITE_ANYTHING=/%2f%2fevil.example', 'api-config-encoded-separator'],
+    ];
+    for (const [line, expected] of cases) {
+      expect(rules(apiConfigViolationsIn(line)), line).toContain(expected);
+    }
+  });
+
+  it('does not hold a non-endpoint VITE_* key to the root-relative-path contract', () => {
+    // These are inlined into the bundle but are not destinations, so the
+    // `api-config-absolute` catch-all must not reach them.
+    for (const line of [
+      'VITE_USE_FIXTURES=false',
+      'VITE_BUILD_CHANNEL=private-beta',
+      'VITE_MAX_UPLOAD_MB=25',
+      'VITE_APP_TITLE=Government Watchdog',
+    ]) {
+      expect(apiConfigViolationsIn(line), line).toHaveLength(0);
+    }
+  });
+
+  it('still holds a declared endpoint key to the root-relative-path contract', () => {
+    expect(rules(apiConfigViolationsIn('VITE_SOMETHING_URL=not-a-path')))
+      .toContain('api-config-absolute');
+    expect(apiConfigViolationsIn('VITE_SOMETHING_URL=/api')).toHaveLength(0);
+  });
+
+  it('never reprints a credential from a non-suffix key either', () => {
+    const hits: Violation[] = apiConfigViolationsIn('VITE_ANYTHING=https://user:hunter2@evil.example');
+    expect(hits).not.toHaveLength(0);
+    expect(hits.every((hit) => !hit.value.includes('hunter2'))).toBe(true);
+  });
+
+  it('leaves build-time-only keys unscanned — they never reach the browser', () => {
+    // Not `VITE_*`, so Vite does not inline them and the destination rules do not apply.
+    expect(apiConfigViolationsIn('GW_SERVICE_PORT=8791')).toHaveLength(0);
+    expect(apiConfigViolationsIn('BACKEND_REF=local:/path/to/Government-watchdog')).toHaveLength(0);
+    expect(apiConfigViolationsIn('GW_INTERNAL_NOTE=see https://example.com/doc')).toHaveLength(0);
+  });
+
   it('unwraps a quoted value before judging it', () => {
     expect(rules(apiConfigViolationsIn('VITE_API_BASE="https://evil.example"')))
       .toContain('api-config-absolute');

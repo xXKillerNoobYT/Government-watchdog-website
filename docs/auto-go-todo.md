@@ -31,11 +31,22 @@ Seeded 2026-07-28 on first run.
       deploy, and deploy is on HOLD per GOV-420. It cannot close from this loop. **This is
       the only criterion left**; #55 is 7 of 8. C8 is recorded `blocked` on it, not `done`.
 
-- [ ] **Iteration 4 opens with the five overdue meta-checks.** `recommender`,
-      `revise-claude-md`, `improver`, `self-audit`, `self-improve` have never fired and are
-      two days overdue. Iterations 2 and 3 both deferred them for carry-over work that
-      genuinely outranked them; C1b is a fresh check, so iteration 4 has no such excuse.
-      `loop-self-improve` now has four metrics rows — still thin, but enough to read a trend.
+- [x] **Iteration 4 opens with the five overdue meta-checks** — done. All six fired. The
+      backlog is cleared and the four missing tracker artifacts they write to now exist.
+      `loop-self-improve` turned out **not** to have enough data after all: four rows over two
+      days cannot evaluate a single one of its triggers, which are all specified over weeks.
+      Zero mutations applied, with the reasoning recorded rather than the pass skipped.
+
+- [ ] **C1b is `in_progress`, not done — residual build-guards drift is #102 and #97.**
+      D1 (#101, the `VITE_*` value-scan fail-open) is fixed and red-proved. **#102** (marker
+      match blind to ASCII-escaped forms) is the next real item in this area: measured as
+      latent, not live, one `esbuild.charset: 'ascii'` away from real. **#97** needs an owner
+      decision, so it is Q&A-shaped, not code-shaped. Next iteration should close #102.
+
+- [ ] **`build-guards` cannot graduate until `dev-qa.md` Q2 is answered.** C7 and C10 are
+      required and structurally unsatisfiable on this repo. Every other check can go green and
+      the area still will not advance. This blocks the rotation itself, not just this area —
+      worth surfacing to the owner ahead of the other questions.
 
 ## Agent-discovered (awaiting owner ratification or scheduling)
 
@@ -56,12 +67,13 @@ Seeded 2026-07-28 on first run.
       files are unrecoverable once deleted, so this was **surfaced, not cleaned**: remedy
       (`rm -rf docs/product docs/prompts` in the owner's clone) is commented on PR #68 for
       the owner to run. No files touched.
-- [ ] **No `CLAUDE.md` exists at this repo's root.** The binding contract, the three-command
-      verification ritual, and the never-merge/never-main rules currently live only in the
-      scheduled-task definition and `docs/company-os/AGENT-RULEBOOK.md` (which is itself
-      still unmerged, inside PR #68). Any agent starting cold in this repo has no in-repo
-      statement of the rules. Recommend adopting one — C12 will propose it once the
-      rotation reaches an area that justifies it.
+- [x] **No `CLAUDE.md` exists at this repo's root** — proposed in iteration 4, and the PR is
+      the ratification (nothing lands without an owner merge). Deliberately **thin and
+      pointer-based**: it restates no rule that `docs/design-information-type-matrix.md` owns,
+      and its closing note says it should shrink further once `AGENT-RULEBOOK.md` lands. Every
+      claim in it was verified against the repo rather than recalled — including two
+      corrections to standing assumptions (this repo *does* have an `ios/GovWatchdogApp/`
+      companion app; it has *no* Tauri target anywhere). Tracked as `dev-qa.md` Q5.
 - [ ] **The GS/DG collapse that GOV-SPA flagged is issue #69**, and #69 is blocked behind
       PR #68. Recorded so the finding is not re-discovered a third time.
 - [ ] **Issue #97** — `VITE_READ_API_URL` is documented in `.env.example` but read by no
