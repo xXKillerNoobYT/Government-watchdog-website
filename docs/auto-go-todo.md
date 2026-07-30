@@ -39,11 +39,17 @@ Seeded 2026-07-28 on first run.
       days cannot evaluate a single one of its triggers, which are all specified over weeks.
       Zero mutations applied, with the reasoning recorded rather than the pass skipped.
 
-- [ ] **C1b is `in_progress`, not done — residual build-guards drift is #102 and #97.**
-      D1 (#101, the `VITE_*` value-scan fail-open) is fixed and red-proved. **#102** (marker
-      match blind to ASCII-escaped forms) is the next real item in this area: measured as
-      latent, not live, one `esbuild.charset: 'ascii'` away from real. **#97** needs an owner
-      decision, so it is Q&A-shaped, not code-shaped. Next iteration should close #102.
+- [x] **#102 closed in iteration 6.** The marker scan now decodes the haystack (reusing the
+      sibling guard's `decodeObfuscation`) instead of enumerating escaped needles, so no escape
+      vocabulary can silence it. Red-proved first, and negative-controlled on the real built
+      artifact. Two things worth carrying: the issue's predicted escape form (`\u00b7`) was
+      **wrong** — esbuild 0.21.5 actually emits `\xB7` — and an early draft of the fix
+      reintroduced #102's own failure mode by gating decoding behind a cheap pre-check.
+
+- [ ] **C1b is still `in_progress`, and #97 is now the only thing holding it.** D1 (#101) and
+      #102 are both closed; `VITE_READ_API_URL` (#97) is owner-shaped — remove the key or wire
+      it up through the same root-relative validation as `VITE_API_BASE` — so **C1b cannot
+      self-clear no matter how many iterations run**. It needs an answer, not more work.
 
 - [ ] **`build-guards` cannot graduate until `dev-qa.md` Q2 is answered.** C7 and C10 are
       required and structurally unsatisfiable on this repo. Every other check can go green and
@@ -120,6 +126,18 @@ Seeded 2026-07-28 on first run.
       companion app; it has *no* Tauri target anywhere). Tracked as `dev-qa.md` Q5.
 - [ ] **The GS/DG collapse that GOV-SPA flagged is issue #69**, and #69 is blocked behind
       PR #68. Recorded so the finding is not re-discovered a third time.
+- [ ] **#112 — `test/public-bundle-markers.test.ts` is binary to `grep`.** 4 raw NUL bytes,
+      pre-existing from #55's AC4 tests. `file` calls it `data`; plain `grep` returns nothing.
+      This quietly degrades CLAUDE.md section 3's mandated `grep test/` step, which is the
+      repo's one defence against breaking exact-copy assertions. Two-character fix, but it must
+      preserve a specific two-character byte form, so it was filed rather than done in passing.
+
+- [ ] **The `hygiene` label does not exist on this repo.** Memory and the loop's
+      finding-capture rule both say "file with label `hygiene`"; `gh issue create --label
+      hygiene` fails with *not found*. This repo puts priority in the **title** instead
+      (`[P3][Hygiene] ...`, as #97 does). Either create the labels or drop the instruction —
+      right now every labelled filing attempt costs a failed call.
+
 - [ ] **Issue #97** — `VITE_READ_API_URL` is documented in `.env.example` but read by no
       code. Needs a decision (remove the key, or wire it up through the same root-relative
       validation as `VITE_API_BASE`); filed rather than guessed.
@@ -140,7 +158,4 @@ Seeded 2026-07-28 on first run.
       so every future iteration must branch from the tip, and the trackers are invisible on
       `main` until the whole stack lands. Worth knowing before the next stack starts.
 
-- [ ] **Issue #102** — the public-bundle marker match is blind to ASCII-escaped forms.
-      Filed in iteration 3 with the measurement attached: the current build emits UTF-8
-      literally and has zero `\uXXXX` escapes, so it is latent, not live. One
-      `esbuild.charset: 'ascii'` away from being real.
+- [x] **Issue #102 — CLOSED in iteration 6.** See the carry-over entry above.

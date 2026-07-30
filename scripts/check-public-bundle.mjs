@@ -9,11 +9,20 @@
  * deployment package if a private client artifact sits beside it in `dist/`.
  * Issue #55 AC4 then removed the text-extension allow-list, so "no private
  * marker survived bundling" covers every emitted file rather than nine types.
+ *
+ * Issue #102 removed the remaining charset assumption. AC4 made the scan blind
+ * to no *file type*; it was still blind to every *encoding form* but literal
+ * UTF-8, so one `esbuild: { charset: 'ascii' }` in `vite.config.ts` would have
+ * emitted the marker as `Workspace \xB7 Home \xB7 Alpine` — the form
+ * measured from esbuild 0.21.5 — and silenced the guard without failing a
+ * test or printing a warning. See {@link publicMarkerViolationsIn}.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { decodeObfuscation } from './check-no-direct-exposure.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_ROOT = resolve(REPO_ROOT, 'dist/public');
@@ -67,11 +76,50 @@ export function byteForm(marker) {
  * TypeScript suite can reach the decision, matching `privateSiblingLanes` /
  * `privateSiblingArtifacts` and the sibling guard's `violationsIn` /
  * `scanDirectExposure`: this repository intentionally carries no `@types/node`.
+ *
+ * ## Two needles, because there are two encoding spaces (issue #102)
+ *
+ * The scan decodes the *haystack* rather than enumerating escaped *needles*.
+ * Enumerating is what AC4 already had to undo once: a per-marker list of
+ * `\uXXXX` / `\xXX` / `\u{XX}` variants is another allow-list, and the next
+ * escape vocabulary is blind again. Decoding is one transformation that covers
+ * every marker at once, and it reuses the sibling guard's `decodeObfuscation`
+ * so both guards share one definition of "obfuscated" instead of drifting apart.
+ *
+ * The two variants must be matched with *different* needles, and this is the
+ * easy thing to get backwards:
+ *
+ * - **Raw text** is byte space. A `latin1` read maps one byte to one character,
+ *   so literal UTF-8 `·` arrives as the two characters `Â·` and the needle has
+ *   to be {@link byteForm}.
+ * - **Decoded text** is code-point space. `·` decodes to the single
+ *   character U+00B7, which is what the marker string itself holds, so the
+ *   needle is the plain marker. Feeding `byteForm` here would match nothing —
+ *   a scan that reads every file and reports every time.
+ *
+ * `decodeObfuscation` also joins `"a" + "b"` concatenations and percent-decodes.
+ * Both are strictly extra coverage for literal markers: minifiers fold constant
+ * concatenations rather than create them, and no declared marker contains `%`.
+ *
+ * Honest limit: this reads JavaScript's escape vocabulary. A marker rewritten
+ * in some other alphabet — CSS `\b7`, an HTML entity, base64 — is not decoded,
+ * and neither is a marker escaped only partway. Those are not forms a bundler
+ * charset setting produces, which is the trap #102 was filed about.
  */
 export function publicMarkerViolationsIn(text, relPath) {
+  // Decoded unconditionally. A "does this text look decodable?" pre-check was
+  // tried and reverted: gating on `/[\\%]/` silently dropped the concatenation
+  // rule, which needs neither character, so `"not_" + "publishable"` stopped
+  // being reported. That is #102's own failure mode — a guard going quiet — and
+  // the check only worked if this file correctly enumerated another module's
+  // triggers. Measured on the real artifact (23 files, 0.42 MB): 7 ms with
+  // decoding against 2 ms without. 5 ms is not worth a guard that can go quiet.
+  const decoded = decodeObfuscation(text);
   const violations = [];
   for (const marker of FORBIDDEN_PUBLIC_MARKERS) {
-    if (text.includes(byteForm(marker))) {
+    const found = text.includes(byteForm(marker))
+      || (decoded !== text && decoded.includes(marker));
+    if (found) {
       violations.push(`${relPath} contains forbidden marker ${JSON.stringify(marker)}`);
     }
   }

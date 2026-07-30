@@ -1,5 +1,5 @@
 ---
-last_run: 2026-07-30T00:52:00-06:00
+last_run: 2026-07-30T12:45:00-06:00
 last_task: auto-go
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
@@ -17,7 +17,7 @@ areas:
 current_area: build-guards
 current_area_checklist:
   C1_plan_complete: done  # genuinely, as of iteration 4 — docs/plans/area-build-guards.md now exists. It was recorded done from iteration 1 with no plan file behind it.
-  C1b_plan_vs_code_drift_clean: in_progress  # D1 (#101) fixed; residual drift #102 and #97 filed, not yet closed, so not clean
+  C1b_plan_vs_code_drift_clean: in_progress  # D1 (#101) and #102 both closed. Residual drift is #97 alone, which is owner-shaped (remove the key or wire it up), not code-shaped — so C1b cannot self-clear
   C2_qa_resolved: done
   C2b_github_issues_ingested: done
   C3_hunt_fix_clean: pending
@@ -34,7 +34,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 1  # Gate C kickoff fired (new day); this is iteration 5 overall
+iteration_count: 2  # iteration 6 overall; same day as iteration 5, so Gate C did not fire
 day_started_at: 2026-07-30
 stop_flag: false
 budget_mode: false
@@ -107,3 +107,10 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-30T00:52:00-06:00] ITERATION 5 — **#55 auto-closed at 7 of 8 AC, which was not honest, so it was corrected.** The merge's closing keyword retired an issue whose AC7 (anonymous probes against a *hosted* deployment) was never met and cannot be met by this loop — deploy is HOLD per GOV-420. Rather than reopen and leave 7 completed criteria looking unfinished, the landed work is recorded on #55 with the verification evidence and AC7 is re-filed as **#109**, linked both ways, with its blocker named as the owner rather than as code. #101 closed on its own merits. **An unmet criterion that vanishes when its issue auto-closes is a lost obligation** — the merge keyword is not a judge of completeness.
 - [2026-07-30T00:52:00-06:00] ITERATION 5 — **PR #45 left alone, deliberately.** It is the only PR still open and it is not this loop's work (`GOV-1520-updated-desing`, a MOTY tablet-overflow fix). The grant is explicit that a PR I did not produce and have not reviewed is not mine to merge. Reviewing it is a real next item, not a formality — noted in the todo rather than merged on a green check.
 - [2026-07-30T00:52:00-06:00] ITERATION 5 — **the trackers are on `main` for the first time.** Iteration 2's warning that "the loop's trackers live on the topmost branch and are invisible on `main` until the whole stack lands" is now resolved; future iterations branch from `main`, not from a stack tip. `BACKEND_REF` untouched; Stage 98 untouched; no backend contract was needed, so no backend issue filed; **nothing outward-facing — merging is not deploying.**
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - area: build-guards - check: C1b (plan-vs-code drift) - status: in_progress - **closed #102: the public-bundle marker scan was blind to every encoding form but literal UTF-8.** AC4 had removed the file-*type* blindness; the charset assumption survived it. One `esbuild: { charset: 'ascii' }` would have escaped the three non-ASCII markers and silenced the guard with no failing test and no warning.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **decoded the haystack instead of enumerating escaped needles, and reused the sibling guard's `decodeObfuscation` rather than writing a second decoder.** #102 itself proposed per-marker `\uXXXX`/`\xXX` variants; that is the same allow-list pattern AC4 already had to delete once. The crux is that the two variants need *different* needles because they are in different encoding spaces: raw text is a `latin1` read (byte space, needle stays `byteForm`), decoded text is code-point space (needle is the plain marker). Feeding `byteForm` to the decoded variant yields a scan that reads every file and never matches.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **the issue's predicted escape form was wrong, and decoding did not have to care.** #102 assumed `charset: 'ascii'` emits `\u00b7`. Measured against esbuild 0.21.5, this repo's actual Vite dependency: it emits `Workspace \xB7 Home \xB7 Alpine` - uppercase, single-byte - and `\u2014` for the em-dash. A needle list would have had to guess that right; decoding did not. The real emitted form is now pinned by its own test.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **I reintroduced #102's own failure mode inside its fix, and the negative control caught it.** A `/[\\%]/` pre-check to skip decoding on binary assets silently dropped the string-concatenation rule, which needs neither character, so `"not_" + "publishable"` stopped being reported. **An optimization whose failure mode is silence has to be obviously correct** - and this one was only correct if this file correctly enumerated another module's triggers, a second coupled enumeration. Reverted; unconditional decoding costs 7ms against 2ms over the real 23-file, 0.42 MB artifact. The revert is pinned by a test so it cannot come back unnoticed.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **evidence, not green checks.** Red proved first: exactly the 8 new detection tests fail against the pre-fix guard while the 3 false-positive controls pass on both sides. Negative control on the *real* artifact per the standing rule that a passing guard has proven nothing - an escaped marker planted into the built `dist/public` is reported by name, `grep -F` for the literal marker finds 0, and the untouched copy still scores 0. 973 tests / 63 files, `tsc --noEmit` clean, `build:all` green on both lanes and all four guards.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **filed #112 in passing:** `test/public-bundle-markers.test.ts` carries 4 raw NUL bytes from #55's AC4 tests, so `file` calls it `data` and plain `grep` finds nothing in it. That quietly degrades CLAUDE.md section 3's mandated `grep test/` step - the repo's one defence against breaking exact-copy assertions. Pre-existing on `main`, out of scope for #102, so filed rather than fixed. Also noted: this repo has **no `hygiene` label**; priority lives in the issue title, as #97 does.
+- [2026-07-30T12:45:00-06:00] ITERATION 6 - **meta-checks: global GitHub issue sync ran** (33 open, triaged; the ten-issue P0/P1 MOTY block is confirmed unblocked now that #68 has landed). `claude-automation-recommender` and `revise-claude-md` came due at ~23h40m but were **deliberately deferred, not silently skipped** - both fired 24h ago in iteration 4, whose own finding was that they yield little at this cadence, and spending a second consecutive iteration on meta-checks instead of the named work item would invert the loop's purpose. Flagged for the next iteration. `BACKEND_REF` untouched; Stage 98 untouched; no backend contract needed, so no backend issue filed; **nothing outward-facing.**

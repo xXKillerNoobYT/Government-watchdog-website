@@ -68,6 +68,16 @@
   real gap and its blocker (the owner, not code). A closing keyword in a PR body is not a
   judge of completeness.
 
+- **[2026-07-30]** Closed #102 by **decoding the haystack, not enumerating escaped needles** —
+  and by reusing the sibling guard's `decodeObfuscation` rather than writing a second decoder.
+  The issue itself proposed a per-marker `\uXXXX`/`\xXX` variant list; that is the same
+  allow-list shape iteration 3 already had to delete from this very file. One transformation
+  covers every marker and every future escape form; a needle list goes blind at the next one.
+- **[2026-07-30]** Filed the NUL-byte finding as **#112 instead of fixing it inline**, though it
+  is a two-character change. The lines belong to #55's AC4 tests, not to #102, and the fix has to
+  preserve a specific two-character byte form (`\xc3\xbf`, U+00FF read back as latin1) — an
+  easy thing to get subtly wrong in a drive-by edit inside an unrelated PR.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
@@ -110,6 +120,18 @@
   reopening the next PR. Both remaining PRs passed first time. Cheap, and it removes the
   variable rather than arguing about it.
 
+- **[2026-07-30] Two encoding spaces means two needles, and mixing them yields a silent no-op.**
+  In `publicMarkerViolationsIn` the raw text is a `latin1` read (byte space) so its needle is
+  `byteForm(marker)`, while the decoded text is code-point space so its needle is the **plain**
+  marker. Feeding `byteForm` to the decoded variant produces a guard that reads every file and
+  never matches — the exact failure iteration 3 hit from the other direction. When a scan gains
+  a second variant, ask what space that variant is in before reusing the old needle.
+- **[2026-07-30] Measure the bundler instead of trusting the issue's prediction.** #102 stated
+  `charset: 'ascii'` would emit `\u00b7`. One `esbuild.transform` against 0.21.5 — the version
+  actually in this repo — showed it emits `\xB7` (uppercase, single-byte) and `\u2014` for the
+  em-dash. The issue's own suggested needle list would have missed the real form. Two lines of
+  measurement turned a guessed threat model into a pinned test.
+
 ## What didn't
 
 - **[2026-07-28] Re-running a red CI check to "see if it was flaky" is not evidence and not
@@ -147,6 +169,15 @@
   been tested on. `reopened` **is** a default type, so **close+reopen is the lever** that
   forces a real run. A `CLEAN` status is not a claim of freshness — always read
   `statusCheckRollup[].startedAt` against the base's own merge time.
+
+- **[2026-07-30] An optimization whose failure mode is silence has to be obviously correct.**
+  While fixing #102 I gated decoding behind `/[\\%]/` to skip binary assets. It silently dropped
+  `decodeObfuscation`'s string-concatenation rule, which needs neither character — so
+  `"not_" + "publishable"` stopped being reported. **I reintroduced #102's own failure mode inside
+  its fix**, and only the negative-control table caught it. The pre-check was also only correct
+  if this file correctly enumerated another module's triggers: a second coupled enumeration, in
+  the commit whose whole point was deleting one. Measured cost of just not optimizing: 7ms vs
+  2ms over the real artifact.
 
 ## Patterns
 
@@ -203,6 +234,15 @@
   is split pure-decision / filesystem-walk (`violationsIn`+`scanDirectExposure`,
   `privateSiblingLanes`+`privateSiblingArtifacts`, `emittedViolationsIn`+`scanEmittedArtifact`).
   Follow that split or the TypeScript suite cannot reach the new code.
+
+- **Guards may now share a decoder.** `check-public-bundle.mjs` imports `decodeObfuscation`
+  from `check-no-direct-exposure.mjs` (#102). This is deliberate: one definition of "obfuscated"
+  for both guards rather than two that drift. It does **not** merge their scopes — source scan,
+  emitted scan, and marker scan still answer different questions with different blind spots, and
+  CLAUDE.md's "a finding in one is not covered by another" still holds.
+- **`test/public-bundle-markers.test.ts` is binary to grep** (#112, 4 NUL bytes from #55's AC4
+  tests). Use `grep -a` on it until that lands, and do not trust a clean `grep test/` sweep that
+  needed to match this file.
 
 ### gate
 - Per GOV-SPA's 2026-07-28 adversarial sweep: the **client gate is UI scaffolding, not the
