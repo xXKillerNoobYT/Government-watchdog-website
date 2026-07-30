@@ -179,6 +179,23 @@
   the commit whose whole point was deleting one. Measured cost of just not optimizing: 7ms vs
   2ms over the real artifact.
 
+- **[2026-07-30] A chained `cd` persists through the whole command, and it reset the owner's
+  working copy.** The Bash tool resets cwd between calls, so this loop compensates by writing
+  `cd /Users/IA/Code/Government-watchdog-website && gh ...`. In iteration 6 a cleanup command
+  chained `cd <owner clone> && gh push --delete ... && git fetch && git reset --hard origin/main`
+  — the `gh` call needed the owner's clone, but the `reset` was meant for the **worktree**. It
+  ran where the `cd` had put it. The owner's checkout jumped 97f23d8 → 5ad3eba and the 11
+  previously-untracked `docs/product/` + `docs/prompts/` files were overwritten by #68's tracked
+  versions. **Three iterations had explicitly refused to do this** ("surfaced, not executed —
+  untracked files are unrecoverable once deleted"); a chained `cd` did it by accident.
+  **Rule: never put a state-changing git command in the same chain as a `cd` to a different
+  clone.** Run `gh` (repo-scoped, cwd only picks the remote) and `git` (cwd IS the target) in
+  separate calls, and pass `-C <path>` explicitly to any `git` command that must not guess.
+  Mitigating but not exculpating: iteration 3 had measured those 11 files — 3 identical, 8 older
+  drafts with nothing worth keeping — and the clone was 22 commits behind and *unable to pull*
+  because of exactly those files, so the accident left it current and unblocked. That is luck,
+  not a justification.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
