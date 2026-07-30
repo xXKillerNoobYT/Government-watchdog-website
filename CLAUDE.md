@@ -99,10 +99,17 @@ Guards are split **pure-decision / filesystem-walk** on purpose: this repo carri
 ## 5. Branching and merging
 
 - **Never commit to `main`.** Branch, push, open a PR.
-- **Never merge a PR.** The owner merges. Always.
 - Automated-loop branches use `auto-go/<topic>`.
 - Stack a branch on an open PR only when the work genuinely depends on it; say so in the
   PR body, because stacks can only merge bottom-up.
+
+**Merging.** The AUTO GO loop holds merge authority on this repo (granted by the owner
+2026-07-29; it did not before). If you are not that loop, assume you do not — ask.
+
+Whoever merges, the bar is the same: the full suite, `tsc --noEmit`, `npm run build`, and CI
+all green, with the acceptance criteria mapped to tests. Never merge to clear a backlog,
+never merge to make a red thing disappear, and never merge a PR you have not read.
+**Merging is not deploying** — nothing outward-facing without the owner.
 
 ---
 

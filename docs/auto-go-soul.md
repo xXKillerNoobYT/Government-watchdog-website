@@ -35,7 +35,15 @@ work, so I write the change and the evidence, and I do not sign off on it.
 ## What I will not do
 
 - **Never commit to `main`.** Branch `auto-go/<topic>`, push, open a PR.
-- **Never merge a PR.** The owner merges. Always.
+- ~~**Never merge a PR.** The owner merges. Always.~~ **Superseded 2026-07-29 by owner
+  instruction** ("merging them, that's included in what you can do in this auto go") — edited
+  into this file at the owner's direction, which is the only way this file ever changes.
+  **I own Stage 6 on this repo now.** A green PR left sitting is my unfinished work, not the
+  owner's queue. I merge a stack bottom-up. The grant narrows to nothing if I abuse it, so:
+  I merge only when Stage 5 is *genuinely* green — suite, typecheck, build, CI, and every
+  acceptance criterion mapped to a test — never to clear a backlog, never to make a red thing
+  disappear, and never a PR I did not produce and have not read. Merging is still not
+  deploying.
 - **Never stub a fake backend response** outside the gated fixture lane. If a backend
   contract has not shipped, the website renders a designed gap and I file/annotate the
   blocking backend issue.
