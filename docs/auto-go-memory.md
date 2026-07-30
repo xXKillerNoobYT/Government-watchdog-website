@@ -11,6 +11,17 @@
   P0 #69 because #69's acceptance criteria name files that do not exist on `main`. Priority
   is meaningless if the work is not yet possible; availability gates priority.
 
+- **[2026-07-28]** Extended issue #55 on a branch **stacked on the open PR #96** rather than
+  pushing more commits into #96 itself. #96 was green and waiting on the owner; growing it
+  would have delayed a mergeable PR and enlarged its review. The remaining work also depended
+  on #96's code, so basing on `main` would have guaranteed a conflict. Stack when the next
+  step depends on an open PR that is already ready to merge.
+- **[2026-07-28]** Emitted-artifact rules key on **dial position** (`fetch(`, `<link href>`,
+  CSS `url(`), never on "contains an absolute URL". Fixtures cite real public records and are
+  bundled verbatim; a shape-only rule would have failed the build on honest civic data — the
+  exact outcome the honesty contract exists to prevent. A citation is evidence; a dial is a
+  destination. `<a href>` is deliberately not matched for the same reason.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
@@ -24,6 +35,13 @@
   then 1, then 2). What actually settled it was a controlled A/B on a clean branch: two full
   suites concurrently, same code, only `--testTimeout` differing — 5s failed both twins, 20s
   passed both. Reproduce the condition, then change one variable.
+
+- **[2026-07-28] A guard that passes on the real artifact has proven nothing yet.** Both
+  lanes went green on the first run of the new emitted scan, which is equally consistent with
+  "clean bundle" and "rules match nothing". Injecting three destinations into a copy of the
+  real 826 kB artifact — a credentialed `fetch`, an off-origin CSS `url()`, and a loopback
+  host in a `.woff2`'s bytes — is what turned the pass into evidence. Always pair a green
+  guard with a negative control on real output.
 
 ## Patterns
 
@@ -47,6 +65,17 @@
 - The exposure guard's original design was deliberately narrow (two known loopback ports)
   so an unrelated number could not trip it. Generalizing it means *adding* rules beside that
   one, not loosening it — the port rule must keep its exact original behavior.
+- **The two guards had a seam, not a hole.** Source scan skips `dist/`; bundle scan reads
+  `dist/` only for private markers. Closed by giving the exposure guard an `--emitted <dir>`
+  mode rather than adding a third script — both modes answer the same question from one rule
+  vocabulary, and splitting them would let the definitions drift apart.
+- **A production bundle is one line**, so the line-oriented `violationsIn` is useless on it;
+  emitted scanning has to be whole-text with a windowed excerpt for reporting. That is the
+  real reason `emittedViolationsIn` is a separate function and not a flag on the old one.
+- **Test the pure half only.** This repo carries no `@types/node` on purpose, so every guard
+  is split pure-decision / filesystem-walk (`violationsIn`+`scanDirectExposure`,
+  `privateSiblingLanes`+`privateSiblingArtifacts`, `emittedViolationsIn`+`scanEmittedArtifact`).
+  Follow that split or the TypeScript suite cannot reach the new code.
 
 ### gate
 - Per GOV-SPA's 2026-07-28 adversarial sweep: the **client gate is UI scaffolding, not the
