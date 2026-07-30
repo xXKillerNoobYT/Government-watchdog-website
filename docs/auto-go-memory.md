@@ -95,6 +95,17 @@
   host in a `.woff2`'s bytes — is what turned the pass into evidence. Always pair a green
   guard with a negative control on real output.
 
+- **[2026-07-29] "The timeout fix landed" is not the same as "the timeout is fixed."** #98
+  raised `testTimeout` to 20s and the same test failed at **21624ms** nine days later — a
+  1.6s miss. A threshold fix against a load problem only buys headroom, and the headroom
+  runs out. The tell that it was still load and not the code: a **docs-only commit** went
+  red, and the *same sha* passed on the other twin. Fix the load, not the number.
+- **[2026-07-29] When another open PR already fixes what you need, copy its diff verbatim.**
+  PR #68 makes the identical `push: branches: [main]` change. Writing the fix byte-identical
+  and *verifying it with a diff of both hunks* means the two merge cleanly in either order
+  and whichever lands first makes the other a no-op. Independently inventing a better-worded
+  equivalent would have manufactured a conflict for no gain.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
