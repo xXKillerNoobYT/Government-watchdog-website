@@ -21,12 +21,35 @@
   bundled verbatim; a shape-only rule would have failed the build on honest civic data — the
   exact outcome the honesty contract exists to prevent. A citation is evidence; a dial is a
   destination. `<a href>` is deliberately not matched for the same reason.
+- **[2026-07-29]** Closed a guard's blind spot by **deleting the list that caused it**, not by
+  extending it. `scanPublicBundle` skipped everything outside a nine-entry text-extension
+  allow-list; adding `.woff2`, `.png`, `.wasm` would have left the next new extension blind.
+  Reading every file as `latin1` removes the list entirely — one path, nothing to go stale.
+  When a guard's hole is "the enumeration is incomplete", ask whether the enumeration is
+  needed at all before growing it.
+- **[2026-07-29]** Marked C8 **`blocked`, not `done`**, with issue #55 at 7 of 8 AC. The last
+  criterion needs a hosted deploy this loop may not perform. `done` would claim something
+  nobody verified; `in_progress` would imply the loop is still working it. `blocked` + reason
+  is the only honest state, and unlike `in_progress` it lets the rotation advance.
+- **[2026-07-29]** Filed the ASCII-escape blind spot as **#102** instead of fixing it inside
+  the AC4 change. It is a different criterion (encoding form, not import form), it is not
+  live today, and covering only the `\uXXXX` variant would have produced a guard that reads
+  as complete and still misses `\xXX`. A half guard is worse than a filed issue.
 
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
   `git cat-file -e main:<path>` is the fast, reliable way to tell "available work" from
   "work queued behind an unmerged PR". Do this before picking an item, every time.
+- **[2026-07-29] Measure the speculative hole before deciding whether to build for it.** The
+  ASCII-escape risk looked urgent until two greps settled it: the bundle contains the literal
+  `·` and **zero** `\uXXXX` escapes anywhere. That turned an invented emergency into a filed
+  issue (#102) with the exact trigger condition written down. Two greps, one right decision.
+- **[2026-07-29] A table-driven test over a constant list catches assumptions, not just code.**
+  Asserting "planting marker X yields exactly 1 violation" failed — because several markers
+  nest inside others (`reviewer_internal` ⊂ `reviewer_internal_records`). The code was right
+  and the test's arithmetic was wrong. Over a list of literals, assert **membership**, never
+  cardinality.
 
 ## What didn't
 
@@ -72,6 +95,14 @@
 - **A production bundle is one line**, so the line-oriented `violationsIn` is useless on it;
   emitted scanning has to be whole-text with a windowed excerpt for reporting. That is the
   real reason `emittedViolationsIn` is a separate function and not a flag on the old one.
+- **A byte-oriented read needs a byte-oriented needle.** Reading files as `latin1` (one byte,
+  one char) and then searching for the marker's own JS string misses every marker with a
+  non-ASCII character: `Workspace · Home · Alpine` is 25 chars in source, 27 bytes on disk.
+  The needle must be `Buffer.from(marker, 'utf8').toString('latin1')`. Getting the read right
+  and the needle wrong produces a guard that scans everything and finds nothing.
+- **`Buffer` does not typecheck in `test/`, only in `scripts/`.** No `@types/node` means the
+  `.mjs` guards may use `Buffer` freely (they are never typechecked) but a `.ts` test may not.
+  Build the same latin1 string there with `TextEncoder` + `String.fromCharCode`.
 - **Test the pure half only.** This repo carries no `@types/node` on purpose, so every guard
   is split pure-decision / filesystem-walk (`violationsIn`+`scanDirectExposure`,
   `privateSiblingLanes`+`privateSiblingArtifacts`, `emittedViolationsIn`+`scanEmittedArtifact`).

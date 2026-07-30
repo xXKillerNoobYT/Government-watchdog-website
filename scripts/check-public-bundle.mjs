@@ -7,6 +7,8 @@
  *
  * Issue #55 added the package-shape check: a clean `dist/public` is not a safe
  * deployment package if a private client artifact sits beside it in `dist/`.
+ * Issue #55 AC4 then removed the text-extension allow-list, so "no private
+ * marker survived bundling" covers every emitted file rather than nine types.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -44,21 +46,36 @@ export const FORBIDDEN_PUBLIC_MARKERS = [
   'stmt-disputed',
 ];
 
-const TEXT_EXTENSIONS = new Set([
-  '.css',
-  '.html',
-  '.js',
-  '.json',
-  '.map',
-  '.mjs',
-  '.svg',
-  '.txt',
-  '.xml',
-]);
+/**
+ * A marker as it appears when a file is read byte-for-byte (issue #55, AC4).
+ *
+ * Emitted files are read as `latin1` — the one encoding where a byte maps to
+ * exactly one character — so the needle has to be the marker's UTF-8 *bytes*
+ * read that same way. Searching for the marker's own JavaScript string would
+ * silently miss every marker containing a non-ASCII character: `Workspace ·
+ * Home · Alpine` is 25 characters in this file and 27 bytes in the artifact, and
+ * `includes` would never match. For a pure-ASCII marker this is the identity.
+ */
+export function byteForm(marker) {
+  return Buffer.from(marker, 'utf8').toString('latin1');
+}
 
-function extension(path) {
-  const at = path.lastIndexOf('.');
-  return at >= 0 ? path.slice(at).toLowerCase() : '';
+/**
+ * Forbidden markers present in one emitted file — the pure half of the scan.
+ *
+ * `text` is the file read as `latin1`. Split from the filesystem walk so the
+ * TypeScript suite can reach the decision, matching `privateSiblingLanes` /
+ * `privateSiblingArtifacts` and the sibling guard's `violationsIn` /
+ * `scanDirectExposure`: this repository intentionally carries no `@types/node`.
+ */
+export function publicMarkerViolationsIn(text, relPath) {
+  const violations = [];
+  for (const marker of FORBIDDEN_PUBLIC_MARKERS) {
+    if (text.includes(byteForm(marker))) {
+      violations.push(`${relPath} contains forbidden marker ${JSON.stringify(marker)}`);
+    }
+  }
+  return violations;
 }
 
 function* files(root) {
@@ -70,16 +87,31 @@ function* files(root) {
   for (const name of readdirSync(root)) yield* files(join(root, name));
 }
 
+/**
+ * Every emitted file, whatever its extension (issue #55, AC4).
+ *
+ * The former text-extension allow-list was the hole AC4 names: a marker carried
+ * in an emitted image, font, `.bin`, `.wasm`, or any newly minted extension was
+ * never looked at, so "no private marker survived bundling" was only ever a
+ * claim about nine file types. Reading everything as `latin1` and matching on
+ * {@link byteForm} answers the question for the whole artifact from one code
+ * path — there is no list left to go stale.
+ *
+ * Honest limit: this finds a marker stored verbatim in the emitted bytes. It
+ * cannot see inside a compressed container (a `.woff2` table, a zipped asset),
+ * because those bytes are not the marker's bytes. Markers are long, specific,
+ * private-only strings, so scanning binaries costs no realistic false positive.
+ */
 export function scanPublicBundle(root = PUBLIC_ROOT) {
   const violations = [];
   for (const file of files(root)) {
-    if (!TEXT_EXTENSIONS.has(extension(file))) continue;
-    const text = readFileSync(file, 'utf8');
-    for (const marker of FORBIDDEN_PUBLIC_MARKERS) {
-      if (text.includes(marker)) {
-        violations.push(`${relative(root, file)} contains forbidden marker ${JSON.stringify(marker)}`);
-      }
+    let text;
+    try {
+      text = readFileSync(file, 'latin1');
+    } catch {
+      continue;
     }
+    violations.push(...publicMarkerViolationsIn(text, relative(root, file)));
   }
   return violations;
 }
