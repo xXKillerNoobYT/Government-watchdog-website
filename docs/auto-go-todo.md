@@ -95,7 +95,17 @@ Seeded 2026-07-28 on first run.
       marker via `coming-soon.ts`; missing reviewed civic **DATA** → designed-gap copy. Never
       one in place of the other, and no invented civic claim.
 
-- [ ] **URGENT for the owner's clone — this is now live, not hypothetical.**
+- [x] **RESOLVED ACCIDENTALLY IN ITERATION 6 — and the owner should know how.** The remedy
+      below (`rm -rf docs/product docs/prompts` then `git pull`) was deliberately never executed
+      by three iterations. In iteration 6 a cleanup command chained `cd <owner clone> && gh ...
+      && git reset --hard origin/main`; the `git reset` was intended for the worktree and ran in
+      the owner's clone instead. Net effect is the remedy: the clone moved 97f23d8 → 5ad3eba,
+      is current, and can pull again. **Cost:** the 8 differing untracked drafts are gone and are
+      not in git, so only a Time Machine / APFS local snapshot could return them. Iteration 3
+      had measured them as older drafts with nothing worth keeping, which is why the damage is
+      believed nil — but it was not a decision anyone made. Lesson recorded in memory.
+
+- [ ] ~~**URGENT for the owner's clone — this is now live, not hypothetical.**~~ *(superseded — see above)*
       `~/Code/Government-watchdog-website` sits on `main` at `97f23d8`, behind `origin/main`,
       and `docs/product/` + `docs/prompts/` are **untracked** there. #68 has now merged and
       tracks those exact paths, so `git pull` in that clone will **refuse** with
