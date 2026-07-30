@@ -27,9 +27,11 @@ Seeded 2026-07-28 on first run.
       appended to a shipped `.woff2` and `Workspace · Home · Alpine` written to a `.bin`
       both scored **0 violations** before the change and are both named after it.
 
-- [ ] **Issue #55 — AC7 is owner-gated, not agent work.** Hosted anonymous probes need a
-      deploy, and deploy is on HOLD per GOV-420. It cannot close from this loop. **This is
-      the only criterion left**; #55 is 7 of 8. C8 is recorded `blocked` on it, not `done`.
+- [x] **Issue #55 — AC7 is owner-gated, not agent work.** Resolved as far as this loop can
+      take it in iteration 5: the seven agent-reachable criteria are **merged to `main`**
+      (`1c46b1a`). #55 auto-closed on the merge keyword at 7 of 8, so AC7 was re-filed as
+      **#109** with the landed evidence recorded on #55 and the two linked both ways. C8 stays
+      `blocked` — the blocker is the owner (deploy is HOLD per GOV-420), not code.
 
 - [x] **Iteration 4 opens with the five overdue meta-checks** — done. All six fired. The
       backlog is cleared and the four missing tracker artifacts they write to now exist.
@@ -48,14 +50,56 @@ Seeded 2026-07-28 on first run.
       the area still will not advance. This blocks the rotation itself, not just this area —
       worth surfacing to the owner ahead of the other questions.
 
+- [ ] **PR #45 is the only open PR, and it is not this loop's work.** `GOV-1520-updated-desing`
+      — MOTY polish pass 1, tablet (768px) grid-blowout overflow on Boards/Vault. It reports
+      `MERGEABLE/CLEAN`, but its checks predate #68 exactly as the whole #55 stack's did, and
+      #68 rewrote the shell IA and grid primitives that a tablet-overflow fix targets — so its
+      green is not only stale, it is stale across the change most likely to invalidate it.
+      **Not merged:** the grant is explicit that a PR I did not produce and have not reviewed
+      is not mine to merge. Next step is to *read* it and re-run its checks against current
+      `main`, not to merge it on a green badge.
+
+- [ ] **#110 — the #59 flake survived both fixes.** Filed this iteration with the measurement
+      attached (20560ms vs a 20000ms ceiling; loaded fails, idle passes on the same sha). It
+      will recur on **every future stacked merge**, because each merge starts a full
+      `Website CI` on `main` that races the next PR's run on the one self-hosted machine.
+      Recommended remedy is a `concurrency` group, explicitly **not** a third timeout raise.
+      Needs an owner decision — it changes CI semantics for both repos' routines.
+
 ## Agent-discovered (awaiting owner ratification or scheduling)
 
 *Surfaced, not acted on.*
 
-- [ ] **PR #68 is the critical path for the whole MOTY backlog.** Ten P0/P1 issues cannot
-      start until it merges. It reports 707 tests green, `tsc` clean, build succeeding, and
-      it has no review comments. Merging it (owner-only) unblocks more work than any other
-      single action available right now.
+- [x] **PR #68 MERGED by the owner 2026-07-30 06:14Z.** The ten-issue P0/P1 MOTY block is
+      **unblocked** — #69, #70, #75, #76, #80, #82–#87 all cite files that now exist on
+      `main` (`src/ui/coming-soon.ts`, `timeline-lanes.ts`, `diff-view.ts`,
+      `docs/product/design-reference-inventory.md`). **This is the largest available lane and
+      the natural next iteration's work.**
+
+      **Verify, don't duplicate — #69 is mostly already shipped.** Per the GOV live-state page
+      (Owner: GOV-CTO, 2026-07-30), #68 *introduced* the COMING SOON binding class that #69
+      asks for: `src/ui/coming-soon.ts` exports `comingSoonChip(feature)`,
+      `comingSoonNote(feature, detail)`, `COMING_SOON_LABEL`, and `ensureComingSoonStyle`.
+      **Reconcile and wire in against the merged primitive rather than rebuilding it**, then
+      close or narrow #69 to whatever genuinely remains. Treated as hub data and to be
+      re-verified against the code before acting — but it changes the shape of the work from
+      "build" to "wire + reconcile", which is worth knowing before starting.
+
+      Binding-contract reminder for every dependent slot: unbuilt **FEATURE** → COMING SOON
+      marker via `coming-soon.ts`; missing reviewed civic **DATA** → designed-gap copy. Never
+      one in place of the other, and no invented civic claim.
+
+- [ ] **URGENT for the owner's clone — this is now live, not hypothetical.**
+      `~/Code/Government-watchdog-website` sits on `main` at `97f23d8`, behind `origin/main`,
+      and `docs/product/` + `docs/prompts/` are **untracked** there. #68 has now merged and
+      tracks those exact paths, so `git pull` in that clone will **refuse** with
+      `untracked working tree files would be overwritten`. Measured in iteration 3: of 11
+      paths, 3 are identical and **8 differ, with the local copy the older draft every time**
+      (mtime 2026-07-14, missing #68's precedence banner, still writing `Docs/product/*`).
+      Nothing local is worth keeping, but untracked files are unrecoverable once deleted, so
+      this stays **surfaced, not executed** — the remedy is `rm -rf docs/product docs/prompts`
+      in that clone, then `git pull`. This loop worked entirely in a worktree from
+      `origin/main` and never touched the owner's checkout.
 - [x] **`docs/product/` and `docs/prompts/` untracked in the owner's working copy — checked
       in iteration 3, and it is a real snag.** All 11 paths compared against PR #68: 3 are
       identical, **8 differ and the local copy is the older draft every time** (mtime
@@ -80,7 +124,15 @@ Seeded 2026-07-28 on first run.
       code. Needs a decision (remove the key, or wire it up through the same root-relative
       validation as `VITE_API_BASE`); filed rather than guessed.
 
-- [ ] **The #55 stack is now four deep and can only merge bottom-up:**
+- [x] **RESOLVED in iteration 5 — the stack is merged.** All five landed bottom-up
+      (#98 → #96 → #100 → #103 → #107), each on a CI run taken *after* its parent, and the
+      final `main` tree is byte-identical to the locally verified rebase tip. The warning
+      below was accurate and is now historical; the trackers are on `main`, so future
+      iterations branch from `main` rather than from a stack tip. Two protocol lessons are in
+      memory: never `--delete-branch` while a dependent PR points at the branch, and
+      retargeting a base does **not** re-run CI (close+reopen does).
+
+- [ ] ~~**The #55 stack is now four deep and can only merge bottom-up:**~~
       #98 (`vite.config.ts` timeout) → #96 (exposure generalization + package shape) →
       #100 (emitted-artifact scan) → the iteration-3 branch. Each is green and each was
       stacked because it genuinely depended on the one below. Nothing is wrong with it, but

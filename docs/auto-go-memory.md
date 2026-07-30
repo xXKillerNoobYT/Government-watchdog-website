@@ -53,6 +53,21 @@
   allowed to toggle a check. Both change what a *required* check means, which is the
   graduation bar itself — that is the owner's decision, not a tuning knob.
 
+- **[2026-07-30]** Refused to merge five `MERGEABLE/CLEAN` PRs on their existing green checks.
+  Every check predated the owner's #68 merge, and the stack base was 5 commits behind `main`.
+  **`MERGEABLE` is a statement about textual conflict, not about correctness**, and a
+  `pull_request` check proves only what was true when it ran. Rebased and re-verified first;
+  the discipline immediately earned its keep when #103's fresh check went red.
+- **[2026-07-30]** Merged the stack with a bare `--merge` after `--delete-branch` auto-closed
+  the next PR. Chose to **resurrect the deleted branch** rather than close #96 and open a
+  replacement PR: a new PR would have lost the review thread, the issue links, and the
+  authored description, to save one `git push`.
+- **[2026-07-30]** Corrected #55's auto-close by **recording the evidence on the closed issue
+  and re-filing only the unmet criterion (#109)**, instead of reopening. Reopening would have
+  made seven genuinely-complete criteria read as unfinished; a successor issue names the one
+  real gap and its blocker (the owner, not code). A closing keyword in a PR body is not a
+  judge of completeness.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
@@ -80,6 +95,21 @@
   scanned with the high-signal subset. Recorded in the area plan as an explicit non-finding so
   a later pass does not "discover" it a second time.
 
+- **[2026-07-30] Compare the merged tree against the tree you actually tested.**
+  `git rev-parse origin/main^{tree}` vs the locally verified rebase tip came out **identical**
+  (`d578e5f5`), which upgrades "I tested something like this" into "what shipped is exactly
+  what passed". One command, and it is the only check that closes the gap between local
+  verification and what the merge really produced.
+- **[2026-07-30] Writing a duplicate fix byte-identical to the other PR's is what made the
+  rebase free.** Iteration 4b copied #68's `push: branches: [main]` hunk verbatim rather than
+  wording it better. When #68 landed first, git recognised the patch as already applied and
+  **dropped the commit silently** — 13 commits rebased as 12, zero conflicts, in the file that
+  gates all CI. An equivalent-but-reworded fix would have conflicted there instead.
+- **[2026-07-30] Drain the CI queue before triggering the next check.** After #103's
+  load-induced failure, every subsequent merge waited for `main`'s runs to complete before
+  reopening the next PR. Both remaining PRs passed first time. Cheap, and it removes the
+  variable rather than arguing about it.
+
 ## What didn't
 
 - **[2026-07-28] Re-running a red CI check to "see if it was flaky" is not evidence and not
@@ -105,6 +135,18 @@
   and *verifying it with a diff of both hunks* means the two merge cleanly in either order
   and whichever lands first makes the other a no-op. Independently inventing a better-worded
   equivalent would have manufactured a conflict for no gain.
+
+- **[2026-07-30] `--delete-branch` on a stacked PR closes the PR above it, unrecoverably
+  forward.** GitHub closes any PR whose base branch vanishes, and a closed PR's base is
+  immutable — `gh pr edit --base main` returns *Cannot change the base branch of a closed
+  pull request*. The only route back is pushing the deleted branch to the remote again, then
+  reopen, then retarget. **Never `--delete-branch` while a dependent PR points at it.**
+- **[2026-07-30] Retargeting a PR's base does not re-run CI, and GitHub still reports it
+  `CLEAN`.** `gh pr edit --base` fires `pull_request: edited`, which is not a default trigger
+  type, so #100 sat at `MERGEABLE/CLEAN` on two-day-old checks against a base it had never
+  been tested on. `reopened` **is** a default type, so **close+reopen is the lever** that
+  forces a real run. A `CLEAN` status is not a claim of freshness — always read
+  `statusCheckRollup[].startedAt` against the base's own merge time.
 
 ## Patterns
 
