@@ -40,7 +40,7 @@ stop_flag: false
 budget_mode: false
 budget_mode_until: null
 last_meta_recommender_at: 2026-07-29T12:46:00-06:00
-last_meta_github_sync_at: 2026-07-29T12:46:00-06:00
+last_meta_github_sync_at: 2026-07-30T12:30:00-06:00  # iteration 6 ran a global sync (33 open issues triaged). The recommender and revise timestamps are deliberately left at 2026-07-29 — both came due and were deferred, not fired; see the iteration 6 log.
 last_meta_revise_at: 2026-07-29T12:46:00-06:00
 last_meta_improver_at: 2026-07-29T12:46:00-06:00
 last_meta_self_audit_at: 2026-07-29T12:46:00-06:00
