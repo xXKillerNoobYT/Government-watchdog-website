@@ -10,6 +10,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-29 | 3 | build-guards | C8 | blocked | 4 | 1 | 11 | 2100 | Notion hub read (Gate C kickoff); five others still not fired — see heartbeat |
 | 2026-07-29 | 4 | build-guards | C1b | in_progress | 8 | 1 | 5 | 2700 | ALL SIX — github-issues-sync, recommender, revise-claude-md, improver, self-audit, self-improve |
 | 2026-07-29 | 4b | ci-tooling | C5 | done | 1 | 1 | 0 | 900 | unplanned — CI-blocked follow-through; #98's timeout raise proved insufficient, fixed the doubled trigger at the root |
+| 2026-07-30 | 5 | build-guards | Stage 6 (merge) | done | 5 | 5 | 0 | 2400 | Notion hub read (Gate C kickoff); other five inside their 20h windows, not due |
 
 ## Findings this iteration
 
