@@ -132,6 +132,19 @@ export function correctionStatusLabel(status: string | null | undefined): string
  * the backend sent. An unforeseen future value still renders (title-cased) rather
  * than being dropped — so a new backend class can never silently vanish.
  */
+/**
+ * GOV-70 (iteration 49) — the ONE per-field "unavailable" message that was genuinely
+ * duplicated, emitted from one place.
+ *
+ * Measured before changing anything: `design-pages.ts` and `pages-program.ts` already call
+ * the SAME five shared helpers (`trustLabel`, `verificationStatusLabel`,
+ * `correctionStatusLabel`, `provenanceBadge`, `confidenceLabel`) once each, so the label
+ * vocabulary was already centralised here. Across all of `src/ui`, exactly one per-field
+ * message appeared in more than one module — this one. That is the real duplication #70
+ * describes, and it is now a single export rather than two literals that can drift apart.
+ */
+export const CONFIDENCE_UNAVAILABLE = 'Confidence: unavailable';
+
 export function confidenceLabel(record: StatementRecord): string | undefined {
   const value = record.confidence_label;
   if (value == null || value === '') return undefined;

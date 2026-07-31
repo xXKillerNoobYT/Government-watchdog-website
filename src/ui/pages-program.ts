@@ -39,6 +39,7 @@ import { diffView } from './diff-view';
 import { renderDefinedInfoNote } from './info-note';
 import { DESIGN_FIXTURE_LABEL } from './design-pages';
 import {
+  CONFIDENCE_UNAVAILABLE,
   confidenceLabel,
   correctionStatusLabel,
   provenanceBadge,
@@ -1274,7 +1275,7 @@ function renderIssueDossierCard(record: StatementRecord): HTMLElement {
     trustBadges.push(el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'issue-confidence-label' }, [`Confidence class: ${confidenceClass}`]));
   }
   if (record.confidence == null && !confidenceClass) {
-    trustBadges.push(el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'issue-confidence-gap' }, ['Confidence: unavailable']));
+    trustBadges.push(el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'issue-confidence-gap' }, [CONFIDENCE_UNAVAILABLE]));
   }
   return el('article', { class: 'gw-card', 'data-test': 'issue-dossier-card', 'data-id': record.statement_id }, [
     el('p', { class: 'gw-muted' }, [`Record ${record.statement_id}`]),
