@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T10:09:04-06:00
-last_task: "C7b pages-civic — partial-date precision defect fixed (PR #171); storage duplication filed (#170)"
+last_run: 2026-07-31T10:42:20-06:00
+last_task: "C8 security — unsafe URL schemes refused in every supplied href (PR #173)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -133,7 +133,7 @@ current_area_checklist:
   C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
   C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
   C7b_dev_improvement_polish: done  # iteration 45 — intent applied to the web surface (the SKILL carries 12 iOS references). Runtime-safety hunt found a real precision defect: a partial date '2026-07' was filed as a DAY labelled "NaN"; malformed values gave month label `undefined`. Fixed by routing non-full dates to the existing undated bucket (PR #171), red-proofed. Duplication finding filed as #170
-  C8_security_reviewed: pending  # iteration 41 — not run for this area
+  C8_security_reviewed: done  # iteration 46 — found and fixed a REAL exploitable path: supplied source URLs were bound to href with no scheme validation anywhere in src/. Planting javascript:alert(1) produced 4 live anchors on the newsletter detail view. Fixed centrally in every module's el() helper via safeExternalHref (PR #173), control-character bypasses covered, red-proofed end to end
   C9_performance_reviewed: pending  # iteration 41 — not run for this area
   C10_cross_platform_parity: "n/a (no second platform)"
   C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 35
+iteration_count: 36
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -578,3 +578,28 @@ Verification commands for this project (all three, every iteration that changes 
   Not a bug (both correctly defensive), so filed rather than fixed — but `local-store.ts` claims to
   be 'the MOTY localStorage contract in one place' and that is already untrue.
 - [2026-07-31T10:09:04-06:00] ITERATION 45 — 1067 tests / 68 files green (was 1063), tsc clean, build:all 0.
+- [2026-07-31T10:42:20-06:00] ITERATION 46 — area: pages-civic — check **C8 done. A real exploitable path, proven
+  before it was fixed.** Source URLs originate in INGESTED EXTERNAL DOCUMENTS — untrusted input
+  that merely arrives via our own backend — and were bound straight to `href` with **no scheme
+  validation anywhere in `src/`**. Planting `javascript:alert(1)` on the newsletter fixture and
+  rendering the detail view produced **4 live anchors with `href="javascript:..."`**.
+- [2026-07-31T10:42:20-06:00] MEASURED — **`assertWebSafe` does NOT cover this.** It guards raw-path and locator
+  leakage; a `javascript:` URL passes it cleanly (verified). Two guards that sound adjacent can
+  cover disjoint concerns — the existence of one is not evidence about the other.
+- [2026-07-31T10:42:20-06:00] ITERATION 46 — fixed with ONE validator (`safeExternalHref`, `src/data/web-safe.ts`)
+  applied **centrally in all 25 `el()` helpers** rather than at ~28 call sites: patching call sites
+  invites the one that gets missed, and the central form covers every FUTURE href for free. A
+  refused link keeps its text and gets no href — nothing clickable and no dead affordance, which is
+  the rule C7 established one iteration earlier. **Control-character bypasses are covered**:
+  browsers read `java\tscript:` as `javascript:`, so the validator strips control chars BEFORE
+  testing the scheme; a naive `startsWith()` would have shipped a hole.
+- [2026-07-31T10:42:20-06:00] MEASURED — **`info-note.ts` and `public-landing.ts` deliberately NOT patched.** They are
+  in `PUBLIC_LOCAL_MODULES`, so importing `src/data/web-safe` would break the public bundle
+  boundary; they render no backend data. `build:all` passing is what proves the boundary held —
+  the guard caught the design constraint before the code did.
+- [2026-07-31T10:42:20-06:00] LESSON — **a zero result from a probe is a claim about the probe.** Four attempts were
+  needed to demonstrate this: the first planted on a key the fixture did not use (0 planted), the
+  second skipped null values, the third rendered the archive view which shows no source links. Only
+  the fourth — detail view, correct key shape, non-null values — showed the 4 hostile anchors.
+  **Three separate 'clean' results would each have been a false all-clear on a live vulnerability.**
+- [2026-07-31T10:42:20-06:00] ITERATION 46 — 1073 tests / 70 files green (was 1067), tsc clean, build:all 0.
