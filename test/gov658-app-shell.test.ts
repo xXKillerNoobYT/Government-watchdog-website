@@ -675,3 +675,46 @@ describe('GOV-73 print stylesheet', () => {
     expect(printBlock()).toContain('position: static');
   });
 });
+
+
+// GOV-71: the baseline's account chip is `J. Citizen ✓ ID · manage`. The identity
+// half must never be reproduced; the `manage` half must not vanish. Both halves
+// are asserted because they fail in opposite directions — reproducing identity
+// would be an invented claim, and dropping the slot is the disappearing-slot
+// failure the handoff forbids.
+describe('GOV-71 account chip manage affordance', () => {
+  const chip = (): HTMLElement => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    renderShell(root, { active: '/home', origin: 'live_server', fixture: false });
+    const el = root.querySelector<HTMLElement>('[data-test="shell-account"]');
+    expect(el, 'account chip renders').not.toBeNull();
+    return el!;
+  };
+
+  it('renders a manage affordance that is present but non-actionable', () => {
+    const manage = chip().querySelector<HTMLButtonElement>('[data-test="shell-account-manage"]');
+    expect(manage, 'manage affordance exists').not.toBeNull();
+    expect(manage!.disabled).toBe(true);
+    expect(manage!.getAttribute('aria-disabled')).toBe('true');
+    // Navigates nowhere: not a link, no href anywhere in the slot.
+    expect(manage!.tagName).toBe('BUTTON');
+    expect(manage!.querySelector('a,[href]')).toBeNull();
+  });
+
+  it('names the absent contract rather than asserting an identity', () => {
+    const manage = chip().querySelector('[data-test="shell-account-manage"]')!;
+    const title = manage.getAttribute('title') ?? '';
+    expect(title).toContain('/v1/session');
+    expect(title).toContain('access-request');
+    expect(title.toLowerCase()).not.toContain('signed in as');
+  });
+
+  it('exposes no person, email, or verified-ID glyph anywhere in the chip', () => {
+    const c = chip();
+    const surface = `${c.textContent ?? ''} ${c.getAttribute('title') ?? ''} ${c.innerHTML}`;
+    expect(surface).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/i);   // no email
+    expect(surface).not.toContain('✓');                        // no verified glyph
+    expect(surface).not.toMatch(/\bJ\.\s?Citizen\b/);          // no baseline persona
+  });
+});

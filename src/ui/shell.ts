@@ -301,6 +301,23 @@ function accountChip(): HTMLSpanElement {
     el('span', { id: descriptionId, class: 'gw-shell-sr-only' }, [
       'Private reviewer beta access. This browser chip does not expose or verify a person, email address, or identity.',
     ]),
+    // GOV-71: the baseline's chip is `J. Citizen ✓ ID · manage`. The identity half is
+    // deliberately not reproduced — no name, no email, no verified glyph may enter this
+    // DOM. But `manage` was dropped entirely, and a designed slot that VANISHES is the
+    // failure the handoff forbids: a reviewer diffing against the baseline cannot tell
+    // whether account management is unbuilt, removed, or an oversight.
+    //
+    // This is DG, not CS, and the distinction is load-bearing: a contract genuinely IS
+    // awaited (GET /v1/session plus the access-request flow), and the ledger classes it
+    // DG for that reason. CS forbids naming a backend contract; this slot must name one.
+    el('button', {
+      type: 'button',
+      class: 'gw-shell-account-manage',
+      'data-test': 'shell-account-manage',
+      disabled: '',
+      'aria-disabled': 'true',
+      title: 'Account management is unavailable: the server-authoritative GET /v1/session and the approved access-request flow have not shipped. Nothing here is signed in.',
+    }, ['manage']),
   ]);
 }
 
@@ -687,6 +704,7 @@ html,body{margin:0}
 .gw-shell-mode-btn{appearance:none;border:0;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);min-height:var(--gw-tap-min);padding:7px 15px;border-radius:var(--gw-radius-pill);cursor:pointer}
 .gw-shell-mode-btn:hover{color:var(--gw-text)}
 .gw-shell-mode-btn[aria-pressed="true"]{background:var(--gw-accent);color:var(--gw-accent-text-on)}
+.gw-shell-account-manage{appearance:none;min-height:var(--gw-tap-min);margin-left:6px;padding:0 6px;border:0;border-radius:6px;background:transparent;color:var(--gw-text-muted);font:700 var(--gw-text-badge)/1 var(--gw-font);text-decoration:underline;text-underline-offset:3px;cursor:not-allowed;opacity:.8}
 .gw-shell-print{appearance:none;min-height:var(--gw-tap-min);padding:6px 13px;border:1.5px solid var(--gw-rule-strong);border-radius:8px;background:transparent;color:var(--gw-text);font:700 var(--gw-text-badge)/1 var(--gw-font);cursor:pointer}
 .gw-shell-print:hover{background:var(--gw-surface-well)}
 .gw-shell-mode-btn:focus-visible,.gw-shell-location:focus-visible,.gw-shell-brand:focus-visible,.gw-shell-tab:focus-visible,.gw-shell-print:focus-visible,.gw-shell-footer-links a:focus-visible{outline:2px solid var(--gw-accent);outline-offset:2px}

@@ -66,7 +66,15 @@ will resolve it.
 | Supporter-plan upsell (baseline's "$25/yr Local Data Geek") | Home (Simple) | `#/home` | ✅ #75 |
 | "Fund your area" CTA | Location | `#/location` | ✅ #87 |
 | Explainer video | Explainer; Home | `#/explainer`, `#/home` | ✅ shipped earlier |
-| Account "manage" affordance | Header account chip | all routes | ⏳ **pending — #71** |
+
+**Removed 2026-07-31 — the account "manage" affordance.** It was listed here as CS
+pending #71. It is **DG**, and the Global-shell table above has always said so: a contract
+genuinely is awaited — server-authoritative `GET /v1/session` plus the approved
+access-request flow. #71's own acceptance criteria require the copy to **name that
+contract**, which is exactly what CS forbids. Shipped as a disabled `manage` control whose
+title names the absent contract (`src/ui/shell.ts`, `accountChip`). **Second phantom removed
+from this registry** — both arrived the same way: the table was populated from an issue's
+prose instead of from this ledger's own per-slot assignments.
 
 **Removed 2026-07-31 — "⌘K command palette".** It was listed here on the assumption that the
 baseline designed a palette. It does not: `reference/README.md:21` specifies a *"search box
