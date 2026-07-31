@@ -222,6 +222,16 @@
   because of exactly those files, so the accident left it current and unblocked. That is luck,
   not a justification.
 
+- **[2026-07-31] The running page catches copy the suite is happy with.** #86 deleted the
+  delivery toggles and every test passed — while the page still said *"changing delivery
+  toggles only updates this browser"* about controls that no longer existed. Neither string
+  had an exact-copy assertion, so the suite could not see it. **After deleting a UI
+  affordance, read the rendered page for prose that describes it**, not just the tests.
+- **[2026-07-31] Inner double quotes break a `-m` commit message in zsh.** A message
+  containing `"expected <button …> to be null"` closed the outer quote and zsh tried to
+  redirect from `button`. Use `git commit -F <file>` (heredoc) whenever the message quotes
+  test output — same class as the `${b}` history-modifier gotcha already in CLAUDE.md.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
