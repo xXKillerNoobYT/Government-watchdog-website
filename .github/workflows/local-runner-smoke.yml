@@ -17,4 +17,4 @@ jobs:
           sw_vers || true
           uname -a
       - name: Verify checkout works
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7

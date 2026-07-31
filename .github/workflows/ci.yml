@@ -30,7 +30,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install dependencies (clean, from lockfile)
         run: npm ci --no-audit --no-fund
@@ -41,8 +41,18 @@ jobs:
       - name: Unit tests (vitest)
         run: npm test
 
-      - name: Integration smoke — 5 assertions (raw-path / label / link / rollup / cycle)
-        run: npm run test:smoke
+      # GOV-105: the dedicated `npm run test:smoke` step was removed here — `npm test`
+      # (vitest run) already matches test/integration-smoke.test.ts, and the file's own
+      # header says so. Measured 1.1s of a duplicated ~70-module jsdom boot.
+      #
+      # The other two duplications in that issue are KEPT, deliberately, and measured:
+      #   * the standalone `npm run typecheck` step is 2.1s and fails BEFORE the 11.1s
+      #     suite. Removing it would surface a type error ~13s later, inside build:all.
+      #   * `build:public` and `build:private-beta` each run `tsc --noEmit` inline. That
+      #     is not waste: each lane script must be independently safe when run alone, so
+      #     `npm run build:public` on its own can never emit from broken types.
+      # Total real saving is ~1.1s of a ~70-90s job; the issue's premise that work is
+      # duplicated is correct, its implicit premise that all three are waste is not.
 
       - name: Public + private-beta production builds
         run: npm run build:all
