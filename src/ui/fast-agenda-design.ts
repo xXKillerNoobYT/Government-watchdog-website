@@ -36,6 +36,38 @@ interface ProcessStep {
   state: StepState;
 }
 
+/**
+ * GOV-78 — the video-status ladder from `reference/README.md` §Interactions & Behavior,
+ * applied "everywhere video is referenced".
+ *
+ * **The wording is frozen and the state is SUPPLIED — nothing here is computed from a
+ * date.** The ladder reads like an age bucket, which is exactly the trap: deriving
+ * "missing (7d+)" in the browser would be inventing a claim about a public body's
+ * publication record from a clock. The fixture states which rung a row sits on; this map
+ * only turns that into the design's words.
+ */
+type VideoStatus = 'pending-release' | 'pending-transcript' | 'missing';
+
+const VIDEO_LADDER: Readonly<Record<VideoStatus, string>> = {
+  'pending-release': 'pending release (0–2d)',
+  'pending-transcript': 'pending transcript (2–7d)',
+  missing: 'missing (7d+, flagged)',
+};
+
+/**
+ * One PAST MEETINGS & ANALYSES row. A row either has a video timestamp, or an explicit
+ * note saying why it has none — never silence.
+ */
+interface PastMeetingRow {
+  label: string;
+  /** Present only when the fixture supplies a video reference, e.g. '0:41:20'. */
+  timestamp?: string;
+  /** Which rung of the ladder this row's video sits on. Supplied, never derived. */
+  videoStatus?: VideoStatus;
+  /** Stated reason there is no video at all, e.g. 'document event — no video'. */
+  vidNote?: string;
+}
+
 interface AgendaItem {
   id: string;
   number: string;
@@ -49,7 +81,12 @@ interface AgendaItem {
   decision: string;
   flag: string;
   process: ProcessStep[];
-  history: string[];
+  /** GOV-78: typed rows replacing the old untyped `history: string[]` prose. */
+  pastMeetings: PastMeetingRow[];
+  /** Issue keys that must already exist in ISSUE_CARDS. No similarity matching. */
+  connectedIssues: string[];
+  /** ROLES, never names — reference/README.md §State Management. */
+  whoDecides: string[];
   receipts: string[];
 }
 
@@ -98,7 +135,12 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: 'hearing — Jul 21', state: 'current' },
       { label: 'ordinance readings', state: 'next' },
     ],
-    history: ['Jul 13 — planning recommendation signed', 'Jun 10 — annexation report prepared'],
+    pastMeetings: [
+      { label: '2nd reading', timestamp: '0:41:20', videoStatus: 'pending-transcript' },
+      { label: 'Planning recommendation', vidNote: 'document event — no video' },
+    ],
+    connectedIssues: ['annexation', 'land-use'],
+    whoDecides: ['Town Council', 'Planning & Zoning Commission'],
     receipts: ['Public hearing notice', 'Synthetic staff report reference', 'Draft findings and motion'],
   },
   {
@@ -121,7 +163,11 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: 'pull requests', state: 'next' },
       { label: 'single vote', state: 'next' },
     ],
-    history: ['Jul 17 — packet posted', 'Jul 7 — prior meeting minutes drafted'],
+    pastMeetings: [
+      { label: 'Consent calendar read', vidNote: 'document event — no video' },
+    ],
+    connectedIssues: ['town-lease'],
+    whoDecides: ['Town Council'],
     receipts: ['Draft minutes', 'Claims register', 'Service-agreement index'],
   },
   {
@@ -144,7 +190,12 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: '3rd — Jul 21', state: 'current' },
       { label: 'effective-date check', state: 'next' },
     ],
-    history: ['Jul 7 — second reading recorded', 'Jun 23 — first reading recorded'],
+    pastMeetings: [
+      { label: '1st reading', timestamp: '0:12:05', videoStatus: 'pending-release' },
+      { label: 'Committee referral', vidNote: 'document event — no video' },
+    ],
+    connectedIssues: ['annexation', 'ludc'],
+    whoDecides: ['Town Council', 'Town Attorney'],
     receipts: ['Synthetic ordinance text', 'Prior-reading minute references'],
   },
   {
@@ -167,7 +218,11 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: '1st reading', state: 'current' },
       { label: '2nd + 3rd', state: 'next' },
     ],
-    history: ['Jul 13 — recommendation posted', 'Jun 10 — report prepared'],
+    pastMeetings: [
+      { label: '1st reading', timestamp: '1:03:44', videoStatus: 'missing' },
+    ],
+    connectedIssues: ['annexation'],
+    whoDecides: ['Town Council'],
     receipts: ['Draft ordinance', 'Synthetic annexation report', 'Recommendation reference'],
   },
   {
@@ -190,7 +245,12 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: 'approval — Jul 21', state: 'current' },
       { label: 'payment record', state: 'next' },
     ],
-    history: ['Jul 9 — four applications listed in packet'],
+    pastMeetings: [
+      { label: 'Utilities update', timestamp: '0:27:10', videoStatus: 'pending-transcript' },
+      { label: 'Rate schedule filed', vidNote: 'document event — no video' },
+    ],
+    connectedIssues: ['water', 'fees'],
+    whoDecides: ['Town Council', 'Utilities Department'],
     receipts: ['Synthetic staff report', 'Pay applications 1–4', 'Materials-credit worksheet'],
   },
   {
@@ -212,7 +272,11 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: 'approval — Jul 21', state: 'current' },
       { label: 'cost reporting', state: 'next' },
     ],
-    history: ['Jul 17 — engagement materials listed with packet'],
+    pastMeetings: [
+      { label: 'Executive session noted', vidNote: 'document event — no video' },
+    ],
+    connectedIssues: ['annexation'],
+    whoDecides: ['Town Council', 'Town Attorney'],
     receipts: ['Synthetic engagement-letter reference', 'Hourly-terms reference'],
   },
   {
@@ -236,7 +300,11 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: 'selection — Jul 21', state: 'current' },
       { label: 'contract + rewrite', state: 'next' },
     ],
-    history: ['Jul 18 — evaluation V2 listed', 'Jun 25–30 — revised proposals listed'],
+    pastMeetings: [
+      { label: 'Consultant scoping', timestamp: '0:08:33', videoStatus: 'pending-release' },
+    ],
+    connectedIssues: ['ludc', 'land-use'],
+    whoDecides: ['Planning & Zoning Commission'],
     receipts: ['Synthetic RFP reference', 'Evaluation V1/V2 comparison placeholder', 'Proposal index'],
   },
   {
@@ -259,7 +327,12 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
       { label: '2nd — Aug 4', state: 'next' },
       { label: '3rd — Aug 18', state: 'next' },
     ],
-    history: ['Jul 13 — amendment updates listed', 'Jul 10 — exemptions report listed'],
+    pastMeetings: [
+      { label: '2nd reading', timestamp: '0:55:02', videoStatus: 'missing' },
+      { label: '1st reading', timestamp: '0:19:48', videoStatus: 'pending-transcript' },
+    ],
+    connectedIssues: ['land-use', 'short-term-rentals'],
+    whoDecides: ['Town Council', 'Planning & Zoning Commission'],
     receipts: ['Synthetic amendment text', 'Synthetic exemptions text'],
   },
 ];
@@ -291,6 +364,14 @@ const ISSUE_CARDS: readonly IssueCard[] = [
   { issueKey: 'short-term-rentals', title: 'Short-term-rental bill draft', stage: 6, jurisdiction: 'state', body: 'Interim Committee · property rights', last: 'Jul 13 — draft advanced', next: 'Fall — draft vote', receipts: 4 },
   { issueKey: 'water', title: 'Sewer-capacity follow-up', stage: 6, jurisdiction: 'town', body: 'Town Council · utilities', last: 'Jul 7 — capacity cited', next: 'Engineering follow-up', receipts: 2 },
 ];
+
+/**
+ * GOV-78: the ONLY issue keys a connected-issue pill may target, DERIVED from
+ * ISSUE_CARDS rather than listed, so the allow-list cannot drift from the fixture.
+ * Exported for the test that proves no pill points at an invented edge.
+ */
+export const FIXTURE_ISSUE_KEYS: ReadonlySet<string> = new Set(ISSUE_CARDS.map((card) => card.issueKey));
+
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -411,9 +492,41 @@ function openDetails(
   const titleId = `gw-fa-modal-title-${item.id}`;
   const receiptId = `gw-fa-modal-receipts-${item.id}`;
 
-  const history = el('section', { class: 'gw-fa-modal-section' }, [
-    el('h3', {}, ['Past activity — newest first']),
-    el('ul', {}, item.history.map((event) => el('li', {}, [event]))),
+  // GOV-78 — PAST MEETINGS & ANALYSES, newest first, per the design's fixed section order.
+  // A row shows either a video timestamp with its ladder rung, or an explicit note saying
+  // why there is no video. Never silence, and never an age computed from a date.
+  const history = el('section', { class: 'gw-fa-modal-section', 'data-test': 'past-meetings' }, [
+    el('h3', {}, ['Past meetings & analyses — newest first']),
+    el('ul', {}, item.pastMeetings.map((row) => el('li', { 'data-test': 'past-meeting-row' }, [
+      el('span', {}, [row.label]),
+      row.timestamp
+        ? el('span', { class: 'gw-fa-vid-chip', 'data-test': 'past-meeting-video' }, [
+            `▶ ${row.timestamp}`,
+            ...(row.videoStatus ? [el('em', { class: 'gw-fa-vid-status' }, [` · ${VIDEO_LADDER[row.videoStatus]}`])] : []),
+          ])
+        : el('span', { class: 'gw-fa-vid-note', 'data-test': 'past-meeting-no-video' }, [
+            row.vidNote ?? 'document event — no video',
+          ]),
+    ]))),
+  ]);
+
+  // CONNECTED ISSUES. Pills render ONLY for keys that already exist in ISSUE_CARDS — an
+  // unknown key is dropped rather than linked, because inventing an edge is exactly the
+  // matrix's "No invented timeline edge" prohibition. Nothing here is matched or inferred.
+  const connected = el('section', { class: 'gw-fa-modal-section', 'data-test': 'connected-issues' }, [
+    el('h3', {}, ['Connected issues']),
+    el('div', { class: 'gw-fa-pill-row' },
+      item.connectedIssues.filter((key) => FIXTURE_ISSUE_KEYS.has(key)).map((key) => el('a', {
+        class: 'gw-fa-issue-pill',
+        'data-test': 'connected-issue-pill',
+        href: `#/agenda?issue=${key}`,
+      }, [key]))),
+  ]);
+
+  // WHO DECIDES — roles only. reference/README.md §State Management: no person-naming.
+  const whoDecides = el('section', { class: 'gw-fa-modal-section', 'data-test': 'who-decides' }, [
+    el('h3', {}, ['Who decides']),
+    el('ul', {}, item.whoDecides.map((role) => el('li', { 'data-test': 'who-decides-role' }, [role]))),
   ]);
   const receipts = el('section', { class: 'gw-fa-modal-section', id: receiptId }, [
     el('h3', {}, ['Receipts']),
@@ -441,7 +554,10 @@ function openDetails(
         el('h3', {}, ['Process']),
         processLadder(item.process),
       ]),
-      el('div', { class: 'gw-fa-modal-grid' }, [history, receipts]),
+      history,
+      connected,
+      whoDecides,
+      el('div', { class: 'gw-fa-modal-grid' }, [receipts]),
       el('footer', { class: 'gw-fa-modal-actions' }, [
         el('span', {}, [`Packet page ${item.page} · synthetic fixture reference`]),
         el('button', {
@@ -1466,6 +1582,13 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
 }
 
 export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
+.gw-fa-vid-chip{display:inline-flex;align-items:center;min-height:var(--gw-badge-min);font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);color:var(--gw-info-text)}
+.gw-fa-vid-status{font-style:normal;color:var(--gw-text-muted)}
+.gw-fa-vid-note{font-size:var(--gw-text-badge);color:var(--gw-text-muted)}
+.gw-fa-pill-row{display:flex;flex-wrap:wrap;gap:var(--gw-space-2)}
+.gw-fa-issue-pill{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);padding:0 var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:999px;font-size:var(--gw-text-sm);font-weight:700;color:var(--gw-info-text);text-decoration:none}
+.gw-fa-issue-pill:hover{text-decoration:underline}
+[data-test="past-meeting-row"]{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);align-items:baseline}
 .gw-fast-agenda-design-root{min-width:0}
 .gw-fa,.gw-fa *{box-sizing:border-box}
 .gw-fa{min-height:100%;background:var(--gw-page-bg);color:var(--gw-text);font:var(--gw-text-body)/var(--gw-leading) var(--gw-font)}

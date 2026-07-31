@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import agendaBoardData from '../src/fixtures/agenda-board-projection.json';
 import sampleAgendaBoardData from '../src/fixtures/agenda-board-projection.sample.dev.json';
 import type { AgendaBoard } from '../src/types/agenda-board';
-import { FAST_AGENDA_DESIGN_STYLE, renderFastAgendaDesign } from '../src/ui/fast-agenda-design';
+import { FAST_AGENDA_DESIGN_STYLE, renderFastAgendaDesign , FIXTURE_ISSUE_KEYS } from '../src/ui/fast-agenda-design';
 
 let root: HTMLElement;
 const REVIEWED_BOARD = agendaBoardData as unknown as AgendaBoard;
@@ -496,5 +496,93 @@ describe('Fast Agenda reading mode', () => {
     expect(FAST_AGENDA_DESIGN_STYLE).toMatch(
       /@media \(max-width:720px\)\{[\s\S]*?\.gw-fa-modal-grid\{grid-template-columns:1fr\}/,
     );
+  });
+});
+
+// GOV-78 — the three missing sections of the agenda analysis modal.
+//
+// The design fixes a section order: action chip, Follow pill, "What's really being
+// decided", LANGUAGE WATCH, PAST MEETINGS & ANALYSES, CONNECTED ISSUES, WHO DECIDES,
+// RECEIPTS, footer. The last three named sections were absent, and the untyped
+// `history: string[]` gave nothing typed to render.
+describe('GOV-78 agenda analysis modal — past meetings, connected issues, who decides', () => {
+  function openFirstModal(): HTMLElement {
+    renderFixture();
+    root.querySelector<HTMLButtonElement>('[data-test="open-details"]')!.click();
+    const modal = root.querySelector<HTMLElement>('[data-test="agenda-modal"]');
+    expect(modal).not.toBeNull();
+    return modal!;
+  }
+
+  it('renders all three sections in the design order, after LANGUAGE WATCH', () => {
+    const modal = openFirstModal();
+    for (const id of ['past-meetings', 'connected-issues', 'who-decides']) {
+      expect(modal.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(1);
+    }
+    // Order is part of the design, so assert positions rather than mere presence.
+    const order = [...modal.querySelectorAll('[data-test]')]
+      .map((n) => n.getAttribute('data-test'))
+      .filter((t) => ['language-watch', 'past-meetings', 'connected-issues', 'who-decides', 'receipts-disclaimer'].includes(t ?? ''));
+    expect(order).toEqual(['language-watch', 'past-meetings', 'connected-issues', 'who-decides', 'receipts-disclaimer']);
+  });
+
+  it('every past-meeting row has either a video timestamp or an explicit no-video note', () => {
+    const modal = openFirstModal();
+    const rows = modal.querySelectorAll('[data-test="past-meeting-row"]');
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      const video = row.querySelector('[data-test="past-meeting-video"]');
+      const note = row.querySelector('[data-test="past-meeting-no-video"]');
+      // Exactly one — never both, and never silence.
+      expect((video !== null) !== (note !== null), row.textContent ?? '').toBe(true);
+      // An EMPTY note is silence too. Red proof caught this: blanking the note text kept
+      // the element present, so an element-presence check alone passed on a blank row.
+      expect((video ?? note)?.textContent?.trim(), row.textContent ?? '').toBeTruthy();
+    }
+  });
+
+  it('uses the frozen three-state ladder wording and never a computed age', () => {
+    const modal = openFirstModal();
+    const statuses = [...modal.querySelectorAll('.gw-fa-vid-status')].map((n) => n.textContent?.trim());
+    expect(statuses.length).toBeGreaterThan(0);
+    const allowed = ['· pending release (0–2d)', '· pending transcript (2–7d)', '· missing (7d+, flagged)'];
+    for (const s of statuses) expect(allowed, s ?? '').toContain(s);
+  });
+
+  it('connected pills link only to issue keys that already exist in the fixture', () => {
+    const modal = openFirstModal();
+    const pills = [...modal.querySelectorAll('[data-test="connected-issue-pill"]')];
+    expect(pills.length).toBeGreaterThan(0);
+    // Assert against the module's own DERIVED key set. The first version of this test
+    // read `[data-issue-key]` off the stand rows — an attribute that does not exist — so
+    // the set was empty and the containment check was skipped by its own guard. A
+    // conditional assertion is not an assertion.
+    expect(FIXTURE_ISSUE_KEYS.size).toBeGreaterThan(0);
+    for (const pill of pills) {
+      const key = pill.getAttribute('href')?.split('issue=')[1];
+      expect(key, `pill ${key}`).toBeTruthy();
+      expect([...FIXTURE_ISSUE_KEYS], `pill ${key}`).toContain(key);
+    }
+  });
+
+  it('who-decides entries are roles, never person names', () => {
+    const modal = openFirstModal();
+    const roles = [...modal.querySelectorAll('[data-test="who-decides-role"]')].map((n) => n.textContent ?? '');
+    expect(roles.length).toBeGreaterThan(0);
+    for (const role of roles) {
+      // A role names a body or office. A person-name pattern (title + surname, or an
+      // initial + surname) is what README §State Management forbids.
+      expect(role).not.toMatch(/\b(Mayor|Councilmember|Trustee|Commissioner|Chair|Clerk)\s+[A-Z][a-z]+/);
+      expect(role).not.toMatch(/\b[A-Z]\.\s*[A-Z][a-z]+/);
+    }
+  });
+
+  it('reviewed lane gains no new claims and keeps its decision-context gap', () => {
+    renderReviewed();
+    for (const id of ['past-meetings', 'connected-issues', 'who-decides']) {
+      expect(root.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    expect(root.textContent).not.toContain('pending transcript (2–7d)');
+    expect(root.textContent).not.toContain('document event — no video');
   });
 });
