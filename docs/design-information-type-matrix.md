@@ -214,7 +214,8 @@ and the backend-supplied trust vocabulary.
 | Delivery settings | **DG** | Email, text, push, meeting-eve, and digest controls remain disabled on the reviewed route. | `GET/PUT /v1/me/alert-preferences` with verified recipient/channel state and delivery policy. |
 | Trigger rules | **DG** | No agenda-posted, document-changed, deadline, meeting-eve, or missing-video event is inferred. | Backend trigger definitions and source-version/meeting event producers with provenance. |
 | Alert cards and delivery examples | **GS** | Synthetic severity cards render only in explicit reviewer fixture mode. They are not sourced from `NotificationResponse`. | Replace only with the civic alerts contract, never the account-notification endpoint. |
-| Read state and delivery-toggle behavior in fixture mode | **DL** | Browser-only interaction preview; it sends nothing and registers no recipient. | Mark-read and preference APIs before any persistence or delivery claim. |
+| Read state in fixture mode | **DL** | Browser-only interaction preview; it sends nothing and registers no recipient. `gw_alerts_read` only. | Mark-read API before any persistence claim. |
+| Delivery-channel controls in fixture mode | **CS** | No channel, recipient verification, or delivery service exists in any lane, so the fixture lane shows the `COMING SOON` marker naming all five channels and stores nothing. It previously rendered persisted `role="switch"` toggles defaulting ON — a switch that survives a reload reads as a configured setting whatever the surrounding notice says (#86). | None — this is an unbuilt feature, not an awaited contract. The reviewed lane's row above keeps `GET/PUT /v1/me/alert-preferences` as the contract it awaits. |
 
 ## Hard prohibitions
 
