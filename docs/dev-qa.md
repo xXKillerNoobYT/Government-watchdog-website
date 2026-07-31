@@ -68,8 +68,8 @@ absorbed" move this loop refuses. That re-scope body is Q3's territory and stays
 **Measurement:** C7 (`usability-enforcer`) is specified over "this area's **iOS pages**";
 C10 (`cross-platform-qa`) over "**iOS native ↔ Tauri/React** match". `grep -ril tauri .`
 returns **zero hits anywhere in this repo**. The `ios/GovWatchdogApp/` companion app exists
-(90 Swift files) but is not wired into any npm script and is not "pages" in the enforcer's
-sense.
+(**15** Swift files — 13 Sources, 2 Tests; an earlier note said 90, corrected 2026-07-31 by
+count) but is not wired into any npm script and is not "pages" in the enforcer's sense.
 
 **Consequence:** both are required for area graduation, so **no area on this project can ever
 graduate** while they stand as written. `build-guards` is the first area to hit this.
@@ -113,7 +113,18 @@ decisions. They still need owner merge like any other change.*
 
 ## Repo memory
 
-### Q5 — Ratify the root `CLAUDE.md`? _pending_
+### Q5 — Ratify the root `CLAUDE.md`? _pending — PREMISE CORRECTED 2026-07-31_
+
+**The original framing no longer holds.** This question was filed on the assumption that
+"the PR is the ratification (nothing lands without an owner merge)". Merge authority moved
+to this loop on 2026-07-29, so the file landed on the loop's own merge — nobody ratified it.
+It has since been amended repeatedly (CS class, `grep -a` caveat added then removed, the
+stale `test/` count replaced, the coming-soon primitive pointer) and is in active daily use
+by both routines, so it is load-bearing but **still unreviewed by the owner**.
+
+Mirrored to the owner-facing lane (Government Watchdog Q&A page) 2026-07-31, because an
+owner decision parked in an agent-facing file is not actually asked. Kept open here as the
+technical record.
 
 Both AUTO GO routines independently found that this repo had **no `CLAUDE.md`**, so an agent
 starting cold had no in-repo statement of the binding contract, the three-command

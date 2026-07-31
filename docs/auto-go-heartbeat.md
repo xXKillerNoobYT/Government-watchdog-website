@@ -76,37 +76,48 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: honesty-ledger
-# Iteration 11 advanced `current_area` without resetting the checklist, so iterations
-# 11-13 did honesty-ledger work under a checklist whose every entry described
-# build-guards. Corrected in iteration 14: build-guards' real state is preserved below
-# rather than discarded, and honesty-ledger gets its own evaluated checklist.
+current_area: intake-upload
+graduated_areas:
+  honesty-ledger:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a — zero pending, zero blocked. FIRST area to graduate on either GOV repo.
+    shipped: "#69 (P0, the CS binding class) unblocked #86, #75 and #87; area backlog went 4 -> 0. C7 was BOUND to the web surface rather than inherited as n/a, producing the CS-inertness sweep. C4 measured coverage by mutation and deleted the one gap as dead code."
 parked_areas:
   build-guards:
     parked_at: 2026-07-31
     state: 15 of 16 resolved (12 done, 3 n/a); C6 blocked
     blocker: "C6 — private chunk 855.75 kB > 500 kB (#49). Owner decision Q-E: lazy-loading the 380 KB gated-fixture corpus creates async render states the binding contract must declare. A manualChunks split would silence the warning while changing zero initial-load bytes, destroying the only signal pointing at the problem."
     resume_when: Q-E is answered; nothing else in the area is agent-reachable.
+  deploy-release:
+    parked_at: 2026-07-31
+    state: not started
+    blocker: "Measured, not assumed: 2 of 4 issues carry owner-decision (#109 needs a hosted deploy on HOLD per GOV-420, #66 is a policy definition), #119 is blocked-by a backend issue that does not exist yet (Government-watchdog#195), and #95 touches BACKEND_REF which is pinned while backend #123 is incomplete. Entering it would relocate the block, not clear it."
+    resume_when: any of those four unblocks.
+# Next in rotation after honesty-ledger(5) is build-guards(6) — parked — then
+# deploy-release(7) — gated. intake-upload(8) is the first AVAILABLE area, per the
+# recorded rule that rotation order is a default and availability outranks it.
+# NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
+# largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: done  # bound contracts (docs/design-information-type-matrix.md, docs/content-quality-baseline.md) both exist and the matrix was substantially extended this session by #69 — CS class, CS-vs-DG section, registry, reviewer-checklist bullet
-  C1b_plan_vs_code_drift_clean: done  # iteration 14 — audited all six CS registry rows against the code, which is the drift check this area affords. Two did not match: "⌘K command palette" was a PHANTOM (the baseline designs a search box with a ⌘K shortcut, not a palette; the shell implements that and disclaims the palette in a comment and the control title) and was removed, and the account "manage" row is genuinely unmarked and now labelled pending #71. Also corrected a three-way class conflict this loop itself introduced in iteration 11
-  C2_qa_resolved: done  # no honesty-ledger question is pending. dev-qa Q3/Q4/Q5 and GOV Q&A Q-A..Q-E are loop-level or other-area
-  C2b_github_issues_ingested: done  # all four area issues ingested and closed this session (#69, #86, #75, #87)
-  C3_hunt_fix_clean: "n/a (retired 2026-07-30)"  # retired from the shared auto-go.md; does not count against graduation
-  C4_tests_present: done  # iteration 15 — coverage MEASURED BY MUTATION, not by grep. Broke each uncertain export to a no-op and ran the suite: renderPrivateUnavailableInfoNote 7 tests fail, renderPrivateProjectionInfoNote 5, renderDefinedInfoNote 47, renderExplainer 1 — all genuinely covered, mostly behaviourally through route/page tests rather than direct imports, which is why a grep-based audit understated them. renderPrivateDefinedInfoNote left 980/980 GREEN: not merely untested but DEAD (zero call sites repo-wide since the commit that added it). Deleted rather than tested — the coming-soon primitives were already covered including the style-injection idempotency case
-  C5_tests_pass: done  # 980/980 across 63 files at iteration 13, tsc clean, build:all exit 0 both lanes
-  C6_build_warnings_zero: done  # no warning originates from this area's paths. The one repo warning is the private-chunk size (#49), which belongs to build-guards and is parked there — it is not inherited by every area the rotation touches
-  C7_ui_polish: done  # iteration 16 — C7 BOUND to this repo's web surface rather than inherited as n/a, honouring the iteration-10 commitment. usability-enforcer scanner 5 (SQL vs schema) is n/a on a frontend and scanner 6 (plan alignment) is C1b's job; scanners 2 (every control does something) and 4 (no dead ends / trapped state) translate into one product-specific property — a COMING SOON marker must be INERT — now enforced across 11 routes x 2 lanes by a permanent sweep, red-proved
-  C7b_dev_improvement_polish: done  # iteration 17 (also carrying the hunting mandate C3 handed to C7b/C8/C9). Runtime safety: no HTML-string sinks in any bound path; el() uses createTextNode for children and setAttribute only with authored literals, so there is no dynamic-attribute or javascript: URI path. Hunt finding, measured not assumed: all 7 comingSoon* call sites pass AUTHORED LITERALS with zero ${} interpolation — recorded as a reviewer-checklist rule in the owning contract rather than automated, per "measure the speculative hole before building for it"
-  C8_security_reviewed: done  # iteration 17 — grepped every unsafe sink (innerHTML/outerHTML/insertAdjacentHTML/document.write/eval/new Function) across coming-soon.ts, info-note.ts, explainer.ts, private-info-note.ts: ZERO. Text reaches the DOM only via document.createTextNode, so the feature/detail parameters are structurally escaped; no XSS path exists through the CS primitives
-  C9_performance_reviewed: done  # iteration 17 — MEASURED, not asserted: 10,000 markers built in 195.4ms (~0.02ms each) and exactly ONE #gw-coming-soon-style element in head afterwards, so the idempotency guard holds under load. This mattered because four new ensureComingSoonStyle call sites were added earlier this session; a per-marker injection would have been invisible in normal use
-  C10_cross_platform_parity: "n/a (no second platform)"  # repo-wide; `grep -ril tauri .` is zero and the iOS companion ships nothing the web build ships
-  C11_github_issues_resolved: done  # iteration 13 — `area:honesty-ledger` reached ZERO open issues; all four closed on evidence, none deferred
+  C1_plan_complete: pending
+  C1b_plan_vs_code_drift_clean: pending
+  C2_qa_resolved: pending
+  C2b_github_issues_ingested: pending
+  C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
+  C4_tests_present: pending
+  C5_tests_pass: pending
+  C6_build_warnings_zero: pending
+  C7_ui_polish: pending  # intake-upload RENDERS (gated upload, supplied-files drawer, supersede view), so C7 is live here and inherits the iteration-16 web binding recorded in area_bindings
+  C7b_dev_improvement_polish: pending
+  C8_security_reviewed: pending
+  C9_performance_reviewed: pending
+  C10_cross_platform_parity: "n/a (no second platform)"
+  C11_github_issues_resolved: pending
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 7  # iteration 17 overall; same day
+iteration_count: 8  # iteration 18 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -215,3 +226,7 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T03:10:00-06:00] ITERATION 16 — **why that property is the right binding.** A CS slot offering an operable control is simultaneously the pipeline's Severity-1 *hidden lock* (the user is invited to act on a feature that exists in no lane) and an honesty failure (the marker says "not built" while the DOM says "clickable"). #75, #86 and #87 each asserted inertness for their own slot; the new sweep asserts it for **every marker on 11 routes × 2 lanes**, so a slot added later cannot regress silently. It also forbids a backend-contract sentence inside a marker (that is DG's job) and requires the `COMING SOON` label, since an unlabelled CS slot is indistinguishable from a data gap — the exact collapse the class was created to prevent. **Guard-the-guard:** the sweep asserts `markersSeen > 0`, because a selector that stops matching would make the whole loop pass vacuously. **Red-proved:** injecting `<a href="#/checkout">` into `comingSoonNote` failed with the route named (`/explainer (reviewer=1)`); restored, 11/11. 981 tests / 63 files, tsc clean, `build:all` exit 0.
 - [2026-07-31T03:35:00-06:00] ITERATION 17 — area: honesty-ledger — checks: **C7b, C8, C9 all done**, run together because the owner's C3 decision folded the hunting mandate into exactly these three. **C8:** every unsafe DOM sink grepped across the four bound paths — `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`, `eval`, `new Function` — **zero**. `el()` attaches string children through `document.createTextNode` and sets attributes with `setAttribute` from authored literals only, so the `feature`/`detail` parameters are structurally escaped and no dynamic-attribute or `javascript:` URI path exists. **C9 measured rather than asserted:** 10,000 markers in **195.4ms** (~0.02ms each) with exactly **one** `#gw-coming-soon-style` element in head afterwards — the idempotency guard holds under load, which mattered specifically because four new `ensureComingSoonStyle` call sites were added earlier this session and a per-marker injection would be invisible in normal use.
 - [2026-07-31T03:35:00-06:00] ITERATION 17 — **C7b's hunt finding, and the decision not to automate it.** All seven `comingSoonNote`/`comingSoonChip` call sites pass **authored literal strings**, with zero `${…}` interpolation anywhere in a CS call. That property is worth protecting: interpolating a projection into a CS slot would put civic content inside a marker that says nothing is built — an invented claim — and would route response text into the DOM through a path no reviewer reads as data-bearing. But it is **not happening** (0 of 7), so per this loop's own precedent — *measure the speculative hole before deciding whether to build for it* — it is recorded as a **reviewer-checklist rule in the owning contract**, not as a new source-scanning guard. Documentation where a reviewer already looks, rather than a system to maintain.
+- [2026-07-31T04:00:00-06:00] ITERATION 18 — area: honesty-ledger — checks: **C11b, C12, C13 all done — ✅ AREA `honesty-ledger` GRADUATED TO PRODUCTION-READY.** 17 of 17 rows done or n/a, zero pending, zero blocked. **First area to graduate on either GOV repo**, and it happened in eight iterations because #69 was a *blocker* rather than merely the top of a list: closing the P0 unblocked #86, #75 and #87, taking the area backlog 4 → 0.
+- [2026-07-31T04:00:00-06:00] ITERATION 18 — **C11b found a real process gap: an owner question parked where the owner never looks.** `dev-qa.md` Q5 ("ratify the root CLAUDE.md?") had also silently **expired its own premise** — it was filed assuming "the PR is the ratification, nothing lands without an owner merge", but merge authority moved to this loop on 2026-07-29, so CLAUDE.md landed on the loop's own merge and **nobody ratified it**. It has since been amended four times and is load-bearing for both routines. Premise corrected in place, and mirrored to the owner-facing GOV Q&A page — an owner decision sitting in an agent-facing file is not actually being asked. **C12** audited every factual claim in CLAUDE.md (all four guards exist and are wired; the `test/` row already avoids a countable number) and found one genuine gap: the file stated the CS rule but never named `src/ui/coming-soon.ts`, so a cold agent learned the rule without learning where the primitive is — precisely what that file exists to prevent.
+- [2026-07-31T04:00:00-06:00] ITERATION 18 — **a stale fact corrected in the live layer only.** `dev-qa.md` Q2 claimed the iOS companion has "90 Swift files"; it has **15** (13 Sources, 2 Tests). Corrected in `dev-qa.md` and in memory, but **deliberately left standing** in `auto-go-heartbeat.md`'s iteration-4 log and in `auto-go-self-improvements.md`: those are dated records of what was believed at the time, and rewriting a log to match present knowledge destroys the reasoning trail. Memory now carries the correction *and* says why the two historical copies were not touched. **C13:** A7 (a CS-copy-literal source scan) considered and **declined with a stated trigger** — build it when the violation count leaves 0 of 7 — and A8 records that the inertness sweep already is this area's automation, so a later broad scan does not rebuild it.
+- [2026-07-31T04:00:00-06:00] ITERATION 18 — **area advanced to `intake-upload`, skipping two by measurement.** Rotation from honesty-ledger(5) goes to build-guards(6), which is **parked** on Q-E, then deploy-release(7), which is **gated** — 2 of 4 issues owner-decision, #119 blocked-by a backend issue that does not exist yet, #95 touching a pinned `BACKEND_REF`. Both are now recorded under `parked_areas` with their measured blockers rather than being silently passed over. intake-upload(8) is the first available area and it **renders**, so C7 is live there and inherits the web binding from iteration 16. **Flagged for the owner:** `area:pages-civic` holds 10 of the 26 open issues — the largest lane by far — but sits at rotation position 3, so strict order reaches it last.
