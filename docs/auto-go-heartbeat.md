@@ -76,8 +76,12 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: intake-upload
+current_area: a11y-responsive
 graduated_areas:
+  intake-upload:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a. SECOND area to graduate.
+    shipped: "No product defects found — the area was already well built (C4 mutation swept 10 of 10 exports clean). Its real gap lived in ANOTHER area's guard: the CS-inertness sweep covered 11 of 22 routes and excluded /upload. Gained test/gov1569-upload-hostile-input.test.ts and a fail-closed assertion over PUBLICATION_ELIGIBLE_UI_STATUSES."
   honesty-ledger:
     graduated: 2026-07-31
     result: 17 of 17 rows done or n/a — zero pending, zero blocked. FIRST area to graduate on either GOV repo.
@@ -99,25 +103,25 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: done  # iteration 19 — both bound contracts exist and are substantive (gov1568-upload-ux-spec.md 297 lines, gov1609-upload-provenance-form-model.md 224) and all three bound paths are present
-  C1b_plan_vs_code_drift_clean: done  # iteration 19 — probed the spec's non-negotiables rather than trusting a grep: all 7 states from §3 implemented; the "processing" and "verified" hits are comments FORBIDDING them; projectReviewState fails closed and is tested. One real gap found and closed: §4 names PUBLICATION_ELIGIBLE_UI_STATUSES as the set F1 must never render, but the test proved fail-closed for only ONE of its three members plus a made-up value. Now table-driven over the real constant, red-proved
-  C2_qa_resolved: done  # iteration 20 — the 3 pending dev-qa entries (Q3/Q4/Q5) are loop-level, none belongs to this area
-  C2b_github_issues_ingested: done  # iteration 20 — 0 open issues carry area:intake-upload
+  C1_plan_complete: pending
+  C1b_plan_vs_code_drift_clean: pending
+  C2_qa_resolved: pending
+  C2b_github_issues_ingested: pending
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: done  # iteration 20 — mutation sweep over 10 exports across all three bound paths: EVERY one produced failures (1, 1, 5, 31, 4, 11, 4, 2, 4, 5). No gap, no test written. Contrast honesty-ledger, where the same method exposed dead code
-  C5_tests_pass: done  # iteration 20 — 982/982 across 63 files
-  C6_build_warnings_zero: done  # iteration 20 — the single repo warning is the private-chunk size, which belongs to build-guards (#49) and is parked there; nothing warns from this area's paths
-  C7_ui_polish: done  # iteration 20 — inherited the iteration-16 web binding AND FOUND IT HALF-BLIND: the CS-inertness sweep hand-listed 11 routes while the router registers 22, so /upload, /cards, /topics, /sources, /body, /meeting, /agenda-boards, /timeline-legacy, /issue, /app and / were never swept. Route list now DERIVED from main.ts via Vite ?raw, with a guard on the derivation itself. Formerly: intake-upload RENDERS (gated upload, supplied-files drawer, supersede view), so C7 is live here and inherits the iteration-16 web binding recorded in area_bindings
+  C4_tests_present: pending
+  C5_tests_pass: pending
+  C6_build_warnings_zero: pending
+  C7_ui_polish: pending  # a11y-responsive RENDERS — inherits the iteration-16 web binding, and this area is where C7's ACCESSIBILITY half finally has a home
   C7b_dev_improvement_polish: pending
   C8_security_reviewed: pending
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: done  # iteration 20 — 0 open issues in this area
+  C11_github_issues_resolved: pending  # 3 open: #88 (bottom tab overflow), #74 (badge floor), #73 (print stylesheet)
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 10  # iteration 20 overall; same day
+iteration_count: 11  # iteration 21 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -236,3 +240,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T05:05:00-06:00] ITERATION 20 — area: intake-upload — **C2, C2b, C4, C5, C6, C7, C11 done.** **C4 by mutation over 10 exports across all three bound paths — every single one produced failures** (1, 1, 5, 31, 4, 11, 4, 2, 4, 5). No coverage gap and no test written; the same method that exposed dead code in honesty-ledger returned a clean bill here, which is what makes it worth trusting in both directions.
 - [2026-07-31T05:05:00-06:00] ITERATION 20 — **C7 inherited the iteration-16 binding and immediately found it HALF-BLIND — my own guard, four iterations old.** The CS-inertness sweep hand-listed **11 routes**; `src/main.ts` registers **22**. It had never checked `/upload`, `/cards`, `/topics`, `/sources`, `/body`, `/meeting`, `/agenda-boards`, `/timeline-legacy`, `/issue`, `/app` or `/` — including, pointedly, the route belonging to the area I had just moved into. **This is the identical hand-picked-list failure iteration 19 criticised one iteration earlier, committed by me four iterations before that.** Fixed structurally rather than by appending 11 strings: the route list is now **derived from the router's own `register()` calls** in `main.ts`, read via Vite `?raw` + `import.meta.glob` (the repo's established no-`node:fs` pattern — I nearly reached for `readFileSync`, which would have broken typecheck since there is deliberately no `@types/node`).
 - [2026-07-31T05:05:00-06:00] ITERATION 20 — **two red proofs, because the fix has two failure modes.** (1) An operable control planted in `comingSoonNote` is still caught by name — `/explainer (reviewer=1): expected <button></button> to have a length of +0 but got 1`. (2) **Breaking the derivation itself** (corrupting the `router.register` regex) fails with `expected 0 to be greater than 15` rather than silently sweeping zero routes — the derivation is guarded because a completeness guard that derives its own scope can go vacuous in a *new* way the original could not. **C8 addition:** `safeHttpUrl` is a correct protocol allow-list that fails closed; added the two evasion shapes it handles but nothing asserted — a `data:` URI carrying markup and a mixed-case `JaVaScRiPt:` scheme. 982 tests / 63 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T05:40:00-06:00] ITERATION 21 — area: intake-upload — **✅ AREA GRADUATED (17/17), the second on this repo.** C7b, C8, C9, C11b, C12, C13 all done. **The graduation gate did its job on me:** the first check run reported `C8_security_reviewed: pending` — iteration 20 had done partial C8 work (the `safeHttpUrl` evasion cases) and never marked it, and the gate refused to graduate the area on a check nobody had recorded. Completed properly rather than waved through: the transport is constructed **once** in production (`main.ts:860`) with no options, so it always uses the root-relative same-origin default; `projectBackendReviewState` is an **allow-list** (only `pending`→`received`, `held`→`held`; `reviewing`/`web_safe`/`rejected`/`verified`/unknown all fail closed); and `review_state` itself is on `RAW_PATH_FORBIDDEN_KEYS`, enforced table-driven by `assertWebSafe`.
+- [2026-07-31T05:40:00-06:00] ITERATION 21 — **a nuance recorded so a later pass does not "fix" it backwards.** Iteration 19's lesson was *"when a spec names a CONSTANT as the forbidden set, import it"*. `projectBackendReviewState` looks like the same shape but is the **opposite case**: there is deliberately **no** mirrored constant of the backend's internal `review_state` vocabulary, because importing it would itself be the leak the denylist exists to prevent. The hand-picked hostile set is therefore *correct here*. Same surface shape, opposite right answer — which is exactly why these get written down.
+- [2026-07-31T05:40:00-06:00] ITERATION 21 — **C7b: my first hunt produced two false findings, and reachability killed both.** Passing `{}` to `validateStagedUpload` threw a TypeError and `formatBytes(1e308)` emitted scientific notation — but every degenerate case I passed lacked `provenance`, which TypeScript forbids, and both production call sites construct `staged` internally; `File.size` cannot approach 1e308. **The probe was violating the contract, not finding a bug.** Re-ran with valid shapes carrying hostile VALUES (5000-char names, path-traversal names, markup in provenance) and found no defect. Promoted the probe to `test/gov1569-upload-hostile-input.test.ts` because it locks three properties nothing else asserted for a surface that accepts files from a person, and red-proved it by making validation echo raw input. 990 tests / 64 files, tsc clean, `build:all` exit 0. **Area advanced to `a11y-responsive`** — 3 open issues (#88, #74, #73), and the area where C7's accessibility half finally has a home.

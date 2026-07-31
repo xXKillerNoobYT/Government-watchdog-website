@@ -321,6 +321,22 @@
   The established pattern is `import src from '../src/x.ts?raw'` (see `gov658-fonts.test.ts`).
   I nearly reached for `readFileSync` on the strength of a half-remembered grep hit.
 
+- **[2026-07-31] The graduation gate caught an omission I would have shipped.** Iteration 20
+  did partial C8 work and never marked the check; iteration 21's graduation test reported
+  `C8: pending` and refused the area. **A checklist is only worth having if you let it refuse
+  you** — the temptation is to reason "I did some C8 work, close enough". Don't.
+- **[2026-07-31] Same surface shape, opposite right answer — check WHY the constant is absent.**
+  Iteration 19: a spec named `PUBLICATION_ELIGIBLE_UI_STATUSES`, so the test must import it.
+  Iteration 21: `projectBackendReviewState` looks identical but there is deliberately **no**
+  mirrored constant of the backend's internal `review_state`, because importing it would BE
+  the leak the denylist prevents. A hand-picked hostile set is correct there. Before
+  "fixing" an enumeration into a constant, ask whether the constant's absence is the design.
+- **[2026-07-31] Check reachability before believing a hunt finding.** A probe throwing a
+  TypeError and emitting scientific notation looked like two defects; both came from *my*
+  inputs violating the type contract (`{}` with no `provenance`) or being physically
+  impossible (`File.size` near 1e308). **A crash on input the type system forbids and the
+  call sites cannot produce is a bad test, not a bug.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

@@ -121,3 +121,29 @@ A per-marker snapshot test. The inertness sweep asserts the *properties* that ma
 (no operable control, label present, no contract sentence); snapshots would additionally
 lock exact copy, which the suite already does where it matters and which would make every
 honest copy improvement a test churn.
+
+## Area: intake-upload — 2026-07-31 (iteration 21, C13)
+
+Scoped to `src/ui/{gated-upload,supplied-files,supersede-view}.ts`.
+
+**A9 — no new automation recommended, and the reason is worth recording.** The C4 mutation
+sweep found **every** export covered (10 of 10 produced failures), and the hostile-input hunt
+found no defect. The gap this area actually had was in a guard *belonging to another area* —
+the CS-inertness sweep covered 11 of 22 routes — and that was fixed structurally by deriving
+the route list rather than by adding a scanner. **The lesson generalises: when a check finds
+nothing in its own area, look at whether an existing cross-cutting guard silently excludes
+that area.** That is where this iteration's only real finding came from.
+
+**A10 — `test/gov1569-upload-hostile-input.test.ts` is the automation this area gained**
+(this iteration). It locks three properties nothing else asserted for a surface that accepts
+files from a person: validation never throws on hostile values, error copy never echoes raw
+input back, and error copy stays bounded. It runs in the normal suite; no scheduled task.
+
+### Explicitly not recommended (this area)
+
+A filename-content validator (length limits, path-shape rejection). Spec §3.2 defines
+validation as **mechanical** — type, size, required provenance — and nothing else. The name
+renders as text (`el()` uses `createTextNode`) and the **backend is the sanitising boundary**,
+exactly as the client gate is not the confidentiality boundary. Adding a content judgement
+here would move a security boundary into the browser, which is the opposite of this repo's
+standing architecture.
