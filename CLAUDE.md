@@ -160,7 +160,15 @@ never merge to make a red thing disappear, and never merge a PR you have not rea
 Key documents: [`docs/design-information-type-matrix.md`](docs/design-information-type-matrix.md)
 (binding ledger) · [`docs/public-private-asset-lanes.md`](docs/public-private-asset-lanes.md)
 (lane separation) · [`docs/deployment-sites.md`](docs/deployment-sites.md) (hosting and the
-server-side access boundary) · [`docs/ui-design-system.md`](docs/ui-design-system.md).
+server-side access boundary) · [`docs/ui-design-system.md`](docs/ui-design-system.md) ·
+[`docs/gov1568-upload-ux-spec.md`](docs/gov1568-upload-ux-spec.md) (the gated upload
+surface).
+
+**One invariant worth knowing before you touch upload:** the surface's most optimistic
+state is `review_pending`/`held`. It has **no verified or published value in its
+vocabulary at all**, and status projection is fail-closed — an unknown, absent, or
+publication-eligible status collapses to the conservative bucket rather than being
+rendered. An uploader can never drive a file to a trusted state from the browser.
 
 **Note:** the client-side gate (`?gate=approved`, `?reviewer=1`) is **UI scaffolding, not
 the confidentiality boundary** — it intentionally fails open. Confidentiality rests on the
