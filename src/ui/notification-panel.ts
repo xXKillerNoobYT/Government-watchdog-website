@@ -25,6 +25,7 @@ import {
   type LoadNotificationsResult,
 } from '../data/notifications';
 import type { NotificationItem, NotificationKind } from '../types/notification';
+import { safeExternalHref } from '../data/web-safe';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -32,7 +33,16 @@ function el<K extends keyof HTMLElementTagNameMap>(
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  for (const [k, v] of Object.entries(attrs)) {
+    // C8: a supplied URL is untrusted input. An unsafe scheme is REFUSED, not rendered —
+    // the anchor keeps its text and simply has no href, so nothing is clickable and no
+    // dead affordance is presented. See safeExternalHref in src/data/web-safe.ts.
+    if (k === 'href' && safeExternalHref(v) === null) {
+      node.setAttribute('data-href-refused', 'unsafe-scheme');
+      continue;
+    }
+    node.setAttribute(k, v);
+  }
   for (const c of children) node.append(typeof c === 'string' ? document.createTextNode(c) : c);
   return node;
 }

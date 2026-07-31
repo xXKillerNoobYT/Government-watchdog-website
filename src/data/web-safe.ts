@@ -188,3 +188,41 @@ export function assertDigestWebSafe<T>(body: T): T {
   visit(body);
   return body;
 }
+
+/**
+ * C8 (iteration 46) - the only safe way to put a SUPPLIED value into an `href`.
+ *
+ * Source URLs on this product originate in ingested external documents, so they are
+ * untrusted input that happens to arrive via our own backend. `assertWebSafe` does not
+ * cover them: it guards raw-path and locator leakage, a different concern - verified by
+ * planting `javascript:alert(1)` and watching it pass, then render into 4 live anchors on
+ * the newsletter detail view.
+ *
+ * Returns the URL when it is safe to navigate to, or `null` when it is not. A caller that
+ * gets `null` must render the honest thing - the slot with an explicit "link unavailable"
+ * - and never a dead or dangerous anchor.
+ *
+ * Allowed: `http:`, `https:`, and in-app targets (`#...`, `/...`). Everything else is
+ * refused, including `javascript:`, `data:`, `vbscript:`, `file:` and `blob:`.
+ */
+const SAFE_EXTERNAL_SCHEMES = new Set(['http:', 'https:']);
+
+export function safeExternalHref(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  // Strip ASCII control characters and spaces FIRST. Browsers parse `java\tscript:` and
+  // `java\nscript:` as `javascript:`, so a naive startsWith() check is bypassable; this
+  // normalisation is what makes the scheme test meaningful.
+  const cleaned = raw.replace(/[\u0000-\u0020]/g, '');
+  if (cleaned === '') return null;
+
+  // In-app targets are not external navigation and carry no scheme.
+  if (cleaned.startsWith('#') || cleaned.startsWith('/')) return raw.trim();
+
+  try {
+    const parsed = new URL(cleaned);
+    return SAFE_EXTERNAL_SCHEMES.has(parsed.protocol) ? raw.trim() : null;
+  } catch {
+    // Not an absolute URL and not an in-app target - refuse rather than guess.
+    return null;
+  }
+}

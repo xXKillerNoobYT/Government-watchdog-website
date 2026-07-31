@@ -31,6 +31,7 @@ import {
   renderPrivateInfoNote,
   type PrivateInfoNoteId,
 } from './private-info-note';
+import { safeExternalHref } from '../data/web-safe';
 
 export interface DesignPageOptions {
   access?: string;
@@ -55,7 +56,16 @@ function el<K extends keyof HTMLElementTagNameMap>(
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  for (const [key, value] of Object.entries(attrs)) {
+    // C8: a supplied URL is untrusted input. An unsafe scheme is REFUSED, not rendered —
+    // the anchor keeps its text and simply has no href, so nothing is clickable and no
+    // dead affordance is presented. See safeExternalHref in src/data/web-safe.ts.
+    if (key === 'href' && safeExternalHref(value) === null) {
+      node.setAttribute('data-href-refused', 'unsafe-scheme');
+      continue;
+    }
+    node.setAttribute(key, value);
+  }
   for (const child of children) {
     node.append(typeof child === 'string' ? document.createTextNode(child) : child);
   }
