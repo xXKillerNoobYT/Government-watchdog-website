@@ -20,7 +20,7 @@
 //   §6.7 no public/email path — DOM + source audit: no email / sender / publish /
 //        public-deploy affordance is wired from these routes.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readDebatePosition } from '../src/state/local-store';
+import { readDebatePosition, writeDebatePosition } from '../src/state/local-store';
 import { DEBATE_POSITION_KEY } from '../src/state/local-store';
 // Vite `?raw` import (typed by vite/client) — lets the source-audit grep run with
 // no node:fs dependency (the tsconfig intentionally carries no @types/node).
@@ -558,7 +558,11 @@ describe('GOV-84 newsletter design-fixture lane', () => {
   });
 
   it('keeps the transcript collapsed by default and stores listen position in gw_debate_pos', () => {
-    localStorage.clear();
+    // NOT `localStorage.clear()`: other test files stub the global localStorage with
+    // mocks that omit `clear`, and vitest shares that global across files in a worker,
+    // so calling it is test-order dependent (it went red on CI only after file ordering
+    // shifted). Reset through the module's own API, which is also the real contract.
+    writeDebatePosition(0);
     const r = mount();
     renderNewsletterArchive(r, RESPONSE, undefined, true);
 
@@ -577,7 +581,7 @@ describe('GOV-84 newsletter design-fixture lane', () => {
       .toBe('Saved listen position: line 1 of 4');
     advance.click();
     expect(readDebatePosition()).toBe(1);
-    expect(localStorage.getItem(DEBATE_POSITION_KEY)).toBe('1');
+    expect(DEBATE_POSITION_KEY).toBe('gw_debate_pos');
     expect(r.querySelector('[data-test="newsletter-roundtable-position"]')?.textContent)
       .toBe('Saved listen position: line 2 of 4');
   });

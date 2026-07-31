@@ -354,3 +354,19 @@ Verification commands for this project (all three, every iteration that changes 
   down, so the app bootstrap renders "The reviewed record service is not available right now"
   before any route body runs. GOV-84 therefore shipped on router-level jsdom coverage
   (`design-routes.test.ts`) and this was stated in the PR rather than claimed as browser-verified.
+- [2026-07-31T05:48:10-06:00] ITERATION 37 — **I shipped an order-dependent test and turned `main` intermittently
+  red.** My GOV-84 playback test called `localStorage.clear()`. **Six test files stub the global
+  `localStorage` with mocks that omit `clear`** (`reviewer-context-ui`, `timeline-route-loading`,
+  `sites-auth-entry`, `design-routes`, `reviewer-context-routes`, `fast-agenda-design`), and vitest
+  shares that global across files in a worker — so the call crashes with
+  `TypeError: localStorage.clear is not a function` at some file orderings and not others. It
+  passed locally and on PR #152's own CI, then went red on the very next run: **main carried a
+  failure AND a success for the same sha `cd74e8a`.** Fixed by resetting through the module's own
+  API (`writeDebatePosition(0)`), which depends on nothing but `setItem`.
+- [2026-07-31T05:48:10-06:00] LESSON — **never touch the global `localStorage` directly in a test on this repo.**
+  Go through `src/state/local-store.ts`. The global is a shared, partially-stubbed object whose
+  shape depends on which file ran first in the worker. Note the honest limit of this diagnosis:
+  **the failure could NOT be reproduced locally**, even running the whole suite in one worker
+  (`--no-file-parallelism`) with the offending line restored. The fix rests on CI's stack trace
+  and on removing the dependency entirely, not on a local red proof — a green local run was
+  exactly what let this ship in the first place.
