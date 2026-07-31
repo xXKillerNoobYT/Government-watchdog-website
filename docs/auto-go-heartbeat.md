@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T06:57:26-06:00
-last_task: "GOV-82 — deterministic diff primitive wired into Source Vault version compare (PR #156, merged)"
+last_run: 2026-07-31T07:30:01-06:00
+last_task: "GOV-78 — agenda analysis modal: past meetings, connected issues, who decides (PR #158, merged)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
   C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 29
+iteration_count: 30
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -427,3 +427,26 @@ Verification commands for this project (all three, every iteration that changes 
   red-proofed that the scoped form still catches marks leaking into plain mode.
 - [2026-07-31T06:57:26-06:00] ITERATION 39 — 1039 tests / 67 files green (was 1033), tsc clean, build:all 0,
   `dist/public` fixture-string grep = 0. main verified green post-merge at 539e753.
+- [2026-07-31T07:30:01-06:00] ITERATION 40 — area: pages-civic — **GOV-78 shipped** (PR #158, merged). The agenda
+  analysis modal's three missing sections. `AgendaItem.history: string[]` (untyped prose) replaced
+  by typed `pastMeetings` + `connectedIssues` + `whoDecides` across all 8 fixture items; `history`
+  **deleted** rather than kept alongside — two sources for one section is how they drift.
+  **This clears every P1 in pages-civic.** Remaining: #90, #89 (both P2/UX).
+- [2026-07-31T07:30:01-06:00] ITERATION 40 — **the video ladder is a trap worth naming.** Its wording READS like an
+  age bucket (`missing (7d+, flagged)`), so computing it from a date is the obvious implementation
+  — and would invent a claim about a public body's publication record from a clock. The rung is
+  supplied per row; `VIDEO_LADDER` only maps it to the design's words. Nothing touches a date.
+  Same shape as the earlier `axisPercent` refusal on #80: **design copy that looks derived is
+  usually the point at which a browser starts inventing.**
+- [2026-07-31T07:30:01-06:00] LESSON — **two of five red proofs exposed weak assertions in the NEW tests, not weak
+  code.** (1) 'a no-video row renders silence' PASSED: the test checked the *element* existed, not
+  that it said anything, so blanking the note left an empty element and a green suite — literally
+  the silence the test claims to prevent. **Presence of an element is not presence of content.**
+  (2) The connected-pill test read `[data-issue-key]`, an attribute that **does not exist**, so the
+  key set was empty and its own `if (size > 0)` guard skipped the containment check.
+  **A conditional assertion is not an assertion** — if a guard can be skipped by empty data, it
+  will be. Fixed by exporting `FIXTURE_ISSUE_KEYS` DERIVED from `ISSUE_CARDS` and asserting
+  non-empty first.
+- [2026-07-31T07:30:01-06:00] ITERATION 40 — 1045 tests / 67 files green (was 1039), tsc clean, build:all 0,
+  `dist/public` fixture-string grep = 0, issue pills meet the 44px tap floor.
+  main verified green post-merge at 2fce94e.
