@@ -28,6 +28,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 19 | intake-upload | C1 + C1b | done | 2 | 1 | 1 | 1500 | none due; invariant was proven by example not over its own constant; also caught a self-inflicted @vitest-environment placement bug a green run would have hidden |
 | 2026-07-31 | 20 | intake-upload | C2,C2b,C4,C5,C6,C7,C11 | done | 2 | 2 | 2 | 2100 | none due; C4 mutation sweep clean on all 10 exports; C7 found my own iteration-16 sweep covered 11 of 22 routes, now derived from the router |
 | 2026-07-31 | 21 | intake-upload | C7b,C8,C9,C11b,C12,C13 → ✅ GRADUATED | done | 2 | 2 | 8 | 2400 | none due; SECOND graduation (17/17); graduation gate caught an unmarked C8; hostile-input suite added |
+| 2026-07-31 | 22 | a11y-responsive | C1 + #73 print stylesheet | done | 3 | 1 | 4 | 2400 | none due; shipped a vacuous guard 3x, caught only by a VERIFIED red proof (negative slice, then at-rule parse bug) |
 
 ## Findings this iteration
 

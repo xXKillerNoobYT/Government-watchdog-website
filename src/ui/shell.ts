@@ -783,6 +783,50 @@ html,body{margin:0}
   .gw-shell-simple-masthead{grid-template-columns:1fr;align-items:start}
   .gw-shell-simple-headline{width:100%}
 }
+
+/* GOV-73 — a printed civic page is an EVIDENCE ARTIFACT, not a screenshot of an app.
+   Two rules, and the second matters more than the first:
+
+   1. Interactive chrome must not print. At <=760px .gw-shell-tabs is
+      position:fixed;bottom:0, the theme toggle pins itself, and an open
+      notification drawer is fixed too — all three print ON TOP of the content.
+   2. Nothing that carries PROVENANCE may be hidden. The origin/fixture banner,
+      the AI disclosure, and the footer receipt line stay, because a printed
+      fixture page that has lost its SYNTHETIC DESIGN FIXTURE banner is
+      indistinguishable from a printed reviewed page. Hiding chrome is a
+      convenience; hiding a banner would be an honesty failure, so the two are
+      enumerated separately rather than with one broad rule. */
+@media print {
+  /* Chrome that is interactive, fixed, or meaningless on paper. */
+  .gw-shell-tabs,
+  .gw-shell-search,
+  .gw-shell-mode,
+  .gw-shell-print,
+  .gw-theme-toggle,
+  .gw-ntf-anchor,
+  .gw-ntf-drawer,
+  .gw-ntf-bell { display: none !important; }
+
+  /* Un-pin anything still fixed so it cannot overlay the first printed page. */
+  .gw-shell-root *,
+  .gw-shell-root { position: static !important; }
+
+  /* Print-safe pairing in BOTH modes — the Advanced dark palette would
+     otherwise print as a full-bleed dark background. */
+  .gw-shell-root,
+  .gw-shell-root[data-mode="advanced"],
+  .gw-shell-content { background: #fff !important; color: #000 !important; }
+
+  /* Provenance survives printing. Explicit, so a later broad display:none
+     sweep over "chrome" cannot silently take these with it. */
+  .gw-shell-banner-slot,
+  .gw-shell-origin,
+  .gw-shell-origin-wrap,
+  .gw-shell-origin-fixture,
+  .gw-shell-footer,
+  .gw-shell-footer-brand,
+  .gw-shell-footer-links { display: revert !important; }
+}
 `;
 
 const SHELL_STYLE_ID = 'gw-shell-style';

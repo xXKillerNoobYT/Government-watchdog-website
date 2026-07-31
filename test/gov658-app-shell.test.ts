@@ -608,3 +608,70 @@ describe('GOV-658 shell — contextual information notes', () => {
 // Type-level guard: the palette mapping assumes exactly these two values.
 const _modes: ShellMode[] = ['simple', 'advanced'];
 void _modes;
+
+
+// GOV-73: a printed civic page is an evidence artifact. The two halves of this
+// rule fail in OPPOSITE directions, so both are asserted: too little hiding puts
+// fixed chrome over the content, and too much hiding strips the provenance that
+// makes the printout trustworthy. A broad "hide the chrome" sweep added later
+// would pass the first assertion and break the second.
+describe('GOV-73 print stylesheet', () => {
+  const printBlock = (): string => {
+    const at = SHELL_STYLE.indexOf('@media print');
+    expect(at, 'SHELL_STYLE has an @media print block').toBeGreaterThan(-1);
+    return SHELL_STYLE.slice(at);
+  };
+
+  it('hides every piece of fixed or interactive chrome', () => {
+    const block = printBlock();
+    for (const sel of [
+      '.gw-shell-tabs', '.gw-shell-search', '.gw-shell-mode', '.gw-shell-print',
+      '.gw-theme-toggle', '.gw-ntf-drawer', '.gw-ntf-bell',
+    ]) {
+      expect(block, sel).toContain(sel);
+    }
+    expect(block).toContain('display: none');
+  });
+
+  /** Selector lists of every rule in the print block whose body hides something.
+   *  Parsed as rules, NOT sliced by character offset: the first version of this
+   *  helper used `block.slice(i - 400, i)`, and because that index was 231 the
+   *  negative start made String.slice count from the END — the window was always
+   *  the empty string, so the assertion could never fail. It passed a red proof
+   *  only because the mutation was also silently a no-op. */
+  const hidingSelectorLists = (): string[] => {
+    const block = printBlock();
+    // Strip the `@media print {` wrapper before parsing rules. Without this the
+    // first match treats `@media print ` as a selector list and swallows the
+    // whole first rule as its body — the assertion then reads a selector list of
+    // "@media print" and passes no matter what is hidden.
+    const open = block.indexOf('{');
+    const inner = block.slice(open + 1, block.lastIndexOf('}'));
+    return [...inner.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((m) => /display\s*:\s*none/.test(m[2]))
+      .map((m) => m[1]);
+  };
+
+  it('never hides a provenance surface — banner, origin, fixture label, footer', () => {
+    const hiding = hidingSelectorLists();
+    // Guard the parse itself: zero hiding rules would make the loop vacuous.
+    expect(hiding.length, 'found at least one display:none rule').toBeGreaterThan(0);
+    const hidden = hiding.join(' ');
+    for (const sel of [
+      '.gw-shell-banner-slot', '.gw-shell-origin', '.gw-shell-origin-fixture', '.gw-shell-footer',
+    ]) {
+      expect(printBlock(), `${sel} present`).toContain(sel);
+      expect(hidden, `${sel} must NOT be in a display:none rule`).not.toContain(sel);
+    }
+  });
+
+  it('forces a print-safe palette so Advanced does not print full-bleed dark', () => {
+    const block = printBlock();
+    expect(block).toContain('background: #fff');
+    expect(block).toContain('color: #000');
+  });
+
+  it('un-pins fixed positioning so nothing overlays the first page', () => {
+    expect(printBlock()).toContain('position: static');
+  });
+});
