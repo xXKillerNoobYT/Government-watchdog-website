@@ -232,6 +232,17 @@
   redirect from `button`. Use `git commit -F <file>` (heredoc) whenever the message quotes
   test output — same class as the `${b}` history-modifier gotcha already in CLAUDE.md.
 
+- **[2026-07-31] The Vite dev server can serve a STALE module after a scripted write.**
+  A live check showed the new slot absent while tests passed and the disk file was correct.
+  `curl http://127.0.0.1:<port>/src/ui/<file>.ts | grep <new-symbol>` settles it in one call —
+  0 means the server, not the code, is behind. Restart the preview server. **Browser
+  verification is only evidence if the server is serving the code you just wrote.**
+- **[2026-07-31] Assigning `location.hash` its current value fires no hashchange**, so the
+  DOM stays on the previous render and a follow-up query reads stale state. This produced a
+  contradictory pair (`advancedHome_upsell: true` alongside `advancedBriefingRendered:
+  false`) that looked like a real AC violation. **Contradictory readings mean a broken
+  measurement, not a surprising truth** — force a real reload before believing either half.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
