@@ -71,12 +71,11 @@ Seeded 2026-07-28 on first run.
       re-broken it). Fresh CI forced via close+reopen (retarget does not re-trigger; reopen
       does), passed against the current base, then merged. Zero open PRs remain.
 
-- [ ] **#110 — the #59 flake survived both fixes.** Filed this iteration with the measurement
-      attached (20560ms vs a 20000ms ceiling; loaded fails, idle passes on the same sha). It
-      will recur on **every future stacked merge**, because each merge starts a full
-      `Website CI` on `main` that races the next PR's run on the one self-hosted machine.
-      Recommended remedy is a `concurrency` group, explicitly **not** a third timeout raise.
-      Needs an owner decision — it changes CI semantics for both repos' routines.
+- [x] **#110 RESOLVED in iteration 9 — owner approved the `concurrency` group in-chat
+      (2026-07-30) and it is implemented:** global group `website-ci-runner`,
+      `cancel-in-progress: false`, trade-offs documented in the workflow comment. Behavioral
+      proof deferred to the next stacked merge (CI semantics cannot be red-proved locally);
+      two rapid workflow_dispatch runs after merge must queue, not overlap.
 
 ## Agent-discovered (awaiting owner ratification or scheduling)
 
