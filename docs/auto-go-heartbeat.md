@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T11:11:59-06:00
-last_task: "C9 performance — word-level diff bounded against document-sized inputs (PR #175)"
+last_run: 2026-07-31T11:48:23-06:00
+last_task: "C11b+C12+C13 done; pages-civic PARKED on #80; rotation advanced to data-contract"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -76,7 +76,7 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: pages-civic
+current_area: data-contract
 graduated_areas:
   shell-nav:
     graduated: 2026-07-31
@@ -137,11 +137,11 @@ current_area_checklist:
   C9_performance_reviewed: done  # iteration 47 — MEASURED a real cliff: diffWords is a full LCS table, O(n x m) in time AND memory. 10,000 words/side = 5.30s main-thread freeze and 400M cells; several diffs in one process exhausted the JS heap. Bounded by DIFF_CELL_BUDGET (PR #175) — both versions still render in full, only highlighting is withheld. Red-proofed, with a timing assertion
   C10_cross_platform_parity: "n/a (no second platform)"
   C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
-  C11b_process_gaps_clean: pending  # iteration 41 — not run for this area
-  C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
-  C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
+  C11b_process_gaps_clean: done  # iteration 48 — found a real process gap: C11 was marked done in iteration 41 when #80 was the only open pages-civic issue, then THIS loop filed #163 (iter 42) and #170 (iter 45) into the same area. A check marked done is a claim about a moment, not a standing guarantee. #170 closed (PR #177), #163 deferred with its reason recorded on the issue
+  C12_claude_md_reflects_area: done  # iteration 48 — two hard stops added: "never invent" includes PRECISION (a month-precision date rendered as a day is invented even when every character came from the backend), and never put a supplied value straight into an href (assertWebSafe does not cover schemes)
+  C13_automation_opportunities_reviewed: done  # iteration 48 — phase 2 empty (Q4 still owner-pending, nothing built without approval). Phase 1 closed one gap as ordinary work: the C8 href fix is central by design but nothing asserted all 25 el() helpers still route through safeExternalHref. Guard added at test/href-guard-coverage.test.ts
 in_progress: false
-iteration_count: 37
+iteration_count: 38
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -623,3 +623,23 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T11:11:59-06:00] ITERATION 47 — 1078 tests / 70 files green (was 1073), tsc clean, build:all 0. Five new
   tests including a **timing assertion** (oversize render under 250ms, against 536ms unbounded at
   the same size). Red-proofed: removing the cap fails 3.
+- [2026-07-31T11:48:23-06:00] ITERATION 48 — area: pages-civic — **C11b, C12 and C13 done. Area PARKED, not
+  graduated.** Every check is `done` or `n/a` except C2, correctly blocked on owner decision #80.
+  Parking keeps the block visible and lets the rotation advance; marking C2 `done` would convert an
+  honest 'waiting on a person' into a false 'finished'. `current_area` -> **data-contract**, whose
+  own checklist still carries its honest 16/17 from iteration 32 (C11 `in_progress` on #70).
+- [2026-07-31T11:48:23-06:00] C11b FINDING — **a check marked `done` is a claim about a moment, not a standing
+  guarantee.** C11 passed in iteration 41 when #80 was the only open pages-civic issue; then THIS
+  loop filed #163 (iter 42) and #170 (iter 45) into the same area. Parking would have stranded two
+  agent-reachable issues under a block that does not apply to them. #170 closed (PR #177); #163
+  deferred with its reason recorded ON the issue, not just in the tracker.
+- [2026-07-31T11:48:23-06:00] LESSON — **a behaviour test can pass while the thing it was written for is bypassed.**
+  My GOV-170 tests exercised local-store's helpers (always correct) and stayed green when the
+  shared writer was bypassed inside design-pages. The guarantee #170 asks for is a SOURCE property
+  — one implementation, not two — so it had to be asserted as one.
+- [2026-07-31T11:48:23-06:00] LESSON — **a guard was fooled by its own explanatory comment.** The C13 href-coverage
+  sweep used `src.includes('safeExternalHref')`; the COMMENT above the check satisfied it, so
+  deleting the real call still passed. Comments are now stripped and a real call is required.
+  **A guard that matches prose is not testing behaviour** — strip comments before any source-level
+  assertion about code.
+- [2026-07-31T11:48:23-06:00] ITERATION 48 — 1086 tests / 71 files green (was 1078), tsc clean, build:all 0.
