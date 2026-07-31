@@ -129,8 +129,16 @@ filing: the current build emits UTF-8 literally with **zero** `\uXXXX` escapes, 
 latent, one `esbuild.charset: 'ascii'` away from live. Deliberately not half-fixed —
 covering only `\uXXXX` and not `\xXX` yields a guard that reads complete and misses.
 
-**#97** — `VITE_READ_API_URL` documented in `.env.example`, read by no code. Needs an owner
-decision (remove the key, or wire it through the same validation as `VITE_API_BASE`).
+**#97** — RESOLVED 2026-07-30 (iteration 7): the key is **removed**, not wired. This stopped
+being an open design decision on inspection: the shipped GOV-1527 design already derives the
+read endpoint from `apiBase(env)` in `readConfig` (`src/data/client.ts:31`) and
+`test/client.test.ts` asserts a cross-origin `VITE_READ_API_URL` is *ignored* — the code had
+already decided; only `.env.example` was stale. Removal reconciles the doc with the shipped
+single-source contract (remove > merge > simplify). A second key naming the same destination
+would be a second way to point it off-origin. Red-proved on the real file: re-adding
+`VITE_READ_API_URL=http://127.0.0.1:8787/read` fails the exposure guard
+(`api-config-absolute`, exit 1) because #101 made the rule key-agnostic — the deleted key
+cannot come back armed.
 
 ### D5 — Structural blocker on graduation, outside this area's control
 

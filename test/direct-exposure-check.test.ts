@@ -29,8 +29,9 @@ describe('direct-exposure build check', () => {
 // destination on any other port — or on any absolute host — passed silently.
 describe('direct-exposure check generalization (#55)', () => {
   it('rejects a loopback destination on a port the guard was never told about', () => {
-    // 8787 is the read-API port documented in .env.example. It is not a
-    // SERVICE_PORT, so the port-enumerating predecessor let this through.
+    // 8787 was the read-API port `.env.example` documented until #97 removed the
+    // dead key. It is not a SERVICE_PORT, so the port-enumerating predecessor let
+    // this through — the case is kept because the source rule is unchanged.
     expect(rules(violationsIn('const url = "http://127.0.0.1:8787/read";', 'src/data/client.ts')))
       .toContain('loopback-host');
   });
@@ -92,6 +93,8 @@ describe('browser-facing API configuration (#55)', () => {
   it('rejects every off-origin URL form', () => {
     const cases: Array<[string, string]> = [
       ['VITE_API_BASE=https://evil.example/api', 'api-config-absolute'],
+      // #97 deleted this key from `.env.example`. The case stays: the rule is
+      // key-agnostic (#101), so a removed key coming back must still be caught.
       ['VITE_READ_API_URL=http://127.0.0.1:8787/read', 'api-config-absolute'],
       ['VITE_API_BASE=//evil.example/api', 'api-config-network-path'],
       ['VITE_API_BASE=\\\\evil.example\\api', 'api-config-backslash'],
@@ -116,7 +119,7 @@ describe('browser-facing API configuration (#55)', () => {
   });
 
   it('treats an empty value as unset', () => {
-    expect(apiConfigViolationsIn('VITE_READ_API_URL=')).toHaveLength(0);
+    expect(apiConfigViolationsIn('VITE_API_BASE=')).toHaveLength(0);
   });
 
   it('ignores keys that do not configure a network destination', () => {

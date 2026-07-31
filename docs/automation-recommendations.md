@@ -71,3 +71,28 @@ it is deploy-time integration rather than a correctness guard. Flagged only.
 A **pre-commit hook running the three-command ritual**. It would duplicate CI's work on the
 same already-variance-prone self-hosted runner, compounding the exact problem #59 was filed
 for. A3's lighter hook is the better answer to "faster local feedback."
+
+## Daily pass — 2026-07-30 (iteration 7)
+
+Scoped to what changed since the 2026-07-29 broad scan rather than re-deriving it.
+
+**A5 — The `area:*` label taxonomy now exists and closes A-series gap 0.** 12 labels
+created and all 33 open issues classified this iteration, so `C2b`/`C11` finally have a
+selector and `gh issue list --label area:X` is a real query. No further automation needed;
+the check bindings in the heartbeat's `area_bindings` are the wiring. Recorded so a later
+broad scan does not re-recommend "adopt labels".
+
+**A6 — `.claude/launch.json` (uncommitted, local-only) was written this session** so the
+preview server can start the dev server by name (`npm run dev`, port 5178 with
+`--strictPort` because a Paperclip agent's server already holds 5173). Worth committing if
+the owner wants one-keystroke previews for every agent; left local otherwise since it
+encodes a port choice that is session-circumstantial. **Owner call — low stakes either way.**
+
+### Explicitly not recommended (this pass)
+
+An automated "`.env.example` keys must all be read by code" guard, considered while closing
+#97. It needs an enumeration of read keys that goes stale exactly the way the allow-lists
+this area keeps deleting did, for a hygiene (not security) property: the exposure guard
+already catches any *armed* revival of a dead key regardless of key name (#101, red-proved
+on the real file this iteration). Deletion beat automation; one dead key in 30 months does
+not justify a new enumeration.

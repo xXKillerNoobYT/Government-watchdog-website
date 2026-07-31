@@ -70,6 +70,8 @@ each emitted artifact.
 **The suite asserts exact user-visible copy.** `grep test/` before changing any string a
 person can read; assertions like `.toBe('Saved view: Jackson, Wyoming')` are common
 (`test/gov658-app-shell.test.ts`). Changing a string without grepping first will go red.
+Use `grep -a`: one test file carries raw NUL bytes and plain `grep` silently skips it as
+binary (#112), so a clean sweep without `-a` has not actually swept.
 
 ---
 
@@ -100,6 +102,9 @@ Guards are split **pure-decision / filesystem-walk** on purpose: this repo carri
 
 - **Never commit to `main`.** Branch, push, open a PR.
 - Automated-loop branches use `auto-go/<topic>`.
+- New issues carry one `area:*` label (taxonomy created 2026-07-30, mirrors the ten
+  heartbeat areas) plus `owner-decision` when blocked on the owner. Priority stays in the
+  title (`[P2][Security] …`) — there are no priority labels.
 - Stack a branch on an open PR only when the work genuinely depends on it; say so in the
   PR body, because stacks can only merge bottom-up.
 

@@ -12,7 +12,18 @@ green and every design question the loop hit had nowhere to go.
 
 ## Loop integrity — 2026-07-29
 
-### Q1 — What should C3 actually invoke? _pending_
+### Q1 — What should C3 actually invoke? _answered 2026-07-30_
+
+**Resolution: (c) — C3 is retired**, exactly as recommended. The shared
+`~/.claude/commands/auto-go.md` was edited 2026-07-30 with owner authorization (per the
+backend routine's provenance-carrying hub entry; the file itself now carries the change):
+C3's row reads "RETIRED 2026-07-30", the checklist is 16 checks, and existing checklists
+mark it `n/a (retired)`. **One correction to this question's own premise, measured by the
+backend routine and verified in the file:** the assumption "HUNT FIX already owns hunting"
+is FALSE — `hunt-fix.md` STEP 3 invokes the same nonexistent `/hunt-fix-loop`. So automated
+hunting is currently done by **nothing**; that gap is escalated as website #106 (kept open,
+now labelled `owner-decision`) and cross-repo backend #191. The owner decision remaining is
+what should own hunting, not whether C3 stays.
 
 **Measurement:** `/auto-go.md`'s C3 says "Invoke `/hunt-fix-loop` focused on this area."
 `/hunt-fix-loop` does not exist. `find /Users/IA/.claude -iname "*hunt-fix-loop*"` matches
@@ -40,7 +51,19 @@ An area can graduate with C3 green having run no scanner.
 
 **Recommendation: (c).** Also filed as GitHub issue #106.
 
-### Q2 — C7 and C10 are unsatisfiable on this repo. Drop, or re-scope? _pending_
+### Q2 — C7 and C10 are unsatisfiable on this repo. Drop, or re-scope? _answered 2026-07-30_
+
+**Resolution: the shared file now carries a general rule that subsumes option (a).** The
+2026-07-30 owner-authorized edit adds "a check that cannot fail is not evidence — bind it or
+retire it, never leave it `blocked`": on the second consecutive iteration a check is blocked
+on a missing prerequisite it must be retired, bound via the project's `area_bindings`, or
+marked `n/a` with a stated reason. Applied to this repo in iteration 7: **C10 is `n/a`
+repo-wide** (no second platform exists — `grep -ril tauri .` is zero, and the iOS companion
+ships nothing the web build ships, so there is no parity relation); **C7 is `n/a` for
+`build-guards` only** (this area renders nothing). C7's intent — usability of a real UI —
+is alive on this repo and must be **re-bound to the web surface** when the rotation reaches
+`pages-civic` / `shell-nav` / `a11y-responsive`; marking it n/a there would be the "silently
+absorbed" move this loop refuses. That re-scope body is Q3's territory and stays open.
 
 **Measurement:** C7 (`usability-enforcer`) is specified over "this area's **iOS pages**";
 C10 (`cross-platform-qa`) over "**iOS native ↔ Tauri/React** match". `grep -ril tauri .`

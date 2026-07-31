@@ -46,15 +46,20 @@ Seeded 2026-07-28 on first run.
       **wrong** — esbuild 0.21.5 actually emits `\xB7` — and an early draft of the fix
       reintroduced #102's own failure mode by gating decoding behind a cheap pre-check.
 
-- [ ] **C1b is still `in_progress`, and #97 is now the only thing holding it.** D1 (#101) and
-      #102 are both closed; `VITE_READ_API_URL` (#97) is owner-shaped — remove the key or wire
-      it up through the same root-relative validation as `VITE_API_BASE` — so **C1b cannot
-      self-clear no matter how many iterations run**. It needs an answer, not more work.
+- [x] **C1b CLEARED in iteration 7 — #97 resolved by removal, and it stopped being
+      owner-shaped on inspection.** The shipped GOV-1527 design already derives the read
+      endpoint from `apiBase(env)` and `test/client.test.ts:33` asserts a cross-origin
+      `VITE_READ_API_URL` is ignored — the code had decided; only `.env.example` was stale.
+      Removal reconciles doc with shipped design (remove > merge). Red-proved on the real
+      file: the revived key armed with an off-origin value fails the exposure guard by name.
+      Trivially revertible if the owner intended the key to work — say so and it wires up.
 
-- [ ] **`build-guards` cannot graduate until `dev-qa.md` Q2 is answered.** C7 and C10 are
-      required and structurally unsatisfiable on this repo. Every other check can go green and
-      the area still will not advance. This blocks the rotation itself, not just this area —
-      worth surfacing to the owner ahead of the other questions.
+- [x] **RESOLVED in iteration 7 — the graduation freeze is over.** The owner-authorized
+      2026-07-30 change to the shared `auto-go.md` (bind-or-retire rule + C3 retirement)
+      answered Q1 and Q2: C3 `n/a (retired)`, C10 `n/a` repo-wide (no second platform),
+      C7 `n/a` for build-guards only — its intent must be RE-BOUND to the web surface when
+      the rotation reaches an area that renders (pages-civic / shell-nav / a11y-responsive).
+      `build-guards` can now graduate on the strength of C4–C6, C7b, C9, C11, C11b, C12, C13.
 
 - [ ] **PR #45 is the only open PR, and it is not this loop's work.** `GOV-1520-updated-desing`
       — MOTY polish pass 1, tablet (768px) grid-blowout overflow on Boards/Vault. It reports
@@ -142,15 +147,14 @@ Seeded 2026-07-28 on first run.
       repo's one defence against breaking exact-copy assertions. Two-character fix, but it must
       preserve a specific two-character byte form, so it was filed rather than done in passing.
 
-- [ ] **The `hygiene` label does not exist on this repo.** Memory and the loop's
-      finding-capture rule both say "file with label `hygiene`"; `gh issue create --label
-      hygiene` fails with *not found*. This repo puts priority in the **title** instead
-      (`[P3][Hygiene] ...`, as #97 does). Either create the labels or drop the instruction —
-      right now every labelled filing attempt costs a failed call.
+- [x] **RESOLVED in iteration 7 — the label taxonomy exists now.** 12 labels created
+      (10 `area:*` mirroring the heartbeat areas, plus `owner-decision` and
+      `loop-self-audit`) and all 33 open issues classified, 0 unclassified. Priority stays
+      in the title (`[P2][Security] …`) — deliberately no priority labels, matching how the
+      backlog already works. CLAUDE.md §5 now records the convention. There is still no
+      `hygiene` label; hygiene items take an `area:*` label like everything else.
 
-- [ ] **Issue #97** — `VITE_READ_API_URL` is documented in `.env.example` but read by no
-      code. Needs a decision (remove the key, or wire it up through the same root-relative
-      validation as `VITE_API_BASE`); filed rather than guessed.
+- [x] **Issue #97 — CLOSED in iteration 7.** See the C1b carry-over entry above.
 
 - [x] **RESOLVED in iteration 5 — the stack is merged.** All five landed bottom-up
       (#98 → #96 → #100 → #103 → #107), each on a CI run taken *after* its parent, and the

@@ -1,5 +1,5 @@
 ---
-last_run: 2026-07-30T12:45:00-06:00
+last_run: 2026-07-30T22:10:00-06:00
 last_task: auto-go
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
@@ -14,34 +14,91 @@ areas:
   - intake-upload
   - a11y-responsive
   - ci-tooling
+# Per-project, per-area bindings (auto-go.md RULES, added there 2026-07-30). Every
+# check that names a path reads THESE, not the WiredPart layout the shared file is
+# written against. Every path below was verified to exist on 2026-07-30; an unbound
+# area is a bug to fix on sight, which is why all ten are here rather than just the
+# active one. `label:` is what C2b and C11 select on — the taxonomy was created and
+# all 33 open issues classified this iteration (0 unclassified).
+area_bindings:
+  gate:
+    label: "area:gate"
+    paths: [src/gate/, src/ui/landing.ts, src/ui/magic-link-form.ts, src/ui/waitlist-form.ts]
+    contracts: [docs/design-information-type-matrix.md, docs/deployment-sites.md]
+    tests: [test/gov419-preview-gate.test.ts, test/gov758-gated-access.test.ts, test/gov799-magic-link-form.test.ts, test/sites-auth-entry.test.ts, test/sites-worker-auth.test.ts]
+  shell-nav:
+    label: "area:shell-nav"
+    paths: [src/ui/shell.ts, src/router.ts, src/ui/theme-toggle.ts, src/ui/tokens.ts, src/ui/render.ts]
+    contracts: [docs/ui-design-system.md, docs/design-information-type-matrix.md]
+    tests: [test/gov658-app-shell.test.ts, test/gov658-fonts.test.ts, test/gov767-landing-theme.test.ts, test/gov440-dark-theme.test.ts, test/render.test.ts]
+  pages-civic:
+    label: "area:pages-civic"
+    paths: [src/ui/home.ts, src/ui/timeline.ts, src/ui/timeline-lanes.ts, src/ui/board.ts, src/ui/newsletter.ts, src/ui/topic-tree.ts, src/ui/card-feed.ts, src/ui/diff-view.ts, src/ui/pages-program.ts, src/ui/design-pages.ts]
+    contracts: [docs/design-information-type-matrix.md, docs/product/, docs/stage3-06-card-feed-frontend-contract.md, docs/stage4-06-newsletter-archive-detail-frontend-contract.md]
+    tests: [test/gov658-home-dashboard.test.ts, test/gov606-agenda-board.test.ts, test/gov665-pages-program.test.ts, test/gov668-wave3-pages.test.ts, test/gov671-wave4-pages.test.ts, test/timeline*.test.ts, test/topic-tree*.test.ts, test/diff-view.test.ts, test/gov462-newsletter-digest.test.ts]
+  data-contract:
+    label: "area:data-contract"
+    paths: [src/data/, src/types/, src/fixtures/, src/state/]
+    contracts: [docs/reviewer-context.md, docs/gov1527-build-integration.md, docs/design-information-type-matrix.md]
+    tests: [test/client.test.ts, test/web-safe.test.ts, test/reviewer-normalize.test.ts, test/state-matrix.test.ts, test/state-view.test.ts, test/gov1527-api-integration.test.ts]
+  honesty-ledger:
+    label: "area:honesty-ledger"
+    paths: [src/ui/coming-soon.ts, src/ui/info-note.ts, src/ui/explainer.ts, src/ui/private-info-note.ts]
+    contracts: [docs/design-information-type-matrix.md, docs/content-quality-baseline.md]
+    tests: [test/coming-soon.test.ts, test/gov52-honest-notifications.test.ts, test/gov53-contextual-info-notes.test.ts, test/gov314-provenance-badge.test.ts, test/gov301-completeness-gap-card.test.ts, test/gov1634-provenance-note.test.ts]
+  build-guards:
+    label: "area:build-guards"
+    paths: [scripts/check-no-direct-exposure.mjs, scripts/check-public-bundle.mjs, scripts/prepare-sites-build.mjs, vite.config.ts]
+    contracts: [docs/plans/area-build-guards.md, docs/public-private-asset-lanes.md]
+    tests: [test/direct-exposure-check.test.ts, test/emitted-artifact-exposure.test.ts, test/public-bundle-markers.test.ts, test/public-build-boundary.test.ts, test/public-lane.test.ts, test/public-package-isolation.test.ts]
+  deploy-release:
+    label: "area:deploy-release"
+    paths: [deploy/, Dockerfile, fly.toml, BACKEND_REF, scripts/sites-worker.mjs, scripts/fetch-artifact.mjs]
+    contracts: [docs/deployment-sites.md, docs/gov1543-deploy-execution-plan.md, docs/gov1544-deploy-config.md]
+    tests: [test/sites-worker-auth.test.ts, test/sites-auth-entry.test.ts]
+  intake-upload:
+    label: "area:intake-upload"
+    paths: [src/ui/gated-upload.ts, src/ui/supplied-files.ts, src/ui/supersede-view.ts]
+    contracts: [docs/gov1568-upload-ux-spec.md, docs/gov1609-upload-provenance-form-model.md]
+    tests: [test/gov1569-gated-upload.test.ts, test/gov1570-supplied-files.test.ts, test/gov1571-supersede-view.test.ts, test/gov1609-provenance-form-model.test.ts]
+  a11y-responsive:
+    label: "area:a11y-responsive"
+    paths: [src/ui/tokens.ts, src/ui/shell.ts, src/ui/fonts.ts]
+    contracts: [docs/ui-design-system.md]
+    tests: [test/gov1645-shell-overflow.test.ts, test/gov440-dark-theme.test.ts, test/gov658-fonts.test.ts]
+  ci-tooling:
+    label: "area:ci-tooling"
+    paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
+    contracts: [docs/plans/, CLAUDE.md]
+    tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
 current_area: build-guards
 current_area_checklist:
   C1_plan_complete: done  # genuinely, as of iteration 4 — docs/plans/area-build-guards.md now exists. It was recorded done from iteration 1 with no plan file behind it.
-  C1b_plan_vs_code_drift_clean: in_progress  # D1 (#101) and #102 both closed. Residual drift is #97 alone, which is owner-shaped (remove the key or wire it up), not code-shaped — so C1b cannot self-clear
+  C1b_plan_vs_code_drift_clean: done  # iteration 7 — all three drift items closed: D1 (#101), #102, and now #97. Zero residual drift against docs/plans/area-build-guards.md
   C2_qa_resolved: done
   C2b_github_issues_ingested: done
-  C3_hunt_fix_clean: pending
+  C3_hunt_fix_clean: "n/a (retired 2026-07-30)"  # the shared auto-go.md retired C3 outright: it invoked /hunt-fix-loop, which exists at neither scope (website #106, backend #184). Does NOT count against graduation. See #106 — automated hunting is currently done by nothing, which is escalated, not absorbed
   C4_tests_present: pending
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
-  C7_ui_polish: pending
+  C7_ui_polish: "n/a (no UI surface in this area)"  # bind-or-retire, resolved this iteration. C7 reads "this area's iOS pages" via usability-enforcer; build-guards owns scripts/check-*.mjs and vite.config.ts and renders nothing. n/a is per-AREA, not repo-wide — C7's intent is live for pages-civic / shell-nav / a11y-responsive and must be re-bound there when the rotation arrives, not inherited as n/a
   C7b_dev_improvement_polish: pending
-  C8_security_reviewed: blocked  # #55's seven agent-reachable criteria are now MERGED to main (iteration 5). AC7 needs a hosted deploy — HOLD per GOV-420 (owner-gated) — and #55 auto-closed on merge, so AC7 was re-filed as #109 rather than retired silently.
+  C8_security_reviewed: done  # iteration 7. #55's seven agent-reachable criteria are merged (1c46b1a) and #101/#102 closed since. The eighth, AC7, is an anonymous probe against a HOSTED ORIGIN — a property of the deployment, never of this area's source — and is now correctly labelled area:deploy-release on #109. Nothing in scripts/check-*.mjs or vite.config.ts goes unreviewed as a result. This `done` explicitly does NOT claim AC7 is met
   C9_performance_reviewed: pending
-  C10_cross_platform_parity: pending
-  C11_github_issues_resolved: pending
+  C10_cross_platform_parity: "n/a (no second platform)"  # bind-or-retire, resolved this iteration. C10 reads "iOS native ↔ Tauri/React"; `grep -ril tauri .` is zero repo-wide. ios/GovWatchdogApp/ exists but is a thin auth companion in no npm script and ships nothing the web build ships — there is no parity relation to check. Repo-wide n/a, unlike C7
+  C11_github_issues_resolved: pending  # partially advanced: the label taxonomy C11 and C2b select on did not exist until this iteration. 12 labels created, all 33 open issues classified, 0 unclassified. Remaining for C11 proper: area:build-guards still holds #112 and #49 open, neither closed nor deferred with a stated reason
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 2  # iteration 6 overall; same day as iteration 5, so Gate C did not fire
+iteration_count: 3  # iteration 7 overall; same day as iterations 5–6, so Gate C did not fire
 day_started_at: 2026-07-30
 stop_flag: false
 budget_mode: false
 budget_mode_until: null
-last_meta_recommender_at: 2026-07-29T12:46:00-06:00
-last_meta_github_sync_at: 2026-07-30T12:30:00-06:00  # iteration 6 ran a global sync (33 open issues triaged). The recommender and revise timestamps are deliberately left at 2026-07-29 — both came due and were deferred, not fired; see the iteration 6 log.
-last_meta_revise_at: 2026-07-29T12:46:00-06:00
+last_meta_recommender_at: 2026-07-30T22:05:00-06:00  # iteration 7 ran the pass scoped to the day's deltas (A5/A6 + one explicit non-recommendation), honoring iteration 6's "next iteration" flag rather than deferring a third time
+last_meta_github_sync_at: 2026-07-30T22:00:00-06:00  # iteration 7: labels created and ALL 33 open issues classified (0 unclassified) — the first sync with a real selector
+last_meta_revise_at: 2026-07-30T22:05:00-06:00  # iteration 7: two targeted CLAUDE.md revisions (grep -a caveat per #112; area-label convention)
 last_meta_improver_at: 2026-07-29T12:46:00-06:00
 last_meta_self_audit_at: 2026-07-29T12:46:00-06:00
 last_meta_self_improve_at: 2026-07-29T12:46:00-06:00
@@ -114,3 +171,7 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-30T12:45:00-06:00] ITERATION 6 - **evidence, not green checks.** Red proved first: exactly the 8 new detection tests fail against the pre-fix guard while the 3 false-positive controls pass on both sides. Negative control on the *real* artifact per the standing rule that a passing guard has proven nothing - an escaped marker planted into the built `dist/public` is reported by name, `grep -F` for the literal marker finds 0, and the untouched copy still scores 0. 973 tests / 63 files, `tsc --noEmit` clean, `build:all` green on both lanes and all four guards.
 - [2026-07-30T12:45:00-06:00] ITERATION 6 - **filed #112 in passing:** `test/public-bundle-markers.test.ts` carries 4 raw NUL bytes from #55's AC4 tests, so `file` calls it `data` and plain `grep` finds nothing in it. That quietly degrades CLAUDE.md section 3's mandated `grep test/` step - the repo's one defence against breaking exact-copy assertions. Pre-existing on `main`, out of scope for #102, so filed rather than fixed. Also noted: this repo has **no `hygiene` label**; priority lives in the issue title, as #97 does.
 - [2026-07-30T12:45:00-06:00] ITERATION 6 - **meta-checks: global GitHub issue sync ran** (33 open, triaged; the ten-issue P0/P1 MOTY block is confirmed unblocked now that #68 has landed). `claude-automation-recommender` and `revise-claude-md` came due at ~23h40m but were **deliberately deferred, not silently skipped** - both fired 24h ago in iteration 4, whose own finding was that they yield little at this cadence, and spending a second consecutive iteration on meta-checks instead of the named work item would invert the loop's purpose. Flagged for the next iteration. `BACKEND_REF` untouched; Stage 98 untouched; no backend contract needed, so no backend issue filed; **nothing outward-facing.**
+- [2026-07-30T22:10:00-06:00] ITERATION 7 — area: build-guards — check: C1b — status: **done** — **#97 closed, the last drift item.** The key is REMOVED, not wired: this stopped being an owner decision on inspection, because the shipped GOV-1527 design already derives the read endpoint from `apiBase(env)` and `test/client.test.ts:33` asserts a cross-origin `VITE_READ_API_URL` is ignored — the code had decided; `.env.example` was stale. Both mentions deleted, the GOV-1527 recipe now documents the derived endpoint, and the guard tests keep the dead key's attack form as a key-agnostic case. Red-proved on the REAL file: re-adding `VITE_READ_API_URL=http://127.0.0.1:8787/read` → `api-config-absolute`, exit 1; restored → exit 0. 973 tests / 63 files, `tsc --noEmit` clean, `build:all` exit 0.
+- [2026-07-30T22:10:00-06:00] ITERATION 7 — **the shared `auto-go.md` changed (owner-authorized, backend-routine handoff confirmed by reading the file): C3 retired, red proof required, bind-or-retire rule, `area_bindings`.** Applied all four here. C3 → `n/a (retired)`. C8 → `done` under bind-or-retire: #109 (AC7, anonymous probes against a hosted origin) is a property of the DEPLOYMENT, now labelled `area:deploy-release` — build-guards' own source surface is fully reviewed, and the `done` explicitly does not claim AC7 met. C7 → `n/a` for THIS AREA only (renders nothing); its intent must be re-bound to the web surface for pages-civic/shell-nav/a11y-responsive. C10 → `n/a` repo-wide (no second platform; the iOS companion ships nothing the web build ships). Q1 and Q2 in `dev-qa.md` marked answered with the source attributed.
+- [2026-07-30T22:10:00-06:00] ITERATION 7 — **the label taxonomy exists now: 12 labels (10 `area:*` + `owner-decision` + `loop-self-audit`), all 33 open issues classified, 0 unclassified.** C2b/C11 had never had a selector on this repo — "adopting the taxonomy IS the C11 work" per the shared file. `area:pages-civic` is 10 of 33 (the unblocked MOTY block), `ci-tooling` 5, `honesty-ledger` 4. Wrote `area_bindings` for ALL TEN areas into this heartbeat with every path verified against the tree, so no future check reads the WiredPart layout here. C11 stays `pending` honestly: #112 and #49 are open in-area, neither closed nor deferred with reason.
+- [2026-07-30T22:10:00-06:00] ITERATION 7 — **meta-checks: three fired** (global sync with the new selector; recommender scoped to the day's deltas — A5/A6 plus an explicit non-recommendation of a dead-key guard; revise-claude-md — `grep -a` caveat per #112 and the label convention, both thin per the router design). Honored iteration 6's flag instead of deferring a third time. **Owner interaction this session:** owner asked for the site live — served from this worktree at 127.0.0.1:5178 (5173 is held by a Paperclip agent's dev server on branch GOV-799); walked the reviewer bypass to `#/home` and the design fixture lane; the designed-gap "reviewed record service is not available" render was the contract working as written, no backend running locally. `BACKEND_REF` untouched; Stage 98 untouched; no backend contract needed; nothing outward-facing.
