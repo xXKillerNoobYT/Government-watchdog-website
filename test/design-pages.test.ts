@@ -622,7 +622,18 @@ describe('Power Tracker synthetic consent flow', () => {
     renderPowerTracker(root, ALLOWED);
     expect(root.textContent).toContain('Placeholder Official A');
     expect(root.textContent).toContain('No real people, scores, or verdicts');
-    expect(root.textContent).not.toMatch(/\b\d+%/);
+    // GOV-83: this used to sweep the whole fixture page for /\b\d+%/ as a proxy for
+    // "claims no score". The matrix §5 GS row explicitly authorises synthetic scores,
+    // verdicts and votes in THIS mode, so the blanket sweep now tests the absence of an
+    // authorised feature rather than an invariant. The invariant is narrower and is
+    // asserted directly instead: no PRODUCTION score is claimed, and every synthetic
+    // figure is declared fixture-origin and labelled synthetic where it is shown.
+    expect(root.textContent).toContain('does not calculate or claim a production score');
+    for (const id of ['power-score-donut', 'power-kept-broken-bars', 'power-vote-record']) {
+      expect(root.querySelector(`[data-test="${id}"]`)?.getAttribute('data-origin'), id).toBe('fixture');
+    }
+    expect(root.querySelector('[data-test="power-score-donut"]')?.textContent)
+      .toContain('SYNTHETIC SCORE — fixture value, not computed here');
     expect(root.querySelector('[data-test="power-verdict-detail"]')).toBeNull();
 
     root.querySelector<HTMLButtonElement>('[data-test="power-open-detail"]')!.click();
@@ -804,5 +815,96 @@ describe('accessibility and claim-safety invariants', () => {
       const text = visibleCopy.textContent ?? '';
       expect(text).not.toMatch(/encrypted|secure account|verified identity|real-time monitoring|guaranteed delivery/i);
     }
+  });
+});
+
+// GOV-83 — the gated Power Tracker fixture: score donut, kept/broken/partial bars,
+// promise ledger and vote/action record.
+//
+// Matrix §5 keeps every score, verdict, quote and vote DG on the reviewed lane and classes
+// "placeholder officials, scores, verdicts, quotes, votes" GS — populated ONLY in explicit
+// reviewer design-fixture mode behind the AI/disclaimer interstitial. These tests pin both
+// halves: the figures exist in fixture mode, and nowhere else.
+describe('GOV-83 Power Tracker fixture scorecard', () => {
+  const FIGURES = [
+    'power-score-donut',
+    'power-kept-broken-bars',
+    'power-promise-ledger',
+    'power-vote-record',
+  ] as const;
+
+  it('renders every baseline figure in fixture mode', () => {
+    renderPowerTracker(root, ALLOWED);
+    for (const id of FIGURES) {
+      expect(root.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(1);
+    }
+    // Three kept/broken/partial bars, each carrying its own supplied percentage.
+    const bars = root.querySelectorAll('[data-test="power-kept-broken-bars"] .gw-dp-bar-row');
+    expect(bars).toHaveLength(3);
+    expect([...bars].map((b) => b.querySelector('.gw-dp-bar-label')?.textContent))
+      .toEqual(['Kept · 5', 'Broken · 3', 'Partial · 2']);
+    expect(root.querySelectorAll('[data-test="power-vote-row"]')).toHaveLength(3);
+  });
+
+  it('derives no figure in the browser — every number is supplied', () => {
+    renderPowerTracker(root, ALLOWED);
+    // The bar percentages are literals from the fixture, NOT count/total. 5/(5+3+2) would
+    // also be 50%, so a sum check would pass on derived data; assert against the source
+    // table instead, which is what "no score is computed in the browser" actually means.
+    const pcts = [...root.querySelectorAll('[data-test="power-kept-broken-bars"] .gw-dp-bar-pct')]
+      .map((n) => n.textContent);
+    expect(pcts).toEqual(['50%', '30%', '20%']);
+    const widths = [...root.querySelectorAll<HTMLElement>('[data-test="power-kept-broken-bars"] .gw-dp-bar-fill')]
+      .map((n) => n.style.width);
+    expect(widths).toEqual(['50%', '30%', '20%']);
+    // The donut arc is drawn from the supplied score, not from the bars.
+    expect(root.querySelector('[data-test="power-score-donut"] .gw-dp-donut-arc')?.getAttribute('stroke-dasharray'))
+      .toBe('62 38');
+  });
+
+  it('routes every vote row through the AI-disclaimer interstitial before any conclusion', () => {
+    renderPowerTracker(root, ALLOWED);
+    const row = root.querySelector<HTMLButtonElement>('[data-test="power-vote-row"]')!;
+    row.click();
+
+    expect(root.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
+    // The disclaimer precedes the conclusion: the gate is up and the verdict is withheld.
+    expect(root.querySelector('[data-test="power-ai-gate"]')?.textContent)
+      .toContain('AI-GENERATED ANALYSIS — READ FIRST');
+    expect(root.querySelector('[data-test="power-verdict-detail"]')).toBeNull();
+
+    root.querySelector<HTMLButtonElement>('[data-test="power-ai-consent"]')!.click();
+    expect(root.querySelector('[data-test="power-verdict-detail"]')).not.toBeNull();
+  });
+
+  it('names no real official and every vote row is synthetic', () => {
+    renderPowerTracker(root, ALLOWED);
+    for (const row of root.querySelectorAll('[data-test="power-vote-row"]')) {
+      expect(row.textContent).toContain('SYNTHETIC AGENDA ITEM');
+    }
+    expect(root.textContent).toContain('Placeholder Official A');
+    expect(root.textContent).not.toMatch(/Mayor|Councilmember|Trustee|Commissioner/);
+  });
+
+  it('reviewed lane carries no figure and keeps its designed gaps', () => {
+    renderPowerTracker(root, { access: 'reviewer_internal', fixture: false });
+    for (const id of FIGURES) {
+      expect(root.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    expect(root.textContent).not.toContain('SYNTHETIC SCORE');
+    expect(root.textContent).not.toContain('SYNTHETIC AGENDA ITEM');
+    // The DG states GOV-83 must not disturb.
+    expect(root.querySelector('[data-test="power-score-unavailable"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="power-roster-unavailable"]')).not.toBeNull();
+  });
+
+  it('public lane carries no figure and no fixture string', () => {
+    renderPowerTracker(root, REVIEWED_OPTIONS, { ...REVIEWED_DATA, access: 'public' }, REVIEWED_NOTICE);
+    for (const id of FIGURES) {
+      expect(root.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    expect(root.textContent).not.toContain('SYNTHETIC SCORE');
+    expect(root.textContent).not.toContain('SYNTHETIC PROMISE');
+    expect(root.textContent).not.toContain('SYNTHETIC AGENDA ITEM');
   });
 });
