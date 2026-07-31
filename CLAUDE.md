@@ -140,7 +140,17 @@ never merge to make a red thing disappear, and never merge a PR you have not rea
   publication/immutability setup is recorded incomplete.
 - **Never open Stage 98** (public release).
 - **Nothing outward-facing without the owner** — no deploy, no publish, no send.
-- **Never invent** a civic fact, source, vote count, date, or official's position.
+- **Never invent** a civic fact, source, vote count, date, or official's position — and
+  that includes **precision**. A month-precision date rendered as a day, or a partial value
+  placed on a scale, is an invented claim even when every character came from the backend.
+  `buildTimeNavigator` files anything that is not a full `YYYY-MM-DD` as *undated* for
+  exactly this reason.
+- **Never put a supplied value straight into an `href`.** Source URLs originate in ingested
+  external documents, so they are untrusted input that merely arrives via our backend, and
+  `assertWebSafe` does **not** cover schemes. Every `el()` helper refuses anything that is
+  not `http:`/`https:` or an in-app target via `safeExternalHref`
+  (`src/data/web-safe.ts`); a refused link keeps its text and gets no href. A
+  `javascript:` URL planted in a fixture reached four live anchors before this landed.
 - **Never ship a state-bearing control below the accessibility floors.** Two hard stops,
   both enforced by tests: interactive controls reach `--gw-tap-min` (**44px**), and
   state-bearing text — trust chips, the AI disclosure, the origin/fixture banner — reaches
