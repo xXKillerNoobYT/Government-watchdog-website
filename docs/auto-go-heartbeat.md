@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T06:24:38-06:00
-last_task: "GOV-83 — Power Tracker score, promise ledger and vote table in fixture mode (PR #154, merged)"
+last_run: 2026-07-31T06:57:26-06:00
+last_task: "GOV-82 — deterministic diff primitive wired into Source Vault version compare (PR #156, merged)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
   C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 28
+iteration_count: 29
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -401,3 +401,29 @@ Verification commands for this project (all three, every iteration that changes 
   `dist/public` fixture-string grep = 0, new vote-row control meets the 44px tap floor.
   Four red proofs incl. disabling the fixture gate (donut renders on the reviewed lane -> 7 failed).
   main verified green post-merge at 1361117 — checked deliberately after iteration 37's flake.
+- [2026-07-31T06:57:26-06:00] ITERATION 39 — area: pages-civic — **GOV-82 shipped** (PR #156, merged).
+  `src/ui/diff-view.ts` held the deterministic LCS diff and `DIFF_CODE_CHIP` from the start but
+  **nothing in `src/` imported it** — its only consumer was its own test, so the primitive could
+  drift from the baseline with a fully green suite. Now wired into Source Vault's compare panel;
+  reviewed lane untouched, fixture lane renders the real primitive under the banner.
+  Fixed two gaps in the primitive: added/removed carried **colour alone** (added a text key), and
+  the chip diverges from the baseline by one word with no recorded reason (kept ours, recorded why,
+  flagged to the owner — baseline says `100% CODE — NO AI WAIT`, we ship `100% CODE — NO AI`).
+- [2026-07-31T06:57:26-06:00] LESSON — **a tautological assertion looks like a passing test.** My new test asserted
+  `expect(renderedChip).toBe(DIFF_CODE_CHIP)` — comparing the rendered value against the same
+  constant it came from. It stays green no matter what the constant becomes, which the red proof
+  exposed when mutating the chip to 'COMPUTED' changed nothing. **Assert the literal, not the
+  constant, whenever the constant is what produced the value.** This is a distinct failure mode
+  from a vacuous selector: the assertion is well-formed and reads correctly.
+- [2026-07-31T06:57:26-06:00] LESSON — **`s.replace(old, new, 1)` in a red proof only neutralises the FIRST call
+  site.** Mutating the fixture gate looked like a vacuous guard until I noticed the second call
+  site still rendered it. Count the sites first and assert the count; when mutating a gate, replace
+  ALL occurrences and assert what should survive. Two of four red proofs failed to fire this
+  iteration and **both were the probe's fault, not the test's** — which is exactly why
+  'the guard looks vacuous' must be investigated rather than believed.
+- [2026-07-31T06:57:26-06:00] ITERATION 39 — one pre-existing test scoped, not weakened: `diff-view.test.ts` asserted
+  `querySelectorAll('ins, del')` was empty in plain mode, which held only while nothing else used
+  those tags. The new key uses real `<ins>`/`<del>` deliberately. Scoped to `.gw-diff-body` and
+  red-proofed that the scoped form still catches marks leaking into plain mode.
+- [2026-07-31T06:57:26-06:00] ITERATION 39 — 1039 tests / 67 files green (was 1033), tsc clean, build:all 0,
+  `dist/public` fixture-string grep = 0. main verified green post-merge at 539e753.
