@@ -508,7 +508,7 @@ function simpleTools(): HTMLElement {
   ]);
 }
 
-function originBanner(origin: ShellOrigin, refreshedAt?: string): HTMLElement {
+function originBanner(origin: ShellOrigin, refreshedAt?: string, freshness?: Partial<Record<GovLevel, string>>): HTMLElement {
   const fixture = origin === 'fixture';
   const live = origin === 'live_server';
   const children: (Node | string)[] = [
@@ -526,6 +526,25 @@ function originBanner(origin: ShellOrigin, refreshedAt?: string): HTMLElement {
   if (refreshedAt) {
     children.push(el('time', { datetime: refreshedAt }, [`snapshot generated ${refreshedAt}`]));
   }
+  // GOV-72: the baseline carries TOWN/COUNTY/STATE freshness atop every page. The
+  // slot must exist even though no contract supplies it yet — a designed slot that
+  // disappears is the failure the handoff forbids. Each level renders a supplied
+  // string verbatim or its explicit gap; nothing here can invent a time.
+  children.push(el('span', { class: 'gw-shell-origin-freshness', 'data-test': 'shell-origin-freshness' },
+    (['town', 'county', 'state'] as const).flatMap((level) => {
+      const supplied = freshness?.[level];
+      return [el('span', {
+        class: 'gw-shell-origin-level',
+        'data-test': 'shell-origin-level',
+        'data-level': level,
+        'data-state': supplied ? 'supplied' : 'unavailable',
+      }, [
+        el('b', {}, [level.toUpperCase()]),
+        supplied
+          ? el('time', { datetime: supplied }, [supplied])
+          : el('span', {}, ['freshness unavailable']),
+      ])];
+    })));
   const status = el('div', {
     class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : live ? 'live' : 'reviewed'}`,
     role: 'status',
@@ -576,6 +595,9 @@ interface NavContext {
   fixture?: boolean;
 }
 
+/** The three government levels the baseline banner carries. */
+export type GovLevel = 'town' | 'county' | 'state';
+
 export interface ShellOptions {
   /** Current hash path without `#`; used only for primary-nav highlighting. */
   active: string;
@@ -588,6 +610,16 @@ export interface ShellOptions {
   mode?: ShellMode;
   /** Real projection-generation timestamp. Omitted means no stamp is rendered. */
   refreshedAt?: string;
+  /**
+   * GOV-72 — per-level freshness for the banner's Town/County/State row.
+   *
+   * A key is present ONLY when the admitted projection supplied that exact
+   * string; the shell renders it verbatim. An absent key renders the explicit
+   * unavailable state. There is deliberately no "compute it" branch: the shell
+   * never reads a clock, never parses a document date, and never borrows a
+   * fixture constant, so a freshness claim can only originate from a response.
+   */
+  freshness?: Partial<Record<GovLevel, string>>;
   /** Explicit shell-wide data origin. Omitted when a page owns its own origin notice. */
   origin?: ShellOrigin;
 }
@@ -611,7 +643,7 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
 
   const slot = el('div', { class: 'gw-shell-slot', 'data-test': 'shell-content' });
   const bannerSlot = el('div', { class: 'gw-shell-banner-slot', 'data-test': 'shell-banner-slot' });
-  if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt));
+  if (opts.origin) bannerSlot.append(originBanner(opts.origin, opts.refreshedAt, opts.freshness));
   const nav: NavContext = { active: opts.active, fixture: opts.fixture === true };
   const headerChildren = mode === 'simple'
     ? [simpleUtilityBar(mode, opts.origin, nav), simpleMasthead(), simpleTools(), tabRow(opts.active)]
@@ -651,6 +683,10 @@ html,body{margin:0}
 .gw-shell-origin-wrap .gw-shell-origin{padding-right:58px}
 .gw-shell-origin strong{font-weight:800;letter-spacing:.06em}
 .gw-shell-origin time{color:var(--gw-text-muted)}
+.gw-shell-origin-freshness{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.gw-shell-origin-level{display:inline-flex;align-items:center;gap:5px}
+.gw-shell-origin-level b{letter-spacing:.08em}
+.gw-shell-origin-level[data-state="unavailable"]{opacity:.85;font-style:italic}
 .gw-shell-origin-fixture{border-bottom-color:var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text)}
 .gw-shell-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .gw-shell-header{position:sticky;top:0;z-index:20;background:var(--gw-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
