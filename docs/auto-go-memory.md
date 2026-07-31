@@ -337,6 +337,22 @@
   impossible (`File.size` near 1e308). **A crash on input the type system forbids and the
   call sites cannot produce is a bad test, not a bug.**
 
+- **[2026-07-31] I shipped a guard that could never fail, three times in a row, and only a
+  VERIFIED red proof found it.** GOV-73's "provenance is never hidden" assertion was vacuous
+  in three successive forms: (1) `block.slice(i - 400, i)` where `i` was 231 — a negative
+  start makes `String.slice` count from the END, so the window was always `''` and
+  `expect('').not.toContain(x)` always passes; (2) parsing rules with `([^{}]+)\{([^}]*)\}`
+  — `[^}]*` does not exclude `{`, so the first match treats `@media print ` as the selector
+  list and swallows the whole first rule; (3) only after stripping the at-rule wrapper did it
+  fire. **Two compounding lessons: a red proof whose MUTATION silently no-ops proves nothing
+  either — always assert the mutation applied (`assert old in s; assert s2 != s`) — and when
+  an assertion refuses to fail, measure the value it is asserting on rather than reasoning
+  about it.**
+- **[2026-07-31] Backticks inside a CSS comment terminate the enclosing template literal.**
+  Writing ``/* at <=760px `.gw-shell-tabs` is fixed */`` inside `SHELL_STYLE` produced five
+  cryptic TS1005 errors. Style constants are template literals — no backticks in their
+  comments, ever.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
