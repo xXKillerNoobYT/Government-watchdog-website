@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T05:42:11-06:00
-last_task: "GOV-84 — gated design-fixture renderer for the Newsletter route (PR #152, merged)"
+last_run: 2026-07-31T06:24:38-06:00
+last_task: "GOV-83 — Power Tracker score, promise ledger and vote table in fixture mode (PR #154, merged)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
   C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 27
+iteration_count: 28
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -376,3 +376,28 @@ Verification commands for this project (all three, every iteration that changes 
   (`installMemoryLocalStorage` + `vi.unstubAllGlobals`) instead of depending on ambient state.
   Lesson within the lesson: "cannot reproduce" often means "have not yet built the adversarial
   condition", and shipping on an unreproduced diagnosis produced a second red.
+- [2026-07-31T06:24:38-06:00] ITERATION 38 — area: pages-civic — **GOV-83 shipped** (PR #154, merged). Score donut,
+  kept/broken/partial bars, promise ledger and vote/action record added to the Power Tracker
+  **fixture path only**; `renderReviewedPower` untouched and its two DG states asserted directly.
+  Vote rows route through the EXISTING `openPowerDetailModal`, so the AI-hallucination disclaimer
+  always precedes a promise/action conclusion. **Nothing is derived in the browser** — every
+  figure, including each bar's percentage, is a literal in the fixture table.
+  **This completes the three gated-synthetic renderers** (#76 Home, #84 Newsletter, #83 Power).
+- [2026-07-31T06:24:38-06:00] ITERATION 38 — **a green test was pinning the pre-fix state, for the second time this
+  week.** `design-pages.test.ts` swept the fixture page for `\b\d+%` as a proxy for "claims no
+  score" — testing the absence of a feature the matrix §5 GS row explicitly authorises. Re-scoped
+  to the real invariant (no *production* score; every synthetic figure declares
+  `data-origin="fixture"`; the donut is labelled SYNTHETIC SCORE), which is strictly stronger.
+  `design-routes.test.ts` had the identical shape for #84. **Pattern worth naming: when a feature
+  lands in a lane that was previously empty, the test asserting emptiness is the first suspect —
+  and it will be GREEN, not red, until you touch it.**
+- [2026-07-31T06:24:38-06:00] LESSON — **a mutation that produces identical output is not a red proof.** Testing the
+  "no derived figures" guard, I mutated the bar percentage to `count/10*100`, which yields
+  50/30/20 — exactly the supplied values. All 40 tests passed and the guard looked vacuous. It was
+  not; the mutation was. Re-ran with `count*7` (35/21/14) and it failed correctly. **Before
+  concluding a guard is vacuous, prove the mutation actually changed the rendered output** — this
+  is the same class as the earlier no-op `s.replace`, but arithmetic makes it much easier to hit.
+- [2026-07-31T06:24:38-06:00] ITERATION 38 — 1033 tests / 67 files green (was 1027), tsc clean, build:all 0,
+  `dist/public` fixture-string grep = 0, new vote-row control meets the 44px tap floor.
+  Four red proofs incl. disabling the fixture gate (donut renders on the reviewed lane -> 7 failed).
+  main verified green post-merge at 1361117 — checked deliberately after iteration 37's flake.
