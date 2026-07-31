@@ -353,6 +353,17 @@ describe('GOV-658 Home dashboard — Simple broadsheet mode', () => {
       'Past 90 days is the intended Simple reading window',
     );
     expect((root.querySelector('[data-test="home-simple-search-input"]') as HTMLInputElement).disabled).toBe(true);
+
+    // GOV-75: the baseline's upsell slot is restored as CS beside the 90-day search.
+    const upsell = root.querySelector('[data-test="home-simple-upsell"]');
+    expect(upsell).not.toBeNull();
+    expect(upsell?.textContent).toContain('COMING SOON');
+    expect(upsell?.textContent).toContain('no paid plan');
+    // No price may appear until backend #131 approves customer-facing pricing.
+    expect(upsell?.textContent).not.toMatch(/\$\s?\d/);
+    expect(upsell?.textContent).not.toContain('Local Data Geek');
+    // Nothing purchasable: no link, no form, no operable control anywhere in the slot.
+    expect(upsell?.querySelectorAll('a, button, input, form, [href]')).toHaveLength(0);
     expect(root.querySelector('[data-test="home-edition-history-unavailable"]')?.textContent).toContain(
       'The digest coverage period is not version history',
     );
