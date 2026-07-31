@@ -35,6 +35,15 @@ import { GW_TOKENS } from './tokens';
 import { statusTone, uiStatusLabel, AI_LABEL_TEXT } from './state-view';
 import type { TrustTone } from './state-view';
 import { readMode } from './shell';
+import { DESIGN_FIXTURE_LABEL } from './design-pages';
+import {
+  meetingPairBoardFixture,
+  roundtableFixture,
+  agendaFeatureFixture,
+  lensGridFixture,
+  meetingLedgerFixture,
+  NEWSLETTER_DESIGN_STYLE,
+} from './newsletter-design';
 import {
   renderPrivateInfoNote,
   renderPrivateUnavailableInfoNote,
@@ -798,7 +807,7 @@ function historyHonestyReferenceSlot(digest?: NewsletterDigest): HTMLElement {
   ]);
 }
 
-function baselineSlots(digest?: NewsletterDigest): HTMLElement {
+function baselineSlots(digest?: NewsletterDigest, designFixture = false): HTMLElement {
   const mode = readMode();
   const simple = mode === 'simple';
   return el('div', {
@@ -807,6 +816,17 @@ function baselineSlots(digest?: NewsletterDigest): HTMLElement {
     role: 'region',
     'aria-label': `${simple ? 'Simple' : 'Advanced'} newsletter baseline and designed gaps`,
   }, [
+    ...(designFixture
+      ? [el('div', {
+          class: 'gw-nl-design-banner',
+          role: 'status',
+          'data-test': 'newsletter-design-banner',
+          'data-origin': 'fixture',
+        }, [
+          `${DESIGN_FIXTURE_LABEL}. Every block below is synthetic: no real meeting, official, `
+          + 'motion, vote, or quotation is asserted, and no record is classified into a lens.',
+        ])]
+      : []),
     el('div', { class: 'gw-nl-baseline-context' }, [
       renderPrivateInfoNote('newsletter-gaps'),
     ]),
@@ -815,9 +835,9 @@ function baselineSlots(digest?: NewsletterDigest): HTMLElement {
       'data-test': simple ? 'newsletter-simple-edition' : 'newsletter-advanced-workbench',
     }, simple
       ? [
-          el('div', { class: 'gw-nl-editorial-lead' }, [meetingPairBoard(digest), agendaFeatureSlot()]),
-          roundtableSlot(),
-          el('div', { class: 'gw-nl-editorial-secondary' }, [lensGridSlot(), meetingLedgerSlot(digest)]),
+          el('div', { class: 'gw-nl-editorial-lead' }, [designFixture ? meetingPairBoardFixture() : meetingPairBoard(digest), designFixture ? agendaFeatureFixture() : agendaFeatureSlot()]),
+          designFixture ? roundtableFixture() : roundtableSlot(),
+          el('div', { class: 'gw-nl-editorial-secondary' }, [designFixture ? lensGridFixture() : lensGridSlot(), designFixture ? meetingLedgerFixture() : meetingLedgerSlot(digest)]),
           historyHonestyReferenceSlot(digest),
         ]
       : [
@@ -831,10 +851,10 @@ function baselineSlots(digest?: NewsletterDigest): HTMLElement {
               'No edition pairing, multi-jurisdiction selection, entitlement, or all-history search projection is supplied.',
             ),
           ]),
-          el('div', { class: 'gw-nl-workbench-lead' }, [meetingPairBoard(digest), roundtableSlot()]),
-          agendaFeatureSlot(),
-          lensGridSlot(),
-          el('div', { class: 'gw-nl-workbench-secondary' }, [meetingLedgerSlot(digest), historyHonestyReferenceSlot(digest)]),
+          el('div', { class: 'gw-nl-workbench-lead' }, [designFixture ? meetingPairBoardFixture() : meetingPairBoard(digest), designFixture ? roundtableFixture() : roundtableSlot()]),
+          designFixture ? agendaFeatureFixture() : agendaFeatureSlot(),
+          designFixture ? lensGridFixture() : lensGridSlot(),
+          el('div', { class: 'gw-nl-workbench-secondary' }, [designFixture ? meetingLedgerFixture() : meetingLedgerSlot(digest), historyHonestyReferenceSlot(digest)]),
         ]),
   ]);
 }
@@ -901,6 +921,7 @@ export function renderNewsletterArchive(
   root: HTMLElement,
   response: NewsletterDigestResponse,
   notice?: string,
+  designFixture = false,
 ): void {
   prepareNewsletterRoot(root);
   if (!admitReviewerLane(root, response.access)) return;
@@ -928,7 +949,7 @@ export function renderNewsletterArchive(
       'Current-edition selection unavailable',
       'The reviewed response supplies archived digests but no current, featured, or latest-edition marker. Choose a reviewed capture below; the full baseline edition layout remains visible without guessing which archive row is current.',
     ),
-    baselineSlots(),
+    baselineSlots(undefined, designFixture),
   );
 
   if (rows.length === 0) {
@@ -1010,6 +1031,7 @@ export function renderNewsletterDetail(
   response: NewsletterDigestResponse,
   newsletterId: string,
   notice?: string,
+  designFixture = false,
 ): void {
   prepareNewsletterRoot(root);
   if (!admitReviewerLane(root, response.access)) return;
@@ -1074,7 +1096,7 @@ export function renderNewsletterDetail(
     ]),
   );
 
-  root.append(baselineSlots(digest));
+  root.append(baselineSlots(digest, designFixture));
 
   const sections = el('div', { class: 'gw-nl-sections', 'data-test': 'newsletter-digest-sections' }, [
     el('div', { class: 'gw-nl-sections-heading' }, [
@@ -1227,6 +1249,7 @@ export const NEWSLETTER_STYLE = `${GW_TOKENS}
 .gw-nl-detail-archive{margin-top:var(--gw-space-6);padding-top:var(--gw-space-5);border-top:3px double var(--gw-rule-strong)}.gw-nl-detail-archive-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--gw-space-3);margin-top:var(--gw-space-3)}.gw-nl-detail-archive-row{display:grid;gap:var(--gw-space-1);min-height:var(--gw-tap-min);padding:var(--gw-space-3);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-surface);color:var(--gw-text);text-decoration:none}.gw-nl-detail-archive-row[aria-current="page"]{border-color:var(--gw-accent);background:var(--gw-surface-accent-tint)}
 @media(max-width:900px){.gw-nl-editorial-lead,.gw-nl-editorial-secondary,.gw-nl-workbench-lead,.gw-nl-workbench-secondary,.gw-nl-history-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.gw-nl-root{padding:var(--gw-space-4)}.gw-nl-pair-grid,.gw-nl-agenda-grid,.gw-nl-lens-grid,.gw-nl-roundtable-meta{grid-template-columns:1fr}.gw-nl-meeting-reference{grid-template-columns:1fr}.gw-nl-ledger-table{display:block;overflow-x:auto}.gw-nl-player-status{width:100%;margin-left:0}.gw-nl-baseline-card{padding:var(--gw-space-4)}.gw-nl-heading-with-info,.gw-nl-context-row{align-items:center}.gw-nl-origin-with-info{align-items:center}}
+${NEWSLETTER_DESIGN_STYLE}
 `;
 
 let styleInjected = false;

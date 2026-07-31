@@ -20,6 +20,8 @@
 //   §6.7 no public/email path — DOM + source audit: no email / sender / publish /
 //        public-deploy affordance is wired from these routes.
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readDebatePosition } from '../src/state/local-store';
+import { DEBATE_POSITION_KEY } from '../src/state/local-store';
 // Vite `?raw` import (typed by vite/client) — lets the source-audit grep run with
 // no node:fs dependency (the tsconfig intentionally carries no @types/node).
 import newsletterSource from '../src/ui/newsletter.ts?raw';
@@ -464,5 +466,132 @@ describe('GOV-53 — newsletter contextual information notes', () => {
     expect(panel.textContent).toContain('Filled from');
     expect(panel.textContent).toContain('Current state');
     expect(panel.textContent).toContain('Expected result');
+  });
+});
+
+// GOV-84 — the gated design-fixture lane for #/newsletter.
+//
+// The matrix §7 keeps every slot DG on the reviewed lane and classes the July 21 edition,
+// debate and lenses GS: "owner design reference only unless an explicit gated fixture
+// renderer is added". This covers that renderer in all three lanes, and pins the two rules
+// that make the fixture safe — no civic claim, and no lens classified in the browser.
+describe('GOV-84 newsletter design-fixture lane', () => {
+  const FIXTURE_BLOCKS = [
+    'newsletter-meeting-pair-board-fixture',
+    'newsletter-roundtable-fixture',
+    'newsletter-agenda-feature-fixture',
+    'newsletter-six-lens-grid-fixture',
+    'newsletter-meeting-ledger-fixture',
+  ] as const;
+  const REVIEWED_BLOCKS = [
+    'newsletter-meeting-pair-board',
+    'newsletter-roundtable',
+    'newsletter-agenda-feature',
+    'newsletter-six-lens-grid',
+    'newsletter-meeting-ledger',
+  ] as const;
+  // Strings that must never appear outside the fixture lane.
+  const FIXTURE_STRINGS = ['SYNTHETIC PLACEHOLDER', 'SYNTHETIC MEETING', 'VOICE A', 'SYNTHETIC LEDGER ROW'];
+
+  function mount(): HTMLElement {
+    const r = document.createElement('div');
+    document.body.append(r);
+    return r;
+  }
+
+  it('reviewed lane keeps every designed gap and renders no fixture block', () => {
+    const r = mount();
+    renderNewsletterArchive(r, RESPONSE, undefined, false);
+
+    for (const id of REVIEWED_BLOCKS) {
+      expect(r.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(1);
+    }
+    for (const id of FIXTURE_BLOCKS) {
+      expect(r.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    expect(r.querySelector('[data-test="newsletter-design-banner"]')).toBeNull();
+    for (const s of FIXTURE_STRINGS) {
+      expect(r.textContent, s).not.toContain(s);
+    }
+  });
+
+  it('fixture lane renders all five populated blocks under the banner', () => {
+    const r = mount();
+    renderNewsletterArchive(r, RESPONSE, undefined, true);
+
+    for (const id of FIXTURE_BLOCKS) {
+      expect(r.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(1);
+    }
+    for (const id of REVIEWED_BLOCKS) {
+      expect(r.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    const banner = r.querySelector('[data-test="newsletter-design-banner"]');
+    expect(banner?.textContent).toContain('SYNTHETIC DESIGN FIXTURE — not a live read');
+    // Every fixture block declares fixture origin at its own root, not by inheritance.
+    for (const id of FIXTURE_BLOCKS) {
+      expect(r.querySelector(`[data-test="${id}"]`)?.getAttribute('data-origin'), id).toBe('fixture');
+    }
+  });
+
+  it('names no official, meeting, motion or quotation, and classifies no record into a lens', () => {
+    const r = mount();
+    renderNewsletterArchive(r, RESPONSE, undefined, true);
+
+    // The baseline's four roundtable voices are placeholders, never people.
+    const voices = [...r.querySelectorAll('.gw-nl-roundtable-voice')].map((n) => n.textContent);
+    expect(voices).toEqual(['VOICE A', 'VOICE B', 'VOICE C', 'VOICE D']);
+
+    // Six lens headings, and every cell says classification does not happen here.
+    const cells = r.querySelectorAll('[data-test="newsletter-lens-cell"]');
+    expect(cells).toHaveLength(6);
+    for (const cell of cells) {
+      expect(cell.textContent).toContain('No record is classified into this lens in the browser.');
+    }
+
+    // Every AI-authored block carries its label and caveat.
+    const ai = r.querySelectorAll('[data-test="newsletter-ai-presented"]');
+    expect(ai.length).toBeGreaterThan(0);
+    for (const block of ai) {
+      expect(block.textContent).toContain('AI-PRESENTED');
+      expect(block.textContent).toContain('not independently verified');
+    }
+  });
+
+  it('keeps the transcript collapsed by default and stores listen position in gw_debate_pos', () => {
+    localStorage.clear();
+    const r = mount();
+    renderNewsletterArchive(r, RESPONSE, undefined, true);
+
+    const transcript = r.querySelector('[data-test="newsletter-roundtable-transcript"]')!;
+    const toggle = r.querySelector('[data-test="newsletter-roundtable-toggle"]') as HTMLButtonElement;
+    expect(transcript.hasAttribute('hidden')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    toggle.click();
+    expect(transcript.hasAttribute('hidden')).toBe(false);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    // Position round-trips through the shared local-store key, not a private one.
+    const advance = r.querySelector('[data-test="newsletter-roundtable-advance"]') as HTMLButtonElement;
+    expect(r.querySelector('[data-test="newsletter-roundtable-position"]')?.textContent)
+      .toBe('Saved listen position: line 1 of 4');
+    advance.click();
+    expect(readDebatePosition()).toBe(1);
+    expect(localStorage.getItem(DEBATE_POSITION_KEY)).toBe('1');
+    expect(r.querySelector('[data-test="newsletter-roundtable-position"]')?.textContent)
+      .toBe('Saved listen position: line 2 of 4');
+  });
+
+  it('fails closed: the public lane renders no fixture block and no fixture string', () => {
+    const r = mount();
+    renderNewsletterArchive(r, { ...RESPONSE, access: 'public' }, undefined, true);
+
+    for (const id of FIXTURE_BLOCKS) {
+      expect(r.querySelectorAll(`[data-test="${id}"]`), id).toHaveLength(0);
+    }
+    expect(r.querySelector('[data-test="newsletter-design-banner"]')).toBeNull();
+    for (const s of FIXTURE_STRINGS) {
+      expect(r.textContent, s).not.toContain(s);
+    }
   });
 });
