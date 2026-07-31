@@ -33,9 +33,9 @@ area_bindings:
     tests: [test/gov658-app-shell.test.ts, test/gov658-fonts.test.ts, test/gov767-landing-theme.test.ts, test/gov440-dark-theme.test.ts, test/render.test.ts]
   pages-civic:
     label: "area:pages-civic"
-    paths: [src/ui/home.ts, src/ui/timeline.ts, src/ui/timeline-lanes.ts, src/ui/board.ts, src/ui/newsletter.ts, src/ui/topic-tree.ts, src/ui/card-feed.ts, src/ui/diff-view.ts, src/ui/pages-program.ts, src/ui/design-pages.ts]
+    paths: [src/ui/home.ts, src/ui/timeline.ts, src/ui/timeline-lanes.ts, src/ui/timeline-design.ts, src/ui/board.ts, src/ui/newsletter.ts, src/ui/newsletter-design.ts, src/ui/topic-tree.ts, src/ui/topic-tree-view.ts, src/ui/card-feed.ts, src/ui/diff-view.ts, src/ui/pages-program.ts, src/ui/design-pages.ts, src/ui/fast-agenda-design.ts]
     contracts: [docs/design-information-type-matrix.md, docs/product/, docs/stage3-06-card-feed-frontend-contract.md, docs/stage4-06-newsletter-archive-detail-frontend-contract.md]
-    tests: [test/gov658-home-dashboard.test.ts, test/gov606-agenda-board.test.ts, test/gov665-pages-program.test.ts, test/gov668-wave3-pages.test.ts, test/gov671-wave4-pages.test.ts, test/timeline*.test.ts, test/topic-tree*.test.ts, test/diff-view.test.ts, test/gov462-newsletter-digest.test.ts]
+    tests: [test/gov658-home-dashboard.test.ts, test/gov606-agenda-board.test.ts, test/gov665-pages-program.test.ts, test/gov668-wave3-pages.test.ts, test/gov671-wave4-pages.test.ts, test/timeline*.test.ts, test/topic-tree*.test.ts, test/diff-view.test.ts, test/gov462-newsletter-digest.test.ts, test/design-pages.test.ts, test/fast-agenda-design.test.ts, test/design-routes.test.ts]
   data-contract:
     label: "area:data-contract"
     paths: [src/data/, src/types/, src/fixtures/, src/state/]

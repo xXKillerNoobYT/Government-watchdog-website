@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DIFF_CODE_CHIP, diffView, diffWords } from '../src/ui/diff-view';
+import { DIFF_CODE_CHIP, diffView, diffWords, ensureDiffViewStyle } from '../src/ui/diff-view';
 
 beforeEach(() => {
   document.head.innerHTML = '';
@@ -93,5 +93,33 @@ describe('diffView', () => {
     const view = diffView({ ...spec, wordLevel: true });
     expect(view.querySelectorAll('[data-test="diff-before-body"] ins')).toHaveLength(0);
     expect(view.querySelectorAll('[data-test="diff-after-body"] del')).toHaveLength(0);
+  });
+});
+
+// C4 (iteration 43) — found by mutation sweep: neutralising `ensureDiffViewStyle` to a
+// no-op broke ZERO tests across the whole pages-civic suite. The diff would have rendered
+// completely unstyled and every check stayed green. Its idempotency early-return was also
+// never exercised.
+describe('ensureDiffViewStyle', () => {
+  it('injects the stylesheet exactly once, however many times it is called', () => {
+    document.head.querySelectorAll('#gw-diff-view-style').forEach((n) => n.remove());
+    expect(document.getElementById('gw-diff-view-style')).toBeNull();
+
+    ensureDiffViewStyle();
+    const style = document.getElementById('gw-diff-view-style');
+    expect(style).not.toBeNull();
+    expect(style?.tagName).toBe('STYLE');
+    expect(style?.textContent).toContain('.gw-diff');
+
+    // The early-return branch: repeated calls must not stack duplicate <style> nodes.
+    for (let i = 0; i < 50; i += 1) ensureDiffViewStyle();
+    expect(document.querySelectorAll('#gw-diff-view-style')).toHaveLength(1);
+    expect(document.getElementById('gw-diff-view-style')).toBe(style);
+  });
+
+  it('is called by diffView, so a rendered diff is never unstyled', () => {
+    document.head.querySelectorAll('#gw-diff-view-style').forEach((n) => n.remove());
+    diffView({ beforeLabel: 'v1', afterLabel: 'v2', before: 'a b', after: 'a c' });
+    expect(document.getElementById('gw-diff-view-style')).not.toBeNull();
   });
 });
