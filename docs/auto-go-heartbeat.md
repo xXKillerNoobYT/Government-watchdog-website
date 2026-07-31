@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T08:30:47-06:00
-last_task: "pages-civic C1 (bound) + C1b drift sweep — /vault origin fixed (PR #164), Boards GS gap filed (#163)"
+last_run: 2026-07-31T09:09:06-06:00
+last_task: "C4 pages-civic — mutation sweep of 17 render entry points; 2 undetected guards covered; area binding completed"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -128,7 +128,7 @@ current_area_checklist:
   C2_qa_resolved: blocked  # iteration 41 — #80 is open and labelled owner-decision (the timeline TOWN lane; StatementRecord carries no event date or type). Correctly blocked on a person, not on a missing prerequisite
   C2b_github_issues_ingested: done  # iterations 35-41 — every pages-civic issue read and dispositioned: #76 #84 #83 #82 #78 #89 #90 shipped, #80 investigated and declined as scoped with its blocker recorded on the issue
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: in_progress  # iteration 41 — tests added with every issue (1056 total, +43 across 35-41) but per-file coverage for this area was never measured against the 90% bar. Claiming done would assert a number nobody computed
+  C4_tests_present: done  # iteration 43 — bound to MUTATION measurement, not line coverage: no coverage tooling is installed and it cannot safely be added here (vitest resolves from the PARENT repo's node_modules, the owner's working copy). Swept all 17 void render entry points; 2 were undetected (ensureDiffViewStyle, ensureTimelineLanesStyle — both would render unstyled with a green suite) and are now covered and red-proofed. Also completed the area binding, which CHANGED the numbers: renderAlerts 0->13, renderPowerTracker 1->22
   C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
   C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
   C7_ui_polish: pending  # iteration 41 — this area renders, so C7 is live here (web binding, iteration 16). The usability scan has not been run
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 32
+iteration_count: 33
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -503,3 +503,29 @@ Verification commands for this project (all three, every iteration that changes 
   with `g='test/timeline*.test.ts'` returned 0 files and I nearly recorded a false 'stale binding'
   finding. `ls ${~g}` returns 5. Bash would have expanded it; zsh needs `${~g}`. **Adds to the
   existing BSD-awk entry: verify the probe before believing a negative result about the repo.**
+- [2026-07-31T09:09:06-06:00] ITERATION 43 — area: pages-civic — check C4 **done, bound to mutation measurement**.
+  There is NO coverage tooling in this repo and it cannot safely be added from here: the worktree
+  has a local `node_modules` but vitest resolves from **the PARENT repo's**
+  (`/Users/IA/Code/Government-watchdog-website/node_modules`) — the owner's working copy. A
+  dependency installed here would not be what runs and could disturb his checkout. Mutation also
+  answers the better question: would anything notice?
+- [2026-07-31T09:09:06-06:00] MEASURED — swept all **17 void render entry points** in the area. **Two undetected:**
+  neutralising `ensureDiffViewStyle` or `ensureTimelineLanesStyle` to a no-op broke ZERO tests, so
+  the diff and the timeline lanes would render completely unstyled with a fully green suite. Both
+  idempotency early-returns were unexercised too. Covered and red-proofed (2 failures each).
+- [2026-07-31T09:09:06-06:00] MEASURED — **an incomplete area binding was under-measuring, and fixing it changed the
+  answer.** `design-pages.ts` was in `paths:` but `test/design-pages.test.ts` was absent from
+  `tests:`. Area-scoped runs read renderAlerts **0** and renderPowerTracker **1**; with the binding
+  corrected they read **13** and **22**. Those renderers were never untested — the measurement was.
+  Added 3 missing test files and 4 unbound source files; `newsletter-design.ts` was mine from
+  GOV-84 and I should have bound it when I created it. **A new module is not done until it is in
+  the area binding, or every path-scoped check silently skips it.**
+- [2026-07-31T09:09:06-06:00] LESSON — **a mutation sweep killed by a timeout leaves the repo mutated.** The first run
+  hit the 2-minute command ceiling and left a live `if (true) return;` in `diff-view.ts`. Restore
+  after EVERY mutation (`git checkout -- src/`), never only at the end, and run long sweeps in the
+  background. Found by checking for the marker rather than assuming the kill was clean.
+- [2026-07-31T09:09:06-06:00] LESSON — **a verification that cannot block the thing it verifies is decoration.** I ran
+  `npx tsc --noEmit && npm run build:all` and then committed in a SEPARATE command. The type error
+  suppressed the success message but did not stop the commit, so a PR went up with a broken build
+  and a commit message claiming 'tsc clean'. Fixed in the same PR and stated plainly. Put the gate
+  and the action in one chain, or check `$?` explicitly.
