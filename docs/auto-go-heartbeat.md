@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-30T22:40:00-06:00
-last_task: auto-go
+last_run: 2026-07-31T05:04:52-06:00
+last_task: "GOV-76 — Home Latest Verdict + Language Watch in the gated design-fixture lane (PR #150, merged)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
   C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 25  # iteration 35 overall; same day
+iteration_count: 26
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -294,3 +294,36 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T12:05:00-06:00] ITERATION 35 — area: pages-civic — **#80 investigated and DECLINED as scoped; labelled `owner-decision`. No code written, and that is the finding.** Its corrected scope is "TOWN bound to reviewed records, COUNTY/STATE as explicit designed gaps". COUNTY/STATE is trivial — the primitive already has `TimelineLaneSpec.gapNote`. **TOWN cannot be built honestly:** `axisPercent(date, start, end)` positions a dot proportionally between two dates, so placing a reviewed record there claims *the thing happened then* — and `StatementRecord` carries **no event date and no event type** (`first_seen_date`/`last_seen_date` belong to `AgendaThread`, not to a record).
 - [2026-07-31T12:05:00-06:00] ITERATION 35 — **the repo already refuses this promotion, in its own words.** `pages-program.ts:477`: *"Describe the exact field that supplied recordTimelineDate; **never promote it to an event date**."* Every basis it can derive is flagged **`isEventDate: false`** — all six (`agenda-reference`, `source-date`, `capture`, `validation`, `evidence-date`, `undated`). So no date on a reviewed record may be positioned on an event axis; wiring TOWN as scoped would render a capture or validation timestamp as *when the civic event occurred*. `TimelineEventSpec.type` is worse in miniature: `'meeting'|'document'|'change'|'decision'` is a classification the backend never supplies, so choosing one is the frontend deriving a civic category.
 - [2026-07-31T12:05:00-06:00] ITERATION 35 — **the ledger and the code agree; the issue over-reads them.** `design-information-type-matrix.md:155` classes the Town axis **RV**, but in full it reads *"Display-order dates come only from agenda/source/scan/validation fields **and are labelled as such**."* That qualifier is load-bearing: RV covers the **labelled ordering list** that ships today, not an unlabelled position on a dated axis. Recorded on the issue with the field list, the six `isEventDate: false` bases, and the contract that would unblock it (a typed event date plus a backend-assigned event type, and the issue/thread id the primitive already documents as required for connectors). **A three-lane axis populated from capture timestamps would look like a finished feature and assert something nobody measured.**
+- [2026-07-31T05:04:52-06:00] ITERATION 36 — area: pages-civic — **GOV-76 shipped** (PR #150, merged). Home's Latest
+  Verdict and Language Watch now render in the gated design-fixture lane. `renderHomeRoute` had
+  collapsed `demo=design` into `demo=sample`, so /home declared fixture origin in the shell while
+  both widgets stayed empty. Split out a `designFixture` option; `demo=sample` unchanged.
+- [2026-07-31T05:04:52-06:00] ITERATION 36 — **the judgment call, recorded because it will recur.** The baseline
+  supplies this content, and `docs/product/design-reference-inventory.md:13` bars copying baseline
+  civic claims into *reviewer-internal* UI — which the fixture lane is. The binding matrix wins on
+  conflict and admits the GS row, and the GS lane already ships synthetic civic activity behind the
+  banner, so the lane is legitimate. Resolution: render the **geometry**, not the prose. No person
+  named (the baseline's `R. Roe` deliberately NOT transcribed — a Doe-style surname still reads as a
+  real person in a screenshot); every leaf self-describing (`SYNTHETIC PLACEHOLDER — stands in for a
+  reviewed saved quote`); the three tiles are wording *patterns*, which assert nothing about anyone.
+- [2026-07-31T05:04:52-06:00] ITERATION 36 — **two things #76 did not ask for.** (1) The demo banner promised
+  "designed gaps remain empty" — false once these slots are populated; it is now lane-accurate and
+  asserted both ways. (2) The baseline draws the verdict card red, but this system has no red/alert
+  token and `data-tone="alert"` is styled nowhere, so it would have been a dead attribute; the card
+  uses `caution` and carries the conflict in text, per micro-detail rule 1.
+- [2026-07-31T05:04:52-06:00] ITERATION 36 — 1022 tests / 67 files green (was 1015), tsc clean, build:all 0,
+  `dist/public` fixture-string grep = 0. **Five red proofs**, each asserting the mutation applied AND
+  the guard fired; the fifth disabled the access guard and the fixture card genuinely rendered, so
+  the fail-closed test is **not vacuous**.
+- [2026-07-31T05:04:52-06:00] MEASURED — the dev server on **:5173 is a Paperclip agent's worktree**
+  (`GOV-799-gated-beta-front-door…`), not this repo's working copy. Browser checks against it say
+  nothing about this repo. This repo's server is **:5178** per `.claude/launch.json`.
+- [2026-07-31T05:04:52-06:00] MEASURED — the local reviewed lane needs a backend on **:8791** (`GW_SERVICE_PORT`,
+  same-origin `/api` proxy). Nothing is listening, so `/api/reviewer-internal` 500s and Home renders
+  "The reviewed record service is not available right now". Environmental, not a code defect — but
+  it means the owner's live view shows the unavailable state until a backend runs.
+- [2026-07-31T05:04:52-06:00] LESSON — **a `?t=` cache-buster can lie about freshness.** Appending a query param to a
+  Vite dev URL forces a re-transform, so `curl .../home.ts?t=$(date +%s)` reported the NEW code while
+  the plain URL the page actually loads still served the OLD transform. Probe the exact URL the page
+  fetches (`fetch(url,{cache:'reload'})` from the page), or restart the server. Extends the existing
+  stale-dev-server rule, which the buster trick appeared to satisfy.
