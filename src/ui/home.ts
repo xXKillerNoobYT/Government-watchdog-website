@@ -28,6 +28,13 @@ interface HomeOptions {
   /** Explicit route access lane. Any value other than reviewer_internal fails closed. */
   access?: string;
   demo?: boolean;
+  /**
+   * The gated design-fixture lane (`demo=design`). Deliberately SEPARATE from
+   * `demo`: GOV-76: `renderHomeRoute` used to collapse both into one flag, so the
+   * design lane could only ever show the DEV-sample widgets. Reviewer access is
+   * enforced upstream — renderHome fails closed before any widget renders.
+   */
+  designFixture?: boolean;
   sampleBoard?: AgendaBoard;
 }
 
@@ -175,14 +182,16 @@ function honestEmpty(title: string, body: string, source: string): HTMLElement {
   ]);
 }
 
-function demoBanner(): HTMLElement {
+function demoBanner(designFixture: boolean): HTMLElement {
   return el('div', {
     class: 'gw-home-demo',
     role: 'status',
     'data-test': 'home-demo-banner',
     'data-origin': 'fixture',
   }, [
-    'SYNTHETIC DESIGN FIXTURE — not a live read. DEV SAMPLE synthetic modules: Fast Agenda, Transparency Alerts, and Source Vault. Civic Weather, Active Issues, Timeline Preview, and newsletter content remain reviewed snapshot data; designed gaps remain empty.',
+    designFixture
+      ? 'SYNTHETIC DESIGN FIXTURE — not a live read. DEV SAMPLE synthetic modules: Fast Agenda, Transparency Alerts, Source Vault, Latest Verdict, and Language Watch. Civic Weather, Active Issues, Timeline Preview, and newsletter content remain reviewed snapshot data; every remaining designed gap stays empty.'
+      : 'SYNTHETIC DESIGN FIXTURE — not a live read. DEV SAMPLE synthetic modules: Fast Agenda, Transparency Alerts, and Source Vault. Civic Weather, Active Issues, Timeline Preview, and newsletter content remain reviewed snapshot data; designed gaps remain empty.',
   ]);
 }
 
@@ -345,7 +354,68 @@ function sourceVault(model: HomeModel, demo: boolean): HTMLElement {
   ], { 'data-test': 'home-source-vault', 'data-origin': 'fixture' }, 'home-source-vault');
 }
 
-function latestVerdict(): HTMLElement {
+/**
+ * The design fixture renders the baseline's card GEOMETRY, never a plausible civic
+ * claim. A fabricated promise-versus-action pair reads as a live verdict once it is
+ * screenshotted; a self-describing placeholder cannot. `reference/README.md`
+ * §State Management ("No person-naming in AI analyses") also bars a named official,
+ * so the baseline's "R. Roe" is replaced by an unmistakable placeholder rather than
+ * transcribed — a Doe-style surname still reads as a person at a glance.
+ */
+function fixtureLeaf(label: string, text: string): HTMLElement {
+  return el('div', { class: 'gw-home-fixture-leaf', 'data-origin': 'fixture' }, [
+    el('strong', { class: 'gw-home-fixture-leaf-label' }, [label]),
+    el('span', {}, [text]),
+  ]);
+}
+
+function aiPresented(kind: string): HTMLElement {
+  return el('p', { class: 'gw-home-ai', 'data-test': 'home-ai-presented' }, [
+    el('strong', { class: 'gw-home-ai-label' }, [`AI-PRESENTED ${kind}`]),
+    el('span', { class: 'gw-home-ai-caveat' }, ['not independently verified']),
+    el('span', {}, [
+      'Synthetic fixture text carries no receipts because no reviewed record backs it. '
+      + 'A label is not a legal or political verdict.',
+    ]),
+  ]);
+}
+
+function latestVerdictFixture(): HTMLElement {
+  return widget('Latest Verdict', 'PROMISE CONFLICTS · SYNTHETIC DESIGN FIXTURE', [
+    el('div', { class: 'gw-home-verdict', 'data-test': 'home-latest-verdict-fixture-card' }, [
+      el('p', { class: 'gw-home-verdict-subject' }, ['OFFICIAL A — PLACEHOLDER, not a real person']),
+      fixtureLeaf('Promise', 'SYNTHETIC PLACEHOLDER — stands in for a reviewed saved quote.'),
+      fixtureLeaf('Action', 'SYNTHETIC PLACEHOLDER — stands in for a reviewed recorded action.'),
+      fixtureLeaf('Comparison', 'SYNTHETIC PLACEHOLDER — stands in for a reviewed comparison and its receipts.'),
+    ]),
+    aiPresented('ANALYSIS'),
+    // The baseline draws this card RED. This design system has no red/alert token — only
+    // `caution` — and inventing one is a design-system change, not GOV-76's scope. The
+    // conflict is therefore carried in TEXT ("PROMISE CONFLICTS"), which the micro-detail
+    // rule requires anyway: every state needs text and label, never colour alone.
+  ], { 'data-test': 'home-latest-verdict-fixture', 'data-tone': 'caution', 'data-origin': 'fixture' }, 'home-latest-verdict');
+}
+
+/** The baseline's three tricky-phrase tiles. Wording patterns, not civic claims. */
+const LANGUAGE_WATCH_FIXTURE_PHRASES = [
+  '…with ____________',
+  'accounted for separately',
+  'engagement agreement',
+] as const;
+
+function languageWatchFixture(): HTMLElement {
+  return widget('Language Watch', 'JUL 21 PACKET · SYNTHETIC DESIGN FIXTURE', [
+    el('ul', { class: 'gw-home-phrases', 'data-test': 'home-language-watch-fixture-tiles' },
+      LANGUAGE_WATCH_FIXTURE_PHRASES.map((phrase) => el('li', {
+        class: 'gw-home-phrase',
+        'data-origin': 'fixture',
+      }, [phrase]))),
+    aiPresented('LANGUAGE WATCH'),
+  ], { 'data-test': 'home-language-watch-fixture', 'data-tone': 'caution', 'data-origin': 'fixture' }, 'home-language-watch');
+}
+
+function latestVerdict(fixture: boolean): HTMLElement {
+  if (fixture) return latestVerdictFixture();
   return widget('Latest Verdict', 'PROMISE CONFLICTS', [
     honestEmpty(
       'No reviewed promise-versus-action verdict is available',
@@ -356,7 +426,8 @@ function latestVerdict(): HTMLElement {
   ], { 'data-test': 'home-latest-verdict-unavailable', 'data-tone': 'caution', 'data-origin': 'designed-gap' }, 'home-latest-verdict');
 }
 
-function languageWatch(): HTMLElement {
+function languageWatch(fixture: boolean): HTMLElement {
+  if (fixture) return languageWatchFixture();
   return widget('Language Watch', 'AI-PRESENTED REVIEW SLOT', [
     honestEmpty(
       'No reviewed language-watch flags are available',
@@ -582,6 +653,7 @@ function advancedBriefingGroups(model: HomeModel): HTMLElement {
 }
 
 function simpleAccountabilityGroups(model: HomeModel, opts: HomeOptions): HTMLElement {
+  const designFixture = Boolean(opts.designFixture);
   return el('section', {
     class: 'gw-simple-accountability',
     'data-test': 'home-simple-accountability',
@@ -591,22 +663,23 @@ function simpleAccountabilityGroups(model: HomeModel, opts: HomeOptions): HTMLEl
     civicWeather(model, true),
     el('div', { class: 'gw-home-grid' }, [
       el('div', { class: 'gw-home-col' }, [activeIssues(model), timelinePreview(model)]),
-      el('div', { class: 'gw-home-col' }, [latestVerdict(), sourceVault(model, Boolean(opts.demo))]),
-      el('div', { class: 'gw-home-col' }, [explainerVideo(), languageWatch()]),
+      el('div', { class: 'gw-home-col' }, [latestVerdict(designFixture), sourceVault(model, Boolean(opts.demo))]),
+      el('div', { class: 'gw-home-col' }, [explainerVideo(), languageWatch(designFixture)]),
     ]),
   ]);
 }
 
 function renderAdvanced(root: HTMLElement, model: HomeModel, opts: HomeOptions, setLevel: (level: HomeLevel) => void): void {
+  const designFixture = Boolean(opts.designFixture);
   root.append(
     levelFilter(model.level, setLevel),
     civicWeather(model),
     el('div', { class: 'gw-home-grid', 'data-test': 'home-grid' }, [
       el('div', { class: 'gw-home-col' }, [fastAgenda(model, Boolean(opts.demo)), transparencyAlerts(Boolean(opts.demo))]),
       el('div', { class: 'gw-home-col' }, [activeIssues(model), timelinePreview(model)]),
-      el('div', { class: 'gw-home-col' }, [latestVerdict(), sourceVault(model, Boolean(opts.demo)), explainerVideo()]),
+      el('div', { class: 'gw-home-col' }, [latestVerdict(designFixture), sourceVault(model, Boolean(opts.demo)), explainerVideo()]),
     ]),
-    languageWatch(),
+    languageWatch(designFixture),
     advancedBriefingGroups(model),
   );
 }
@@ -661,7 +734,7 @@ export function renderHome(root: HTMLElement, opts: HomeOptions): void {
   let level: HomeLevel = 'all';
   const draw = (): void => {
     root.replaceChildren();
-    if (opts.demo) root.append(demoBanner());
+    if (opts.demo) root.append(demoBanner(Boolean(opts.designFixture)));
     const mode = readMode();
     const model = makeModel(opts, level);
     if (mode === 'simple') renderSimple(root, model, opts, (next) => { level = next; draw(); });
@@ -966,6 +1039,15 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-empty p{margin:.35rem 0 0}.gw-home-source-note{font-family:var(--gw-font-mono);font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
 .gw-home-widget>.gw-home-link{display:inline-block;margin-top:var(--gw-space-3)}
 .gw-home-demo{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:700;color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3) var(--gw-space-4);margin-bottom:var(--gw-space-5)}
+.gw-home-verdict{display:grid;gap:var(--gw-space-3);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
+.gw-home-verdict-subject{margin:0;font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;text-transform:uppercase;color:var(--gw-caution-text-strong)}
+.gw-home-fixture-leaf{display:grid;gap:.15rem}
+.gw-home-fixture-leaf-label{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;text-transform:uppercase;color:var(--gw-text-muted)}
+.gw-home-phrases{list-style:none;margin:0;padding:0;display:grid;gap:var(--gw-space-3)}
+.gw-home-phrase{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-3);font-family:var(--gw-font-mono);font-size:var(--gw-text-sm)}
+.gw-home-ai{display:grid;gap:.2rem;margin-top:var(--gw-space-3);font-size:var(--gw-text-sm);color:var(--gw-text-secondary)}
+.gw-home-ai-label{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;color:var(--gw-caution-text-strong)}
+.gw-home-ai-caveat{font-style:italic}
 .gw-home-mini-card,.gw-home-issue-row{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius);padding:var(--gw-space-4);margin-top:var(--gw-space-3)}
 .gw-home-mini-card h3,.gw-home-issue-row h3{margin:.35rem 0;font-size:var(--gw-text-md)}
 .gw-home-mini-card p,.gw-home-issue-row p{margin:.25rem 0;color:var(--gw-text-secondary)}

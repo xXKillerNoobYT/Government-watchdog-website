@@ -929,10 +929,13 @@ function renderHomeRoute(mount: HTMLElement, query: URLSearchParams): void {
     cardFeed: requestedAccess ? { ...CARD_FEED, access: requestedAccess } : CARD_FEED,
     board: requestedAccess ? { ...BOARD_PROJECTION, access: requestedAccess } : BOARD_PROJECTION,
     newsletter: requestedAccess ? { ...NEWSLETTER_DIGEST, access: requestedAccess } : NEWSLETTER_DIGEST,
-    // `demo=design` enters the shared handoff-preview session. Home reuses its
-    // existing visibly labelled sample widgets while the dedicated handoff
-    // routes render their richer synthetic design fixtures.
+    // `demo=design` enters the shared handoff-preview session. It still turns the
+    // sample widgets on (`demo`), but GOV-76 splits out `designFixture` so the design
+    // lane can render the baseline's Latest Verdict and Language Watch geometry that
+    // `demo=sample` deliberately does not carry. Collapsing both into one flag was why
+    // the shell declared fixture origin for /home while those two widgets stayed empty.
     demo: query.get('demo') === 'sample' || designPreviewActive(query),
+    designFixture: designPreviewActive(query),
     sampleBoard: requestedAccess ? { ...BOARD_SAMPLE, access: requestedAccess } : BOARD_SAMPLE,
   });
 }
