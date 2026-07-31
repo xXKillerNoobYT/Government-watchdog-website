@@ -185,6 +185,12 @@ describe('GOV-668 Source Vault', () => {
       'vault-video',
       'vault-transparency',
       'vault-verification',
+      // GOV-90: the three stat explainers now use the SHARED info-note primitive
+      // (hover + click-to-pin + Escape + focus restore) instead of a bespoke <details>
+      // disclosure, so they join the route's info-note inventory.
+      'source-stat-source-count',
+      'source-stat-hash-verification',
+      'source-stat-open-flags',
     ];
     for (const mode of ['simple', 'advanced'] as const) {
       localStorage.setItem('gw_home_mode', mode);
@@ -237,7 +243,12 @@ describe('GOV-668 Source Vault', () => {
     renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
     expect(root.querySelector('[data-test="source-vault-advanced-workbench"] .gw-vault-contract-advanced-layout')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="source-vault-tools"] :disabled')).toHaveLength(3);
-    expect(root.querySelectorAll('[data-test="source-stat-explainer"]')).toHaveLength(3);
+    // GOV-90: was three <details> disclosures; now three shared info-note triggers with
+    // hover preview and click-to-pin, per the baseline's specified interaction.
+    for (const id of ['source-stat-source-count', 'source-stat-hash-verification', 'source-stat-open-flags']) {
+      expect(root.querySelectorAll(`[data-info-note="${id}"]`), id).toHaveLength(1);
+    }
+    expect(root.querySelectorAll('[data-test="source-stat-explainer"]')).toHaveLength(0);
     expect(root.querySelectorAll('[data-test="source-version-selectors"] select:disabled')).toHaveLength(2);
     expect(root.querySelector('[data-test="source-word-diff-tool"]:disabled')).not.toBeNull();
     expect(root.querySelectorAll('[data-test="source-diff-panes"] > article')).toHaveLength(2);
@@ -298,6 +309,11 @@ describe('GOV-668 Source Vault', () => {
       'vault-video',
       'vault-transparency',
       'vault-verification',
+      // GOV-90: the stat explainers joined the route's info-note inventory when they
+      // adopted the shared hover/click-to-pin primitive.
+      'source-stat-source-count',
+      'source-stat-hash-verification',
+      'source-stat-open-flags',
     ].sort();
 
     window.location.hash = '#/vault?reviewer=1';
@@ -550,5 +566,73 @@ describe('GOV-82 Source Vault version compare', () => {
     expect(root.querySelector('[data-test="source-version-compare-fixture"]')).toBeNull();
     expect(root.querySelector('[data-test="diff-view"]')).toBeNull();
     for (const s of FIXTURE_STRINGS) expect(root.textContent, s).not.toContain(s);
+  });
+});
+
+// GOV-90 — Source Vault stat explainers adopt the shared hover/click-to-pin primitive.
+//
+// The baseline specifies "hover explainer cards + click-to-pin detail panels". The slot
+// had substituted a native <details> disclosure — accessible and honest, but a silent,
+// unrecorded divergence. Resolved by adopting the primitive #53/#62 landed rather than
+// building a second overlay system.
+describe('GOV-90 Source Vault stat explainers', () => {
+  const STAT_NOTES = [
+    'source-stat-source-count',
+    'source-stat-hash-verification',
+    'source-stat-open-flags',
+  ] as const;
+
+  it('renders all three as shared info-note triggers, not <details> disclosures', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    for (const id of STAT_NOTES) {
+      expect(root.querySelectorAll(`[data-info-note="${id}"]`), id).toHaveLength(1);
+    }
+    expect(root.querySelector('[data-test="source-stat-explainer"]')).toBeNull();
+    expect(root.querySelector('.gw-vault-contract-stat-explainer')).toBeNull();
+  });
+
+  it('gives each stat a distinct accessible name', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const labels = STAT_NOTES.map((id) =>
+      root.querySelector(`[data-info-note="${id}"]`)?.getAttribute('aria-label'));
+    for (const label of labels) expect(label).toBeTruthy();
+    // Three panels all reading "What this stat means" would be indistinguishable to a
+    // screen-reader user. Each carries its own stat context.
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('click toggles a pinned panel, and Escape closes it', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const trigger = root.querySelector<HTMLButtonElement>(`[data-info-note="${STAT_NOTES[0]}"]`)!;
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    trigger.click();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('preserves the explainer copy verbatim — the sentence that bounds the RV count', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    const trigger = root.querySelector<HTMLButtonElement>(`[data-info-note="${STAT_NOTES[0]}"]`)!;
+    trigger.click();
+    const panelId = trigger.getAttribute('aria-controls')!;
+    const panel = document.getElementById(panelId);
+    expect(panel?.textContent).toContain(
+      'It is not a count of every file in a full source registry.',
+    );
+    trigger.click();
+  });
+
+  it('adds no stat value, percentage, or flag count of its own', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    for (const id of STAT_NOTES) {
+      const trigger = root.querySelector<HTMLButtonElement>(`[data-info-note="${id}"]`)!;
+      trigger.click();
+      const panel = document.getElementById(trigger.getAttribute('aria-controls')!);
+      expect(panel?.textContent, id).not.toMatch(/\b\d+%/);
+      trigger.click();
+    }
   });
 });

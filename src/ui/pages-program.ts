@@ -36,6 +36,7 @@ import {
 import { FIXTURE_BANNER_TEXT, trustLabel } from './state-view';
 import { buildGapSummary, buildTimeline, recordTimelineDate } from './timeline';
 import { diffView } from './diff-view';
+import { renderDefinedInfoNote } from './info-note';
 import { DESIGN_FIXTURE_LABEL } from './design-pages';
 import {
   confidenceLabel,
@@ -971,8 +972,6 @@ const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-vault-contract-field{display:grid;gap:var(--gw-space-1);font:700 var(--gw-text-badge)/1.2 var(--gw-font);color:var(--gw-text-secondary)}
 .gw-vault-contract-field input,.gw-vault-contract-field select{min-height:var(--gw-tap-min);width:100%;border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-vault-contract-toolbar-note{grid-column:1/-1;margin:0;color:var(--gw-text-muted);font-size:var(--gw-text-xs)}
-.gw-vault-contract-stat-explainer{border-top:var(--gw-border-w) solid var(--gw-border-subtle);padding-top:var(--gw-space-2);font-size:var(--gw-text-xs);color:var(--gw-text-secondary)}
-.gw-vault-contract-stat-explainer summary{cursor:pointer;font-weight:700;color:var(--gw-accent)}
 .gw-vault-contract-advanced-layout{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(340px,1.45fr) minmax(240px,.83fr);gap:var(--gw-space-4);align-items:start}
 .gw-vault-contract-receipts{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
 .gw-vault-contract-receipts[data-test="source-vault-list"]{grid-auto-flow:row;grid-auto-columns:auto;overflow-x:visible}
@@ -1595,13 +1594,42 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
   const sources = collectSources(data);
   const originalLinkCount = sources.filter((source) => Boolean(source.original_url)).length;
   const archiveLinkCount = sources.filter((source) => Boolean(source.archive_url)).length;
-  const statExplainer = (body: string): HTMLElement => el('details', {
-    class: 'gw-vault-contract-stat-explainer',
-    'data-test': 'source-stat-explainer',
-  }, [
-    el('summary', {}, ['What this stat means']),
-    el('p', {}, [body]),
-  ]);
+  /**
+   * GOV-90 — the Source Vault stat explainers.
+   *
+   * The baseline specifies "hover explainer cards + click-to-pin detail panels"
+   * (`reference/README.md` §6, and §Interactions: "show on mouseenter, suppressed while
+   * pinned; click toggles pinned panel"). This slot had substituted a native `<details>`
+   * disclosure — accessible and honest, but a silent, unrecorded divergence from the
+   * approved interaction, which is exactly what the handoff process exists to prevent.
+   *
+   * **Resolved by adopting the shared primitive, not by building a second overlay.**
+   * `renderDefinedInfoNote` already provides hover, focus, click-to-pin, document-level
+   * Escape, outside-dismiss, focus restore and 44px targets — the work #53/#62 landed, both
+   * now closed. A bespoke hover-and-pin overlay here would have created a second overlay
+   * system with a second set of geometry bugs, which #90 explicitly warned against.
+   *
+   * The explainer COPY is unchanged and carried verbatim into `what` — it is out of scope,
+   * and it is the sentence that stops an RV row count from reading as a registry total.
+   */
+  const statExplainer = (id: string, contextLabel: string, body: string): HTMLElement => renderDefinedInfoNote(
+    `source-stat-${id}`,
+    {
+      label: 'What this stat means',
+      what: body,
+      source: 'Reviewed statement receipts on this page. No source-registry projection is connected.',
+      filedUnder: 'Source Vault · Header statistics',
+      review: 'The stat and this explanation change together; neither is derived in the browser.',
+      lifecycle: 'Current state: reviewed row count is real; hash verification and open flags stay unavailable.',
+      limits: 'This panel explains scope only. It adds no count, percentage, verification, or flag.',
+      expectedResult: 'A reviewed source registry that states its own population, verification results, and policy-cleared flags with receipts.',
+    },
+    // Each stat gets its OWN context label: the shared info-note contract requires a
+    // unique accessible name per trigger, and three panels all reading "What this stat
+    // means" would be indistinguishable to a screen-reader user. Caught by the existing
+    // expectRouteInfoNotes uniqueness assertion.
+    { contextLabel },
+  );
   const overview = (): HTMLElement => el('section', { class: 'gw-board', 'data-test': 'source-vault-overview', 'aria-label': 'Source Vault overview' }, [
       el('article', { class: 'gw-card', 'data-test': 'source-reviewed-count' }, [
         el('p', { class: 'gw-muted' }, ['REVIEWED SOURCE METADATA']),
@@ -1611,19 +1639,19 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
           'source-count-info',
         ),
         el('p', {}, [`Unique source row${sources.length === 1 ? '' : 's'} exposed by the current reviewed statement receipts.`]),
-        statExplainer('This is a deduplicated count of source metadata linked by the reviewed statement receipts on this page. It is not a count of every file in a full source registry.'),
+        statExplainer('source-count', 'Reviewed source rows', 'This is a deduplicated count of source metadata linked by the reviewed statement receipts on this page. It is not a count of every file in a full source registry.'),
       ]),
       el('article', { class: 'gw-card', 'data-test': 'source-hash-gap' }, [
         el('p', { class: 'gw-muted' }, ['HASH VERIFICATION']),
         el('h2', {}, ['Unavailable']),
         el('p', {}, ['The web-safe payload supplies no source-registry hash status or reviewed verification percentage.']),
-        statExplainer('A reviewed registry would need to supply both the manifest population and verification results before a percentage could be shown.'),
+        statExplainer('hash-verification', 'Hash verification', 'A reviewed registry would need to supply both the manifest population and verification results before a percentage could be shown.'),
       ]),
       el('article', { class: 'gw-card', 'data-test': 'source-flags-gap' }, [
         el('p', { class: 'gw-muted' }, ['OPEN TRANSPARENCY FLAGS']),
         el('h2', {}, ['Unavailable']),
         el('p', {}, ['No transparency-alert projection is connected, so no flag count is inferred from statement status.']),
-        statExplainer('This slot counts only policy-cleared transparency flags when an alert projection is connected; statement status is not used as a substitute.'),
+        statExplainer('open-flags', 'Open transparency flags', 'This slot counts only policy-cleared transparency flags when an alert projection is connected; statement status is not used as a substitute.'),
       ]),
     ]);
 
