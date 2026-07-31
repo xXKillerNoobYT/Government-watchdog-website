@@ -123,25 +123,25 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: pending
-  C1b_plan_vs_code_drift_clean: pending
-  C2_qa_resolved: pending
-  C2b_github_issues_ingested: pending
+  C1_plan_complete: done  # iteration 32 — wrote docs/plans/area-data-contract.md, which did not exist. Holds the two sequencing findings for #70 and the reason it was not started in a tail-end pass
+  C1b_plan_vs_code_drift_clean: done  # iteration 32 — the drift IS #70: docs/product/issue-card-contract.md is adopted but none of its five presentation types exist, and four surfaces hand-roll their own card. Recorded in the plan with the migration order rather than left implicit
+  C2_qa_resolved: done  # iteration 32 — no data-contract question pending; Q3/Q4/Q5 are loop-level
+  C2b_github_issues_ingested: done  # iteration 32 — #70 ingested and analysed; two sequencing facts recorded on the issue (PR #57 blocker is STALE — closed never merged; #85 overlap previously unrecorded on either issue)
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: pending
-  C5_tests_pass: pending
-  C6_build_warnings_zero: pending
+  C4_tests_present: done  # iteration 32 — mutation sweep on the leak boundary: assertWebSafe 71 failing tests, findRawPathLeaksInText 32. Strongest coverage measured this session, which is the right shape for the function standing between a raw backend path and the DOM
+  C5_tests_pass: done  # iteration 32 — 1013/1013 across 66 files
+  C6_build_warnings_zero: done  # iteration 32 — no warning from this area
   C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
-  C7b_dev_improvement_polish: pending
-  C8_security_reviewed: pending  # the marquee check here: assertWebSafe and RAW_PATH_FORBIDDEN_KEYS are the repo's raw-path leak boundary
-  C9_performance_reviewed: pending
+  C7b_dev_improvement_polish: done  # iteration 32 — hunt found no defect; the improvement this area needs IS #70, which is tracked rather than hunted
+  C8_security_reviewed: done  # iteration 32 — the leak boundary is the most heavily guarded code in the repo by measurement: mutating assertWebSafe fails 71 tests, findRawPathLeaksInText 32, and the suite is table-driven over RAW_PATH_FORBIDDEN_KEYS so a key added later is covered automatically. No unsafe sinks in src/data
+  C9_performance_reviewed: done  # iteration 32 — the async surface is ReviewerContextStore, already measured in iteration 28: fail-closed, single shared request, #requestVersion guard against late overwrites. No new concern
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: pending  # 1 open: #70 (canonical card presentation types)
-  C11b_process_gaps_clean: pending
-  C12_claude_md_reflects_area: pending
-  C13_automation_opportunities_reviewed: pending
+  C11_github_issues_resolved: in_progress  # iteration 32 — #70 is the only area issue and it is NOT deferred on an owner gate: it is agent-reachable work this loop chose not to start at the end of a long session, because every section of it renders trust labels and a half-landed trust refactor is worse than none. Marking this done would claim a deferral that is really an unfinished task. THE AREA THEREFORE DOES NOT GRADUATE. Sequencing is recorded so the next pass starts cheap: #85 first, then types -> shared module -> two migrations
+  C11b_process_gaps_clean: done  # iteration 32 — one real gap found and closed: #70 and #85 both restructure pages-program.ts and NEITHER mentioned the other. Cross-referenced both, with the cheaper order stated (#85 first — it deletes ~340 lines the other would otherwise have to migrate). Also struck a stale blocker: #70 said land after PR #57, which is closed and never merged
+  C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
+  C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 21  # iteration 31 overall; same day
+iteration_count: 22  # iteration 32 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -284,3 +284,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T10:05:00-06:00] ITERATION 29-31 — area: shell-nav — **✅ AREA GRADUATED (17/17), the sixth.** Both issues were the same defect class: **a designed slot that vanished**, which the handoff forbids outright because a reviewer diffing against the baseline cannot tell unbuilt from removed from oversight. **#71** restored the account chip's `manage` affordance as a disabled control naming the awaited contract — and reproduced **none** of the baseline's identity half (`J. Citizen ✓ ID`), with a guard asserting no email, no verified glyph, and no baseline persona can reach the DOM, title, or accessible name. **#72** restored the Town/County/State freshness row; the contract supplies no per-source freshness, so all three render their explicit gap.
 - [2026-07-31T10:05:00-06:00] ITERATION 29 — **#71 exposed a SECOND phantom in the CS registry I wrote this morning.** It was listed as CS `pending — #71`; it is **DG**, because a contract genuinely is awaited (`GET /v1/session`) and the ledger's Global-shell table has always said so. The tell was inside the issue: **its own acceptance criteria require the copy to NAME that contract — exactly what CS forbids.** Both phantoms (this and the ⌘K palette) arrived the same way: the registry was populated from an issue's prose rather than from the ledger's own per-slot assignments. Registry now four rows, all marked, zero pending. **Process note: both were found by WORKING the issues that referenced them, not by re-reading the table — a registry is audited by using it.**
 - [2026-07-31T10:05:00-06:00] ITERATION 30 — **#72's risk ran opposite to every other slot this session.** Everywhere else the danger was hiding something; here it is trivially easy to make the row look *live* by formatting a clock. The type makes that impossible rather than discouraged — a level renders a supplied string verbatim or its gap, with no compute branch. The structural guard had to be **scoped, not broadened**: my first draft asserted the whole module reaches no clock and failed instantly, because the shell legitimately reads one for `shell-local-date` (the reader's own local date, not a data claim). Broadening would have banned a correct use and been the weaker guard. Verified live: three levels, all unavailable, **zero digits and zero `<time>` elements**. C4 mutation sweep: renderShell **81** failures, createRouter 31, applyThemePref 6, hasExplicitThemePref 1. Area advanced to **`data-contract`** (1 open: #70). 1013 tests / 66 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T10:45:00-06:00] ITERATION 32 — area: data-contract — **16 of 17 checks done; the area does NOT graduate, deliberately.** C11 is `in_progress`, not `done`, because #70 is **agent-reachable work this loop chose not to start**, not an owner gate. Marking it `done` would claim a deferral that is really an unfinished task — the distinction matters, because five other areas graduated with genuine owner/backend gates (#49, #54, #104, #109) and blurring the two would make every graduation mean less. **Why not started:** every section of #70 renders **trust labels**, and its failure mode is a subtly reworded trust state on one surface — exactly what the issue exists to prevent. A half-landed trust refactor at the end of a long session is worse than none.
+- [2026-07-31T10:45:00-06:00] ITERATION 32 — **two sequencing findings on #70, both previously unrecorded.** (1) **The stated blocker is stale:** the issue says "land after PR #57 or coordinate with it"; **#57 is closed and was never merged**, and the shared reviewer context it described exists anyway via another route. Nothing to wait for. (2) **#70 and #85 both restructure `src/ui/pages-program.ts` and NEITHER mentioned the other.** Checked whether they destroy each other — they do not: #70's only call site is `renderIssueDetail`, which is not one of #85's deletion targets. But **#85 should land first**: it removes ~340 lines of orphan renderers, shrinking the file #70 then migrates instead of forcing a rebase across a large deletion. Cross-referenced on both issues and recorded in the new `docs/plans/area-data-contract.md`.
+- [2026-07-31T10:45:00-06:00] ITERATION 32 — **the leak boundary is the most heavily guarded code in the repo, by measurement.** Mutating `assertWebSafe` fails **71** tests and `findRawPathLeaksInText` **32** — the strongest coverage measured this session, which is the right shape for the function standing between a raw backend path and the DOM. Its suite is already table-driven over `RAW_PATH_FORBIDDEN_KEYS`, tracking the constant rather than a hand-picked sample — the exact shape iteration 19 had to retrofit onto the upload projection. 1013 tests / 66 files, tsc clean, `build:all` exit 0.

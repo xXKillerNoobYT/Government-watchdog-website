@@ -424,6 +424,21 @@
   would have banned correct code and been weaker. Same shape as the earlier
   region-vs-rule CSS assertion.
 
+- **[2026-07-31] Do not let "deferred" launder "not started".** `data-contract` reached 16/17
+  with only #70 left. Marking C11 `done` was available and would have produced a seventh
+  graduation — but #70 is **agent-reachable work I chose not to begin**, not an owner gate
+  like #49/#54/#104/#109. Blurring the two would make every other graduation mean less.
+  Left `in_progress`; the area does not graduate. **A checklist is only worth the times it
+  says no to you.**
+- **[2026-07-31] Check an issue's stated blocker before honouring it.** #70 said "land after
+  PR #57". #57 was **closed, never merged** — the blocker had been stale for weeks and the
+  capability it described shipped by another route. One `gh pr view` settled it.
+- **[2026-07-31] Two issues editing one file, neither citing the other, is invisible until
+  someone looks.** #70 and #85 both restructure `pages-program.ts`. Checked they do not
+  destroy each other, then recorded the cheaper order (#85 first, it deletes ~340 lines the
+  other would have to migrate) on both. **When picking up an issue, grep the other open
+  issues for its primary file.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
