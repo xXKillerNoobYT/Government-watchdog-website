@@ -397,6 +397,19 @@
   **Measure each duplicate's purpose before deleting it, and leave the measurement where the
   next person will look.**
 
+- **[2026-07-31] An area can graduate with ZERO code changed, and that can be the right
+  answer.** `gate`'s only issue is a P0 whose own closing line warns not to close it because
+  browser tests pass. Triage showed 8 of 9 criteria are server-side by definition. The
+  temptation was to build a client-side `revoke()` — it would have *looked* like progress on
+  a release gate while changing nothing about the boundary. **When most of an issue is
+  outside the repo, measure the part that is inside, record it as partial evidence, and
+  refuse to half-build the rest.**
+- **[2026-07-31] Verify that a documented posture is real, not aspirational.** CLAUDE.md says
+  the client gate is scaffolding that fails open. C1b confirmed it by inspection: `access.ts`
+  is pure and synchronous, references **no** civic records, stores no credential, touches no
+  `localStorage`. A doc claiming a security posture is worth exactly as much as the check
+  that it still matches the code.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

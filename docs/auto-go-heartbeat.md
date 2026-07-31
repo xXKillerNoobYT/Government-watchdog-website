@@ -76,8 +76,13 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: gate
+current_area: shell-nav
 graduated_areas:
+  gate:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a. FIFTH area to graduate.
+    shipped: "No code changed — and that is the correct outcome. #54 (P0) triaged AC-by-AC: 8 of 9 criteria are server-side by definition, the 9th verified by measurement (success -> 401 leaves 0 rows, sticky). Refused to build a partial revoke() with no server trigger, which is the exact failure the issue warns about in its closing line."
+
   ci-tooling:
     graduated: 2026-07-31
     result: 17 of 17 rows done or n/a. FOURTH area to graduate.
@@ -121,17 +126,17 @@ current_area_checklist:
   C4_tests_present: pending
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
-  C7_ui_polish: pending  # the gate RENDERS (landing, magic-link form, waitlist) — inherits the iteration-16 web binding and the iteration-25 tap/type floor guards
+  C7_ui_polish: pending  # shell-nav RENDERS — inherits the inertness sweep and the tap/type floor guards
   C7b_dev_improvement_polish: pending
-  C8_security_reviewed: pending  # the marquee check for this area — but note CLAUDE.md: the CLIENT gate is UI scaffolding and intentionally fails OPEN; the Sites worker is the real boundary. Do not "fix" the client bypasses as if they were it
+  C8_security_reviewed: pending
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: pending  # 1 open: #54 [P0][Security] revocable server sessions
+  C11_github_issues_resolved: pending  # 2 open: #72 (per-level freshness slots), #71 (account chip manage affordance — the CS registry's one pending row)
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 17  # iteration 27 overall; same day
+iteration_count: 18  # iteration 28 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -268,3 +273,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T08:55:00-06:00] ITERATION 26-27 — area: ci-tooling — **✅ AREA GRADUATED (17/17), the fourth.** #105 and #60 closed; **#104 measured and DECLINED**, which is the substantive outcome. `scripts/local_e2e.sh` hard-fails at line 46 without a backend checkout found via three hardcoded absolute paths, and at line 48 without `Database/gov_watchdog.db` — a file gitignored *because the backend repo is public and it is a disclosure boundary*. Wiring it into CI would make the job pass because of untracked machine state on the owner's own runner, and would create standing pressure to commit a file that must never be committed. **A green step for those reasons is worse than no step.** Labelled `owner-decision`, linked to website#119 / backend#195 — once the site builds from a hash-verified storage snapshot, the e2e becomes runnable in CI without any of that.
 - [2026-07-31T08:55:00-06:00] ITERATION 26 — **#105 was measured before cutting, and the measurement changed the fix.** `tsc` 2.1s (×3), `test:smoke` 1.1s, `npm test` 11.1s. Only the smoke step was removed — `npm test` already runs that file (verified in the output: `integration-smoke.test.ts (5 tests)`, exactly the five the step named). The standalone typecheck is **kept**: it fails before the 11.1s suite, so deleting it would surface a type error ~13s later. The two inline `tsc` runs are **kept**: each lane script must be independently safe when run alone. **The issue's premise that work is duplicated is right; its implicit premise that all three are waste is not**, and that measurement now lives in the workflow so it is not "fixed" again. **#60:** checked the real latest release rather than guessing — `actions/checkout@v7.0.1`; the obvious guess of `v5` would have been two majors behind while appearing to close the issue.
 - [2026-07-31T08:55:00-06:00] ITERATION 27 — **C1 could only have been marked done on nothing, so the plan got written.** The bound contract is `docs/plans/` and no ci-tooling plan existed — the identical gap iteration 1 papered over for `build-guards`. `docs/plans/area-ci-tooling.md` now consolidates the four-change flake history (#59/#98 → #68/#107 → #110/#120 → #105/#140) that was scattered across five issues, and records the standing rule in one place: **never raise `testTimeout` again** — it has been missed twice (21624ms, 20560ms against a 20000ms ceiling), because a threshold fix against a load problem only buys headroom until it runs out. Every claim in the plan was then verified against the files (C1b): trigger, concurrency, checkout@v7, smoke-step absent, testTimeout present. Area advanced to **`gate`** — 1 open issue, #54 [P0][Security]. 1006 tests / 66 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T09:25:00-06:00] ITERATION 28 — area: gate — **✅ AREA GRADUATED (17/17), the fifth — and NO CODE CHANGED, which is the correct outcome.** #54 is a P0 release gate whose own closing line warns *"do not close this issue because #51 passes browser tests"*. Triaged AC-by-AC against the code: **8 of 9 criteria are server-side by definition** — HttpOnly session validation before any private byte, anonymous probes of hashed assets and fonts, shared-cache separation, session-A-revoke-session-B, E2E against the exact hosted worker config, release evidence. All need the Sites worker plus a hosted deploy (HOLD per GOV-420) and backend #122 / PR #125.
+- [2026-07-31T09:25:00-06:00] ITERATION 28 — **the 9th criterion was measured rather than assumed, and it passes.** Drove `ReviewerContextStore` through success → 401: `ready` with 1 row → `unavailable` with **0 rows**, and it **stays** unavailable on subsequent `load()` rather than falling back to the cached success. A `#requestVersion` guard already prevents a superseded in-flight response from overwriting newer state. So the in-memory half of AC3 holds today, with output recorded on the issue as partial evidence toward a gate nobody can close from this repo.
+- [2026-07-31T09:25:00-06:00] ITERATION 28 — **deliberately did NOT build a client-side `revoke()`.** There is no sign-out flow in the web app and no server trigger for revocation; adding one would be a mechanism with no caller that *looks* like progress on a release gate while changing nothing about the boundary — precisely the failure #54 warns against. C1b confirmed the documented posture is real rather than aspirational: `access.ts` is pure and synchronous, references **no** civic records, stores no credential, touches no `localStorage`. C4 mutation sweep: resolveAccess 35 failures, gatePanelContent 16, isAccessState 7, isApproved 3 — all four exports genuinely covered. Area advanced to **`shell-nav`** (2 open: #72, #71 — #71 is the CS registry's one `pending` row). 1006 tests / 66 files, tsc clean, `build:all` exit 0.

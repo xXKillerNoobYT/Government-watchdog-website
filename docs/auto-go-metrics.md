@@ -34,6 +34,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 25 | a11y-responsive | C1b..C13 → ✅ GRADUATED | done | 3 | 1 | 4 | 2400 | none due; THIRD graduation (17/17); live-DOM a11y audit found a 19px tap target; C4 method adapted for constants-only modules |
 | 2026-07-31 | 26 | ci-tooling | #105 + #60 | done | 2 | 2 | 0 | 1800 | none due; measured before cutting — removed 1 of 3 duplications, kept 2 with reasons; checkout v4→v7 (guess of v5 would have been 2 majors behind) |
 | 2026-07-31 | 27 | ci-tooling | C1..C13 → ✅ GRADUATED | done | 2 | 1 | 0 | 1800 | none due; FOURTH graduation (17/17); #104 declined on measured disclosure-boundary grounds; wrote the missing area plan |
+| 2026-07-31 | 28 | gate | C1..C13 → ✅ GRADUATED | done | 1 | 0 | 0 | 1500 | none due; FIFTH graduation (17/17) with ZERO code changed; #54 triaged AC-by-AC, 8 of 9 server-side, 9th verified by measurement |
 
 ## Findings this iteration
 
