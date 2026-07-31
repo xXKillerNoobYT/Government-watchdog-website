@@ -7,7 +7,6 @@
 
 import {
   renderDefinedInfoNote,
-  type InfoNoteDefinition,
   type InfoNoteRenderOptions,
 } from './info-note';
 import {
@@ -87,10 +86,3 @@ export function renderPrivateProjectionInfoNote(
   });
 }
 
-/** Feature-specific private modules may supply a reviewed static definition. */
-export function renderPrivateDefinedInfoNote(
-  id: string,
-  definition: InfoNoteDefinition,
-): HTMLDivElement {
-  return renderDefinedInfoNote(`private-${id}`, definition);
-}

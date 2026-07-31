@@ -261,6 +261,17 @@
   earlier. **Verify each registry entry against the baseline and the code; an issue's prose
   is a claim, not a source.**
 
+- **[2026-07-31] Measure coverage by mutation, not by grep.** Five honesty-ledger exports had
+  zero direct references in `test/`; four were fully covered *behaviourally* through route and
+  page tests that never import them by name (breaking them failed 7, 5, 47 and 1 tests).
+  A reference count would have prompted four redundant tests. **Break it to a no-op and run
+  the suite — that is what "is it tested?" actually means.**
+- **[2026-07-31] When the coverage gap is dead code, delete it — do not test it.**
+  `renderPrivateDefinedInfoNote` survived mutation with 980/980 green and had exactly one
+  reference repo-wide: its own definition. A test there would have been a guard protecting
+  something nothing uses. Deletion also orphaned a type import, which `tsc` flagged (TS6133)
+  — a free confirmation that the export was genuinely unwired.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
