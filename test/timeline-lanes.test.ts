@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   axisPercent,
   connectorPoints,
+  ensureTimelineLanesStyle,
   timelineLanes,
   type TimelineEventSpec,
   type TimelineLaneSpec,
@@ -117,5 +118,33 @@ describe('timelineLanes', () => {
   it('keeps the connector overlay hidden from assistive technology', () => {
     const view = timelineLanes(SPEC);
     expect(view.querySelector('[data-test="timeline-connectors"]')?.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
+// C4 (iteration 43) — found by mutation sweep: neutralising `ensureTimelineLanesStyle` to a
+// no-op broke ZERO tests across the whole pages-civic suite. The lanes would have rendered
+// completely unstyled and every check stayed green. Its idempotency early-return was also
+// never exercised.
+describe('ensureTimelineLanesStyle', () => {
+  it('injects the stylesheet exactly once, however many times it is called', () => {
+    document.head.querySelectorAll('#gw-timeline-lanes-style').forEach((n) => n.remove());
+    expect(document.getElementById('gw-timeline-lanes-style')).toBeNull();
+
+    ensureTimelineLanesStyle();
+    const style = document.getElementById('gw-timeline-lanes-style');
+    expect(style).not.toBeNull();
+    expect(style?.tagName).toBe('STYLE');
+    expect(style?.textContent?.length ?? 0).toBeGreaterThan(0);
+
+    // The early-return branch: repeated calls must not stack duplicate <style> nodes.
+    for (let i = 0; i < 50; i += 1) ensureTimelineLanesStyle();
+    expect(document.querySelectorAll('#gw-timeline-lanes-style')).toHaveLength(1);
+    expect(document.getElementById('gw-timeline-lanes-style')).toBe(style);
+  });
+
+  it('is called by timelineLanes, so rendered lanes are never unstyled', () => {
+    document.head.querySelectorAll('#gw-timeline-lanes-style').forEach((n) => n.remove());
+    timelineLanes({ lanes: [], events: [], start: '2026-01-01', end: '2026-12-31' });
+    expect(document.getElementById('gw-timeline-lanes-style')).not.toBeNull();
   });
 });
