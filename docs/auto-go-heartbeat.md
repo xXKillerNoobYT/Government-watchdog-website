@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T12:19:31-06:00
-last_task: "C11 data-contract — GOV-70 premise measured as aged out; one real duplication fixed (PR #180), remainder escalated"
+last_run: 2026-07-31T12:45:55-06:00
+last_task: "data-contract PARKED; rotation EXHAUSTED (6 graduated, 4 parked); ci-tooling graduation found stale on #92"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -76,7 +76,7 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: data-contract
+current_area: none  # ROTATION EXHAUSTED 2026-07-31 — 6 graduated, 4 parked, 0 available. Every remaining area is blocked on an owner decision. Do NOT re-enter a graduated area or invent one to look busy; the honest state is that the loop is waiting on a person.
 graduated_areas:
   shell-nav:
     graduated: 2026-07-31
@@ -107,6 +107,31 @@ graduated_areas:
     result: 17 of 17 rows done or n/a — zero pending, zero blocked. FIRST area to graduate on either GOV repo.
     shipped: "#69 (P0, the CS binding class) unblocked #86, #75 and #87; area backlog went 4 -> 0. C7 was BOUND to the web surface rather than inherited as n/a, producing the CS-inertness sweep. C4 measured coverage by mutation and deleted the one gap as dead code."
 parked_areas:
+  data-contract:
+    parked_at: 2026-07-31
+    state: 16 of 17 resolved (14 done, 2 n/a); C11 blocked
+    blocker: "C11 — #70 is blocked on an OWNER DECISION, not unfinished agent work. Its premise was measured as partly aged out (statement-presenter.ts is already the shared layer with six consumers; exactly one per-field message was duplicated repo-wide, now fixed in PR #180). The remainder would stand up a SECOND presentation system, and converging the badge assembly changes user-visible copy."
+    resume_when: >-
+      #70 is re-scoped or confirmed as written. The measurements and the recommendation
+      are recorded on the issue, which carries the owner-decision label.
+    preserved_checklist:
+      C1_plan_complete: done  # iteration 32 — docs/plans/area-data-contract.md
+      C1b_plan_vs_code_drift_clean: done  # iteration 32
+      C2_qa_resolved: done  # iteration 32 — no data-contract question pending
+      C2b_github_issues_ingested: done  # iteration 32 — #70 ingested and analysed
+      C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
+      C4_tests_present: done  # iteration 32 — mutation sweep on the leak boundary
+      C5_tests_pass: done  # iteration 48 — 1086/1086 across 71 files
+      C6_build_warnings_zero: done  # iteration 48 — tsc clean, build:all 0
+      C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
+      C7b_dev_improvement_polish: done  # iteration 32
+      C8_security_reviewed: done  # iteration 46 — safeExternalHref added to src/data/web-safe.ts and swept repo-wide
+      C9_performance_reviewed: done  # iteration 32
+      C10_cross_platform_parity: "n/a (no second platform)"
+      C11_github_issues_resolved: blocked  # iteration 49 — #70 is now BLOCKED ON AN OWNER DECISION, not unfinished agent work. Measured: its premise ("a fix has to be applied 3-5 times") has aged out — statement-presenter.ts is already the shared layer with 6 consumers, and exactly ONE per-field message was duplicated repo-wide. That is fixed (PR #180) with a guard. The remainder would add a SECOND presentation system beside the existing one, and converging the badge assembly changes user-visible copy. Escalated on the issue and labelled owner-decision
+      C11b_process_gaps_clean: done  # iteration 32
+      C12_claude_md_reflects_area: done  # iteration 32
+      C13_automation_opportunities_reviewed: done  # iteration 32
   pages-civic:
     parked_at: 2026-07-31
     state: 15 of 16 resolved (13 done, 2 n/a); C2 blocked
@@ -148,26 +173,9 @@ parked_areas:
 # recorded rule that rotation order is a default and availability outranks it.
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
-current_area_checklist:
-  C1_plan_complete: done  # iteration 32 — docs/plans/area-data-contract.md
-  C1b_plan_vs_code_drift_clean: done  # iteration 32
-  C2_qa_resolved: done  # iteration 32 — no data-contract question pending
-  C2b_github_issues_ingested: done  # iteration 32 — #70 ingested and analysed
-  C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: done  # iteration 32 — mutation sweep on the leak boundary
-  C5_tests_pass: done  # iteration 48 — 1086/1086 across 71 files
-  C6_build_warnings_zero: done  # iteration 48 — tsc clean, build:all 0
-  C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
-  C7b_dev_improvement_polish: done  # iteration 32
-  C8_security_reviewed: done  # iteration 46 — safeExternalHref added to src/data/web-safe.ts and swept repo-wide
-  C9_performance_reviewed: done  # iteration 32
-  C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: blocked  # iteration 49 — #70 is now BLOCKED ON AN OWNER DECISION, not unfinished agent work. Measured: its premise ("a fix has to be applied 3-5 times") has aged out — statement-presenter.ts is already the shared layer with 6 consumers, and exactly ONE per-field message was duplicated repo-wide. That is fixed (PR #180) with a guard. The remainder would add a SECOND presentation system beside the existing one, and converging the badge assembly changes user-visible copy. Escalated on the issue and labelled owner-decision
-  C11b_process_gaps_clean: done  # iteration 32
-  C12_claude_md_reflects_area: done  # iteration 32
-  C13_automation_opportunities_reviewed: done  # iteration 32
+current_area_checklist: {}  # no active area; see parked_areas for every preserved checklist
 in_progress: false
-iteration_count: 39
+iteration_count: 40
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -702,3 +710,24 @@ Verification commands for this project (all three, every iteration that changes 
   stated solution** — especially for architecture issues, where the proposed remedy is much larger
   than the remaining defect. Building it as written would have been faithful to the ACs and wrong.
 - [2026-07-31T12:19:31-06:00] ITERATION 49 — 1089 tests / 72 files green (was 1086), tsc clean, build:all 0.
+- [2026-07-31T12:45:55-06:00] ITERATION 50 — **`data-contract` PARKED on #70. The rotation is now EXHAUSTED:
+  6 graduated, 4 parked, 0 available.** Verified by accounting for all ten areas, not by
+  impression: gate, shell-nav, honesty-ledger, intake-upload, a11y-responsive and ci-tooling
+  graduated; pages-civic, build-guards, deploy-release and data-contract are parked. **Every
+  remaining area is blocked on an owner decision.** `current_area: none`, with an explicit note not
+  to re-enter a graduated area or invent one to look busy — the honest state is waiting on a person.
+- [2026-07-31T12:45:55-06:00] FINDING — **before declaring the loop out of work I checked whether any graduation had
+  gone stale, and one had.** `ci-tooling` graduated at iteration 26-27 recording dispositions for
+  #105, #60 and #104 — but **not #92**, which was open, agent-reachable, and filed 2026-07-26,
+  BEFORE that graduation. C11 requires every area issue to be closed or **deferred with an explicit
+  reason**; #92 was neither. The graduation was incomplete on its own terms. This is the second
+  instance of the iteration-48 lesson: **a check marked done is a claim about a moment.**
+- [2026-07-31T12:45:55-06:00] ITERATION 50 — **#92 partially delivered, remainder deferred with a measured reason.**
+  Its first complaint — six PNGs sitting loose in the repo ROOT, bypassing the versioned
+  `docs/evidence/<ticket>/` convention — needed no dependency and is fixed: moved with `git mv`
+  into `docs/evidence/GOV-668/` and `GOV-671/` (zero inbound references, verified first), each with
+  a README stating they are a static snapshot rather than a reproducible set. The capture SCRIPT is
+  deferred: it needs Playwright/Puppeteer, the repo has neither, and installing from this worktree
+  is unsafe because `node_modules` resolves from the parent checkout. Same dependency constraint
+  that stopped coverage tooling at C4 — now a recurring blocker worth the owner's attention.
+- [2026-07-31T12:45:55-06:00] ITERATION 50 — 1089 tests / 72 files green, tsc clean, build:all 0.
