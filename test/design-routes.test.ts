@@ -94,6 +94,51 @@ describe('MOTY design-handoff route integration', () => {
     expect(document.querySelector('[data-test="explainer-back"]')?.getAttribute('href')).toBe('#/home');
   });
 
+  // C7 (usability) bound to this repo's web surface, 2026-07-31. The shared
+  // usability-enforcer is written over "iOS pages"; its scanners 2 (every control
+  // does something) and 4 (no dead ends / trapped state) translate here into one
+  // property that is specific to this product's contract:
+  //
+  //   A COMING SOON marker must be INERT.
+  //
+  // A CS slot that offers an operable control is the pipeline's Severity-1 "hidden
+  // lock" — the user is invited to act on a feature that exists in no lane. It is
+  // also an honesty failure: the marker says "not built" while the DOM says
+  // "clickable". #75, #86 and #87 each asserted this for their own slot; this sweeps
+  // EVERY marker on EVERY route so a future slot cannot regress silently.
+  it('renders every COMING SOON marker as an inert slot on every route and lane', async () => {
+    window.location.hash = '#/home?reviewer=1';
+    await import('../src/main');
+    const routes = ['/home', '/agenda', '/timeline', '/boards', '/power', '/vault', '/newsletter', '/watchlist', '/alerts', '/location', '/explainer'];
+
+    let markersSeen = 0;
+    for (const lane of ['reviewer=1', 'demo=design']) {
+      for (const route of routes) {
+        window.location.hash = `#${route}?${lane}`;
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+        const markers = document.querySelectorAll('[data-test="coming-soon-note"], [data-test="coming-soon-chip"]');
+        for (const marker of markers) {
+          markersSeen += 1;
+          const label = `${route} (${lane})`;
+          // Scanner 2 + 4: nothing operable, nothing focusable, nowhere to be trapped.
+          expect(marker.querySelectorAll('a, button, input, select, textarea, form, [href]'), label)
+            .toHaveLength(0);
+          expect(marker.querySelectorAll('[tabindex]:not([tabindex="-1"])'), label).toHaveLength(0);
+          expect(marker.querySelectorAll('[role="switch"], [role="button"], [role="link"]'), label)
+            .toHaveLength(0);
+          // The marker must say what it is. An unlabelled CS slot is indistinguishable
+          // from a data gap, which is the collapse the CS class exists to prevent.
+          expect(marker.textContent, label).toContain('COMING SOON');
+          // CS forbids naming a backend contract — that is DG's job.
+          expect(marker.textContent, label).not.toMatch(/GET |PUT |\/v1\//);
+        }
+      }
+    }
+    // Guard the guard: if the selectors ever stop matching, the loop above passes
+    // vacuously. Several CS slots ship today, so zero means the sweep is broken.
+    expect(markersSeen).toBeGreaterThan(0);
+  });
+
   it('keeps the shared shell as the sole main landmark on every canonical page', async () => {
     window.location.hash = '#/home?reviewer=1';
     await import('../src/main');

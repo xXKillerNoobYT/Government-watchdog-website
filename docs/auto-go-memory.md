@@ -272,6 +272,19 @@
   something nothing uses. Deletion also orphaned a type import, which `tsc` flagged (TS6133)
   — a free confirmation that the export was genuinely unwired.
 
+- **[2026-07-31] A vacuous sweep is the failure mode of any "check every X" test.** The CS
+  inertness sweep loops over 11 routes x 2 lanes; if the selector ever stops matching, every
+  assertion is skipped and the test passes while checking nothing. Fixed by counting matches
+  and asserting `markersSeen > 0`. **Any loop-over-collection test needs a non-empty
+  assertion, or it silently becomes decoration** — the same failure class as the
+  `filterwarnings` guard that reported green with the defect present.
+- **[2026-07-31] Binding a check means translating its INTENT, not its wording.** C7's
+  `usability-enforcer` is written over "iOS pages". Of its eight scanners, one was n/a here
+  (SQL vs schema, no SQL), one belonged to another check (plan alignment = C1b), and two
+  collapsed into a single property worth enforcing on this product — a CS marker must be
+  inert. **Translate scanner by scanner and say which ones do not apply and why**; a blanket
+  n/a and a blanket port are both wrong.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
