@@ -199,6 +199,19 @@ filled.
 | Quote ledger and vote/action table | **DG** | No quote status, vote classification, or action outcome is inferred. | Source-anchored quote records and typed votes/actions with official receipts. |
 | Placeholder officials, scores, verdicts, quotes, votes | **GS** | Populated only in explicit reviewer design-fixture mode with the AI/disclaimer interstitial. | Never copy a fixture name or value into the reviewed route. |
 
+**No figure on this page is derived in the browser (GOV-83).** The fixture renders a score
+donut, kept/broken/partial bars, a promise ledger and a vote/action record. Every number —
+including each bar's percentage — is a **literal in the fixture table**, never computed from
+the counts beside it, because scoring is a backend product with a versioned method. Turning a
+supplied number into arc length or bar width is presentation; deriving the number is not done.
+Vote rows open the existing AI-consent modal, so the hallucination disclaimer always precedes
+a promise/action conclusion. Officials remain placeholders, as on Home and Newsletter.
+
+*Note for anyone re-reading the tests:* `test/design-pages.test.ts` used to sweep the whole
+fixture page for `\b\d+%` as a proxy for "claims no score". That assertion tested the absence
+of a feature **this row authorises**, so it was re-scoped to the actual invariant — no
+*production* score is claimed, and every synthetic figure declares `data-origin="fixture"`.
+
 ## 6. Source Vault — `#/vault`
 
 | Major information group | Class | Current binding | Backend contract needed |

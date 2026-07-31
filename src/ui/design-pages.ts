@@ -422,6 +422,144 @@ interface FixtureOfficial {
   review: string;
 }
 
+/**
+ * GOV-83 — synthetic scorecard for the gated Power Tracker fixture.
+ *
+ * The matrix §5 keeps every score, verdict, quote and vote **DG** on the reviewed lane and
+ * classes "placeholder officials, scores, verdicts, quotes, votes" as **GS**: populated only
+ * in explicit reviewer design-fixture mode behind the AI/disclaimer interstitial. This is
+ * that data, and it is the whole of it — the reviewed lane never reads this table.
+ *
+ * **Nothing here is derived.** Every figure, including each bar's percentage, is supplied as
+ * a literal so the browser computes no score, share, ranking or verdict (an acceptance
+ * criterion of GOV-83, and the standing rule that scoring is a backend product). Turning a
+ * supplied number into arc length or bar width is presentation; deriving the number is not
+ * done anywhere in this file.
+ *
+ * Officials stay placeholders, consistent with GOV-76/GOV-84: no real person is named, so no
+ * synthetic verdict can be read as a claim about anybody.
+ */
+interface FixtureBar { label: string; count: number; pct: number }
+interface FixtureVoteRow { id: string; item: string; position: string; outcome: 'Kept' | 'Broken' | 'Partial' }
+interface FixtureScorecard {
+  score: number;
+  bars: readonly FixtureBar[];
+  promises: readonly string[];
+  votes: readonly FixtureVoteRow[];
+}
+
+const SYNTHETIC_SCORECARD: Readonly<Record<string, FixtureScorecard>> = {
+  'official-a': {
+    score: 62,
+    bars: [
+      { label: 'Kept', count: 5, pct: 50 },
+      { label: 'Broken', count: 3, pct: 30 },
+      { label: 'Partial', count: 2, pct: 20 },
+    ],
+    promises: [
+      'SYNTHETIC PROMISE 1 — placeholder for a reviewed saved quote.',
+      'SYNTHETIC PROMISE 2 — placeholder for a reviewed saved quote.',
+    ],
+    votes: [
+      { id: 'vote-a1', item: 'SYNTHETIC AGENDA ITEM 1', position: 'SYNTHETIC POSITION', outcome: 'Kept' },
+      { id: 'vote-a2', item: 'SYNTHETIC AGENDA ITEM 2', position: 'SYNTHETIC POSITION', outcome: 'Broken' },
+      { id: 'vote-a3', item: 'SYNTHETIC AGENDA ITEM 3', position: 'SYNTHETIC POSITION', outcome: 'Partial' },
+    ],
+  },
+};
+
+/** Donut for a SUPPLIED score. The arc is presentation; the number is fixture data. */
+function scoreDonut(score: number): HTMLElement {
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  svg.setAttribute('viewBox', '0 0 42 42');
+  svg.setAttribute('class', 'gw-dp-donut');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Synthetic score ${score} of 100 — fixture value, not a live read`);
+  const track = document.createElementNS(svgNs, 'circle');
+  track.setAttribute('cx', '21'); track.setAttribute('cy', '21'); track.setAttribute('r', '15.9155');
+  track.setAttribute('class', 'gw-dp-donut-track');
+  const arc = document.createElementNS(svgNs, 'circle');
+  arc.setAttribute('cx', '21'); arc.setAttribute('cy', '21'); arc.setAttribute('r', '15.9155');
+  arc.setAttribute('class', 'gw-dp-donut-arc');
+  arc.setAttribute('stroke-dasharray', `${score} ${100 - score}`);
+  arc.setAttribute('stroke-dashoffset', '25');
+  svg.append(track, arc);
+  return el('div', { class: 'gw-dp-donut-wrap', 'data-test': 'power-score-donut', 'data-origin': 'fixture' }, [
+    svg,
+    el('strong', { class: 'gw-dp-donut-value' }, [`${score}`]),
+    el('span', { class: 'gw-dp-muted' }, ['SYNTHETIC SCORE — fixture value, not computed here']),
+  ]);
+}
+
+function keptBrokenBars(bars: readonly FixtureBar[]): HTMLElement {
+  return el('div', { class: 'gw-dp-bars', 'data-test': 'power-kept-broken-bars', 'data-origin': 'fixture' },
+    bars.map((bar) => el('div', { class: 'gw-dp-bar-row' }, [
+      el('span', { class: 'gw-dp-bar-label' }, [`${bar.label} · ${bar.count}`]),
+      el('span', { class: 'gw-dp-bar-track' }, [
+        el('span', { class: `gw-dp-bar-fill gw-dp-bar-${bar.label.toLowerCase()}`, style: `width:${bar.pct}%` }),
+      ]),
+      el('span', { class: 'gw-dp-bar-pct' }, [`${bar.pct}%`]),
+    ])));
+}
+
+function promiseLedger(promises: readonly string[]): HTMLElement {
+  return el('div', { class: 'gw-dp-ledger', 'data-test': 'power-promise-ledger', 'data-origin': 'fixture' }, [
+    el('div', {}, [
+      el('p', { class: 'gw-dp-kicker' }, ['PROMISE LEDGER']),
+      el('span', { class: 'gw-dp-ai-badge' }, ['AI-PRESENTED — VERIFY SOURCE FIRST']),
+    ]),
+    el('ul', { class: 'gw-dp-promise-list' },
+      promises.map((text) => el('li', { 'data-origin': 'fixture' }, [text]))),
+  ]);
+}
+
+/**
+ * VOTE / ACTION RECORD. Every row opens the EXISTING `openPowerDetailModal`, which shows the
+ * AI-hallucination disclaimer before any promise/action conclusion — the reason GOV-83 routes
+ * through it rather than rendering a verdict inline.
+ */
+function voteRecordTable(
+  votes: readonly FixtureVoteRow[],
+  official: FixtureOfficial,
+  page: HTMLElement,
+): HTMLElement {
+  const rows = votes.map((vote) => {
+    const open = el('button', {
+      type: 'button',
+      class: 'gw-dp-vote-open',
+      'data-test': 'power-vote-row',
+      'data-outcome': vote.outcome,
+    }, [`${vote.item} · ${vote.outcome}`]);
+    open.addEventListener('click', () => openPowerDetailModal(page, open, official));
+    return el('tr', { 'data-origin': 'fixture' }, [
+      el('td', {}, [open]),
+      el('td', {}, [vote.position]),
+      el('td', {}, [el('span', { class: `gw-dp-chip gw-dp-outcome-${vote.outcome.toLowerCase()}` }, [vote.outcome])]),
+    ]);
+  });
+  return el('div', { class: 'gw-dp-vote-record', 'data-test': 'power-vote-record', 'data-origin': 'fixture' }, [
+    el('p', { class: 'gw-dp-kicker' }, ['VOTE / ACTION RECORD']),
+    el('p', { class: 'gw-dp-muted' }, [
+      'Synthetic rows. No real vote, motion, or position is asserted; opening a row shows the '
+      + 'AI-hallucination disclaimer before any conclusion.',
+    ]),
+    el('table', { class: 'gw-dp-vote-table' }, [
+      el('thead', {}, [el('tr', {}, [
+        el('th', { scope: 'col' }, ['Item']),
+        el('th', { scope: 'col' }, ['Position']),
+        el('th', { scope: 'col' }, ['Outcome']),
+      ])]),
+      el('tbody', {}, rows),
+    ]),
+  ]);
+}
+
+/** Every official falls back to the same synthetic card; none is ranked against another. */
+function scorecardFor(id: string): FixtureScorecard {
+  return SYNTHETIC_SCORECARD[id] ?? SYNTHETIC_SCORECARD['official-a']!;
+}
+
 const FIXTURE_OFFICIALS: readonly FixtureOfficial[] = [
   {
     id: 'official-a',
@@ -907,6 +1045,7 @@ export function renderPowerTracker(
     }
 
     const official = FIXTURE_OFFICIALS.find((candidate) => candidate.id === selectedId) ?? FIXTURE_OFFICIALS[0];
+    const card = scorecardFor(official.id);
     const openButton = el('button', {
       type: 'button',
       class: 'gw-dp-button gw-dp-primary',
@@ -926,7 +1065,11 @@ export function renderPowerTracker(
           el('p', {}, [official.role]),
           el('strong', { class: 'gw-dp-no-score' }, ['Production score unavailable']),
         ]),
+        scoreDonut(card.score),
       ]),
+      keptBrokenBars(card.bars),
+      promiseLedger(card.promises),
+      voteRecordTable(card.votes, official, frame.page),
       el('div', { class: 'gw-dp-review-card' }, [
         el('span', { class: 'gw-dp-chip gw-dp-caution' }, ['AI DETAIL LOCKED']),
         el('h3', {}, ['Latest synthetic match']),
@@ -2376,6 +2519,23 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-dp-secondary{color:var(--gw-accent);border-color:var(--gw-accent);background:var(--gw-surface)}
 .gw-dp-remove{color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
 .gw-dp-icon-button{padding:0;border-radius:var(--gw-radius-pill);font-size:1.5rem}
+.gw-dp-donut-wrap{display:grid;justify-items:center;gap:.15rem;margin-left:auto}
+.gw-dp-donut{width:4.5rem;height:4.5rem;transform:rotate(-90deg)}
+.gw-dp-donut-track{fill:none;stroke:var(--gw-border-subtle);stroke-width:4}
+.gw-dp-donut-arc{fill:none;stroke:var(--gw-caution-line);stroke-width:4}
+.gw-dp-donut-value{font:800 var(--gw-text-lg)/1 var(--gw-font-mono)}
+.gw-dp-bars{display:grid;gap:var(--gw-space-2);margin-top:var(--gw-space-3)}
+.gw-dp-bar-row{display:grid;grid-template-columns:8rem 1fr 3rem;align-items:center;gap:var(--gw-space-3);font-size:var(--gw-text-sm)}
+.gw-dp-bar-track{background:var(--gw-surface-subtle);border:var(--gw-border-w) solid var(--gw-border-subtle);border-radius:var(--gw-radius-sm);height:.75rem;overflow:hidden}
+.gw-dp-bar-fill{display:block;height:100%;background:var(--gw-caution-line)}
+.gw-dp-bar-pct{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);text-align:right}
+.gw-dp-promise-list{list-style:none;margin:.35rem 0 0;padding:0;display:grid;gap:var(--gw-space-2);font-size:var(--gw-text-sm)}
+.gw-dp-vote-record{margin-top:var(--gw-space-4);display:grid;gap:var(--gw-space-2)}
+.gw-dp-vote-table{width:100%;border-collapse:collapse;font-size:var(--gw-text-sm)}
+.gw-dp-vote-table th,.gw-dp-vote-table td{text-align:left;padding:var(--gw-space-2);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle);vertical-align:middle}
+.gw-dp-vote-table th{font:800 var(--gw-text-badge)/1.2 var(--gw-font-mono);text-transform:uppercase;color:var(--gw-text-muted)}
+.gw-dp-vote-open{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);background:none;border:0;padding:0;color:var(--gw-info-text);font-weight:700;text-align:left;cursor:pointer}
+.gw-dp-vote-open:hover{text-decoration:underline}
 .gw-dp-chip,.gw-dp-ai-badge{display:inline-flex;align-items:center;min-height:1.65rem;padding:.15rem .5rem;border:var(--gw-border-w) solid var(--gw-border-strong);border-radius:var(--gw-radius-sm);font:800 var(--gw-text-badge)/1.2 var(--gw-font);letter-spacing:.04em}
 .gw-dp-chip.gw-dp-ok{border-color:var(--gw-ok-text);color:var(--gw-ok-text)}
 .gw-dp-ai-badge,.gw-dp-caution{color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border-color:var(--gw-caution-line)}
