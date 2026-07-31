@@ -4,6 +4,7 @@
 // the approved high-fidelity IA and functional shared controls while preserving
 // the original slot, mode, active-parent, and honest-timestamp invariants.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import shellSource from '../src/ui/shell.ts?raw';
 import {
   renderShell,
   readMode,
@@ -716,5 +717,69 @@ describe('GOV-71 account chip manage affordance', () => {
     expect(surface).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/i);   // no email
     expect(surface).not.toContain('✓');                        // no verified glyph
     expect(surface).not.toMatch(/\bJ\.\s?Citizen\b/);          // no baseline persona
+  });
+});
+
+
+// GOV-72: the baseline carries TOWN/COUNTY/STATE freshness atop every page, and
+// the ledger classes exact freshness as DG. The slot must exist even though no
+// contract supplies it — a designed slot that disappears is the failure the
+// handoff forbids. The dangerous direction here is the opposite of usual: it is
+// trivially easy to make this row look "live" by formatting a clock, so the
+// assertions below are mostly about what the shell must NOT be able to do.
+describe('GOV-72 per-level freshness slots', () => {
+  const banner = (freshness?: Partial<Record<'town' | 'county' | 'state', string>>): HTMLElement => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    renderShell(root, { active: '/home', origin: 'live_server', fixture: false, freshness });
+    const el = root.querySelector<HTMLElement>('[data-test="shell-origin-freshness"]');
+    expect(el, 'freshness row renders').not.toBeNull();
+    return el!;
+  };
+
+  it('renders all three levels even when nothing is supplied', () => {
+    const levels = banner().querySelectorAll('[data-test="shell-origin-level"]');
+    expect(levels).toHaveLength(3);
+    expect([...levels].map((l) => l.getAttribute('data-level'))).toEqual(['town', 'county', 'state']);
+    for (const l of levels) {
+      expect(l.getAttribute('data-state')).toBe('unavailable');
+      expect(l.textContent).toContain('freshness unavailable');
+    }
+  });
+
+  it('renders a supplied value verbatim and marks only that level supplied', () => {
+    const row = banner({ county: '2026-07-20T08:30:00Z' });
+    const byLevel = (lv: string) => row.querySelector(`[data-level="${lv}"]`)!;
+    expect(byLevel('county').getAttribute('data-state')).toBe('supplied');
+    expect(byLevel('county').querySelector('time')?.getAttribute('datetime')).toBe('2026-07-20T08:30:00Z');
+    expect(byLevel('county').textContent).toContain('2026-07-20T08:30:00Z');
+    // The other two must NOT inherit it.
+    for (const lv of ['town', 'state']) {
+      expect(byLevel(lv).getAttribute('data-state'), lv).toBe('unavailable');
+    }
+  });
+
+  it('never invents a time — an unsupplied level shows no digits at all', () => {
+    const row = banner();
+    // No year, no clock, nothing that could read as a timestamp.
+    expect(row.textContent).not.toMatch(/\d{4}/);
+    expect(row.querySelector('time')).toBeNull();
+  });
+
+  it('originBanner cannot derive a freshness value: no clock in that path', () => {
+    // Scoped to originBanner deliberately. The module DOES read a clock once, in
+    // `shell-local-date` — the reader's own local date in the Simple chrome. That
+    // is not a data claim and is legitimately derived. Asserting over the whole
+    // module would forbid it and would also be the weaker guard: what matters is
+    // that the FRESHNESS path cannot reach a clock, so a level can only ever show
+    // a string a response supplied.
+    const at = shellSource.indexOf('function originBanner');
+    expect(at, 'originBanner found in source').toBeGreaterThan(-1);
+    const next = shellSource.indexOf('\nfunction ', at + 1);
+    const body = shellSource.slice(at, next === -1 ? undefined : next);
+    expect(body.length, 'body extracted').toBeGreaterThan(200);
+    expect(body).not.toMatch(/Date\.now\(\)/);
+    expect(body).not.toMatch(/new Date\(/);
+    expect(body).not.toMatch(/toLocaleDateString|toISOString/);
   });
 });
