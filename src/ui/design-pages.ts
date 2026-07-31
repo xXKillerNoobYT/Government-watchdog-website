@@ -12,6 +12,10 @@ import {
   ALERTS_READ_KEY,
   LOCATION_KEY,
   TRACKED_KEY,
+  readJson,
+  readTracked,
+  writeJson,
+  writeTracked,
 } from '../state/local-store';
 import { comingSoonNote, ensureComingSoonStyle } from './coming-soon';
 import { readMode } from './shell';
@@ -72,22 +76,11 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function readStoredJson(key: string): unknown {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? null : JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredJson(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* Storage can be unavailable; the current rendered interaction still works. */
-  }
-}
+// GOV-170: the private readStoredJson/writeStoredJson pair lived here and was
+// byte-identical in behaviour to readJson/writeJson in src/state/local-store.ts —
+// the module that describes itself as "the MOTY localStorage contract in one place".
+// Deleted rather than kept: a second copy means a future hardening (quota handling,
+// key namespacing, a storage-unavailable signal) lands in one and not the other.
 
 function hasFixtureAccess(options: DesignPageOptions): boolean {
   return options.access === 'reviewer_internal' && options.fixture === true;
@@ -1139,15 +1132,6 @@ const TRACKED_CATALOG: Readonly<Record<string, TrackedMeta>> = {
   },
 };
 
-function readTracked(): Record<string, true> {
-  const parsed = readStoredJson(TRACKED_STORAGE_KEY);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-  const tracked: Record<string, true> = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (value === true && key.length > 0) tracked[key] = true;
-  }
-  return tracked;
-}
 
 function humanizeTrackedKey(key: string): string {
   const text = key.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
@@ -1290,7 +1274,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         remove.addEventListener('click', () => {
           const next = readTracked();
           delete next[record.statement_id];
-          writeStoredJson(TRACKED_STORAGE_KEY, next);
+          writeTracked(next);
           status.textContent = `Reviewed record ${record.statement_id} was removed from this device.`;
           render();
         });
@@ -1328,7 +1312,7 @@ function renderReviewedWatchlist(frame: PageFrame, data?: ReadApiResponse): void
         add.addEventListener('click', () => {
           const next = readTracked();
           next[record.statement_id] = true;
-          writeStoredJson(TRACKED_STORAGE_KEY, next);
+          writeTracked(next);
           status.textContent = `Reviewed record ${record.statement_id} is now watched on this device.`;
           render();
         });
@@ -1497,7 +1481,7 @@ export function renderWatchlist(
       }, ['Stop tracking']);
       remove.addEventListener('click', () => {
         delete tracked[key];
-        writeStoredJson(TRACKED_STORAGE_KEY, tracked);
+        writeTracked(tracked);
         renderItems();
         status.textContent = `${meta.title} was removed from this device.`;
         const next = list.querySelector<HTMLButtonElement>('[data-test="watchlist-remove"]');
@@ -1645,7 +1629,7 @@ function option(value: string, label: string): HTMLOptionElement {
 }
 
 function readReviewedDeviceLocation(): SavedLocation | null {
-  const parsed = readStoredJson(LOCATION_STORAGE_KEY);
+  const parsed = readJson(LOCATION_STORAGE_KEY);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
   const candidate = parsed as Record<string, unknown>;
   const value = (key: keyof SavedLocation): string => typeof candidate[key] === 'string'
@@ -1870,12 +1854,12 @@ export function renderLocation(
     return;
   }
 
-  let location = normalizeLocation(readStoredJson(LOCATION_STORAGE_KEY));
+  let location = normalizeLocation(readJson(LOCATION_STORAGE_KEY));
   const mount = el('div', { 'data-test': 'location-picker' });
 
   const setLocation = (next: SavedLocation): void => {
     location = normalizeLocation(next);
-    writeStoredJson(LOCATION_STORAGE_KEY, location);
+    writeJson(LOCATION_STORAGE_KEY, location);
     renderPicker();
   };
 
@@ -2135,7 +2119,7 @@ const FIXTURE_EARLIER: readonly FixtureAlert[] = [
 ];
 
 function readAlertIds(): Set<string> {
-  const parsed = readStoredJson(ALERTS_READ_STORAGE_KEY);
+  const parsed = readJson(ALERTS_READ_STORAGE_KEY);
   if (!Array.isArray(parsed)) return new Set();
   return new Set(parsed.filter((value): value is string => typeof value === 'string'));
 }
@@ -2376,7 +2360,7 @@ export function renderAlerts(
     'data-test': 'alerts-mark-all',
   }, ['Mark all read']);
 
-  const persistRead = (): void => writeStoredJson(ALERTS_READ_STORAGE_KEY, [...readIds]);
+  const persistRead = (): void => writeJson(ALERTS_READ_STORAGE_KEY, [...readIds]);
   const renderFeeds = (): void => {
     const unread = FIXTURE_ALERTS.filter((alert) => !readIds.has(alert.id));
     const newlyRead = FIXTURE_ALERTS.filter((alert) => readIds.has(alert.id));
