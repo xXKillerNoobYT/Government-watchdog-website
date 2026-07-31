@@ -630,7 +630,7 @@ html,body{margin:0}
 .gw-shell-banner-slot{width:100%;position:relative;z-index:30}
 .gw-shell-origin-wrap{position:relative;width:100%}
 .gw-shell-origin-wrap>.gw-info-note{position:absolute;right:10px;top:50%;transform:translateY(-50%)}
-.gw-shell-origin{width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;padding:5px 16px;border-bottom:var(--gw-border-w) solid var(--gw-tone-info-line);background:var(--gw-tone-info-well);color:var(--gw-info-text);font:500 11.5px/1.35 var(--gw-font-mono);letter-spacing:.03em;text-align:center}
+.gw-shell-origin{width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;padding:5px 16px;border-bottom:var(--gw-border-w) solid var(--gw-tone-info-line);background:var(--gw-tone-info-well);color:var(--gw-info-text);font:500 var(--gw-text-badge)/1.35 var(--gw-font-mono);letter-spacing:.03em;text-align:center}
 .gw-shell-origin-wrap .gw-shell-origin{padding-right:58px}
 .gw-shell-origin strong{font-weight:800;letter-spacing:.06em}
 .gw-shell-origin time{color:var(--gw-text-muted)}

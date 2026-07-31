@@ -186,6 +186,41 @@ Child B's CI must stay green: `tsc` + full unit/integration suite + build `rc=0`
 
 ---
 
+## 5b. Deviation ledger — MOTY baseline values below the accessibility floor (GOV-74)
+
+The owner-approved MOTY baseline specifies state-bearing type **below** this system's
+floor. Those values are deliberately **not** implemented as written. The matrix reviewer
+checklist requires each deliberate baseline omission to be recorded with its reason, so
+this is that record — without it, a later fidelity pass reading the baseline literally can
+reintroduce a 9.5px trust chip and pass review.
+
+| MOTY baseline value | Shipped substitute | Reason |
+|---|---|---|
+| AI badge `9.5px/800` (`reference/README.md:84`) | `--gw-text-badge` → `--gw-badge-min` → **13px** | 9.5px state-bearing text is unreadable at the 390px mobile floor and fails the legibility floor this system pins |
+| Section labels `11px/800/ls 1.4px` (`reference/README.md:78`) | **13px** where state-bearing; `--gw-text-kicker` **11px** where decorative | The baseline does not distinguish decorative from state-bearing; this system does (below) |
+
+### Decorative vs state-bearing — the distinction the baseline does not draw
+
+**State-bearing (floor-bound, ≥ `BADGE_MIN_FONT_PX`).** Text a reviewer must read to know
+what they are looking at. Enforced by `test/gov74-state-bearing-type-floor.test.ts`, which
+fails on a raw sub-floor `px` in any of these classes:
+
+- `.gw-shell-origin` — the `LIVE SERVER CONTEXT` / `SYNTHETIC DESIGN FIXTURE` banner
+- `.gw-home-chip` — trust and claim chips (`.gw-badge-ai` composes onto it and adds only colour)
+- `.gw-dp-ai-badge` — the AI disclosure in the design lane
+
+**Decorative (kicker-exempt, may sit below the floor).** Brand and layout furniture that
+carries no state: `.gw-shell-ai` (the wordmark's "AI-POWERED ANALYSIS" lockup tagline, 9px),
+`.gw-shell-location-saved`, `.gw-info-row dt`, `.gw-dp-newspaper-rule`, and anything using
+`--gw-text-kicker`. **A class moves out of this list the moment it starts carrying state.**
+
+### Correction shipped with this ledger
+
+`.gw-shell-origin` declared `font:500 11.5px` — a raw sub-floor value on the single most
+trust-critical label in the shell, the one that distinguishes a live read from a synthetic
+fixture. It now resolves to `--gw-text-badge`. The pre-existing tests asserted the *token
+value* existed but never that any class used it, which is exactly how this survived.
+
 ## 6. GOV Premium Success Criteria (template applied)
 
 **Stage:** Stage 3.x reviewer-internal Alpine app · **Scope:** reviewer-internal only, Alpine-first, no public launch · **Project/repo:** `Government-watchdog-website` (`78066972-…`) · **Owner role:** UXProductDesigner (spec) → FrontendTimelineEngineer (impl) · **Reviewer path:** spec → CEO/Isaac theme-direction (§10) → Child B impl → VSR + SecurityPrivacy legs → CTO non-author merge → Isaac visual review · **Blockers / unlock rule:** GOV-427 blocked by GOV-426; this spec unblocks it.
