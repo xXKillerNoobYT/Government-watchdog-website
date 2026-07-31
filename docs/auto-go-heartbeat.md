@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T09:40:16-06:00
-last_task: "C7 pages-civic — 2 dead controls removed, dead-control guard added (PR #168)"
+last_run: 2026-07-31T10:09:04-06:00
+last_task: "C7b pages-civic — partial-date precision defect fixed (PR #171); storage duplication filed (#170)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -132,7 +132,7 @@ current_area_checklist:
   C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
   C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
   C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
-  C7b_dev_improvement_polish: pending  # iteration 41 — not run for this area
+  C7b_dev_improvement_polish: done  # iteration 45 — intent applied to the web surface (the SKILL carries 12 iOS references). Runtime-safety hunt found a real precision defect: a partial date '2026-07' was filed as a DAY labelled "NaN"; malformed values gave month label `undefined`. Fixed by routing non-full dates to the existing undated bucket (PR #171), red-proofed. Duplication finding filed as #170
   C8_security_reviewed: pending  # iteration 41 — not run for this area
   C9_performance_reviewed: pending  # iteration 41 — not run for this area
   C10_cross_platform_parity: "n/a (no second platform)"
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 34
+iteration_count: 35
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -554,3 +554,27 @@ Verification commands for this project (all three, every iteration that changes 
   the fix BEFORE red-proofing it, or back up to a temp file — the same discipline the iteration-43
   timeout taught, from the opposite direction.
 - [2026-07-31T09:40:16-06:00] ITERATION 44 — 1063 tests / 68 files green (was 1060), tsc clean, build:all 0.
+- [2026-07-31T10:09:04-06:00] ITERATION 45 — area: pages-civic — check **C7b done**, intent applied to the web
+  surface (its SKILL carries 12 iOS references, so the body was not run verbatim). Since HUNT FIX
+  was retired this check carries the runtime-safety hunting mandate, and it found a real defect.
+- [2026-07-31T10:09:04-06:00] MEASURED — **`buildTimeNavigator` invented date precision.** It destructures
+  `timelineDate.split('-')`; anything not a full `YYYY-MM-DD` leaves month/day undefined:
+  `'unknown'` gave month label `undefined` and day `"NaN"`, and — the serious one — **`'2026-07'`
+  was filed as a DAY under July labelled `"NaN"`, in the same day list as genuine dates.**
+  Month-precision data rendered as a day entry is a specificity claim the record does not support:
+  the browser inventing precision, which is the one thing this product must never do. Fixed by
+  routing non-full dates to the **existing** `undatedCount` bucket — no new state, no new copy.
+  Red-proofed: removing the guard fails 3 tests.
+- [2026-07-31T10:09:04-06:00] LESSON — **probe the defect before fixing it, and let the probe surprise you.** I went
+  looking for a crash (unguarded `JSON.parse`, non-null assertions). Every candidate turned out
+  correctly defensive. The actual defect threw nothing — it rendered a *plausible-looking wrong
+  answer*. On a civic-data product the silent wrong value is the worse class, and a hunt aimed only
+  at exceptions would have reported the area clean.
+- [2026-07-31T10:09:04-06:00] ZSH — **third expansion trap this session.** Unquoted `$FILES` is NOT word-split in zsh,
+  so `grep ... $FILES` passed one giant filename and every pattern reported nothing. `${=FILES}`
+  splits. Together with `${~g}` for globbing, the rule is: **in zsh, a bare `$var` in a command is
+  neither split nor globbed — a silent empty result is the probe, not the repo.**
+- [2026-07-31T10:09:04-06:00] FILED — #170: `design-pages.ts` duplicates `local-store.ts`'s JSON storage helpers.
+  Not a bug (both correctly defensive), so filed rather than fixed — but `local-store.ts` claims to
+  be 'the MOTY localStorage contract in one place' and that is already untrue.
+- [2026-07-31T10:09:04-06:00] ITERATION 45 — 1067 tests / 68 files green (was 1063), tsc clean, build:all 0.
