@@ -83,8 +83,8 @@ Shared primitives: GW brand; Alpine/location context; Simple/Advanced mode contr
 |---|---|---|---|
 | Mode switch | Simple ↔ Advanced changes density and palette | shell and page toggles exist; content parity is incomplete | one persisted mode authority, no conflicting storage keys, route-specific layouts |
 | Jurisdiction controls | All/Town/County/State filters | controls are shown in canvases; Alpine-only pilot | only enable backed coverage; disabled/unavailable controls explain scope |
-| Search / command palette | search records, documents, officials | not shipped | do not render until index and access policy exist |
-| Alerts | alert count/settings | no alert pipeline | do not render fake count; build after deterministic alerts + accounts/privacy |
+| Search / command palette | search records, documents, officials | **CS** — the ⌘K palette is not built in any lane | render the `COMING SOON` marker, no backend-contract sentence; becomes DG once an index and access policy are genuinely being built |
+| Alerts | alert count/settings | **CS** for delivery channels (email/text, cadence, destination) — no product in any lane; **DG** for the civic alert *count*, which awaits a deterministic alerts projection | never render a fake count; mark the delivery settings `COMING SOON` with no contract named, and keep the count as a designed gap naming the awaited projection |
 | Print | Weekly/digest printing | reference only | stylesheet + print test, or omit control |
 | Source links | original/archive/receipt | partial source links exist | source receipt fields, safe external links, locator/version disclosure |
 | Diff | version and word-diff view | sample-only placeholder | source-version/ledger contract and deterministic diff projection |

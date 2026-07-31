@@ -26,11 +26,43 @@ layout.
 | **DG** | Designed gap | Keep the owner-approved information slot visible and state which projection, receipt, or capability is unavailable. Unsupported controls remain disabled. |
 | **DL** | Device-local | Browser-only reading preference or interaction state. It must say that it creates no account, identity, coverage, monitoring, subscription, reminder, or delivery. |
 | **GS** | Gated synthetic | Populate only after reviewer admission plus an explicit fixture flag and the `SYNTHETIC DESIGN FIXTURE — not a live read` notice. Never mix it into reviewed counts or lists. |
+| **CS** | Coming soon | Functionality that **does not exist in any lane** — no reviewed contract, no fixture, no device-local behaviour, and no backend product behind it. Keep the owner-approved slot visible and mark it with the `COMING SOON` marker (`src/ui/coming-soon.ts`). **Never name a backend contract**, because there is none to name. Any control stays disabled. |
+
+### CS versus DG — the distinction that makes CS necessary
+
+**DG says the data is missing. CS says the feature is.** They are different
+statements about the product and must never be substituted for one another:
+
+- **DG** is correct when the capability is designed and a *reviewed projection,
+  receipt, or contract* has not shipped yet. Naming the awaited contract is the
+  point of a DG slot — it tells a reviewer what would fill it.
+- **CS** is correct when there is **no product at all** behind the slot. Writing a
+  DG sentence here invents a claim: it tells the reviewer a named backend contract
+  is on its way to fill something nobody is building. That is an invented product
+  claim, and it is exactly as prohibited as an invented civic fact.
+
+A slot may move CS → DG once a contract genuinely exists to await, and DG → RV once
+it ships. It must never move backwards silently.
 
 Static presentation elements such as geometry, typography, tokens, headings,
 responsive behavior, and the Simple/Advanced hierarchy are baseline
-invariants, not optional data bindings. All four classes use that same visual
+invariants, not optional data bindings. All five classes use that same visual
 grammar.
+
+### Registry of unbuilt features (CS)
+
+Every slot below is CS: it has no product in any lane. Each renders the `COMING SOON`
+marker and **no backend-contract sentence**. A row leaves this registry only when the
+feature is genuinely being built, at which point it becomes DG with a named contract.
+
+| Unbuilt feature | Owning page | Route |
+| --- | --- | --- |
+| ⌘K command palette | Global shell | all routes |
+| Alert delivery channels (email/text, cadence, destination verification) | Alerts; Watchlist | `#/alerts`, `#/watchlist` |
+| "$25/yr Local Data Geek" upsell | Home (Simple) | `#/home` |
+| "Fund your area" CTA | Location | `#/location` |
+| Account "manage" affordance | Header account chip | all routes |
+| Explainer video | Explainer | `#/explainer` |
 
 ## Current source contracts
 
@@ -210,7 +242,7 @@ Update this file in the same change whenever a baseline information group is
 added, removed, enabled, disabled, or rebound.
 
 - [ ] Name the exact baseline page, major information group, and reviewed route.
-- [ ] Assign **RV**, **DG**, **DL**, or **GS**; do not use an ambiguous
+- [ ] Assign **RV**, **DG**, **DL**, **GS**, or **CS**; do not use an ambiguous
       “temporary” or “mostly real” state.
 - [ ] For **RV**, name the exact response type/field or endpoint, access scope,
       origin/freshness value, trust label, and receipt path.
@@ -220,6 +252,12 @@ added, removed, enabled, disabled, or rebound.
       identity, coverage, monitoring, subscription, reminder, or delivery claim.
 - [ ] For **GS**, require reviewer admission, an explicit fixture flag, and the
       fixture banner before any synthetic leaf reaches the DOM.
+- [ ] For **CS**, require the `COMING SOON` marker from `src/ui/coming-soon.ts`, add
+      the slot to the CS registry above with its owning page and route, and **forbid
+      any backend-contract sentence** — there is no contract to await, so naming one
+      invents a product claim. Before assigning CS, confirm the slot is not simply a
+      DG whose contract is unshipped: DG means the *data* is missing, CS means the
+      *feature* is.
 - [ ] Confirm an adjacent source was not repurposed: TopicTree is not Boards,
       account notifications are not civic alerts, statements are not official
       profiles, and record counts are not coverage.

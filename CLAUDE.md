@@ -40,8 +40,12 @@ Every information slot on a reviewed page renders **exactly one** declared class
 | **DG** | Designed gap | The slot stays visible and states which capability is unavailable |
 | **DL** | Device-local | A browser-only preference; creates no account, coverage, or delivery |
 | **GS** | Gated synthetic | Fixture data, only behind reviewer admission **and** an explicit fixture flag, under the `SYNTHETIC DESIGN FIXTURE — not a live read` notice |
+| **CS** | Coming soon | The **feature** does not exist in any lane. `COMING SOON` marker, and **never a backend-contract sentence** — there is none to name |
 
 > **Real value, designed slot, explicit gap.**
+
+*Codes only — the definitions above are a lookup, not the contract. The ledger's wording
+governs, and it carries the CS registry of unbuilt features and the reviewer checklist.*
 
 **No civic claim is ever invented** — not to fill a layout, not to make a screenshot look
 finished, not "just for the fixture lane." A missing backend product changes the *content*
@@ -52,7 +56,12 @@ different states and must not collapse into one affordance.
 
 **Owner of this rule:** [`docs/design-information-type-matrix.md`](docs/design-information-type-matrix.md)
 — the per-page ledger binding the shell and all ten baseline pages to a class. Read it
-before changing what any slot renders. Do not restate its table anywhere else.
+before changing what any slot renders. **Do not restate its per-slot assignments, its
+class definitions, or the CS registry anywhere else** — the code lookup above is the one
+deliberate exception, kept because an agent needs the vocabulary before it knows where to
+look. If you add or change a class, this lookup and
+[`docs/design-handoff-integration.md`](docs/design-handoff-integration.md) §Product
+boundary must be updated in the same change or they become a second, wrong source of truth.
 
 ---
 
