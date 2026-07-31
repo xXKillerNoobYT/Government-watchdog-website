@@ -15,6 +15,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-30 | 7 | build-guards | C1b | done | 3 | 1 | 0 | 2000 | github-issues-sync (labels created, 33/33 classified), recommender (delta-scoped), revise-claude-md; shared-file reconciliation: C3 retired, C7/C10 n/a, C8 done, area_bindings for all ten areas |
 | 2026-07-30 | 7b | pages-civic | Stage 6 (PR review + merge) | done | 1 | 1 | 0 | 1200 | owner-directed sweep of all open PRs; #45 re-verified against current main and merged; defect found to no longer reproduce pre-fix (recorded on PR) |
 | 2026-07-30 | 8 | build-guards | C4 | done | 2 | 1 | 5 | 900 | none due; C4 audit caught #112 trap live (grep vs grep -a) and closed the untested guard-#4 decision hook |
+| 2026-07-30 | 9 | ci-tooling | owner-pinned #110 | done | 1 | 1 | 0 | 600 | owner decision batch recorded (5 decisions); GOV Q&A Notion page created; storage-bus design note + issues #195/#119 |
 
 ## Findings this iteration
 

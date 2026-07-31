@@ -11,6 +11,19 @@ on:
     branches: ["**"]
   workflow_dispatch:
 
+# #110 (owner-approved 2026-07-30): one global group serializes EVERY run of this
+# workflow, because the remaining #59-family race is cross-ref — main's post-merge
+# run overlapping a different PR's run on the one physical runner (measured:
+# 20560ms vs the 20000ms ceiling, same sha passing once the queue drained).
+# cancel-in-progress stays false so a running suite always finishes; the known
+# trade is that GitHub keeps at most ONE pending run per group, so a queued PR
+# run can be replaced while waiting. That failure is visible-and-restartable
+# (a cancelled check), unlike the load flake it replaces (a red that looks like
+# a code failure). Explicitly NOT a third testTimeout raise — see #110.
+concurrency:
+  group: website-ci-runner
+  cancel-in-progress: false
+
 jobs:
   build-test:
     name: typecheck · test · build
