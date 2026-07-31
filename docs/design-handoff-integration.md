@@ -41,11 +41,34 @@ disappear and it is not populated from the handoff. See the binding ledger in
 The production binding rule is deliberately small:
 
 - **real value** when a reviewed, web-safe contract supplies it;
-- **designed slot** in the owner-approved hierarchy in every case; and
-- **explicit gap** when the contract is absent or incomplete.
+- **designed slot** in the owner-approved hierarchy in every case;
+- **explicit gap** when the contract is absent or incomplete; and
+- **coming soon** when the *feature itself* does not exist in any lane.
 
 Device-local preview state is allowed only where it is labelled as such.
 Synthetic values require the fixture gate described above.
+
+### An explicit gap and a coming-soon marker are different claims
+
+A designed gap says **the data is missing**. A coming-soon marker says **the feature
+is**. Choosing the wrong one is a false statement about the product:
+
+- Use an **explicit gap** only when the capability is designed and a reviewed
+  projection, receipt, or contract has not shipped. Naming the awaited contract is
+  what makes the gap honest — it tells a reviewer what would fill the slot.
+- Use a **coming-soon marker** when nothing is being built behind the slot.
+  **A backend-contract sentence is forbidden here.** Writing "no delivery policy was
+  supplied" for a delivery feature that no lane builds tells the reviewer a named
+  contract is on its way to fill something that does not exist. That is an invented
+  claim about the product, and it is prohibited on exactly the same footing as an
+  invented civic fact — the contract's whole purpose is that a slot never claims more
+  than it has.
+
+The marker primitive is `src/ui/coming-soon.ts` (`comingSoonChip`, `comingSoonNote`,
+`COMING_SOON_LABEL`). The authoritative class list, the CS registry of currently
+unbuilt features, and the reviewer checklist live in the binding ledger,
+[`design-information-type-matrix.md`](design-information-type-matrix.md); this section
+states the boundary, the ledger owns the per-slot assignments.
 
 The admitted app has one shared shell on every page. Its canonical eight-tab
 order is Home, Fast Agenda, Timeline, Boards, Power Tracker, Source Vault,
