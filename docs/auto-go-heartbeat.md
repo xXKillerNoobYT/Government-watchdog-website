@@ -1,5 +1,5 @@
 ---
-last_run: 2026-07-30T22:25:00-06:00
+last_run: 2026-07-30T22:40:00-06:00
 last_task: auto-go
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
@@ -78,7 +78,7 @@ current_area_checklist:
   C2_qa_resolved: done
   C2b_github_issues_ingested: done
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"  # the shared auto-go.md retired C3 outright: it invoked /hunt-fix-loop, which exists at neither scope (website #106, backend #184). Does NOT count against graduation. See #106 — automated hunting is currently done by nothing, which is escalated, not absorbed
-  C4_tests_present: pending
+  C4_tests_present: done  # iteration 8. Export-by-export audit of the four bound paths: every pure-decision export directly tested; fs-walk halves (scanEmittedArtifact, scanPublicBundle, assertPublicBundle/Package) are n/a per the pure/fs split and exercised by every build:all + the per-iteration negative controls; prepare-sites-build.mjs exports nothing. Gap found and closed: publicModuleBoundary's decision HOOK (guard #4 in the CLAUDE.md table) had zero direct tests — only its helper did. 5 tests added, red-proved
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
   C7_ui_polish: "n/a (no UI surface in this area)"  # bind-or-retire, resolved this iteration. C7 reads "this area's iOS pages" via usability-enforcer; build-guards owns scripts/check-*.mjs and vite.config.ts and renders nothing. n/a is per-AREA, not repo-wide — C7's intent is live for pages-civic / shell-nav / a11y-responsive and must be re-bound there when the rotation arrives, not inherited as n/a
@@ -91,7 +91,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 3  # iteration 7 overall; same day as iterations 5–6, so Gate C did not fire
+iteration_count: 4  # iteration 8 overall; same day, Gate C did not fire
 day_started_at: 2026-07-30
 stop_flag: false
 budget_mode: false
@@ -177,3 +177,4 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-30T22:10:00-06:00] ITERATION 7 — **meta-checks: three fired** (global sync with the new selector; recommender scoped to the day's deltas — A5/A6 plus an explicit non-recommendation of a dead-key guard; revise-claude-md — `grep -a` caveat per #112 and the label convention, both thin per the router design). Honored iteration 6's flag instead of deferring a third time. **Owner interaction this session:** owner asked for the site live — served from this worktree at 127.0.0.1:5178 (5173 is held by a Paperclip agent's dev server on branch GOV-799); walked the reviewer bypass to `#/home` and the design fixture lane; the designed-gap "reviewed record service is not available" render was the contract working as written, no backend running locally. `BACKEND_REF` untouched; Stage 98 untouched; no backend contract needed; nothing outward-facing.
 - [2026-07-30T22:20:00-06:00] ITERATION 7 — **Stage 6: PR #116 merged (`59a7e57`).** CI green on the fresh run, `main`'s post-merge run green on both twins, and `origin/main^{tree}` byte-identical to the locally verified branch tree (`e871a22d`). #97 auto-closed with all its ACs genuinely met, so no successor issue was needed this time. Owner reconfirmed merge authority in-session ("full permission for merging").
 - [2026-07-30T22:25:00-06:00] ITERATION 7b — **owner-directed PR review sweep: PR #45 reviewed and MERGED (`bebb114`). Zero open PRs remain.** Not this loop's work, so it was read first (6 style-only lines, `minmax(0,1fr)` on six implicit-auto grids), its surface confirmed live (out of #85's orphan scope), and its stale July-24 green replaced with real evidence: local merge onto current `main` → 973/973 + tsc + build green; browser sweep at 768px → 0px overflow, both modes, boards+vault; fresh CI forced via close+reopen and passed against the current base. **Review finding recorded on the PR: the defect no longer reproduces on today's main without the fix** — merged as structural prevention, not as a live-bug fix, and the comment says so. Protocol note reused from iteration 5: bare `--merge`, no `--delete-branch`, drain `main`'s queue first.
+- [2026-07-30T22:40:00-06:00] ITERATION 8 — area: build-guards — check: C4 (tests present) — status: **done** — export-by-export audit against `area_bindings`. **The audit itself hit #112's trap live:** plain `grep -rl` reported `byteForm` and `publicMarkerViolationsIn` untested because the file that tests them is binary to grep; `grep -a` corrected both to tested. The real gap was **`publicModuleBoundary`'s decision hook** — guard #4 in CLAUDE.md's table, whose verdict fired inside a Rollup hook no test drove; only its path helper was pinned. 5 tests added driving the hook directly (fake context whose `error` throws, as Rollup's does): disallowed local module → build failure with exact copy; every `PUBLIC_LOCAL_MODULES` entry parses silently; external/virtual/off-root ids left to the other guards; root resolution with and without the `/public-entry` suffix; `apply: 'build'` pinned so the guard can never silently move off the build path. **Red-proved:** decision neutered in the real `vite.config.ts` → exactly the 2 detection tests fail, the 5 controls stay green; restored → 7/7. 978 tests / 63 files (was 973), `tsc --noEmit` clean, `build:all` exit 0. The dispatched `test-coverage-maintenance` body is still WiredPart-hardcoded (Q3) — its method was applied through this repo's bindings, not its literal paths. Next check: C5.
