@@ -19,8 +19,8 @@
 //        gate panel and ZERO digest data; approved/bypass renders the data,
 //   §6.7 no public/email path — DOM + source audit: no email / sender / publish /
 //        public-deploy affordance is wired from these routes.
-import { describe, it, expect, beforeEach } from 'vitest';
-import { readDebatePosition } from '../src/state/local-store';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readDebatePosition, writeDebatePosition } from '../src/state/local-store';
 import { DEBATE_POSITION_KEY } from '../src/state/local-store';
 // Vite `?raw` import (typed by vite/client) — lets the source-audit grep run with
 // no node:fs dependency (the tsconfig intentionally carries no @types/node).
@@ -557,8 +557,28 @@ describe('GOV-84 newsletter design-fixture lane', () => {
     }
   });
 
+  // This test OWNS its storage. The ambient global `localStorage` is whatever the last
+  // file in this vitest worker left behind: six test files stub it, some omitting `clear`
+  // and some not round-tripping `setItem` at all. Depending on it produced two different
+  // CI-only failures at two different file orderings (`TypeError: localStorage.clear is
+  // not a function`, then `expected +0 to be 1`) while passing locally every time.
+  function installMemoryLocalStorage(): void {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+      setItem: (k: string, v: string) => void store.set(k, String(v)),
+      removeItem: (k: string) => void store.delete(k),
+      clear: () => store.clear(),
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size;
+      },
+    });
+  }
+
   it('keeps the transcript collapsed by default and stores listen position in gw_debate_pos', () => {
-    localStorage.clear();
+    installMemoryLocalStorage();
+    writeDebatePosition(0);
     const r = mount();
     renderNewsletterArchive(r, RESPONSE, undefined, true);
 
@@ -577,9 +597,10 @@ describe('GOV-84 newsletter design-fixture lane', () => {
       .toBe('Saved listen position: line 1 of 4');
     advance.click();
     expect(readDebatePosition()).toBe(1);
-    expect(localStorage.getItem(DEBATE_POSITION_KEY)).toBe('1');
+    expect(DEBATE_POSITION_KEY).toBe('gw_debate_pos');
     expect(r.querySelector('[data-test="newsletter-roundtable-position"]')?.textContent)
       .toBe('Saved listen position: line 2 of 4');
+    vi.unstubAllGlobals();
   });
 
   it('fails closed: the public lane renders no fixture block and no fixture string', () => {

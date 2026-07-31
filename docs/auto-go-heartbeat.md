@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T05:04:52-06:00
-last_task: "GOV-76 — Home Latest Verdict + Language Watch in the gated design-fixture lane (PR #150, merged)"
+last_run: 2026-07-31T05:42:11-06:00
+last_task: "GOV-84 — gated design-fixture renderer for the Newsletter route (PR #152, merged)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
   C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
 in_progress: false
-iteration_count: 26
+iteration_count: 27
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -327,3 +327,52 @@ Verification commands for this project (all three, every iteration that changes 
   the plain URL the page actually loads still served the OLD transform. Probe the exact URL the page
   fetches (`fetch(url,{cache:'reload'})` from the page), or restart the server. Extends the existing
   stale-dev-server rule, which the buster trick appeared to satisfy.
+- [2026-07-31T05:42:11-06:00] ITERATION 37 — area: pages-civic — **GOV-84 shipped** (PR #152, merged). The gated
+  design-fixture renderer for `#/newsletter`, the richest MOTY screen. **Three wiring defects had
+  to be fixed together** — each alone would have left the lane dead: (1) the route was absent from
+  `SHELL_DESIGN_FIXTURE_ROUTES`; (2) `renderNewsletterRoute` never consulted `designPreviewActive`,
+  and its non-snapshot branch renders the contract-gap page the fixture must skip; (3) the route
+  went through async `withReviewerContext`, where `/power` and the other design routes
+  short-circuit first. Fixing only one looks correct in isolation and renders nothing.
+- [2026-07-31T05:42:11-06:00] ITERATION 37 — **the GOV-76 geometry-not-prose rule generalised.** Newsletter is where
+  breaking it would do the most damage: the baseline wants a 4-voice roundtable, a full agenda and
+  a six-lens ideology grid. Voices are `VOICE A-D`; no official, meeting, motion, vote or quotation
+  is named; the lens grid renders headings only and every cell says classification does not happen
+  in the browser. **This rule is now the default for every remaining GS renderer** (#83 next).
+- [2026-07-31T05:42:11-06:00] ITERATION 37 — **an existing test encoded the pre-fix behaviour.** `design-routes.test.ts`
+  asserted `/newsletter` stays `live_server` under design preview — true only because the route had
+  no fixture. Moved into the fixture group with its own page banner, per Timeline's precedent.
+  Worth noting the shape: a green test can be pinning a defect in place.
+- [2026-07-31T05:42:11-06:00] ITERATION 37 — 1027 tests / 67 files green (was 1022), tsc clean, build:all 0,
+  `dist/public` fixture-string grep = 0. **Six red proofs**, incl. disabling the reviewer gate —
+  the fixture block genuinely rendered, so the public-lane test is not vacuous.
+- [2026-07-31T05:42:11-06:00] MEASURED — **the router parses its query from the HASH, not `location.search`.**
+  `http://host/?demo=design#/newsletter` does NOT enter the design lane; the flag must ride the
+  hash: `#/newsletter?demo=design`. Cost a full round of false browser readings this iteration —
+  the page looked broken when the URL was simply wrong.
+- [2026-07-31T05:42:11-06:00] MEASURED — browser verification is still blocked repo-wide: the backend on **:8791** is
+  down, so the app bootstrap renders "The reviewed record service is not available right now"
+  before any route body runs. GOV-84 therefore shipped on router-level jsdom coverage
+  (`design-routes.test.ts`) and this was stated in the PR rather than claimed as browser-verified.
+- [2026-07-31T05:48:10-06:00] ITERATION 37 — **I shipped an order-dependent test and turned `main` intermittently
+  red.** My GOV-84 playback test called `localStorage.clear()`. **Six test files stub the global
+  `localStorage` with mocks that omit `clear`** (`reviewer-context-ui`, `timeline-route-loading`,
+  `sites-auth-entry`, `design-routes`, `reviewer-context-routes`, `fast-agenda-design`), and vitest
+  shares that global across files in a worker — so the call crashes with
+  `TypeError: localStorage.clear is not a function` at some file orderings and not others. It
+  passed locally and on PR #152's own CI, then went red on the very next run: **main carried a
+  failure AND a success for the same sha `cd74e8a`.** Fixed by resetting through the module's own
+  API (`writeDebatePosition(0)`), which depends on nothing but `setItem`.
+- [2026-07-31T05:48:10-06:00] LESSON — **never touch the global `localStorage` directly in a test on this repo.**
+  Go through `src/state/local-store.ts`. The global is a shared, partially-stubbed object whose
+  shape depends on which file ran first in the worker. **CORRECTION — supersedes the first
+  attempt at this entry:** I initially recorded that the failure could not be reproduced locally
+  and shipped a fix resting only on CI's stack trace. That was two wrong fixes in a row
+  (`writeDebatePosition(0)` still failed CI with `expected +0 to be 1`, because a foreign stub
+  can also silently discard `setItem`). It IS reproducible — not by re-ordering files, but by
+  **installing the hostile global directly**: a stub with no `clear` and a no-op `setItem`
+  reproduces both CI failure modes at once. Pre-fix fails under it with CI's exact error;
+  post-fix passes. The real fix is that the test now **owns its storage**
+  (`installMemoryLocalStorage` + `vi.unstubAllGlobals`) instead of depending on ambient state.
+  Lesson within the lesson: "cannot reproduce" often means "have not yet built the adversarial
+  condition", and shipping on an unreproduced diagnosis produced a second red.
