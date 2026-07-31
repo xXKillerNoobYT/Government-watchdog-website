@@ -449,3 +449,112 @@ describe('GOV-658 Home route access scoping', () => {
     expect(app.querySelector('[data-origin="fixture"]')).toBeNull();
   });
 });
+
+// GOV-76 — the gated design-fixture lane for Latest Verdict and Language Watch.
+//
+// Both slots stay DG on the reviewed lane; the matrix admits a GS row ("Populated
+// Home sample widgets") reachable only behind reviewer admission AND the design
+// flag. Before this, `renderHomeRoute` collapsed `demo=design` into `demo=sample`,
+// so /home declared fixture origin in the shell while these two widgets stayed
+// empty — shell and content disagreed.
+describe('GOV-76 Home design-fixture lane', () => {
+  const REVIEWED = ['home-latest-verdict-unavailable', 'home-language-watch-unavailable'] as const;
+  const FIXTURE = ['home-latest-verdict-fixture', 'home-language-watch-fixture'] as const;
+
+  it.each(['advanced', 'simple'] as const)(
+    'reviewed lane keeps both designed gaps and renders no fixture card in %s mode',
+    (mode) => {
+      applyMode(mode);
+      renderHome(root, { ...opts(true), designFixture: false });
+
+      for (const slot of REVIEWED) {
+        expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(1);
+      }
+      for (const slot of FIXTURE) {
+        expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(0);
+      }
+    },
+  );
+
+  it.each(['advanced', 'simple'] as const)(
+    'design lane renders the populated card geometry in %s mode',
+    (mode) => {
+      applyMode(mode);
+      renderHome(root, { ...opts(true), designFixture: true });
+
+      for (const slot of FIXTURE) {
+        expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(1);
+      }
+      for (const slot of REVIEWED) {
+        expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(0);
+      }
+      // The three baseline tricky-phrase tiles.
+      const tiles = root.querySelectorAll('[data-test="home-language-watch-fixture-tiles"] li');
+      expect(tiles).toHaveLength(3);
+      expect([...tiles].map((t) => t.textContent)).toEqual([
+        '…with ____________',
+        'accounted for separately',
+        'engagement agreement',
+      ]);
+    },
+  );
+
+  it('labels every synthetic leaf and never names a person in the verdict fixture', () => {
+    applyMode('advanced');
+    renderHome(root, { ...opts(true), designFixture: true });
+
+    const card = root.querySelector('[data-test="home-latest-verdict-fixture-card"]')!;
+    expect(card).toBeTruthy();
+    // Officials are placeholders by policy — reference/README.md §State Management,
+    // "No person-naming in AI analyses". The baseline's "R. Roe" is a Doe-style
+    // placeholder that still reads as a person at a glance, so it is not transcribed.
+    expect(card.textContent).toContain('PLACEHOLDER');
+    expect(card.textContent).not.toMatch(/R\.\s*Roe/i);
+    // Every leaf declares fixture origin rather than inheriting it from an ancestor.
+    const leaves = card.querySelectorAll('.gw-home-fixture-leaf');
+    expect(leaves.length).toBeGreaterThan(0);
+    for (const leaf of leaves) {
+      expect(leaf.getAttribute('data-origin')).toBe('fixture');
+      expect(leaf.textContent).toContain('SYNTHETIC PLACEHOLDER');
+    }
+    // Each AI-authored block carries its label and caveat.
+    const ai = root.querySelectorAll('[data-test="home-ai-presented"]');
+    expect(ai).toHaveLength(2);
+    for (const block of ai) {
+      expect(block.textContent).toContain('AI-PRESENTED');
+      expect(block.textContent).toContain('not independently verified');
+    }
+  });
+
+  it('keeps the fixture banner truthful about which gaps are populated', () => {
+    applyMode('advanced');
+    renderHome(root, { ...opts(true), designFixture: true });
+    const banner = root.querySelector('[data-test="home-demo-banner"]')!.textContent ?? '';
+    expect(banner).toContain('Latest Verdict, and Language Watch');
+    // The sample lane's promise that "designed gaps remain empty" would be false here.
+    expect(banner).not.toContain('designed gaps remain empty');
+
+    root.replaceChildren();
+    renderHome(root, { ...opts(true), designFixture: false });
+    const sample = root.querySelector('[data-test="home-demo-banner"]')!.textContent ?? '';
+    expect(sample).toContain('designed gaps remain empty');
+    expect(sample).not.toContain('Latest Verdict, and Language Watch');
+  });
+
+  it('fails closed: no fixture card survives a non-reviewer access lane', () => {
+    applyMode('advanced');
+    const base = opts(true);
+    renderHome(root, {
+      ...base,
+      access: 'public',
+      cardFeed: { ...base.cardFeed, access: 'public' },
+      designFixture: true,
+    });
+
+    for (const slot of FIXTURE) {
+      expect(root.querySelectorAll(`[data-test="${slot}"]`), slot).toHaveLength(0);
+    }
+    expect(root.textContent).not.toContain('SYNTHETIC PLACEHOLDER');
+    expect(root.textContent).not.toContain('accounted for separately');
+  });
+});

@@ -132,6 +132,24 @@ and the backend-supplied trust vocabulary.
 | County and State editions | **DG** | The layouts remain visible and honestly empty because the admitted projections are Alpine-first. | Separately authorized county and state projections with the same web-safe trust contract. |
 | Populated Home sample widgets | **GS** | Available only on the explicit reviewer fixture path with a sample banner. | Never a production source. Replace each value only with the matching reviewed contract above. |
 
+**The Home GS lane renders geometry, not civic prose (GOV-76).** `demo=design` populates
+Latest Verdict and Language Watch so the approved Home direction is reviewable; the reviewed
+lane keeps both DG rows above unchanged. Two constraints bind that fixture and are asserted
+in `test/gov658-home-dashboard.test.ts`:
+
+- **No person is named.** Officials are placeholders — `reference/README.md` §State
+  Management, "No person-naming in AI analyses". The baseline's `R. Roe` is *not*
+  transcribed: a Doe-style surname still reads as a real person in a screenshot.
+- **Each synthetic leaf describes itself** (`SYNTHETIC PLACEHOLDER — stands in for a
+  reviewed saved quote`) rather than stating a plausible promise-versus-action claim. A
+  fabricated verdict reads as a live read once it leaves the browser; a placeholder cannot.
+  Language Watch's three tiles are the baseline's wording *patterns*, which assert nothing
+  about anyone.
+
+`demo=sample` is unchanged and still leaves both slots empty; the fixture banner states which
+lane populated which module, so it never claims "designed gaps remain empty" while they are
+filled.
+
 ## 2. Fast Agenda — `#/agenda`
 
 | Major information group | Class | Current binding | Backend contract needed |
