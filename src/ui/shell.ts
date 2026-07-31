@@ -658,7 +658,12 @@ html,body{margin:0}
 .gw-shell-search-submit{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:var(--gw-tap-min);min-height:var(--gw-tap-min);border:0;background:transparent;color:var(--gw-text-muted);font:700 18px/1 var(--gw-font);padding:6px;cursor:pointer}
 .gw-shell-search-submit:hover{color:var(--gw-accent)}
 .gw-shell-search-submit:focus-visible{outline:2px solid var(--gw-accent);outline-offset:1px;border-radius:var(--gw-radius-sm)}
-.gw-shell-search-input{flex:1;min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--gw-text);font:500 var(--gw-text-badge)/1.3 var(--gw-font)}
+/* GOV-88 follow-up (C7 a11y audit): the input measured 19px tall inside a 46px
+   form row. The row meets the tap floor, but the input is NOT label-wrapped, so
+   tapping the row's padding focuses nothing — the real target was 19px, under
+   both this system's 44px hard stop and WCAG 2.2 AA's 24px minimum. Filling the
+   row makes the visible control and the tappable control the same thing. */
+.gw-shell-search-input{flex:1;min-width:0;width:100%;min-height:var(--gw-tap-min);border:0;outline:0;background:transparent;color:var(--gw-text);font:500 var(--gw-text-badge)/1.3 var(--gw-font)}
 .gw-shell-search-input::placeholder{color:var(--gw-text-muted);opacity:1}
 .gw-shell-search-input::-webkit-search-cancel-button{cursor:pointer}
 .gw-shell-search-shortcut{flex:none;border:var(--gw-border-w) solid var(--gw-border);border-radius:5px;padding:2px 6px;background:transparent;color:var(--gw-text-muted);font:500 10.5px/1.2 var(--gw-font-mono)}

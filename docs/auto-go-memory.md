@@ -367,6 +367,21 @@
   `.gw-shell-actions` also declares it. Third vacuous assertion this session, all the same
   shape: too-wide a slice. Extract the specific rule body first.
 
+- **[2026-07-31] Audit the RUNNING page, not the source, for accessibility.** The C7 sweep
+  measured 77 live controls and found `.gw-shell-search-input` rendering 19px tall inside a
+  46px row — invisible to any style-text check, because the *rule* looked fine and only the
+  computed geometry was wrong. The row met the tap floor; the input did not, and it is not
+  label-wrapped, so the padding focused nothing.
+- **[2026-07-31] When a hunt reports a defect, verify the DETECTOR before believing it.**
+  Second false positive of the session: my "unnamed control" check tested `aria-label`,
+  `title` and text content but never looked for a `<label for>` — so it accused a correctly
+  labelled input. Pair with the iteration-21 case where type-invalid probe inputs produced a
+  phantom TypeError.
+- **[2026-07-31] A token existing is not the same as a class using it.** Both accessibility
+  floors (13px type, 44px tap) had tests asserting the TOKEN, and both shipped violated —
+  an 11.5px banner and a 19px input. **Assert the usage, per class, or the guard is about
+  the design system rather than the product.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
