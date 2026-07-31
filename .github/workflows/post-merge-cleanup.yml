@@ -27,7 +27,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
     steps:
       - name: Checkout (keep this repo's state current on the runner)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Resolve script path
         id: script
