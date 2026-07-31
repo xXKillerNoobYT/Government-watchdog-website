@@ -831,6 +831,11 @@ function renderSourceVaultRoute(
     fixture ? GRAPH_REAL_NOTICE : LIVE_CONTEXT_NOTICE,
     fixture ? SUPPLIED_FILES : null,
     fixture ? SUPERSEDE_EVENTS : null,
+    // GOV-82: the version-compare fixture is gated on the DESIGN flag, not `demo=sample`.
+    // They are different lanes: `sample` populates contract fixtures, `design` is the
+    // owner's visual-review path. Reviewer admission is enforced inside renderSourceVault,
+    // which renders no source rows outside the reviewer-internal lane.
+    designPreviewActive(query),
   );
 }
 

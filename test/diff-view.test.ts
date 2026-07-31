@@ -68,7 +68,11 @@ describe('diffView', () => {
     const view = diffView(spec);
     const toggle = view.querySelector<HTMLButtonElement>('[data-test="diff-word-toggle"]');
     expect(toggle?.getAttribute('aria-pressed')).toBe('false');
-    expect(view.querySelectorAll('ins, del')).toHaveLength(0);
+    // Scoped to the PANES (GOV-82). This was `view.querySelectorAll('ins, del')`, which
+    // worked only while nothing else in the view used those tags. The added/removed key
+    // now uses real <ins>/<del> so it matches the marks it explains, and a key entry is
+    // not a word-level mark. `.gw-diff-body` is exactly what the assertion means.
+    expect(view.querySelectorAll('.gw-diff-body ins, .gw-diff-body del')).toHaveLength(0);
 
     toggle?.click();
     expect(toggle?.getAttribute('aria-pressed')).toBe('true');
@@ -76,7 +80,7 @@ describe('diffView', () => {
     expect(view.querySelector('[data-test="diff-after-body"] ins')?.textContent).toContain('$150');
 
     toggle?.click();
-    expect(view.querySelectorAll('ins, del')).toHaveLength(0);
+    expect(view.querySelectorAll('.gw-diff-body ins, .gw-diff-body del')).toHaveLength(0);
   });
 
   it('honours an initial word-level preference', () => {

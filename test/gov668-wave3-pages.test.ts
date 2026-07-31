@@ -5,6 +5,8 @@
 // and no unsupported metrics/alert generation on these pages.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderIssueDetail, renderSourceVault } from '../src/ui/pages-program';
+import { DIFF_CODE_CHIP } from '../src/ui/diff-view';
+import { assertWebSafe } from '../src/data/web-safe';
 import { loadDigestResponse, renderNewsletterArchive, renderNewsletterDetail, renderNewsletterState } from '../src/ui/newsletter';
 import type { ReadApiResponse } from '../src/types/read-api';
 import graphRealData from '../src/fixtures/concept-graph-real.json';
@@ -470,5 +472,83 @@ describe('GOV-668 newsletter broadsheet re-skin', () => {
       (call) => (call as unknown[])[0] === '/api/reviewer-internal',
     ))
       .toHaveLength(1);
+  });
+});
+
+// GOV-82 — the deterministic diff primitive wired into Source Vault version compare.
+//
+// `src/ui/diff-view.ts` held the LCS diff and DIFF_CODE_CHIP from the start, but NOTHING
+// in src/ imported it — its only consumer was its own test, so the primitive could drift
+// from the baseline with a fully green suite. These tests pin the wiring and the lanes.
+describe('GOV-82 Source Vault version compare', () => {
+  const FIXTURE_STRINGS = ['SYNTHETIC DOCUMENT TEXT', 'synthetic capture 09:00'];
+
+  it('reviewed lane with no supplied versions still renders the unavailable state', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real');
+    expect(root.querySelector('[data-test="source-version-compare-empty"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="source-version-compare-fixture"]')).toBeNull();
+    expect(root.querySelector('[data-test="diff-view"]')).toBeNull();
+    for (const s of FIXTURE_STRINGS) expect(root.textContent, s).not.toContain(s);
+    // The disabled controls the reviewed lane still owns.
+    expect(root.querySelector('[data-test="source-word-diff-tool"]:disabled')).not.toBeNull();
+  });
+
+  it('fixture lane renders the real diff primitive under the banner', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real', null, null, true);
+    const panel = root.querySelector('[data-test="source-version-compare-fixture"]');
+    expect(panel).not.toBeNull();
+    expect(panel?.getAttribute('data-origin')).toBe('fixture');
+    expect(root.querySelector('[data-test="source-version-compare-empty"]')).toBeNull();
+
+    // It is the shared primitive, not a second implementation.
+    expect(root.querySelector('[data-test="diff-view"]')).not.toBeNull();
+    // Assert the LITERAL, not the constant. `toBe(DIFF_CODE_CHIP)` compares the rendered
+    // chip against the same value it came from — a tautology that stays green if the
+    // constant is changed to anything at all. Caught by red proof (GOV-82).
+    expect(root.querySelector('[data-test="diff-code-chip"]')?.textContent).toBe('100% CODE — NO AI');
+    // And the constant is what the panel renders, so a drift in either is caught.
+    expect(DIFF_CODE_CHIP).toBe('100% CODE — NO AI');
+    expect(root.querySelector('[data-test="source-version-compare-fixture-banner"]')?.textContent)
+      .toContain('SYNTHETIC DESIGN FIXTURE — not a live read');
+  });
+
+  it('names both versions with their times and labels added/removed in text, not colour alone', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real', null, null, true);
+    expect(root.querySelector('[data-test="diff-pane-before"] h4')?.textContent)
+      .toBe('VERSION 1 · synthetic capture 09:00');
+    expect(root.querySelector('[data-test="diff-pane-after"] h4')?.textContent)
+      .toBe('VERSION 2 · synthetic capture 14:30');
+
+    const key = root.querySelector('[data-test="diff-key"]');
+    expect(key).not.toBeNull();
+    expect(key?.textContent).toContain('Added');
+    expect(key?.textContent).toContain('Removed');
+  });
+
+  it('word-level toggle is operable on the fixture path', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real', null, null, true);
+    const toggle = root.querySelector<HTMLButtonElement>('[data-test="diff-word-toggle"]')!;
+    expect(toggle.disabled).toBe(false);
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelectorAll('.gw-diff-body ins, .gw-diff-body del')).toHaveLength(0);
+
+    toggle.click();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(root.querySelectorAll('.gw-diff-body ins, .gw-diff-body del').length).toBeGreaterThan(0);
+  });
+
+  it('renders no hash, local path, or private locator, and stays web-safe', () => {
+    renderSourceVault(root, GRAPH_REAL, new URLSearchParams(), 'real', null, null, true);
+    const text = root.textContent ?? '';
+    expect(text).not.toMatch(/raw_sha256|sha256|[0-9a-f]{40,}/i);
+    expect(text).not.toMatch(/\/Users\/|file:\/\/|localSourcePath/);
+    expect(() => assertWebSafe(GRAPH_REAL)).not.toThrow();
+  });
+
+  it('public lane renders no fixture string', () => {
+    renderSourceVault(root, { ...GRAPH_REAL, access: 'public' }, new URLSearchParams(), 'real', null, null, true);
+    expect(root.querySelector('[data-test="source-version-compare-fixture"]')).toBeNull();
+    expect(root.querySelector('[data-test="diff-view"]')).toBeNull();
+    for (const s of FIXTURE_STRINGS) expect(root.textContent, s).not.toContain(s);
   });
 });
