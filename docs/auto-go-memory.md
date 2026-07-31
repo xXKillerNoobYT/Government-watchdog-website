@@ -297,6 +297,18 @@
   alone and said so in memory. **A log is a record of what was believed then — rewriting it
   to match present knowledge destroys the reasoning trail that makes the log worth keeping.**
 
+- **[2026-07-31] The "assert over the real list" lesson did not transfer on its own.** Iteration 3
+  learned it in `check-public-bundle.mjs`; iteration 19 found the identical shape in
+  `gov1569-gated-upload.test.ts` — an invariant defined over `PUBLICATION_ELIGIBLE_UI_STATUSES`
+  but tested against one of its three members plus an invented value. **When a spec names a
+  CONSTANT as the forbidden set, the test must import that constant**, or it proves nothing
+  about the values added to it later.
+- **[2026-07-31] `// @vitest-environment` only works in the file's FIRST comment block.** An
+  import placed above it silently disables the environment, and a green run will not tell you
+  — DOM-free assertions still pass while every DOM test in the file quietly loses jsdom. Tell
+  by the run summary: a real jsdom setup shows a non-trivial `environment Nms`. Check it after
+  touching the head of any test file.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
