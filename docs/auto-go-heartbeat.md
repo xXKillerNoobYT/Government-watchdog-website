@@ -365,8 +365,14 @@ Verification commands for this project (all three, every iteration that changes 
   API (`writeDebatePosition(0)`), which depends on nothing but `setItem`.
 - [2026-07-31T05:48:10-06:00] LESSON — **never touch the global `localStorage` directly in a test on this repo.**
   Go through `src/state/local-store.ts`. The global is a shared, partially-stubbed object whose
-  shape depends on which file ran first in the worker. Note the honest limit of this diagnosis:
-  **the failure could NOT be reproduced locally**, even running the whole suite in one worker
-  (`--no-file-parallelism`) with the offending line restored. The fix rests on CI's stack trace
-  and on removing the dependency entirely, not on a local red proof — a green local run was
-  exactly what let this ship in the first place.
+  shape depends on which file ran first in the worker. **CORRECTION — supersedes the first
+  attempt at this entry:** I initially recorded that the failure could not be reproduced locally
+  and shipped a fix resting only on CI's stack trace. That was two wrong fixes in a row
+  (`writeDebatePosition(0)` still failed CI with `expected +0 to be 1`, because a foreign stub
+  can also silently discard `setItem`). It IS reproducible — not by re-ordering files, but by
+  **installing the hostile global directly**: a stub with no `clear` and a no-op `setItem`
+  reproduces both CI failure modes at once. Pre-fix fails under it with CI's exact error;
+  post-fix passes. The real fix is that the test now **owns its storage**
+  (`installMemoryLocalStorage` + `vi.unstubAllGlobals`) instead of depending on ambient state.
+  Lesson within the lesson: "cannot reproduce" often means "have not yet built the adversarial
+  condition", and shipping on an unreproduced diagnosis produced a second red.

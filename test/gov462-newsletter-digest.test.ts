@@ -19,7 +19,7 @@
 //        gate panel and ZERO digest data; approved/bypass renders the data,
 //   §6.7 no public/email path — DOM + source audit: no email / sender / publish /
 //        public-deploy affordance is wired from these routes.
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readDebatePosition, writeDebatePosition } from '../src/state/local-store';
 import { DEBATE_POSITION_KEY } from '../src/state/local-store';
 // Vite `?raw` import (typed by vite/client) — lets the source-audit grep run with
@@ -557,11 +557,27 @@ describe('GOV-84 newsletter design-fixture lane', () => {
     }
   });
 
+  // This test OWNS its storage. The ambient global `localStorage` is whatever the last
+  // file in this vitest worker left behind: six test files stub it, some omitting `clear`
+  // and some not round-tripping `setItem` at all. Depending on it produced two different
+  // CI-only failures at two different file orderings (`TypeError: localStorage.clear is
+  // not a function`, then `expected +0 to be 1`) while passing locally every time.
+  function installMemoryLocalStorage(): void {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+      setItem: (k: string, v: string) => void store.set(k, String(v)),
+      removeItem: (k: string) => void store.delete(k),
+      clear: () => store.clear(),
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size;
+      },
+    });
+  }
+
   it('keeps the transcript collapsed by default and stores listen position in gw_debate_pos', () => {
-    // NOT `localStorage.clear()`: other test files stub the global localStorage with
-    // mocks that omit `clear`, and vitest shares that global across files in a worker,
-    // so calling it is test-order dependent (it went red on CI only after file ordering
-    // shifted). Reset through the module's own API, which is also the real contract.
+    installMemoryLocalStorage();
     writeDebatePosition(0);
     const r = mount();
     renderNewsletterArchive(r, RESPONSE, undefined, true);
@@ -584,6 +600,7 @@ describe('GOV-84 newsletter design-fixture lane', () => {
     expect(DEBATE_POSITION_KEY).toBe('gw_debate_pos');
     expect(r.querySelector('[data-test="newsletter-roundtable-position"]')?.textContent)
       .toBe('Saved listen position: line 2 of 4');
+    vi.unstubAllGlobals();
   });
 
   it('fails closed: the public lane renders no fixture block and no fixture string', () => {
