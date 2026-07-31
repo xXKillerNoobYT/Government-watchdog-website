@@ -243,6 +243,24 @@
   false`) that looked like a real AC violation. **Contradictory readings mean a broken
   measurement, not a surprising truth** — force a real reload before believing either half.
 
+- **[2026-07-31] Advancing `current_area` without resetting the checklist is silent and
+  invisible.** Iteration 11 changed the area and left build-guards' 16 entries in place, so
+  iterations 11-13 recorded honesty-ledger work under a checklist whose every note described
+  a different area. Nothing flagged it — the file stayed well-formed and plausible.
+  **`current_area` and `current_area_checklist` must move together, always**, and the old
+  area's state belongs in `parked_areas` rather than being overwritten or discarded.
+- **[2026-07-31] A registry row is a claim that something exists — give it a status column.**
+  #69's CS registry listed six unbuilt features; an audit found two with no marker. The table
+  had no way to say "listed but not yet marked", so it silently implied full coverage.
+  Added a `Marked?` column where `pending` must name its issue.
+- **[2026-07-31] I copied a registry entry from an issue's prose and it was factually wrong.**
+  "⌘K command palette" was listed as CS; the baseline actually designs a *search box with a
+  ⌘K shortcut*, which the shell implements and explicitly disclaims as a palette. That
+  phantom row put the ledger, the interaction inventory, and the code into a three-way
+  conflict — and *this loop wrote the conflicting inventory row itself* one iteration
+  earlier. **Verify each registry entry against the baseline and the code; an issue's prose
+  is a claim, not a source.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

@@ -55,14 +55,29 @@ Every slot below is CS: it has no product in any lane. Each renders the `COMING 
 marker and **no backend-contract sentence**. A row leaves this registry only when the
 feature is genuinely being built, at which point it becomes DG with a named contract.
 
-| Unbuilt feature | Owning page | Route |
-| --- | --- | --- |
-| ⌘K command palette | Global shell | all routes |
-| Alert delivery channels (email/text, cadence, destination verification) | Alerts; Watchlist | `#/alerts`, `#/watchlist` |
-| "$25/yr Local Data Geek" upsell | Home (Simple) | `#/home` |
-| "Fund your area" CTA | Location | `#/location` |
-| Account "manage" affordance | Header account chip | all routes |
-| Explainer video | Explainer | `#/explainer` |
+**A registry row is a claim that a marker exists.** The `Marked?` column is not decoration:
+without it the table silently implies every listed feature already renders a CS marker, and
+a reader auditing the contract would stop there. A `pending` row must name the issue that
+will resolve it.
+
+| Unbuilt feature | Owning page | Route | Marked? |
+| --- | --- | --- | --- |
+| Alert delivery channels (email/text, push, cadence, destination verification) | Alerts | `#/alerts` | ✅ #86 |
+| Supporter-plan upsell (baseline's "$25/yr Local Data Geek") | Home (Simple) | `#/home` | ✅ #75 |
+| "Fund your area" CTA | Location | `#/location` | ✅ #87 |
+| Explainer video | Explainer; Home | `#/explainer`, `#/home` | ✅ shipped earlier |
+| Account "manage" affordance | Header account chip | all routes | ⏳ **pending — #71** |
+
+**Removed 2026-07-31 — "⌘K command palette".** It was listed here on the assumption that the
+baseline designed a palette. It does not: `reference/README.md:21` specifies a *"search box
+⌘K"*, and the shell implements exactly that — `⌘K` focuses the filter field, and
+`src/ui/shell.ts` states in both a comment and the control's own `title` that it "does not
+open a command palette". The two real search surfaces are already correctly classed
+elsewhere — the shell filter is **DL** (it filters records already loaded) and Home's 90-day
+archive search is **DG** (disabled, awaiting a reviewed projection). Listing a phantom CS
+slot beside them created a three-way conflict between this ledger, the interaction
+inventory, and the code. **A registry entry must be verified against the baseline and the
+code, not copied from an issue's prose.**
 
 ## Current source contracts
 
