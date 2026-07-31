@@ -1537,7 +1537,19 @@ export function renderWatchlist(
     el('div', { class: 'gw-dp-stack' }, [
       panel('Watch controls', 'ADVANCED TOOLS', [
         el('div', { class: 'gw-dp-toolbox', role: 'group', 'aria-label': 'Watchlist record types' }, [
-          el('button', { type: 'button', class: 'gw-dp-tool-pill', 'aria-pressed': 'true' }, ['Issues']),
+          // C7 (iteration 44): this was the ONE enabled pill in a group whose siblings are
+          // all disabled-with-title. It carried `aria-pressed="true"` and no handler, so it
+          // announced a pressed toggle that could not be operated (micro-detail rule 5).
+          //
+          // It is NOT an unavailable tool — it is the CURRENT record type. Disabling it
+          // would conflate "selected" with "does not work", which the sibling count in
+          // test/design-pages.test.ts deliberately distinguishes. A current state is an
+          // indicator, so it renders as one: same pill geometry, no false affordance.
+          el('span', {
+            class: 'gw-dp-tool-pill',
+            'data-test': 'watchlist-current-record-type',
+            'aria-current': 'true',
+          }, ['Issues']),
           el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs a reviewed boards projection' }, ['Boards · unavailable']),
           el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs policy-cleared official profiles' }, ['Officials · unavailable']),
           el('button', { type: 'button', class: 'gw-dp-tool-pill', disabled: '', title: 'Needs the source monitoring service' }, ['Documents · unavailable']),

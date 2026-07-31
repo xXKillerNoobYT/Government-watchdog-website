@@ -200,12 +200,21 @@ export function renderTimelineDesign(
   const windowControls = el('div', { class: 'gw-tld-controls', 'data-test': 'timeline-design-windows' });
   const visibleWindows = mode === 'simple' ? WINDOWS.slice(0, 2) : WINDOWS;
   visibleWindows.forEach((w, index) => {
+    // C7 (iteration 44): these pills were ENABLED with `aria-pressed` and no handler
+    // anywhere — a screen reader announced a toggle state and activating did nothing.
+    // Micro-detail rule 5: a button either works, leads somewhere, or is not rendered;
+    // an unavailable one must say why. No reviewed time-window projection exists, so they
+    // are inert-and-explained, matching the disabled+title convention used elsewhere.
     windowControls.append(el('button', {
       type: 'button',
       class: 'gw-tld-pill',
       'data-test': 'timeline-window-pill',
       'data-window': w.id,
       'aria-pressed': index === 0 ? 'true' : 'false',
+      disabled: '',
+      title: index === 0
+        ? 'This is the window this fixture response covers.'
+        : 'Window selection needs a reviewed timeline-window projection.',
     }, [w.label]));
   });
   windowControls.append(comingSoonChip('Saved timeline views'));
