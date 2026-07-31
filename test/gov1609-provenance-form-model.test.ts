@@ -186,6 +186,11 @@ describe('GOV-1609 §4.2 — provenance URL is only linkified when it is http(s)
     expect(safeHttpUrl('Town of Alpine clerk, emailed 2026-06-09')).toBeNull();
     expect(safeHttpUrl('file:///Users/vault/minutes.pdf')).toBeNull();
     expect(safeHttpUrl('javascript:alert(1)')).toBeNull();
+    // Two evasion shapes the allow-list already handles but nothing asserted:
+    // a data: URI (can carry markup) and a mixed-case scheme (URL lowercases
+    // protocol, so the allow-list must be compared against the normalised form).
+    expect(safeHttpUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
+    expect(safeHttpUrl('JaVaScRiPt:alert(1)')).toBeNull();
     expect(safeHttpUrl('')).toBeNull();
     expect(safeHttpUrl(null)).toBeNull();
     expect(safeHttpUrl(undefined)).toBeNull();

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import mainSource from '../src/main.ts?raw';
 
 const REVIEWER_ENVELOPE = {
   reviewer_internal_records: [{
@@ -56,6 +57,18 @@ beforeEach(() => {
   document.body.append(root);
 });
 
+/**
+ * Every hash route `src/main.ts` registers, read from source via Vite `?raw`
+ * (no `node:fs` — this repo carries no `@types/node` on purpose).
+ */
+function registeredRoutes(): string[] {
+  const found = [...mainSource.matchAll(/router\.register\('([^']+)'/g)].map((m) => m[1]);
+  // Guard the derivation itself: if the regex ever stops matching, every route
+  // loop below would iterate nothing and pass vacuously.
+  expect(found.length).toBeGreaterThan(15);
+  return found;
+}
+
 describe('MOTY design-handoff route integration', () => {
   it('returns to the top when primary pages change without resetting same-page controls', async () => {
     window.location.hash = '#/home?reviewer=1';
@@ -109,7 +122,12 @@ describe('MOTY design-handoff route integration', () => {
   it('renders every COMING SOON marker as an inert slot on every route and lane', async () => {
     window.location.hash = '#/home?reviewer=1';
     await import('../src/main');
-    const routes = ['/home', '/agenda', '/timeline', '/boards', '/power', '/vault', '/newsletter', '/watchlist', '/alerts', '/location', '/explainer'];
+    // Derived from the router's own registrations, NOT hand-listed. The first
+    // version of this sweep enumerated 11 routes and the app registers 22 — it
+    // silently skipped half the app, including /upload, /cards and /topics. An
+    // enumeration inside a completeness guard is the one place a hand-picked
+    // list is least excusable, so the list is now read out of main.ts.
+    const routes = registeredRoutes();
 
     let markersSeen = 0;
     for (const lane of ['reviewer=1', 'demo=design']) {

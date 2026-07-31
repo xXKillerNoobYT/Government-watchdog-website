@@ -309,6 +309,18 @@
   by the run summary: a real jsdom setup shows a non-trivial `environment Nms`. Check it after
   touching the head of any test file.
 
+- **[2026-07-31] I committed the hand-picked-list failure while criticising it.** Iteration 19
+  flagged a test that proved an invariant over 1 of 3 constant members; iteration 20 found my
+  own iteration-16 sweep covering **11 of 22 routes**, missing the route of the very area I had
+  just entered. **A completeness guard must DERIVE its scope, never enumerate it** — the route
+  list now comes from `main.ts`'s `router.register()` calls. And a derived scope needs its own
+  guard: if the derivation returns nothing the sweep goes vacuous in a way the hardcoded
+  version could not, so assert the derived count.
+- **[2026-07-31] Read source in tests with Vite `?raw` / `import.meta.glob`, never `node:fs`.**
+  This repo carries no `@types/node` on purpose, so `readFileSync` in a test breaks typecheck.
+  The established pattern is `import src from '../src/x.ts?raw'` (see `gov658-fonts.test.ts`).
+  I nearly reached for `readFileSync` on the strength of a half-remembered grep hit.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
