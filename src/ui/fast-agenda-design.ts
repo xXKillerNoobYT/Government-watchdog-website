@@ -46,6 +46,22 @@ interface ProcessStep {
  * publication record from a clock. The fixture states which rung a row sits on; this map
  * only turns that into the design's words.
  */
+/**
+ * GOV-89 — action-chip tones. The baseline scans by colour ("PUBLIC HEARING red / FINAL
+ * VOTE gold / ONE MOTION grey"), but every chip rendered the same caution outline.
+ *
+ * **The tone is a DECLARED FIELD on the fixture row, not a string match.** The issue
+ * proposed a map keyed on the action text; that would have been brittle (one action string
+ * embeds a dollar amount) and, worse, `.gw-fa-action` is shared with the REVIEWED
+ * `reviewed-status-badge`. Any text-keyed map risks colouring a reviewed trust badge by
+ * matching frontend text — the frontend recomputing a severity conclusion the backend never
+ * sent, which `docs/design-handoff-integration.md` forbids. A field cannot leak: reviewed
+ * cards have no `actionTone`, so there is nothing to match on and no fallback to reach for.
+ *
+ * Colour is never the only carrier — every chip keeps its full action word (§3, §5).
+ */
+type ActionTone = 'hearing' | 'final' | 'reading' | 'routine';
+
 type VideoStatus = 'pending-release' | 'pending-transcript' | 'missing';
 
 const VIDEO_LADDER: Readonly<Record<VideoStatus, string>> = {
@@ -74,6 +90,8 @@ interface AgendaItem {
   issueKey: string;
   title: string;
   action: string;
+  /** GOV-89: declared tone. Never derived from `action` text. */
+  actionTone: ActionTone;
   jurisdiction: Jurisdiction;
   page: number;
   analysis: string;
@@ -120,6 +138,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'annexation',
     title: 'Alpine Apex annexation — public hearing',
     action: 'HEARING + POSSIBLE VOTE',
+    actionTone: 'hearing',
     jurisdiction: 'town',
     page: 2,
     analysis:
@@ -149,6 +168,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'council-process',
     title: 'Consent agenda — minutes, bills, and service agreements',
     action: 'CONSENT VOTE',
+    actionTone: 'routine',
     jurisdiction: 'town',
     page: 3,
     analysis:
@@ -176,6 +196,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'annexation',
     title: 'Ordinance 2026-011 — Boardwalk II Lot 18, third reading',
     action: 'FINAL READING VOTE',
+    actionTone: 'final',
     jurisdiction: 'town',
     page: 2,
     analysis:
@@ -204,6 +225,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'annexation',
     title: 'Ordinance 2026-013 — Alpine Apex annexation, first reading',
     action: 'FIRST READING VOTE',
+    actionTone: 'reading',
     jurisdiction: 'town',
     page: 2,
     analysis:
@@ -231,6 +253,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'water',
     title: 'AMI radio-read project — pay applications 1–4',
     action: 'MONEY VOTE · $667,067.91',
+    actionTone: 'final',
     jurisdiction: 'town',
     page: 5,
     analysis:
@@ -259,6 +282,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'annexation',
     title: 'Outside counsel — annexation engagement',
     action: 'LEGAL CONTRACT VOTE',
+    actionTone: 'routine',
     jurisdiction: 'town',
     page: 2,
     analysis:
@@ -285,6 +309,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'ludc',
     title: 'Land-use code rewrite — consultant selection',
     action: 'CONTRACT SELECTION VOTE',
+    actionTone: 'routine',
     jurisdiction: 'town',
     page: 8,
     analysis:
@@ -313,6 +338,7 @@ const AGENDA_ITEMS: readonly AgendaItem[] = [
     issueKey: 'land-use',
     title: 'Land-use amendments and building-code exemptions',
     action: 'TWO FIRST-READING VOTES',
+    actionTone: 'reading',
     jurisdiction: 'town',
     page: 4,
     analysis:
@@ -544,7 +570,7 @@ function openDetails(
     header: el('div', {}, [
       kicker(`ITEM ${item.number} · DETAILED DESIGN ANALYSIS`),
       el('h2', { id: titleId }, [item.title]),
-      el('p', { class: 'gw-fa-action' }, [item.action]),
+      el('p', { class: `gw-fa-action gw-fa-tone-${item.actionTone}` }, [item.action]),
     ]),
     body: [
       trackButton(root, tracked, item.issueKey, item.title),
@@ -724,7 +750,7 @@ function agendaRow(
     el('div', { class: 'gw-fa-agenda-main' }, [
       el('header', { class: 'gw-fa-agenda-title' }, [
         el('h3', {}, [item.title]),
-        el('span', { class: 'gw-fa-action' }, [item.action]),
+        el('span', { class: `gw-fa-action gw-fa-tone-${item.actionTone}` }, [item.action]),
       ]),
       aiAnalysis(item.analysis),
       languageWatch(item.languageWatch),
@@ -786,7 +812,7 @@ function simpleAgendaItem(
         el('span', { class: 'gw-fa-number', 'aria-label': `Agenda item ${item.number}` }, [item.number]),
         el('div', {}, [
           el('h3', {}, [item.title]),
-          el('p', { class: 'gw-fa-simple-action' }, [item.action]),
+          el('p', { class: `gw-fa-simple-action gw-fa-tone-${item.actionTone}` }, [item.action]),
         ]),
       ]),
       aiAnalysis(item.analysis),
@@ -1090,7 +1116,10 @@ function reviewedAgendaCard(card: AgendaBoardCard): HTMLElement {
   const number = card.itemOrder === undefined ? '—' : String(card.itemOrder);
   const trustBadges: HTMLElement[] = [
     el('span', {
-      class: 'gw-fa-action',
+      // GOV-89: explicit neutral. The reviewed badge shares `.gw-fa-action` with the
+      // fixture chips; naming its tone here means it can never inherit or fall back to
+      // one, and a reader sees the intent rather than an absence.
+      class: 'gw-fa-action gw-fa-tone-neutral',
       'data-test': 'reviewed-status-badge',
     }, [card.statusBadge]),
   ];
@@ -1582,6 +1611,23 @@ export function renderFastAgendaDesign(root: HTMLElement, options: FastAgendaDes
 }
 
 export const FAST_AGENDA_DESIGN_STYLE = `${GW_TOKENS}
+/* GOV-89 action-chip tones. Existing tokens only; no new token, no new raw hex.
+   The word always stays in the chip, so tone is redundant reinforcement, never state.
+
+   MEASURED, not assumed: the obvious pairing (--gw-tone-*-line border on a
+   --gw-tone-*-well background) FAILS the >=3:1 state-bearing border floor in 4 of 8
+   light/dark pairings — those line tokens are drawn for the page surface, not for
+   their own tint, and caution-line misses even in light mode (2.05:1). Measuring the
+   border against the page surface instead fails the same 4. Each tone therefore uses
+   its OWN TEXT token as the border, which already clears 4.5:1 against the well by
+   construction: 8/8 pass, worst case 6.58:1. Pinned by a test so it cannot regress. */
+.gw-fa-tone-hearing{border-color:var(--gw-stop-text);background:var(--gw-tone-stop-well);color:var(--gw-stop-text)}
+.gw-fa-tone-final{border-color:var(--gw-caution-text-strong);background:var(--gw-tone-caution-well);color:var(--gw-caution-text-strong)}
+.gw-fa-tone-reading{border-color:var(--gw-info-text);background:var(--gw-tone-info-well);color:var(--gw-info-text)}
+.gw-fa-tone-routine{border-color:var(--gw-text-secondary);background:var(--gw-surface-subtle);color:var(--gw-text-secondary)}
+/* The reviewed badge is deliberately neutral — a backend-supplied status is never
+   re-toned by the frontend. Declared, not merely absent. */
+.gw-fa-tone-neutral{border-color:var(--gw-text-secondary);background:var(--gw-surface-subtle);color:var(--gw-text-secondary)}
 .gw-fa-vid-chip{display:inline-flex;align-items:center;min-height:var(--gw-badge-min);font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);color:var(--gw-info-text)}
 .gw-fa-vid-status{font-style:normal;color:var(--gw-text-muted)}
 .gw-fa-vid-note{font-size:var(--gw-text-badge);color:var(--gw-text-muted)}

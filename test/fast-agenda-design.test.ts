@@ -586,3 +586,100 @@ describe('GOV-78 agenda analysis modal — past meetings, connected issues, who 
     expect(root.textContent).not.toContain('document event — no video');
   });
 });
+
+// GOV-89 — action-chip tones, and the lane boundary they must not cross.
+//
+// `.gw-fa-action` is shared between the GS fixture chips and the REVIEWED
+// `reviewed-status-badge`. The issue proposed a tone map keyed on the action TEXT; that
+// would risk colouring a reviewed trust badge by string-matching frontend copy — the
+// frontend recomputing a severity conclusion the backend never sent. The tone is therefore
+// a declared FIELD on the fixture row, and these tests pin that it cannot leak.
+describe('GOV-89 action-chip tones', () => {
+  const TONES = ['hearing', 'final', 'reading', 'routine'] as const;
+
+  it('gives every fixture chip a declared tone and keeps its full action word', () => {
+    renderFixture();
+    const chips = [...root.querySelectorAll('.gw-fa-action, .gw-fa-simple-action')]
+      .filter((n) => n.getAttribute('data-test') !== 'reviewed-status-badge');
+    expect(chips.length).toBeGreaterThan(0);
+    for (const chip of chips) {
+      const tone = TONES.find((t) => chip.classList.contains(`gw-fa-tone-${t}`));
+      expect(tone, chip.textContent ?? '').toBeTruthy();
+      // Colour is never the only carrier: the word survives with no colour vision.
+      expect(chip.textContent?.trim(), 'chip word').toBeTruthy();
+      expect(chip.textContent).toMatch(/VOTE|HEARING|READING|MOTION/i);
+    }
+  });
+
+  it('uses more than one tone — a single tone is the defect this fixes', () => {
+    renderFixture();
+    const used = new Set(
+      [...root.querySelectorAll('.gw-fa-action, .gw-fa-simple-action')]
+        .flatMap((n) => TONES.filter((t) => n.classList.contains(`gw-fa-tone-${t}`))),
+    );
+    expect(used.size).toBeGreaterThan(1);
+  });
+
+  it('reviewed status badge is explicitly neutral and carries no fixture tone', () => {
+    renderReviewed(POPULATED_REVIEWED_BOARD);
+    const badges = [...root.querySelectorAll('[data-test="reviewed-status-badge"]')];
+    expect(badges.length).toBeGreaterThan(0);
+    for (const badge of badges) {
+      expect(badge.classList.contains('gw-fa-tone-neutral'), badge.textContent ?? '').toBe(true);
+      for (const t of TONES) {
+        expect(badge.classList.contains(`gw-fa-tone-${t}`), `${badge.textContent} got ${t}`).toBe(false);
+      }
+    }
+  });
+
+  it('a reviewed badge whose text EXACTLY matches a fixture action stays neutral', () => {
+    // The decisive case. If any text-keyed matching existed anywhere, this is where it
+    // would fire: a backend-supplied status that happens to read 'FINAL READING VOTE'
+    // must still render neutral, because severity is the backend's to state, not ours.
+    const board = JSON.parse(JSON.stringify(POPULATED_REVIEWED_BOARD)) as AgendaBoard;
+    let planted = 0;
+    const plant = (node: unknown): void => {
+      if (Array.isArray(node)) { node.forEach(plant); return; }
+      if (node && typeof node === 'object') {
+        const rec = node as Record<string, unknown>;
+        if ('statusBadge' in rec) { rec.statusBadge = 'FINAL READING VOTE'; planted += 1; }
+        Object.values(rec).forEach(plant);
+      }
+    };
+    plant(board);
+    expect(planted, 'planted statusBadge values').toBeGreaterThan(0);
+
+    renderReviewed(board);
+    const badges = [...root.querySelectorAll('[data-test="reviewed-status-badge"]')];
+    expect(badges.length).toBeGreaterThan(0);
+    for (const badge of badges) {
+      expect(badge.textContent).toBe('FINAL READING VOTE');
+      expect(badge.classList.contains('gw-fa-tone-final'), 'text-keyed tone leaked').toBe(false);
+      expect(badge.classList.contains('gw-fa-tone-neutral')).toBe(true);
+    }
+  });
+
+  it('introduces no new raw hex into the fixture style block', () => {
+    const toneRules = FAST_AGENDA_DESIGN_STYLE.match(/\.gw-fa-tone-[a-z]+\{[^}]*\}/g) ?? [];
+    expect(toneRules.length).toBeGreaterThan(0);
+    for (const rule of toneRules) expect(rule, rule).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+});
+
+// GOV-89 — the contrast floor, pinned. Each tone's border MUST be its own text token:
+// pairing `--gw-tone-*-line` with `--gw-tone-*-well` fails the >=3:1 state-bearing border
+// floor in 4 of 8 light/dark pairings (caution-line reaches only 2.05:1 in light mode).
+describe('GOV-89 action-chip contrast floor', () => {
+  it('every tone draws its border from its own text token, never a --gw-tone-*-line', () => {
+    const rules = FAST_AGENDA_DESIGN_STYLE.match(/\.gw-fa-tone-[a-z]+\{[^}]*\}/g) ?? [];
+    expect(rules.length).toBeGreaterThanOrEqual(5);
+    for (const rule of rules) {
+      const border = rule.match(/border-color:var\((--[a-z-]+)\)/)?.[1];
+      const color = rule.match(/color:var\((--[a-z-]+)\)\}/)?.[1] ?? rule.match(/;color:var\((--[a-z-]+)\)/)?.[1];
+      expect(border, rule).toBeTruthy();
+      expect(border, `${rule} — a --gw-tone-*-line border fails the 3:1 floor on its own well`)
+        .not.toMatch(/^--gw-tone-.*-line$/);
+      expect(border, `${rule} — border must equal the tone's text token`).toBe(color);
+    }
+  });
+});
