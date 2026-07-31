@@ -78,6 +78,20 @@
   preserve a specific two-character byte form (`\xc3\xbf`, U+00FF read back as latin1) — an
   easy thing to get subtly wrong in a drive-by edit inside an unrelated PR.
 
+- **[2026-07-30]** Resolved #97 by **removal without an owner answer**, after two iterations
+  recorded it as "owner-shaped, cannot self-clear." What changed: reading the issue *against
+  the code* showed the decision was already made — `readConfig` derives the endpoint from
+  `apiBase(env)` and a test asserts the key is ignored, so "wire it up" would mean adding a
+  second way to name a destination the design deliberately single-sources. **"Needs an owner
+  decision" deserves re-derivation before another deferral: if the shipped design already
+  embodies one option, reconciling the doc to it is drift-cleanup, not decision-making.**
+  Kept trivially revertible and said so everywhere it is recorded.
+- **[2026-07-30]** Marked C8 `done` while its successor issue #109 stays open, by relabelling
+  the criterion to the area it is actually a property of (`area:deploy-release` — anonymous
+  probes test the hosted origin, not this area's source). The alternative — build-guards held
+  hostage by a deploy that is owner-gated — punished the wrong area. A criterion belongs to
+  the area whose artifact it measures, not the area whose issue first named it.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against

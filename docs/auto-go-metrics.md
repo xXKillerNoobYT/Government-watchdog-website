@@ -12,6 +12,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-29 | 4b | ci-tooling | C5 | done | 1 | 1 | 0 | 900 | unplanned — CI-blocked follow-through; #98's timeout raise proved insufficient, fixed the doubled trigger at the root |
 | 2026-07-30 | 5 | build-guards | Stage 6 (merge) | done | 5 | 5 | 0 | 2400 | Notion hub read (Gate C kickoff); other five inside their 20h windows, not due |
 | 2026-07-30 | 6 | build-guards | C1b | in_progress | 2 | 1 | 9 | 1500 | github-issues-sync (global); recommender + revise deferred with reason, not silently skipped |
+| 2026-07-30 | 7 | build-guards | C1b | done | 3 | 1 | 0 | 2000 | github-issues-sync (labels created, 33/33 classified), recommender (delta-scoped), revise-claude-md; shared-file reconciliation: C3 retired, C7/C10 n/a, C8 done, area_bindings for all ten areas |
 
 ## Findings this iteration
 
