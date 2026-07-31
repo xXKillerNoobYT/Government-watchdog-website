@@ -17,8 +17,6 @@ export const TRACKED_KEY = 'gw_tracked';
 export const LOCATION_KEY = 'gw_location';
 export const ALERTS_READ_KEY = 'gw_alerts_read';
 export const DEBATE_POSITION_KEY = 'gw_debate_pos';
-/** @deprecated Delivery toggles became Coming Soon notes in the MOTY pass. */
-export const DELIVERY_PREVIEW_KEY = 'gw_alert_delivery_preview';
 
 export interface SavedLocation {
   state: string;

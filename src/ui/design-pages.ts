@@ -10,10 +10,10 @@
 
 import {
   ALERTS_READ_KEY,
-  DELIVERY_PREVIEW_KEY,
   LOCATION_KEY,
   TRACKED_KEY,
 } from '../state/local-store';
+import { comingSoonNote, ensureComingSoonStyle } from './coming-soon';
 import { readMode } from './shell';
 import type { ShellMode } from './shell';
 import { applyThemePref, hasExplicitThemePref } from './theme-toggle';
@@ -48,7 +48,6 @@ export const DESIGN_FIXTURE_LABEL = 'SYNTHETIC DESIGN FIXTURE — not a live rea
 export const TRACKED_STORAGE_KEY = TRACKED_KEY;
 export const LOCATION_STORAGE_KEY = LOCATION_KEY;
 export const ALERTS_READ_STORAGE_KEY = ALERTS_READ_KEY;
-export const DELIVERY_PREVIEW_STORAGE_KEY = DELIVERY_PREVIEW_KEY;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -1937,36 +1936,10 @@ const FIXTURE_EARLIER: readonly FixtureAlert[] = [
   },
 ];
 
-interface DeliveryPreview {
-  email: boolean;
-  text: boolean;
-  meetingEve: boolean;
-  dailyDigest: boolean;
-}
-
-const DELIVERY_DEFAULTS: DeliveryPreview = {
-  email: true,
-  text: false,
-  meetingEve: true,
-  dailyDigest: false,
-};
-
 function readAlertIds(): Set<string> {
   const parsed = readStoredJson(ALERTS_READ_STORAGE_KEY);
   if (!Array.isArray(parsed)) return new Set();
   return new Set(parsed.filter((value): value is string => typeof value === 'string'));
-}
-
-function readDeliveryPreview(): DeliveryPreview {
-  const parsed = readStoredJson(DELIVERY_PREVIEW_STORAGE_KEY);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ...DELIVERY_DEFAULTS };
-  const value = parsed as Record<string, unknown>;
-  return {
-    email: typeof value.email === 'boolean' ? value.email : DELIVERY_DEFAULTS.email,
-    text: typeof value.text === 'boolean' ? value.text : DELIVERY_DEFAULTS.text,
-    meetingEve: typeof value.meetingEve === 'boolean' ? value.meetingEve : DELIVERY_DEFAULTS.meetingEve,
-    dailyDigest: typeof value.dailyDigest === 'boolean' ? value.dailyDigest : DELIVERY_DEFAULTS.dailyDigest,
-  };
 }
 
 function trackedCount(): number {
@@ -2167,7 +2140,7 @@ export function renderAlerts(
     'alerts',
     'Alerts',
     options.fixture
-      ? 'A read-state and delivery-settings interaction preview. Nothing here is subscribed or sent.'
+      ? 'A read-state interaction preview. Delivery is not built, and nothing here is subscribed or sent.'
       : 'The baseline alerts workspace with unsupported feed, history, trigger, and delivery products kept visibly unavailable.',
     'alerts-overview',
     responseScopedOptions(options, data),
@@ -2182,7 +2155,7 @@ export function renderAlerts(
 
   frame.content.append(notice(
     'Device-only preview — not subscribed',
-    'Reading cards and changing delivery toggles only updates this browser. There is no alert service, recipient, account sync, email, text, or push subscription behind this fixture.',
+    'Reading cards only updates this browser. There is no alert service, recipient, account sync, email, text, or push subscription behind this fixture, and no delivery control to change.',
     'caution',
     { 'data-test': 'alerts-device-only-notice' },
   ));
@@ -2195,7 +2168,6 @@ export function renderAlerts(
   ]));
 
   let readIds = readAlertIds();
-  let delivery = readDeliveryPreview();
   const unreadMount = el('div', { class: 'gw-dp-alert-list', 'data-test': 'alerts-unread-list' });
   const earlierMount = el('div', { class: 'gw-dp-alert-list', 'data-test': 'alerts-earlier-list' });
   const unreadCount = el('span', { class: 'gw-dp-chip gw-dp-stop', 'data-test': 'alerts-unread-count' });
@@ -2257,49 +2229,24 @@ export function renderAlerts(
   });
   renderFeeds();
 
-  const deliveryMount = el('div', { class: 'gw-dp-delivery-list', 'data-test': 'alerts-delivery-preview' });
-  const deliveryStatus = el('p', {
-    role: 'status',
-    'aria-live': 'polite',
-    class: 'gw-dp-muted',
-    'data-test': 'alerts-delivery-status',
-  });
-  const renderDelivery = (): void => {
-    deliveryMount.replaceChildren();
-    const settings: { key: keyof DeliveryPreview; label: string; detail: string }[] = [
-      { key: 'email', label: 'Email preview', detail: 'Agenda-posting example' },
-      { key: 'text', label: 'Text preview', detail: 'Document-change example' },
-      { key: 'meetingEve', label: 'Meeting-eve preview', detail: 'Evening-before example' },
-      { key: 'dailyDigest', label: 'Daily digest preview', detail: 'Daily-summary example' },
-    ];
-    for (const setting of settings) {
-      const enabled = delivery[setting.key];
-      const toggle = el('button', {
-        type: 'button',
-        class: 'gw-dp-switch',
-        role: 'switch',
-        'aria-checked': String(enabled),
-        'aria-label': `${setting.label}: ${enabled ? 'on' : 'off'}; device-only preview`,
-        'data-test': 'alerts-delivery-toggle',
-        'data-delivery-key': setting.key,
-      }, [
-        el('span', { class: 'gw-dp-switch-track', 'aria-hidden': 'true' }, [el('span')]),
-        el('span', { class: 'gw-dp-switch-copy' }, [
-          el('strong', {}, [setting.label]),
-          el('small', {}, [setting.detail]),
-        ]),
-        el('b', {}, [enabled ? 'ON' : 'OFF']),
-      ]);
-      toggle.addEventListener('click', () => {
-        delivery = { ...delivery, [setting.key]: !delivery[setting.key] };
-        writeStoredJson(DELIVERY_PREVIEW_STORAGE_KEY, delivery);
-        renderDelivery();
-        deliveryStatus.textContent = `${setting.label} changed on this device only. No subscription was created.`;
-      });
-      deliveryMount.append(toggle);
-    }
-  };
-  renderDelivery();
+  // GOV-86: the fixture lane used to render four `role="switch"` toggles that
+  // persisted to `gw_alert_delivery_preview`, with email and meeting-eve defaulting
+  // ON. A switch that reads ON and survives a reload IS a configured setting to the
+  // person looking at it, whatever the surrounding notice says — and no channel,
+  // recipient verification, or delivery service exists in any lane. That makes this
+  // an unbuilt FEATURE (CS), not a device-local preview (DL): see the CS-versus-DG
+  // section of docs/design-information-type-matrix.md. All five channels are named
+  // here so the fixture lane stops disagreeing with the reviewed lane, which has
+  // always listed Push.
+  ensureComingSoonStyle();
+  const deliveryMount = el('div', { class: 'gw-dp-delivery-list', 'data-test': 'alerts-delivery-preview' }, [
+    comingSoonNote(
+      'Alert delivery',
+      'Email, text, push, meeting-eve reminders, and the daily digest are not built in any lane. '
+      + 'There is no delivery channel, no recipient verification, and no way to switch one on — '
+      + 'so nothing here is a setting, and no preference is stored on this device.',
+    ),
+  ]);
 
   const feedColumn = el('div', { class: 'gw-dp-stack' }, [
       panel(frame.mode === 'simple' ? 'New since you last read' : 'Unread fixture cards', 'UNREAD', [
@@ -2324,10 +2271,9 @@ export function renderAlerts(
   frame.content.append(el('div', { class: 'gw-dp-alert-grid', 'data-test': 'alerts-advanced-workbench' }, [
     feedColumn,
     el('div', { class: 'gw-dp-stack' }, [
-      panel('Delivery controls', 'DEVICE-ONLY PREVIEW', [
+      panel('Delivery controls', 'COMING SOON', [
         deliveryMount,
-        deliveryStatus,
-        el('p', { class: 'gw-dp-muted' }, ['These switches are appearance and persistence tests. They do not register a recipient or promise delivery timing.']),
+        el('p', { class: 'gw-dp-muted' }, ['No recipient is registered and no delivery timing is promised, in this lane or any other.']),
       ], {}, 'alerts-delivery'),
       panel('What a future alert could represent', 'TRIGGER EXAMPLES', [
         el('ul', { class: 'gw-dp-trigger-list' }, [

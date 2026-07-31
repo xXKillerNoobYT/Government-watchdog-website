@@ -3,7 +3,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ALERTS_READ_STORAGE_KEY,
-  DELIVERY_PREVIEW_STORAGE_KEY,
   DESIGN_FIXTURE_LABEL,
   DESIGN_PAGES_STYLE,
   LOCATION_STORAGE_KEY,
@@ -733,18 +732,41 @@ describe('Alerts read-state, tracked count, and device-only delivery preview', (
     expect(root.querySelector('[data-test="alerts-empty"]')).not.toBeNull();
   });
 
-  it('shows gw_tracked count and persists delivery toggles without claiming a subscription', () => {
+  // GOV-86: this test previously asserted the OPPOSITE — that clicking a delivery
+  // switch persisted to localStorage. That behaviour was the defect: a switch reading
+  // ON and surviving a reload is a configured setting to the person looking at it,
+  // and no delivery channel exists in any lane. Delivery is now CS, not DL.
+  it('shows gw_tracked count and offers no operable delivery control in the fixture lane', () => {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify({ water: true, str: true }));
     renderAlerts(root, ALLOWED);
     expect(root.querySelector('[data-test="alerts-tracked-count"]')?.textContent).toBe('2');
     expect(root.querySelector('[data-test="alerts-device-only-notice"]')?.textContent).toContain('not subscribed');
 
-    const email = root.querySelector<HTMLButtonElement>('[data-delivery-key="email"]')!;
-    expect(email.getAttribute('role')).toBe('switch');
-    expect(email.getAttribute('aria-checked')).toBe('true');
-    email.click();
-    expect(JSON.parse(localStorage.getItem(DELIVERY_PREVIEW_STORAGE_KEY)!).email).toBe(false);
-    expect(root.querySelector('[data-test="alerts-delivery-status"]')?.textContent).toContain('No subscription was created');
+    // No switch, no persistence, no status line implying a change was recorded.
+    expect(root.querySelector('[data-delivery-key]')).toBeNull();
+    expect(root.querySelector('[data-test="alerts-delivery-toggle"]')).toBeNull();
+    expect(root.querySelector('[data-test="alerts-delivery-status"]')).toBeNull();
+    expect(localStorage.getItem('gw_alert_delivery_preview')).toBeNull();
+
+    // The slot stays visible and says the feature is unbuilt — not that data is missing.
+    const preview = root.querySelector('[data-test="alerts-delivery-preview"]');
+    expect(preview?.textContent).toContain('COMING SOON');
+    for (const channel of ['Email', 'text', 'push', 'meeting-eve', 'daily digest']) {
+      expect(preview?.textContent?.toLowerCase(), channel).toContain(channel.toLowerCase());
+    }
+    // CS forbids naming a backend contract — that is DG's job, and this slot is not DG.
+    expect(preview?.textContent).not.toContain('/v1/me/alert-preferences');
+  });
+
+  it('leaves the reviewed lane unchanged: five disabled channels naming the awaited contract', () => {
+    renderAlerts(root, REVIEWED_OPTIONS, REVIEWED_DATA);
+    const controls = root.querySelector('[data-test="alerts-real-delivery-controls"]')!;
+    const buttons = controls.querySelectorAll('button');
+    expect(buttons).toHaveLength(5);
+    for (const button of buttons) expect(button.hasAttribute('disabled')).toBe(true);
+    for (const label of ['Email', 'Text', 'Push', 'Meeting-eve reminder', 'Daily digest']) {
+      expect(controls.textContent, label).toContain(label);
+    }
   });
 });
 
