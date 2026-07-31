@@ -58,6 +58,34 @@ export interface DiffToken {
  * Deterministic and dependency-free: identical inputs always produce identical
  * output, which is what makes the result quotable as evidence.
  */
+/**
+ * C9 (iteration 47) — the word-level diff is a full LCS table: O(n x m) in time AND in
+ * memory, allocating a (rows+1) x (cols+1) matrix. Measured on this machine:
+ *
+ *     4,000 words/side ->   536 ms   (64M cells)
+ *     6,000 words/side ->  1.83 s   (144M cells)
+ *     8,000 words/side ->  2.98 s   (256M cells)
+ *    10,000 words/side ->  5.30 s   (400M cells)
+ *
+ * and several such diffs in one process exhausted the JS heap outright. A 10,000-word
+ * pair freezes the main thread for over five seconds with no spinner and no way out —
+ * and government minutes and packets, which is exactly what Source Vault compares,
+ * routinely run past that.
+ *
+ * So the comparison is BOUNDED. Above the cap the panes still render side by side with
+ * their full text — only the word-level highlighting is withheld, with a stated reason.
+ * Degrade the feature, never the page. The cap is expressed in table CELLS because that,
+ * not word count, is what drives both cost and allocation.
+ */
+export const DIFF_CELL_BUDGET = 6_000_000;
+
+/** Token counts a diff would need, without building anything. */
+export function diffCellCount(before: string, after: string): number {
+  const a = before.split(/(\s+)/).filter((part) => part !== '').length;
+  const b = after.split(/(\s+)/).filter((part) => part !== '').length;
+  return (a + 1) * (b + 1);
+}
+
 export function diffWords(before: string, after: string): DiffToken[] {
   const a = before.split(/(\s+)/).filter((part) => part !== '');
   const b = after.split(/(\s+)/).filter((part) => part !== '');
@@ -118,6 +146,7 @@ export const DIFF_VIEW_STYLE = `${GW_TOKENS}
 .gw-diff-body{margin:0;white-space:pre-wrap;word-break:break-word;font-size:var(--gw-text-sm);line-height:var(--gw-leading);color:var(--gw-text)}
 .gw-diff-body ins{background:var(--gw-tone-ok-well);color:var(--gw-ok-text);text-decoration:none;border-bottom:2px solid var(--gw-tone-ok-line)}
 .gw-diff-body del{background:var(--gw-tone-stop-well);color:var(--gw-stop-text);border-bottom:2px solid var(--gw-tone-stop-line)}
+.gw-diff-oversize{margin:0 0 var(--gw-space-2);font-size:var(--gw-text-sm);color:var(--gw-text-secondary)}
 .gw-diff-key{display:flex;flex-wrap:wrap;gap:var(--gw-space-3);margin:0 0 var(--gw-space-2);font-size:var(--gw-text-badge);color:var(--gw-text-secondary)}
 .gw-diff-key-item{display:inline-flex;align-items:center;gap:.3rem}
 .gw-diff-legend{display:flex;flex-wrap:wrap;gap:var(--gw-space-3);margin:0;font-size:var(--gw-text-badge);color:var(--gw-text-muted)}
@@ -165,8 +194,10 @@ function renderPane(
 /** Side-by-side version compare with a word-level highlighting toggle. */
 export function diffView(spec: DiffViewSpec): HTMLElement {
   ensureDiffViewStyle();
-  let wordLevel = spec.wordLevel === true;
-  const tokens = diffWords(spec.before, spec.after);
+  // C9: refuse the expensive path rather than freezing the tab. See DIFF_CELL_BUDGET.
+  const overBudget = diffCellCount(spec.before, spec.after) > DIFF_CELL_BUDGET;
+  let wordLevel = spec.wordLevel === true && !overBudget;
+  const tokens = overBudget ? [] : diffWords(spec.before, spec.after);
 
   const panes = el('div', { class: 'gw-diff-panes' });
   const paint = (): void => {
@@ -181,6 +212,14 @@ export function diffView(spec: DiffViewSpec): HTMLElement {
     class: 'gw-diff-toggle',
     'data-test': 'diff-word-toggle',
     'aria-pressed': wordLevel ? 'true' : 'false',
+    // Inert and explained when the comparison is too large — never a dead control (C7).
+    ...(overBudget
+      ? {
+          disabled: '',
+          title: 'This comparison is too large to highlight word by word in the browser. '
+            + 'Both versions are shown in full.',
+        }
+      : {}),
   }, ['Word-level changes']);
   toggle.addEventListener('click', () => {
     wordLevel = !wordLevel;
@@ -196,6 +235,12 @@ export function diffView(spec: DiffViewSpec): HTMLElement {
       toggle,
     ]),
     panes,
+    ...(overBudget
+      ? [el('p', { class: 'gw-diff-oversize', 'data-test': 'diff-oversize-note' }, [
+          'Both versions are shown in full. Word-level highlighting is withheld because this '
+          + 'comparison is too large to compute in the browser without freezing the page.',
+        ])]
+      : []),
     el('p', { class: 'gw-diff-key', 'data-test': 'diff-key' }, [
       // Micro-detail rule 1: every state has text and label, never colour alone. The
       // <ins>/<del> tags already announce to assistive tech; this key is what a sighted
