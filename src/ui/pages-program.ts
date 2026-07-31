@@ -18,6 +18,7 @@ import type {
   TopicTreeNode,
 } from '../types/read-api';
 import { ensureStyle, gapCardSection, recordCard } from './render';
+import { readMode } from './shell';
 import {
   groupSuppliedFilesByMeeting,
   pendingReviewNotice,
@@ -60,18 +61,7 @@ export type PageMode = 'simple' | 'advanced';
 // renderers briefly used a second `gw-mode` key, which let the persistent shell
 // say Advanced while a page rendered Simple.  Keep one source of truth so the
 // two complete skins always move together.
-const MODE_KEY = 'gw_home_mode';
-const WATCHLIST_KEY = 'gw-watchlist';
 
-export function readPageMode(): PageMode {
-  try {
-    const v = localStorage.getItem(MODE_KEY);
-    if (v === 'simple' || v === 'advanced') return v;
-  } catch {
-    /* storage unavailable */
-  }
-  return 'simple';
-}
 
 function fixtureBanner(notice?: string): HTMLElement {
   return el('div', { class: 'gw-fixture-banner', role: 'status', 'data-test': 'fixture-banner' }, [
@@ -264,7 +254,7 @@ export function renderFastAgenda(root: HTMLElement, board: AgendaBoard, notice?:
         ...board.lanes.map(agendaLaneSummary),
       ]),
     ]));
-  })(readPageMode());
+  })(readMode());
   shell.append(mount);
 }
 
@@ -807,7 +797,7 @@ export function renderTimelineLevels(
       ]),
     );
     mount.append(el('div', { class: 'gw-timeline-lanes', 'data-test': 'timeline-advanced-lanes' }, lanes));
-  })(readPageMode());
+  })(readMode());
   shell.append(mount);
 }
 
@@ -1180,7 +1170,7 @@ export function renderBoardsDirectory(root: HTMLElement, data: ReadApiResponse, 
       ...(selectedNotice ? [selectedNotice] : []),
       topicContext(),
     ]));
-  })(readPageMode());
+  })(readMode());
   shell.append(mount);
 }
 
@@ -1188,198 +1178,14 @@ function statementTitle(record: StatementRecord): string {
   return record.statement_text?.slice(0, 96) || record.statement_id;
 }
 
-function readWatchIds(): Set<string> {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(WATCHLIST_KEY) ?? '[]');
-    return new Set(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []);
-  } catch {
-    return new Set();
-  }
-}
 
-function persistWatchIds(ids: Set<string>): void {
-  try {
-    localStorage.setItem(WATCHLIST_KEY, JSON.stringify([...ids].sort()));
-  } catch {
-    /* non-fatal: the in-DOM toggle state still reflects the click */
-  }
-}
 
-function recordSourceSummary(record: StatementRecord): string {
-  const first = record.evidence?.[0];
-  return [first?.source_type, first?.published_by, first?.source_date].filter(Boolean).join(' · ') || 'Reviewed source metadata not present';
-}
 
-function watchToggle(record: StatementRecord, onChange?: () => void): HTMLElement {
-  const button = el('button', { type: 'button', class: 'gw-view-tab', 'data-test': 'watch-toggle', 'data-id': record.statement_id });
-  const sync = () => {
-    const ids = readWatchIds();
-    const watched = ids.has(record.statement_id);
-    button.setAttribute('aria-pressed', String(watched));
-    button.textContent = watched ? 'Watching locally' : 'Watch locally';
-  };
-  button.addEventListener('click', () => {
-    const ids = readWatchIds();
-    if (ids.has(record.statement_id)) ids.delete(record.statement_id);
-    else ids.add(record.statement_id);
-    persistWatchIds(ids);
-    sync();
-    onChange?.();
-  });
-  sync();
-  return button;
-}
 
-function powerRosterEmpty(): HTMLElement {
-  return el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'power-roster-empty', role: 'status' }, [
-    el('h2', {}, ['No reviewed person or role roster yet']),
-    el('p', {}, ['The reviewed Alpine projection does not include member-name or role rows, so this page stops at the evidence trail and does not invent people.']),
-  ]);
-}
 
-export function renderPowerTracker(root: HTMLElement, data: ReadApiResponse, _query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'power-tracker-page', 'Power Tracker', {
-    notice,
-    admitted: data.access === 'reviewer_internal',
-  });
-  if (data.access !== 'reviewer_internal') {
-    shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
-      el('h2', {}, ['Reviewer-internal only']),
-      el('p', {}, ['The Power Tracker renders no roster or records outside the reviewer-internal lane.']),
-    ]));
-    return;
-  }
 
-  shell.append(el('section', { class: 'gw-state', 'data-test': 'power-scope-note', role: 'note' }, [
-    el('p', {}, ['Gated Alpine scaffold. It shows reviewed records and source trails only; no comparative tables or outcome judgments are computed here.']),
-  ]));
-  shell.append(powerRosterEmpty());
 
-  const records = data.records ?? [];
-  const mount = el('div', { 'data-test': 'power-mode-mount' });
-  ((mode: PageMode) => {
-    mount.replaceChildren();
-    if (!records.length) {
-      mount.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'power-records-empty', role: 'status' }, [
-        el('h2', {}, ['No reviewed Alpine records available']),
-        el('p', {}, ['No records were fabricated for this view.']),
-      ]));
-      return;
-    }
-    const cards = records.map((record) => el('article', { class: 'gw-card', 'data-test': 'power-record', 'data-id': record.statement_id }, [
-      el('p', { class: 'gw-muted' }, [`Record ${record.statement_id}`]),
-      el('h2', {}, [statementTitle(record)]),
-      el('div', { class: 'gw-badges' }, [
-        el('span', { class: 'gw-badge gw-tone-neutral', 'data-test': 'power-status' }, [record.ui_status ?? 'status not present']),
-        el('span', { class: 'gw-badge gw-tone-caution', 'data-test': 'power-verification' }, [record.verification_status ?? 'verification not present']),
-      ]),
-      el('p', { class: 'gw-muted', 'data-test': 'power-source' }, [recordSourceSummary(record)]),
-      el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'power-record-link' }, ['Open record']),
-      watchToggle(record),
-      ...(mode === 'advanced' ? [evidenceMetaRows(record.evidence ?? [])] : []),
-    ]));
-    mount.append(el('div', { class: 'gw-board', 'data-test': mode === 'advanced' ? 'power-advanced-list' : 'power-simple-list' }, cards));
-  })(readPageMode());
-  shell.append(mount);
-}
 
-export function renderWatchlist(root: HTMLElement, data: ReadApiResponse, _query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'watchlist-page', 'Watchlist', {
-    notice,
-    admitted: data.access === 'reviewer_internal',
-  });
-  if (data.access !== 'reviewer_internal') {
-    shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
-      el('h2', {}, ['Reviewer-internal only']),
-      el('p', {}, ['The Watchlist renders no local selections outside the reviewer-internal lane.']),
-    ]));
-    return;
-  }
-  shell.append(el('section', { class: 'gw-state', 'data-test': 'watchlist-local-note', role: 'note' }, [
-    el('p', {}, ['Local-only watch toggles. No email, account sync, or alert settings are wired.']),
-  ]));
-  const mount = el('div', { 'data-test': 'watchlist-mount' });
-  const renderList = () => {
-    const ids = readWatchIds();
-    const watched = (data.records ?? []).filter((record) => ids.has(record.statement_id));
-    mount.replaceChildren();
-    if (!watched.length) {
-      mount.append(el('section', { class: 'gw-state', 'data-state': 'empty', 'data-test': 'watchlist-empty', role: 'status' }, [
-        el('h2', {}, ['No local watch items yet']),
-        el('p', {}, ['Use Power Tracker or the reviewed records below to add items on this device only.']),
-      ]));
-    } else {
-      mount.append(el('div', { class: 'gw-board', 'data-test': 'watchlist-items' }, watched.map((record) =>
-        el('article', { class: 'gw-card', 'data-test': 'watchlist-item', 'data-id': record.statement_id }, [
-          el('h2', {}, [statementTitle(record)]),
-          el('p', { class: 'gw-muted' }, [recordSourceSummary(record)]),
-          el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'watchlist-record-link' }, ['Open record']),
-          watchToggle(record, renderList),
-        ]),
-      )));
-    }
-    mount.append(el('details', { class: 'gw-drawer', 'data-test': 'watchlist-add-records' }, [
-      el('summary', {}, ['Reviewed records available to watch']),
-      el('div', { class: 'gw-board' }, (data.records ?? []).map((record) =>
-        el('article', { class: 'gw-card', 'data-test': 'watchlist-candidate', 'data-id': record.statement_id }, [
-          el('h3', {}, [statementTitle(record)]),
-          watchToggle(record, renderList),
-        ]),
-      )),
-    ]));
-  };
-  ((mode: PageMode) => {
-    mount.setAttribute('data-mode', mode);
-    renderList();
-  })(readPageMode());
-  shell.append(mount);
-}
-
-const COVERAGE = {
-  state: 'Wyoming',
-  county: 'Lincoln County',
-  town: 'Alpine',
-} as const;
-
-export function renderLocation(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string): void {
-  const shell = pageShell(root, 'location-page', 'Location coverage', {
-    notice,
-    admitted: data.access === 'reviewer_internal',
-  });
-  if (data.access !== 'reviewer_internal') {
-    shell.append(el('section', { class: 'gw-state', 'data-test': 'state-reviewer-gated', role: 'status' }, [
-      el('h2', {}, ['Reviewer-internal only']),
-      el('p', {}, ['The Location page renders no coverage details outside the reviewer-internal lane.']),
-    ]));
-    return;
-  }
-  const state = query.get('state') || COVERAGE.state;
-  const county = query.get('county') || COVERAGE.county;
-  const town = query.get('town') || COVERAGE.town;
-  const covered = state === COVERAGE.state && county === COVERAGE.county && town === COVERAGE.town;
-  const records = data.records ?? [];
-  shell.append(el('section', { class: 'gw-state', 'data-test': 'location-scope-note', role: 'note' }, [
-    el('p', {}, ['Static Alpine coverage picker. No geographic analysis map, waitlist form, or notification signup is wired.']),
-  ]));
-  shell.append(el('nav', { class: 'gw-view-toggle', 'data-test': 'location-picker', 'aria-label': 'Coverage picker' }, [
-    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Lincoln%20County&town=Alpine', 'data-test': 'location-alpine-link' }, ['Wyoming → Lincoln County → Alpine']),
-    el('a', { class: 'gw-view-tab', href: '#/location?state=Wyoming&county=Teton%20County&town=Jackson', 'data-test': 'location-uncovered-link' }, ['Other Wyoming town']),
-  ]));
-  shell.append(el('section', { class: 'gw-card', 'data-test': covered ? 'location-covered' : 'location-not-covered' }, [
-    el('h2', {}, [covered ? 'Alpine is covered in this reviewer build' : 'Not covered yet']),
-    el('p', { class: 'gw-muted' }, [`Selected: ${state} → ${county} → ${town}`]),
-    el('p', {}, [covered ? `This page can show ${records.length} reviewed Alpine record(s) from the existing projection.` : 'No records are shown for this location until reviewed coverage exists.']),
-  ]));
-  if (covered) {
-    shell.append(el('div', { class: 'gw-board', 'data-test': 'location-records' }, records.map((record) =>
-      el('article', { class: 'gw-card', 'data-test': 'location-record', 'data-id': record.statement_id }, [
-        el('h3', {}, [statementTitle(record)]),
-        el('p', { class: 'gw-muted' }, [recordSourceSummary(record)]),
-        el('a', { href: `#/issue?id=${encodeURIComponent(record.statement_id)}`, 'data-test': 'location-record-link' }, ['Open record']),
-      ]),
-    )));
-  }
-}
 function renderIssueDossierCard(record: StatementRecord): HTMLElement {
   const provenance = provenanceBadge(record);
   const confidenceClass = confidenceLabel(record);
@@ -1497,7 +1303,7 @@ export function renderIssueDetail(root: HTMLElement, data: ReadApiResponse, quer
       ),
       evidenceMetaRows(record.evidence ?? []),
     );
-  })(readPageMode());
+  })(readMode());
   shell.append(mount);
 }
 
@@ -2034,6 +1840,6 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
       ]),
       ...(demo ? [demo] : []),
     ]));
-  })(readPageMode());
+  })(readMode());
   shell.append(mount);
 }

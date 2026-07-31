@@ -3,8 +3,9 @@
 // GOV-665 — Wave 2 pages program: Fast Agenda, timeline levels/filters, and
 // Boards directory/detail. These tests pin the public-lane 0-leak invariant, the
 // shared `gw_home_mode` Simple/Advanced switch, and the no-score body detail rule.
+import { readMode } from '../src/ui/shell';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels, readPageMode } from '../src/ui/pages-program';
+import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels } from '../src/ui/pages-program';
 import { FIXTURE } from '../src/data/client';
 import type { AgendaBoard } from '../src/types/agenda-board';
 import type { ReadApiResponse } from '../src/types/read-api';
@@ -72,7 +73,7 @@ describe('GOV-665 Fast Agenda page', () => {
 
   it('uses the shell-owned shared mode preference without rendering a duplicate page switch', () => {
     renderFastAgenda(root, SAMPLE_BOARD, 'sample');
-    expect(readPageMode()).toBe('simple');
+    expect(readMode()).toBe('simple');
     expect(root.querySelectorAll('[data-test="fast-agenda-card"]')).toHaveLength(1);
     expect(root.querySelector('[data-test="mode-toggle"]')).toBeNull();
 
