@@ -23,6 +23,16 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+/**
+ * **Deliberate one-word divergence from the baseline, recorded per GOV-82.** The MOTY
+ * chip is a single span reading exactly `100% CODE — NO AI WAIT`
+ * (`reference/Source Vault.dc.html`). We ship `100% CODE — NO AI`, dropping the trailing
+ * word: "NO AI" is the honesty claim the chip exists to make, whereas a trailing "WAIT"
+ * reads as an instruction to the user ("wait!") rather than as "no waiting for a model".
+ * The claim is unchanged and no weaker; only the ambiguity is removed. Flagged to the
+ * owner in the GOV-82 PR — if the baseline wording is preferred verbatim, change this one
+ * constant and the assertion in `test/diff-view.test.ts`.
+ */
 export const DIFF_CODE_CHIP = '100% CODE — NO AI';
 
 export type DiffOp = 'same' | 'added' | 'removed';
@@ -98,6 +108,8 @@ export const DIFF_VIEW_STYLE = `${GW_TOKENS}
 .gw-diff-body{margin:0;white-space:pre-wrap;word-break:break-word;font-size:var(--gw-text-sm);line-height:var(--gw-leading);color:var(--gw-text)}
 .gw-diff-body ins{background:var(--gw-tone-ok-well);color:var(--gw-ok-text);text-decoration:none;border-bottom:2px solid var(--gw-tone-ok-line)}
 .gw-diff-body del{background:var(--gw-tone-stop-well);color:var(--gw-stop-text);border-bottom:2px solid var(--gw-tone-stop-line)}
+.gw-diff-key{display:flex;flex-wrap:wrap;gap:var(--gw-space-3);margin:0 0 var(--gw-space-2);font-size:var(--gw-text-badge);color:var(--gw-text-secondary)}
+.gw-diff-key-item{display:inline-flex;align-items:center;gap:.3rem}
 .gw-diff-legend{display:flex;flex-wrap:wrap;gap:var(--gw-space-3);margin:0;font-size:var(--gw-text-badge);color:var(--gw-text-muted)}
 @media (max-width:720px){.gw-diff-panes{grid-template-columns:minmax(0,1fr)}}
 `;
@@ -174,6 +186,13 @@ export function diffView(spec: DiffViewSpec): HTMLElement {
       toggle,
     ]),
     panes,
+    el('p', { class: 'gw-diff-key', 'data-test': 'diff-key' }, [
+      // Micro-detail rule 1: every state has text and label, never colour alone. The
+      // <ins>/<del> tags already announce to assistive tech; this key is what a sighted
+      // reader needs to know which highlight means what.
+      el('span', { class: 'gw-diff-key-item' }, [el('ins', {}, ['Added']), ' text is added in the later version']),
+      el('span', { class: 'gw-diff-key-item' }, [el('del', {}, ['Removed']), ' text is gone from the later version']),
+    ]),
     el('p', { class: 'gw-diff-legend' }, [
       'Comparison is computed in code from the two stored versions. No model wrote, ranked, or summarised this difference.',
     ]),

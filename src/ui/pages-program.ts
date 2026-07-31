@@ -35,6 +35,8 @@ import {
 } from './supersede-view';
 import { FIXTURE_BANNER_TEXT, trustLabel } from './state-view';
 import { buildGapSummary, buildTimeline, recordTimelineDate } from './timeline';
+import { diffView } from './diff-view';
+import { DESIGN_FIXTURE_LABEL } from './design-pages';
 import {
   confidenceLabel,
   correctionStatusLabel,
@@ -1576,7 +1578,7 @@ function supersedeCard(event: SupersedeEvent): HTMLElement {
   ]);
 }
 
-export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string, suppliedFiles?: SuppliedFilesProjection | null, supersedes?: SupersedeProjection | null): void {
+export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, query: URLSearchParams, notice?: string, suppliedFiles?: SuppliedFilesProjection | null, supersedes?: SupersedeProjection | null, designFixture = false): void {
   const shell = pageShell(root, 'source-vault-page', 'Source vault', {
     notice,
     fixture: query.get('demo') === 'sample',
@@ -1690,6 +1692,35 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
       )),
     ]);
   };
+
+  // GOV-82: the gated fixture lane. `src/ui/diff-view.ts` has always held the
+  // deterministic LCS diff and DIFF_CODE_CHIP, but NOTHING in src/ imported it — its only
+  // consumer was its own test, so the primitive could drift from the baseline with a fully
+  // green suite. This is the first real consumer. The reviewed lane is untouched: with no
+  // supplied version text it still renders `source-version-compare-empty` exactly as before,
+  // because no reviewed source-versions projection exists to diff.
+  const versionCompareFixture = (): HTMLElement => el('section', {
+    class: 'gw-vault-contract-panel',
+    'data-state': 'fixture',
+    'data-origin': 'fixture',
+    'data-test': 'source-version-compare-fixture',
+  }, [
+    el('header', {}, [
+      el('p', { class: 'gw-muted' }, ['DOCUMENT VERSION COMPARE · SYNTHETIC DESIGN FIXTURE']),
+      el('h2', {}, ['Document version compare — synthetic sample']),
+      el('p', { 'data-test': 'source-version-compare-fixture-banner' }, [
+        `${DESIGN_FIXTURE_LABEL}. Both versions below are synthetic strings; no reviewed `
+        + 'document, hash, page locator, or private path is rendered.',
+      ]),
+    ]),
+    diffView({
+      // Both versions are NAMED WITH THEIR TIMES, per the baseline's v1/v2 captions.
+      beforeLabel: 'VERSION 1 · synthetic capture 09:00',
+      afterLabel: 'VERSION 2 · synthetic capture 14:30',
+      before: 'SYNTHETIC DOCUMENT TEXT — placeholder first version for the design fixture.',
+      after: 'SYNTHETIC DOCUMENT TEXT — placeholder second version for the design fixture, with an added clause.',
+    }),
+  ]);
 
   const versionCompare = (): HTMLElement => el('section', {
     class: 'gw-vault-contract-panel',
@@ -1860,7 +1891,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
         sourceContent(),
         suppliedFilesSection(),
         supersedeSection(),
-        versionCompare(),
+        designFixture ? versionCompareFixture() : versionCompare(),
         ledgerPanel(),
         videoPanel(),
         alertsPanel(),
@@ -1885,7 +1916,7 @@ export function renderSourceVault(root: HTMLElement, data: ReadApiResponse, quer
           sourceContent(),
           suppliedFilesSection(),
           supersedeSection(),
-          versionCompare(),
+          designFixture ? versionCompareFixture() : versionCompare(),
         ]),
         el('aside', { class: 'gw-vault-contract-stack', 'aria-label': 'Ledger and verification gaps' }, [
           ledgerPanel(),
