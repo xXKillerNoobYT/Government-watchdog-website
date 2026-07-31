@@ -144,7 +144,7 @@ describe('ensureTimelineLanesStyle', () => {
 
   it('is called by timelineLanes, so rendered lanes are never unstyled', () => {
     document.head.querySelectorAll('#gw-timeline-lanes-style').forEach((n) => n.remove());
-    timelineLanes({ lanes: [], events: [], rangeStart: '2026-01-01', rangeEnd: '2026-12-31' });
+    timelineLanes({ lanes: [], events: [], start: '2026-01-01', end: '2026-12-31' });
     expect(document.getElementById('gw-timeline-lanes-style')).not.toBeNull();
   });
 });
