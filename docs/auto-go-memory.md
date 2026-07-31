@@ -382,6 +382,21 @@
   an 11.5px banner and a 19px input. **Assert the usage, per class, or the guard is about
   the design system rather than the product.**
 
+- **[2026-07-31] "Wire the missing test into CI" is sometimes the wrong fix — check what it
+  DEPENDS on first.** #104's script hard-fails without a backend checkout at a hardcoded
+  absolute path and without a **gitignored** DB that is a disclosure boundary on a public
+  repo. On a self-hosted runner that is the owner's own machine it might have gone green —
+  **because of untracked machine state**, which is worse than no job. Declined with the
+  measurement and linked to the storage-bus work that would make it legitimate.
+- **[2026-07-31] Check the real latest version instead of incrementing.** `actions/checkout`
+  was on v4; the obvious guess was v5. Latest is **v7.0.1**. `gh api repos/OWNER/REPO/releases/latest`
+  costs one call and would have left the repo two majors behind otherwise.
+- **[2026-07-31] "Duplicated" is not the same as "wasteful".** #105 correctly identified three
+  duplications; measurement showed only one was waste. The standalone typecheck buys fast-fail
+  before an 11s suite, and the two inline ones keep each lane script independently safe.
+  **Measure each duplicate's purpose before deleting it, and leave the measurement where the
+  next person will look.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

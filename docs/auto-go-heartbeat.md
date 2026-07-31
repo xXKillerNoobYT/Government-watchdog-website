@@ -76,8 +76,13 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: ci-tooling
+current_area: gate
 graduated_areas:
+  ci-tooling:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a. FOURTH area to graduate.
+    shipped: "#105 and #60 closed; #104 measured and DECLINED with reasons (it hard-fails without a backend checkout and a gitignored disclosure-boundary DB) rather than force-fitted into CI. Wrote docs/plans/area-ci-tooling.md, which did not exist, consolidating the four-change flake history and the standing never-raise-testTimeout rule."
+
   a11y-responsive:
     graduated: 2026-07-31
     result: 17 of 17 rows done or n/a. THIRD area to graduate.
@@ -116,17 +121,17 @@ current_area_checklist:
   C4_tests_present: pending
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
-  C7_ui_polish: "n/a (no UI surface — CI workflows and test infrastructure)"
+  C7_ui_polish: pending  # the gate RENDERS (landing, magic-link form, waitlist) — inherits the iteration-16 web binding and the iteration-25 tap/type floor guards
   C7b_dev_improvement_polish: pending
-  C8_security_reviewed: pending
+  C8_security_reviewed: pending  # the marquee check for this area — but note CLAUDE.md: the CLIENT gate is UI scaffolding and intentionally fails OPEN; the Sites worker is the real boundary. Do not "fix" the client bypasses as if they were it
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: pending  # 4 open: #110 (flake, owner-decision), #105, #104, #60
+  C11_github_issues_resolved: pending  # 1 open: #54 [P0][Security] revocable server sessions
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 15  # iteration 25 overall; same day
+iteration_count: 17  # iteration 27 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -260,3 +265,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T08:10:00-06:00] ITERATION 25 — area: a11y-responsive — **✅ AREA GRADUATED (17/17), the third.** C7 was a **real audit of the running page**, not a style-text check, and that is what found the defect: 77 interactive controls, landmarks correct (1 main / 2 nav / 1 header), 30 headings with one h1 and **zero level skips**, no missing alt. **`.gw-shell-search-input` rendered 19px tall inside a 46px form row** — the row met the tap floor but the input is **not label-wrapped**, so tapping the padding focused nothing and the real target was 19px, under this system's own 44px hard stop *and* WCAG 2.2 AA's 24px minimum. Fixed; all 77 controls now clear 44px, verified live.
 - [2026-07-31T08:10:00-06:00] ITERATION 25 — **one audit finding was a false positive from my own detector**, caught before filing: an input flagged as having no accessible name turned out to carry a proper `<label for>` — my check tested `aria-label`/`title`/text content and simply did not look for a label element. Second time this session a probe accused working code. **The pattern is now explicit in memory: when a hunt reports a defect, verify the detector before believing the finding.**
 - [2026-07-31T08:10:00-06:00] ITERATION 25 — **C4 had to change method, and the area is why.** These bound paths export **constants, not functions**, so mutating bodies was inapplicable; mutated the *values* instead — `BADGE_MIN_FONT_PX` 13→9 and `DRAWER_TAP_MIN_PX` 44→24 each failed 2 tests, proving both floors are genuinely guarded rather than merely declared. **C12** found CLAUDE.md carried **nothing** about the accessibility floors despite both being hard stops that shipped violated this session; added both with the reason they were missed — *a token existing is not the same as a class using it*, which is exactly how a 13px token coexisted with an 11.5px banner. Area advanced to **`ci-tooling`** (4 open issues; #110 carries `owner-decision`). 1006 tests / 66 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T08:55:00-06:00] ITERATION 26-27 — area: ci-tooling — **✅ AREA GRADUATED (17/17), the fourth.** #105 and #60 closed; **#104 measured and DECLINED**, which is the substantive outcome. `scripts/local_e2e.sh` hard-fails at line 46 without a backend checkout found via three hardcoded absolute paths, and at line 48 without `Database/gov_watchdog.db` — a file gitignored *because the backend repo is public and it is a disclosure boundary*. Wiring it into CI would make the job pass because of untracked machine state on the owner's own runner, and would create standing pressure to commit a file that must never be committed. **A green step for those reasons is worse than no step.** Labelled `owner-decision`, linked to website#119 / backend#195 — once the site builds from a hash-verified storage snapshot, the e2e becomes runnable in CI without any of that.
+- [2026-07-31T08:55:00-06:00] ITERATION 26 — **#105 was measured before cutting, and the measurement changed the fix.** `tsc` 2.1s (×3), `test:smoke` 1.1s, `npm test` 11.1s. Only the smoke step was removed — `npm test` already runs that file (verified in the output: `integration-smoke.test.ts (5 tests)`, exactly the five the step named). The standalone typecheck is **kept**: it fails before the 11.1s suite, so deleting it would surface a type error ~13s later. The two inline `tsc` runs are **kept**: each lane script must be independently safe when run alone. **The issue's premise that work is duplicated is right; its implicit premise that all three are waste is not**, and that measurement now lives in the workflow so it is not "fixed" again. **#60:** checked the real latest release rather than guessing — `actions/checkout@v7.0.1`; the obvious guess of `v5` would have been two majors behind while appearing to close the issue.
+- [2026-07-31T08:55:00-06:00] ITERATION 27 — **C1 could only have been marked done on nothing, so the plan got written.** The bound contract is `docs/plans/` and no ci-tooling plan existed — the identical gap iteration 1 papered over for `build-guards`. `docs/plans/area-ci-tooling.md` now consolidates the four-change flake history (#59/#98 → #68/#107 → #110/#120 → #105/#140) that was scattered across five issues, and records the standing rule in one place: **never raise `testTimeout` again** — it has been missed twice (21624ms, 20560ms against a 20000ms ceiling), because a threshold fix against a load problem only buys headroom until it runs out. Every claim in the plan was then verified against the files (C1b): trigger, concurrency, checkout@v7, smoke-step absent, testTimeout present. Area advanced to **`gate`** — 1 open issue, #54 [P0][Security]. 1006 tests / 66 files, tsc clean, `build:all` exit 0.
