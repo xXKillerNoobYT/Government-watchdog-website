@@ -285,6 +285,18 @@
   inert. **Translate scanner by scanner and say which ones do not apply and why**; a blanket
   n/a and a blanket port are both wrong.
 
+- **[2026-07-31] A Q&A parked in an agent-facing file is not actually being asked.** `dev-qa.md`
+  Q5 sat "pending" for two days while the owner never reads that file. Worse, its premise had
+  **silently expired**: it assumed "the PR is the ratification" and merge authority moved to
+  this loop the next day, so the thing landed unratified. **When a question needs the owner,
+  put it in the owner's lane; and re-read a pending question's premise before counting it as
+  still-open — the world may have moved under it.**
+- **[2026-07-31] Correct a stale fact in the LIVE layer; never rewrite a dated log.** The
+  "90 Swift files" claim (actually 15) appeared in `dev-qa.md`, memory, an iteration-4
+  heartbeat entry, and a self-improvements record. Fixed the first two; left the last two
+  alone and said so in memory. **A log is a record of what was believed then — rewriting it
+  to match present knowledge destroys the reasoning trail that makes the log worth keeping.**
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
@@ -306,7 +318,10 @@
   Issue #106 / `dev-qa.md` Q1.
 - **C7 and C10 can never go green here** — specified over "iOS pages" and "iOS native ↔
   Tauri", and this repo has zero Tauri references. It *does* have `ios/GovWatchdogApp/`
-  (90 Swift files) but that is a thin auth companion in no npm script. `dev-qa.md` Q2.
+  (**15** Swift files: 13 Sources, 2 Tests — corrected 2026-07-31 by count; iterations 4's
+  heartbeat entry and `auto-go-self-improvements.md` still say 90 and are left alone on
+  purpose, because those are dated records of what was believed then, not live knowledge)
+  but that is a thin auth companion in no npm script. `dev-qa.md` Q2.
 - **`auto-go.md` was generalized to multi-project on 2026-07-27; the SKILL.md bodies it
   dispatches to were not.** `plan-enforcer`, `usability-enforcer`, and `dev-pipeline-manager`
   still carry `Features/<area>/`, `swift build`, and "iOS page" verbatim.

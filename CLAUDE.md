@@ -52,7 +52,11 @@ finished, not "just for the fixture lane." A missing backend product changes the
 of a slot, not the *existence* of the slot.
 
 `COMING SOON` marks an unbuilt **feature**. Gap copy marks missing civic **data**. They are
-different states and must not collapse into one affordance.
+different states and must not collapse into one affordance. The primitive is
+`src/ui/coming-soon.ts` (`comingSoonChip`, `comingSoonNote`) — always use it rather than
+hand-rolling a marker, and pass it **authored literal copy, never interpolated data**. A CS
+slot must be inert: `test/design-routes.test.ts` sweeps every marker on every route and
+fails the build if one contains an operable control.
 
 **Owner of this rule:** [`docs/design-information-type-matrix.md`](docs/design-information-type-matrix.md)
 — the per-page ledger binding the shell and all ten baseline pages to a class. Read it

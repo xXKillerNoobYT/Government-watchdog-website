@@ -96,3 +96,28 @@ this area keeps deleting did, for a hygiene (not security) property: the exposur
 already catches any *armed* revival of a dead key regardless of key name (#101, red-proved
 on the real file this iteration). Deletion beat automation; one dead key in 30 months does
 not justify a new enumeration.
+
+## Area: honesty-ledger — 2026-07-31 (iteration 18, C13)
+
+Scoped to `src/ui/{coming-soon,info-note,explainer,private-info-note}.ts`.
+
+**A7 — CS-copy-literal source scan. CONSIDERED AND DECLINED, with a trigger condition.**
+C7b established that all seven `comingSoonNote`/`comingSoonChip` call sites pass authored
+literal strings (zero `${…}` interpolation). A source-scanning guard could enforce that
+permanently. Declined for now on the standing precedent *measure the speculative hole before
+building for it*: the violation count is **0 of 7**, the rule is now written into the
+matrix's reviewer checklist where a reviewer already looks, and a new scanner is a system to
+maintain. **Build it if the count ever becomes non-zero** — that is the trigger, stated so
+the next pass does not have to re-derive the judgement.
+
+**A8 — the CS-inertness sweep is the automation this area needed, and it already shipped**
+(iteration 16, `test/design-routes.test.ts`). It runs in the normal suite, needs no new
+scheduled task, and covers 11 routes × 2 lanes. Recorded so a later broad scan does not
+recommend building something equivalent.
+
+### Explicitly not recommended (this area)
+
+A per-marker snapshot test. The inertness sweep asserts the *properties* that matter
+(no operable control, label present, no contract sentence); snapshots would additionally
+lock exact copy, which the suite already does where it matters and which would make every
+honest copy improvement a test churn.
