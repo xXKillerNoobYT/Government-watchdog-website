@@ -225,8 +225,17 @@ describe('MOTY design-handoff route integration', () => {
     expect(app.querySelector('[data-test="newsletter-design-banner"]')?.textContent)
       .toContain('SYNTHETIC DESIGN FIXTURE');
 
+    // GOV-82 follow-up: /vault has a gated version-compare fixture, so the shell must
+    // call it a fixture. Its banner lives in the compare panel, like Newsletter's.
+    window.location.hash = '#/vault?demo=design';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+    });
+
     // Routes with no design fixture yet must stay reviewed, never claim one.
-    for (const route of ['/boards', '/vault']) {
+    for (const route of ['/boards']) {
       window.location.hash = `#${route}`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       await vi.waitFor(() => {

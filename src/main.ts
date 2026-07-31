@@ -1116,6 +1116,11 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // fixture origin for this route too or shell and content disagree (the exact defect
   // GOV-76 fixed on /home).
   '/newsletter',
+  // GOV-82 follow-up, found by the iteration-42 C1b drift pass: the Vault's gated
+  // version-compare fixture shipped WITHOUT adding the route here, so the shell declared
+  // `live_server` while the page rendered a synthetic diff — the exact shell/content
+  // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
+  '/vault',
   '/agenda',
   '/timeline',
   '/power',
