@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T09:09:06-06:00
-last_task: "C4 pages-civic — mutation sweep of 17 render entry points; 2 undetected guards covered; area binding completed"
+last_run: 2026-07-31T09:40:16-06:00
+last_task: "C7 pages-civic — 2 dead controls removed, dead-control guard added (PR #168)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -131,7 +131,7 @@ current_area_checklist:
   C4_tests_present: done  # iteration 43 — bound to MUTATION measurement, not line coverage: no coverage tooling is installed and it cannot safely be added here (vitest resolves from the PARENT repo's node_modules, the owner's working copy). Swept all 17 void render entry points; 2 were undetected (ensureDiffViewStyle, ensureTimelineLanesStyle — both would render unstyled with a green suite) and are now covered and red-proofed. Also completed the area binding, which CHANGED the numbers: renderAlerts 0->13, renderPowerTracker 1->22
   C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
   C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
-  C7_ui_polish: pending  # iteration 41 — this area renders, so C7 is live here (web binding, iteration 16). The usability scan has not been run
+  C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
   C7b_dev_improvement_polish: pending  # iteration 41 — not run for this area
   C8_security_reviewed: pending  # iteration 41 — not run for this area
   C9_performance_reviewed: pending  # iteration 41 — not run for this area
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 33
+iteration_count: 34
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -529,3 +529,28 @@ Verification commands for this project (all three, every iteration that changes 
   suppressed the success message but did not stop the commit, so a PR went up with a broken build
   and a commit message claiming 'tsc clean'. Fixed in the same PR and stated plainly. Put the gate
   and the action in one chain, or check `$?` explicitly.
+- [2026-07-31T09:40:16-06:00] ITERATION 44 — area: pages-civic — check **C7 done**, re-bound to the web surface.
+  The `usability-enforcer` SKILL is written against WiredPart iOS pages (6 iOS/Swift references), so
+  per 'chain, don't duplicate' its body was NOT run verbatim; its scanner INTENT was applied here,
+  which is exactly what Q2's resolution said to do on reaching pages-civic.
+- [2026-07-31T09:40:16-06:00] MEASURED — **2 genuine dead controls** (enabled, `aria-pressed`, no handler anywhere, so
+  assistive tech announced an operable toggle that could not be operated): the timeline-design
+  window pills and the watchlist 'Issues' pill. Both violate micro-detail rule 5. Fixed, and a
+  source-level guard added at `test/ui-dead-controls.test.ts`.
+- [2026-07-31T09:40:16-06:00] LESSON — **'unavailable' and 'current' look identical and are not.** My first fix simply
+  disabled both controls. An existing assertion caught it: `unavailableTools ... toHaveLength(3)`
+  encodes *3 unavailable record types + 1 current selection*, and disabling the current one
+  conflates 'selected' with 'does not work'. The rule now applied: **current state renders as an
+  indicator (no affordance); an unavailable alternative stays a disabled control with a reason.**
+- [2026-07-31T09:40:16-06:00] LESSON — **building the guard surfaced THREE ways a working button looks dead**, each of
+  which would have made it accuse healthy code: (1) delegation via `[data-modal-close]` bound in
+  `modal.ts:155`; (2) a `}` inside a `${...}` template truncating a naive `/\{.*?\}/` attribute
+  read and hiding a real `disabled` — fixed with balanced-brace parsing; (3) selector retrieval —
+  built inline, fetched later by `querySelector('.gw-info-close')`, bound at `info-note.ts:435`.
+  **A static guard must model every real binding pattern in the codebase, or its findings are
+  noise.** The test carries a planted dead button so the sweep cannot go vacuous.
+- [2026-07-31T09:40:16-06:00] LESSON — **`git checkout --` during a red proof destroys UNCOMMITTED fixes.** Restoring
+  after the proof reverted the two fixes I had not yet committed, and the suite went red. Commit
+  the fix BEFORE red-proofing it, or back up to a temp file — the same discipline the iteration-43
+  timeout taught, from the opposite direction.
+- [2026-07-31T09:40:16-06:00] ITERATION 44 — 1063 tests / 68 files green (was 1060), tsc clean, build:all 0.
