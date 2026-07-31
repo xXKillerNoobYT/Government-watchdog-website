@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T10:42:20-06:00
-last_task: "C8 security — unsafe URL schemes refused in every supplied href (PR #173)"
+last_run: 2026-07-31T11:11:59-06:00
+last_task: "C9 performance — word-level diff bounded against document-sized inputs (PR #175)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -134,14 +134,14 @@ current_area_checklist:
   C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
   C7b_dev_improvement_polish: done  # iteration 45 — intent applied to the web surface (the SKILL carries 12 iOS references). Runtime-safety hunt found a real precision defect: a partial date '2026-07' was filed as a DAY labelled "NaN"; malformed values gave month label `undefined`. Fixed by routing non-full dates to the existing undated bucket (PR #171), red-proofed. Duplication finding filed as #170
   C8_security_reviewed: done  # iteration 46 — found and fixed a REAL exploitable path: supplied source URLs were bound to href with no scheme validation anywhere in src/. Planting javascript:alert(1) produced 4 live anchors on the newsletter detail view. Fixed centrally in every module's el() helper via safeExternalHref (PR #173), control-character bypasses covered, red-proofed end to end
-  C9_performance_reviewed: pending  # iteration 41 — not run for this area
+  C9_performance_reviewed: done  # iteration 47 — MEASURED a real cliff: diffWords is a full LCS table, O(n x m) in time AND memory. 10,000 words/side = 5.30s main-thread freeze and 400M cells; several diffs in one process exhausted the JS heap. Bounded by DIFF_CELL_BUDGET (PR #175) — both versions still render in full, only highlighting is withheld. Red-proofed, with a timing assertion
   C10_cross_platform_parity: "n/a (no second platform)"
   C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
   C11b_process_gaps_clean: pending  # iteration 41 — not run for this area
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 36
+iteration_count: 37
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -603,3 +603,23 @@ Verification commands for this project (all three, every iteration that changes 
   the fourth — detail view, correct key shape, non-null values — showed the 4 hostile anchors.
   **Three separate 'clean' results would each have been a false all-clear on a live vulnerability.**
 - [2026-07-31T10:42:20-06:00] ITERATION 46 — 1073 tests / 70 files green (was 1067), tsc clean, build:all 0.
+- [2026-07-31T11:11:59-06:00] ITERATION 47 — area: pages-civic — check **C9 done. A measured perf cliff, not an
+  estimated one.** `diffWords` builds a full LCS table: O(n x m) in time AND memory.
+  **4,000 words/side 536ms | 6,000 1.83s | 8,000 2.98s | 10,000 5.30s (400M cells)** — and running
+  several such diffs in one process produced `FATAL ERROR: Ineffective mark-compacts near heap
+  limit`. A 10,000-word pair freezes the main thread for over five seconds with no spinner and no
+  escape, and Source Vault exists to compare government minutes and packets, which routinely run
+  past that. GOV-82 wired this primitive into the Vault two iterations ago, so the path is live.
+- [2026-07-31T11:11:59-06:00] ITERATION 47 — fixed by BOUNDING, not by rewriting. The cap is expressed in table CELLS
+  because that, not word count, drives both cost and allocation. Above it: **both versions still
+  render in full**, only the word-level highlighting is withheld with the reason stated, and the
+  toggle is inert-and-explained rather than dead (the C7 rule). **Degrade the feature, never the
+  page.** Hirschberg's algorithm would fix the memory but not the multi-second freeze, so it is the
+  wrong tool for the actual problem.
+- [2026-07-31T11:11:59-06:00] LESSON — **an OOM in a loop of sizes is not an OOM at any one size.** The first run died
+  with a heap error across four sizes in one process; measured individually, 10,000 completed in
+  5.3s. The cliff was real either way, but the first reading would have overstated WHERE it starts.
+  Measure each size in its own process before quoting a threshold.
+- [2026-07-31T11:11:59-06:00] ITERATION 47 — 1078 tests / 70 files green (was 1073), tsc clean, build:all 0. Five new
+  tests including a **timing assertion** (oversize render under 250ms, against 536ms unbounded at
+  the same size). Red-proofed: removing the cap fails 3.
