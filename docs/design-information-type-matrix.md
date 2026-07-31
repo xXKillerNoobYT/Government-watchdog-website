@@ -274,6 +274,12 @@ added, removed, enabled, disabled, or rebound.
       invents a product claim. Before assigning CS, confirm the slot is not simply a
       DG whose contract is unshipped: DG means the *data* is missing, CS means the
       *feature* is.
+- [ ] **CS copy is authored literal text — never interpolated from a response.**
+      `comingSoonNote(feature, detail)` must receive written strings, not values built
+      from a projection. All seven call sites satisfy this today (audited 2026-07-31,
+      zero `${…}` interpolation). Passing data in would put civic content inside a slot
+      that says nothing is built — an invented claim — and would route response text
+      into the DOM through a path no reviewer reads as data-bearing.
 - [ ] Confirm an adjacent source was not repurposed: TopicTree is not Boards,
       account notifications are not civic alerts, statements are not official
       profiles, and record counts are not coverage.
