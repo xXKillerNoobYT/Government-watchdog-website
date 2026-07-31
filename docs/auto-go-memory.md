@@ -353,6 +353,20 @@
   cryptic TS1005 errors. Style constants are template literals — no backticks in their
   comments, ever.
 
+- **[2026-07-31] Run the A/B in the live DOM instead of arguing it.** For #88 I injected
+  option B (wrap to rows) into the running page and measured the bar growing **45px → 133px**
+  — 16% of a phone viewport. That number decided the choice in seconds and is now on the
+  issue, so the owner can overrule with the real cost in front of them rather than my prose.
+- **[2026-07-31] A correct technique can still be decorative — check it in the DEFAULT theme.**
+  My scroll shadow used `rgba(0,0,0,.20)`: invisible on the dark theme's `#0D1218` bar, which
+  is what ships by default. Tests passed, technique was right, affordance did not exist for
+  most users. **A screenshot caught it; no assertion would have.** Use theme-adaptive tokens
+  for anything whose job is to be *seen*.
+- **[2026-07-31] Scope a style assertion to the RULE, never to the region.** `toContain` over
+  a whole media-query tail passed with `overflow-x:auto` deleted from the tab bar, because
+  `.gw-shell-actions` also declares it. Third vacuous assertion this session, all the same
+  shape: too-wide a slice. Extract the specific rule body first.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

@@ -763,6 +763,40 @@ html,body{margin:0}
   .gw-shell-simple-tools-label{display:block;margin-bottom:7px}
   .gw-shell-simple-tools .gw-shell-search{margin:0;max-width:none}
   .gw-shell-tabs,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{position:fixed;bottom:0;left:0;right:0;z-index:60;justify-content:flex-start;max-width:none;margin:0;padding:0 8px env(safe-area-inset-bottom);gap:0;background:var(--gw-header-bg);border-top:var(--gw-border-w) solid var(--gw-border);border-bottom:0;overflow-x:auto}
+  /* GOV-88 — the bottom tab track is 836px inside a 390px viewport: 446px of it is
+     off-screen, only 4 of 10 items are fully visible, and scrollbar-width:none means
+     a touch user gets NO signal that Boards, Power Tracker, Source Vault, Newsletter
+     and Watchlist exist. (Keyboard/AT users are unaffected — every tab is tabIndex 0
+     and focus scrolls it into view, which is why this is a discoverability defect
+     rather than a hidden lock.)
+
+     Self-hiding scroll shadows, chosen over wrapping to multiple rows: wrapping was
+     measured at 45px -> 133px of permanently fixed chrome, 16% of an 844px phone
+     viewport, on a reading-first civic app. See the A/B on issue #88.
+
+     The technique: two "cover" layers scroll WITH the content (background-attachment:
+     The shadow colour is --gw-border-strong, NOT a hardcoded black: this app
+     ships a dark theme by default, and rgba(0,0,0,.2) on a #0D1218 bar is
+     invisible — the first draft of this fix was decorative in the default theme
+     and a screenshot is what exposed it. The token is mid-tone in both themes.
+
+     local) and two shadow layers stay put (scroll). At a scroll extreme the cover
+     slides over its shadow and hides it, so each shadow appears only while there is
+     genuinely more content that way. No JS, no state, no layout cost. */
+  .gw-shell-tabs,.gw-shell-root[data-mode="simple"] .gw-shell-tabs{
+    background-image:
+      linear-gradient(to right,var(--gw-header-bg),rgba(0,0,0,0)),
+      linear-gradient(to left,var(--gw-header-bg),rgba(0,0,0,0)),
+      linear-gradient(to right,var(--gw-border-strong),rgba(0,0,0,0)),
+      linear-gradient(to left,var(--gw-border-strong),rgba(0,0,0,0));
+    background-position:left center,right center,left center,right center;
+    background-repeat:no-repeat;
+    background-size:28px 100%,28px 100%,14px 100%,14px 100%;
+    background-attachment:local,local,scroll,scroll;
+    background-color:var(--gw-header-bg);
+    scroll-snap-type:x proximity;
+  }
+  .gw-shell-tab{scroll-snap-align:start}
   .gw-shell-tabs>.gw-info-note{margin-left:0;min-width:var(--gw-tap-min);justify-content:center}
   .gw-shell-tab,.gw-shell-root[data-mode="simple"] .gw-shell-tab{flex:0 0 auto;justify-content:center;min-width:96px;min-height:var(--gw-tap-min);padding:4px 10px;border-top:2px solid transparent;border-bottom:0;font-size:12px;letter-spacing:0;text-transform:none}
   .gw-shell-tab[aria-current="page"],.gw-shell-root[data-mode="simple"] .gw-shell-tab[aria-current="page"]{border-top-color:var(--gw-accent);border-bottom-color:transparent;color:var(--gw-accent)}
