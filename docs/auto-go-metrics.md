@@ -35,6 +35,9 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 26 | ci-tooling | #105 + #60 | done | 2 | 2 | 0 | 1800 | none due; measured before cutting — removed 1 of 3 duplications, kept 2 with reasons; checkout v4→v7 (guess of v5 would have been 2 majors behind) |
 | 2026-07-31 | 27 | ci-tooling | C1..C13 → ✅ GRADUATED | done | 2 | 1 | 0 | 1800 | none due; FOURTH graduation (17/17); #104 declined on measured disclosure-boundary grounds; wrote the missing area plan |
 | 2026-07-31 | 28 | gate | C1..C13 → ✅ GRADUATED | done | 1 | 0 | 0 | 1500 | none due; FIFTH graduation (17/17) with ZERO code changed; #54 triaged AC-by-AC, 8 of 9 server-side, 9th verified by measurement |
+| 2026-07-31 | 29 | shell-nav | #71 manage affordance | done | 2 | 2 | 3 | 1800 | none due; found a SECOND phantom CS registry row (account manage is DG, not CS) |
+| 2026-07-31 | 30 | shell-nav | #72 freshness slots | done | 1 | 1 | 4 | 1800 | none due; clock guard had to be scoped to originBanner, not the module (shell-local-date is a legitimate clock read) |
+| 2026-07-31 | 31 | shell-nav | C1..C13 → ✅ GRADUATED | done | 1 | 0 | 0 | 1200 | none due; SIXTH graduation (17/17); renderShell mutation-swept at 81 failing tests |
 
 ## Findings this iteration
 

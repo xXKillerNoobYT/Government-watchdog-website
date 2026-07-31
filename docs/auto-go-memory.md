@@ -410,6 +410,20 @@
   `localStorage`. A doc claiming a security posture is worth exactly as much as the check
   that it still matches the code.
 
+- **[2026-07-31] A registry is audited by USING it, not by re-reading it.** Both phantom rows
+  in the CS registry were found by working the issue that referenced them — never by
+  re-reading the table, which I did several times without noticing either. **Schedule the
+  audit as "work an item that cites this table", not "check the table".**
+- **[2026-07-31] The tell for a misclassification can be inside the issue's own ACs.** #71
+  was filed as CS but its acceptance criteria require the copy to *name the awaited
+  contract* — which CS forbids. **When an issue's ACs contradict its stated class, the ACs
+  usually describe the truth**, because they were written against the behaviour.
+- **[2026-07-31] Scope a structural guard to the function, not the module — twice now.**
+  The freshness clock-guard failed instantly over the whole of `shell.ts` because a
+  *legitimate* clock read exists (`shell-local-date`, the reader's own date). Broadening
+  would have banned correct code and been weaker. Same shape as the earlier
+  region-vs-rule CSS assertion.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,

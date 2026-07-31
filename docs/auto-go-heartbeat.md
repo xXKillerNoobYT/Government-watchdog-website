@@ -76,8 +76,13 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: shell-nav
+current_area: data-contract
 graduated_areas:
+  shell-nav:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a. SIXTH area to graduate.
+    shipped: "#71 and #72 closed — both were VANISHED designed slots, the failure the handoff explicitly forbids. #71 also corrected a misclassification in the CS registry (account manage is DG: a contract genuinely is awaited, and CS forbids naming one). renderShell mutation-swept at 81 failing tests, the most load-bearing function measured this session."
+
   gate:
     graduated: 2026-07-31
     result: 17 of 17 rows done or n/a. FIFTH area to graduate.
@@ -126,17 +131,17 @@ current_area_checklist:
   C4_tests_present: pending
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
-  C7_ui_polish: pending  # shell-nav RENDERS — inherits the inertness sweep and the tap/type floor guards
+  C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
   C7b_dev_improvement_polish: pending
-  C8_security_reviewed: pending
+  C8_security_reviewed: pending  # the marquee check here: assertWebSafe and RAW_PATH_FORBIDDEN_KEYS are the repo's raw-path leak boundary
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: pending  # 2 open: #72 (per-level freshness slots), #71 (account chip manage affordance — the CS registry's one pending row)
+  C11_github_issues_resolved: pending  # 1 open: #70 (canonical card presentation types)
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 18  # iteration 28 overall; same day
+iteration_count: 21  # iteration 31 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -276,3 +281,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T09:25:00-06:00] ITERATION 28 — area: gate — **✅ AREA GRADUATED (17/17), the fifth — and NO CODE CHANGED, which is the correct outcome.** #54 is a P0 release gate whose own closing line warns *"do not close this issue because #51 passes browser tests"*. Triaged AC-by-AC against the code: **8 of 9 criteria are server-side by definition** — HttpOnly session validation before any private byte, anonymous probes of hashed assets and fonts, shared-cache separation, session-A-revoke-session-B, E2E against the exact hosted worker config, release evidence. All need the Sites worker plus a hosted deploy (HOLD per GOV-420) and backend #122 / PR #125.
 - [2026-07-31T09:25:00-06:00] ITERATION 28 — **the 9th criterion was measured rather than assumed, and it passes.** Drove `ReviewerContextStore` through success → 401: `ready` with 1 row → `unavailable` with **0 rows**, and it **stays** unavailable on subsequent `load()` rather than falling back to the cached success. A `#requestVersion` guard already prevents a superseded in-flight response from overwriting newer state. So the in-memory half of AC3 holds today, with output recorded on the issue as partial evidence toward a gate nobody can close from this repo.
 - [2026-07-31T09:25:00-06:00] ITERATION 28 — **deliberately did NOT build a client-side `revoke()`.** There is no sign-out flow in the web app and no server trigger for revocation; adding one would be a mechanism with no caller that *looks* like progress on a release gate while changing nothing about the boundary — precisely the failure #54 warns against. C1b confirmed the documented posture is real rather than aspirational: `access.ts` is pure and synchronous, references **no** civic records, stores no credential, touches no `localStorage`. C4 mutation sweep: resolveAccess 35 failures, gatePanelContent 16, isAccessState 7, isApproved 3 — all four exports genuinely covered. Area advanced to **`shell-nav`** (2 open: #72, #71 — #71 is the CS registry's one `pending` row). 1006 tests / 66 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T10:05:00-06:00] ITERATION 29-31 — area: shell-nav — **✅ AREA GRADUATED (17/17), the sixth.** Both issues were the same defect class: **a designed slot that vanished**, which the handoff forbids outright because a reviewer diffing against the baseline cannot tell unbuilt from removed from oversight. **#71** restored the account chip's `manage` affordance as a disabled control naming the awaited contract — and reproduced **none** of the baseline's identity half (`J. Citizen ✓ ID`), with a guard asserting no email, no verified glyph, and no baseline persona can reach the DOM, title, or accessible name. **#72** restored the Town/County/State freshness row; the contract supplies no per-source freshness, so all three render their explicit gap.
+- [2026-07-31T10:05:00-06:00] ITERATION 29 — **#71 exposed a SECOND phantom in the CS registry I wrote this morning.** It was listed as CS `pending — #71`; it is **DG**, because a contract genuinely is awaited (`GET /v1/session`) and the ledger's Global-shell table has always said so. The tell was inside the issue: **its own acceptance criteria require the copy to NAME that contract — exactly what CS forbids.** Both phantoms (this and the ⌘K palette) arrived the same way: the registry was populated from an issue's prose rather than from the ledger's own per-slot assignments. Registry now four rows, all marked, zero pending. **Process note: both were found by WORKING the issues that referenced them, not by re-reading the table — a registry is audited by using it.**
+- [2026-07-31T10:05:00-06:00] ITERATION 30 — **#72's risk ran opposite to every other slot this session.** Everywhere else the danger was hiding something; here it is trivially easy to make the row look *live* by formatting a clock. The type makes that impossible rather than discouraged — a level renders a supplied string verbatim or its gap, with no compute branch. The structural guard had to be **scoped, not broadened**: my first draft asserted the whole module reaches no clock and failed instantly, because the shell legitimately reads one for `shell-local-date` (the reader's own local date, not a data claim). Broadening would have banned a correct use and been the weaker guard. Verified live: three levels, all unavailable, **zero digits and zero `<time>` elements**. C4 mutation sweep: renderShell **81** failures, createRouter 31, applyThemePref 6, hasExplicitThemePref 1. Area advanced to **`data-contract`** (1 open: #70). 1013 tests / 66 files, tsc clean, `build:all` exit 0.
