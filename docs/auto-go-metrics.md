@@ -18,6 +18,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-30 | 9 | ci-tooling | owner-pinned #110 | done | 1 | 1 | 0 | 600 | owner decision batch recorded (5 decisions); GOV Q&A Notion page created; storage-bus design note + issues #195/#119 |
 | 2026-07-30 | 10 | build-guards | C5,C7b,C9,C11,C11b,C12,C13 | done (C6 blocked) | 4 | 3 | 0 | 1800 | area-scoped C13; #112 closed; #49 measured and routed to owner Q&A rather than silenced |
 | 2026-07-31 | 11 | honesty-ledger | C1/area entry — #69 P0 | done | 3 | 1 | 0 | 2400 | Gate C kickoff; area advanced off parked build-guards; deploy-release skipped on measurement; CLAUDE.md drift fixed |
+| 2026-07-31 | 12 | honesty-ledger | #86 P1 (CS applied) | done | 3 | 1 | 1 | 2100 | none due; browser check caught two stale copy strings the suite could not see |
 
 ## Findings this iteration
 
