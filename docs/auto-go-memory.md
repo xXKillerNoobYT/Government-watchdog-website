@@ -92,6 +92,18 @@
   hostage by a deploy that is owner-gated — punished the wrong area. A criterion belongs to
   the area whose artifact it measures, not the area whose issue first named it.
 
+- **[2026-07-31]** Advanced the area off `build-guards` at **15/16** rather than idling on a
+  check blocked by an owner decision, and **skipped `deploy-release` on measurement** rather
+  than by rotation order: 2 of 4 issues `owner-decision`, one `blocked-by` a backend issue
+  that does not exist, one gated on the pinned `BACKEND_REF`. **Rotation order is a default
+  for avoiding spray, not a rule that outranks availability** — the loop already spent 10
+  iterations in one area while the P0 sat untouched in area 5. Check the next area's issues
+  before entering it; entering a fully-gated area just relocates the block.
+- **[2026-07-31]** Recorded #69's AC6 as **pre-satisfied by #68** instead of editing something
+  to tick it. The issue's line reference had drifted because #68 edited that file after filing.
+  **When an AC cites a line number, verify the phrase still exists before "fixing" it** — an
+  invented edit to satisfy a checkbox is worse than an unticked box with a reason.
+
 ## What worked
 
 - **[2026-07-28]** `gh pr view <n> --json files` cross-referenced against
