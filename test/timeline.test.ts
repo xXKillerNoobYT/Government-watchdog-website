@@ -6,6 +6,7 @@ import {
   recordTimelineDate,
   orderedTimeline,
   buildTimeline,
+  buildTimeNavigator,
   assembleThread,
   completenessView,
   NO_LINK_TEXT,
@@ -226,5 +227,53 @@ describe('completenessView — fail-closed, never false-complete', () => {
   it('DOWNGRADES a "complete" that nonetheless carries gaps to gaps (never false-complete)', () => {
     const sneaky: ThreadCompleteness = { state: 'complete', gaps: [{ kind: 'missing_meeting_instance' }] };
     expect(completenessView(sneaky).state).toBe('gaps');
+  });
+});
+
+// C7b (iteration 45) — runtime-safety / edge-case hunt over the pages-civic area.
+//
+// `buildTimeNavigator` destructures `timelineDate.split('-')`. On anything that is not a
+// full YYYY-MM-DD, month and day come back undefined, which produced two measured defects:
+//   * 'unknown' → month label `undefined`, day label "NaN"
+//   * '2026-07' → filed as a DAY under July, labelled "NaN"
+// The second is the one that matters: month-precision data rendered as a day entry claims
+// a specificity the record does not have. Such dates are UNDATED, which this function
+// already models.
+describe('buildTimeNavigator — partial and malformed dates', () => {
+  const nav = (dates: (string | null)[]) =>
+    buildTimeNavigator(dates.map((timelineDate) => ({ timelineDate })) as never);
+
+  it('never renders NaN or undefined as a date label', () => {
+    const result = nav(['2026-07-21', '2026-07', 'unknown', '', null, '2026-13-99x']);
+    for (const y of result.years) {
+      expect(y.year, 'year').not.toMatch(/NaN|undefined/);
+      for (const m of y.months) {
+        expect(String(m.label), 'month label').not.toMatch(/NaN|undefined/);
+        for (const d of m.days) {
+          expect(String(d.label), 'day label').not.toMatch(/NaN|undefined/);
+        }
+      }
+    }
+  });
+
+  it('counts a month-precision date as undated rather than inventing a day', () => {
+    const result = nav(['2026-07-21', '2026-07']);
+    const julyDays = result.years.flatMap((y) => y.months).flatMap((m) => m.days);
+    // The real date is placed; the month-precision one is not given a fabricated day.
+    expect(julyDays.map((d) => d.label)).toEqual(['21']);
+    expect(result.undatedCount).toBe(1);
+  });
+
+  it('counts malformed values as undated, not as a year of their own', () => {
+    const result = nav(['unknown', '2026', '2026-7-1', 'null']);
+    expect(result.years).toHaveLength(0);
+    expect(result.undatedCount).toBe(4);
+  });
+
+  it('still places well-formed dates exactly as before', () => {
+    const result = nav(['2026-07-21', '2026-07-22', '2026-06-01']);
+    expect(result.undatedCount).toBe(0);
+    const labels = result.years.flatMap((y) => y.months).flatMap((m) => m.days).map((d) => d.label);
+    expect(labels.sort()).toEqual(['1', '21', '22']);
   });
 });
