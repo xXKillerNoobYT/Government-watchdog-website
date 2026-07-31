@@ -232,6 +232,9 @@ export interface TimeNavigator {
  * year/month/day buckets that actually contain records. The first record seen
  * for each day (in timeline order) owns that day's scroll anchor.
  */
+/** Only a full calendar date can be placed on a day. */
+const FULL_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 export function buildTimeNavigator(ordered: OrderedRecord[]): TimeNavigator {
   const years: TimeNavYear[] = [];
   let undatedCount = 0;
@@ -242,7 +245,15 @@ export function buildTimeNavigator(ordered: OrderedRecord[]): TimeNavigator {
   const dayByKey = new Map<string, TimeNavDay>();
 
   for (const { timelineDate } of ordered) {
-    if (!timelineDate) {
+    // C7b (iteration 45): a date that is not a full YYYY-MM-DD is UNDATED here, not
+    // partially placed. `split('-')` on a partial or malformed value leaves month/day
+    // undefined, which produced two defects, measured:
+    //   * 'unknown'  -> month label `undefined`, day label "NaN"
+    //   * '2026-07'  -> filed as a DAY under July with the label "NaN"
+    // The second is the serious one: month-precision data rendered as a day entry is a
+    // precision claim the record does not support — the browser inventing specificity.
+    // This function already carries the honest bucket for it.
+    if (!timelineDate || !FULL_DATE.test(timelineDate)) {
       undatedCount += 1;
       continue;
     }
