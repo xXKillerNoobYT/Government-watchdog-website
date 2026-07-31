@@ -16,6 +16,7 @@
 //     is concerned,
 //   - the scaffold transport is fail-closed (never a fake receipt) until B3 lands.
 import { describe, it, expect } from 'vitest';
+import { PUBLICATION_ELIGIBLE_UI_STATUSES } from '../src/types/read-api';
 import {
   UPLOAD_COPY,
   UPLOAD_SCAFFOLDING_NOTE,
@@ -74,6 +75,23 @@ describe('GOV-1569 status projection is fail-closed (never upgrades)', () => {
     expect(projectReviewState({ status: 'verified' })).toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
     expect(projectReviewState('source-backed')).toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
     expect(CONSERVATIVE_UPLOAD_REVIEW_STATE).toBe('review_pending');
+  });
+
+  // GOV-1569 §4 names PUBLICATION_ELIGIBLE_UI_STATUSES as the set F1 must never
+  // render. The cases above prove fail-closed for 'source-backed' and a made-up
+  // 'verified' — two hand-picked examples. That leaves 'archived-source-backed'
+  // and 'corrected' unproven, and a hand-picked list cannot notice a value added
+  // to the constant later. Assert over the REAL set, in both the bare and the
+  // {status} envelope form, so the invariant tracks the source of truth.
+  it('collapses EVERY publication-eligible status to the conservative bucket (§4)', () => {
+    expect(PUBLICATION_ELIGIBLE_UI_STATUSES.length).toBeGreaterThan(0);
+    for (const eligible of PUBLICATION_ELIGIBLE_UI_STATUSES) {
+      expect(projectReviewState(eligible), eligible).toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
+      expect(projectReviewState({ status: eligible }), `{status:${eligible}}`)
+        .toBe(CONSERVATIVE_UPLOAD_REVIEW_STATE);
+      // And it must never become a renderable upload state under any casing.
+      expect(UPLOAD_REVIEW_STATES as readonly string[], eligible).not.toContain(eligible);
+    }
   });
 
   it('has NO verified/published value in the vocabulary (core invariant §4)', () => {
