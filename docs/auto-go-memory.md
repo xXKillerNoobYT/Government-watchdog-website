@@ -271,9 +271,10 @@
   for both guards rather than two that drift. It does **not** merge their scopes — source scan,
   emitted scan, and marker scan still answer different questions with different blind spots, and
   CLAUDE.md's "a finding in one is not covered by another" still holds.
-- **`test/public-bundle-markers.test.ts` is binary to grep** (#112, 4 NUL bytes from #55's AC4
-  tests). Use `grep -a` on it until that lands, and do not trust a clean `grep test/` sweep that
-  needed to match this file.
+- **`test/public-bundle-markers.test.ts` WAS binary to grep** (#112, 4 NUL bytes from #55's AC4
+  tests) — **fixed 2026-07-30 (iteration 10)**: the raw NULs are now written as `\x00` source
+  escapes, so the runtime strings are byte-identical and the file is plain UTF-8 on disk. The
+  whole `test/` tree is greppable again; CLAUDE.md's `grep test/` step is honest without `-a`.
 
 ### gate
 - Per GOV-SPA's 2026-07-28 adversarial sweep: the **client gate is UI scaffolding, not the

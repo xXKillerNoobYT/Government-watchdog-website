@@ -70,8 +70,8 @@ each emitted artifact.
 **The suite asserts exact user-visible copy.** `grep test/` before changing any string a
 person can read; assertions like `.toBe('Saved view: Jackson, Wyoming')` are common
 (`test/gov658-app-shell.test.ts`). Changing a string without grepping first will go red.
-Use `grep -a`: one test file carries raw NUL bytes and plain `grep` silently skips it as
-binary (#112), so a clean sweep without `-a` has not actually swept.
+Every file under `test/` is plain text and greppable (#112 removed the last raw NUL bytes);
+if that ever stops being true, a clean `grep test/` sweep is silently not a sweep.
 
 ---
 
@@ -140,7 +140,7 @@ never merge to make a red thing disappear, and never merge a PR you have not rea
 | `src/data/`, `src/types/` | Response contracts, `assertWebSafe`, reviewer-normalize |
 | `src/fixtures/` | Gated synthetic data — never reachable from the public lane |
 | `scripts/` | Build guards, artifact fetch, sites worker, local e2e |
-| `test/` | 54 files; exact-copy assertions |
+| `test/` | Exact-copy assertions. Don't cite a file count here — it goes stale silently; `ls test/*.test.ts \| wc -l` is always right |
 | `docs/` | Specs and contracts (see below) |
 | `ios/GovWatchdogApp/` | Native companion app, separate from the web build |
 
