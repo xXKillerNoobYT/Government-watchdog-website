@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T07:30:01-06:00
-last_task: "GOV-78 — agenda analysis modal: past meetings, connected issues, who decides (PR #158, merged)"
+last_run: 2026-07-31T08:11:13-06:00
+last_task: "GOV-89 + GOV-90 shipped; pages-civic checklist reseeded after a 6-iteration staleness"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -123,25 +123,25 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: done  # iteration 32 — wrote docs/plans/area-data-contract.md, which did not exist. Holds the two sequencing findings for #70 and the reason it was not started in a tail-end pass
-  C1b_plan_vs_code_drift_clean: done  # iteration 32 — the drift IS #70: docs/product/issue-card-contract.md is adopted but none of its five presentation types exist, and four surfaces hand-roll their own card. Recorded in the plan with the migration order rather than left implicit
-  C2_qa_resolved: done  # iteration 32 — no data-contract question pending; Q3/Q4/Q5 are loop-level
-  C2b_github_issues_ingested: done  # iteration 32 — #70 ingested and analysed; two sequencing facts recorded on the issue (PR #57 blocker is STALE — closed never merged; #85 overlap previously unrecorded on either issue)
+  C1_plan_complete: pending  # iteration 41 — NOT run for this area. No docs/plans/area-pages-civic.md exists
+  C1b_plan_vs_code_drift_clean: pending  # iteration 41 — not run for this area
+  C2_qa_resolved: blocked  # iteration 41 — #80 is open and labelled owner-decision (the timeline TOWN lane; StatementRecord carries no event date or type). Correctly blocked on a person, not on a missing prerequisite
+  C2b_github_issues_ingested: done  # iterations 35-41 — every pages-civic issue read and dispositioned: #76 #84 #83 #82 #78 #89 #90 shipped, #80 investigated and declined as scoped with its blocker recorded on the issue
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: done  # iteration 32 — mutation sweep on the leak boundary: assertWebSafe 71 failing tests, findRawPathLeaksInText 32. Strongest coverage measured this session, which is the right shape for the function standing between a raw backend path and the DOM
-  C5_tests_pass: done  # iteration 32 — 1013/1013 across 66 files
-  C6_build_warnings_zero: done  # iteration 32 — no warning from this area
-  C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
-  C7b_dev_improvement_polish: done  # iteration 32 — hunt found no defect; the improvement this area needs IS #70, which is tracked rather than hunted
-  C8_security_reviewed: done  # iteration 32 — the leak boundary is the most heavily guarded code in the repo by measurement: mutating assertWebSafe fails 71 tests, findRawPathLeaksInText 32, and the suite is table-driven over RAW_PATH_FORBIDDEN_KEYS so a key added later is covered automatically. No unsafe sinks in src/data
-  C9_performance_reviewed: done  # iteration 32 — the async surface is ReviewerContextStore, already measured in iteration 28: fail-closed, single shared request, #requestVersion guard against late overwrites. No new concern
+  C4_tests_present: in_progress  # iteration 41 — tests added with every issue (1056 total, +43 across 35-41) but per-file coverage for this area was never measured against the 90% bar. Claiming done would assert a number nobody computed
+  C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
+  C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
+  C7_ui_polish: pending  # iteration 41 — this area renders, so C7 is live here (web binding, iteration 16). The usability scan has not been run
+  C7b_dev_improvement_polish: pending  # iteration 41 — not run for this area
+  C8_security_reviewed: pending  # iteration 41 — not run for this area
+  C9_performance_reviewed: pending  # iteration 41 — not run for this area
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: in_progress  # iteration 32 — #70 is the only area issue and it is NOT deferred on an owner gate: it is agent-reachable work this loop chose not to start at the end of a long session, because every section of it renders trust labels and a half-landed trust refactor is worse than none. Marking this done would claim a deferral that is really an unfinished task. THE AREA THEREFORE DOES NOT GRADUATE. Sequencing is recorded so the next pass starts cheap: #85 first, then types -> shared module -> two migrations
-  C11b_process_gaps_clean: done  # iteration 32 — one real gap found and closed: #70 and #85 both restructure pages-program.ts and NEITHER mentioned the other. Cross-referenced both, with the cheaper order stated (#85 first — it deletes ~340 lines the other would otherwise have to migrate). Also struck a stale blocker: #70 said land after PR #57, which is closed and never merged
-  C12_claude_md_reflects_area: done  # iteration 32 — CLAUDE.md section 7 already names src/data and src/types with assertWebSafe and reviewer-normalize, which is what a cold agent needs before knowing where to look. The presentation-type gap belongs in the area plan, not the thin router
-  C13_automation_opportunities_reviewed: done  # iteration 32 — A15: no new automation. web-safe.test.ts is already table-driven over RAW_PATH_FORBIDDEN_KEYS, which is the correct shape (it tracks the constant, not a hand-picked sample) and is exactly what iteration 19 had to retrofit elsewhere
+  C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
+  C11b_process_gaps_clean: pending  # iteration 41 — not run for this area
+  C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
+  C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 30
+iteration_count: 31
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -450,3 +450,34 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T07:30:01-06:00] ITERATION 40 — 1045 tests / 67 files green (was 1039), tsc clean, build:all 0,
   `dist/public` fixture-string grep = 0, issue pills meet the 44px tap floor.
   main verified green post-merge at 2fce94e.
+- [2026-07-31T08:11:13-06:00] ITERATION 41 — area: pages-civic — **GOV-89 and GOV-90 both shipped** (PRs #160, #161,
+  merged). #89: action chips now carry per-action tones. The tone is a **declared field on the
+  fixture row, not a text-keyed map** — `.gw-fa-action` is shared with the reviewed
+  `reviewed-status-badge`, so text keying risked the frontend re-toning a backend-supplied trust
+  badge. A field cannot leak: reviewed cards have no `actionTone`. #90: the stat explainers adopt
+  the SHARED info-note primitive (hover + click-to-pin + Escape + focus restore) instead of the
+  undocumented `<details>` substitution, reusing what #53/#62 landed rather than adding a second
+  overlay. Dead CSS for the removed class deleted.
+- [2026-07-31T08:11:13-06:00] MEASURED — **#89's obvious implementation fails the contrast floor.** A
+  `--gw-tone-*-line` border on a `--gw-tone-*-well` background misses the >=3:1 state-bearing
+  border floor in **4 of 8** light/dark pairings; `caution-line` reaches only **2.05:1** in LIGHT
+  mode. Those line tokens are drawn for the page surface, not their own tint — and measuring
+  against the surface fails the same four. Each tone now uses its own TEXT token as its border:
+  8/8 pass, worst case 6.58:1, no new token. Pinned by a test. **Compute the ratio; do not assume
+  a token pairing that looks designed-for-each-other actually clears the floor.**
+- [2026-07-31T08:11:13-06:00] TRACKER BUG — **the checklist was stale for six iterations.** Iteration 33-34 corrected
+  `current_area` back to `pages-civic`, but left `current_area_checklist` as **data-contract's,
+  from iteration 32** — comments and all, including its `C11 ... THE AREA THEREFORE DOES NOT
+  GRADUATE` note. So iterations 35-41 did pages-civic work against a checklist describing a
+  different area, and any graduation test would have read the wrong area's state. Reseeded honestly
+  this iteration: only C2b/C5/C6/C11 are `done` (each measured), C4 is `in_progress` because
+  per-file coverage was never computed, C2 is `blocked` on #80, and seven checks are `pending`
+  because they were never run here. **Advancing the area must reset the checklist in the same
+  edit — `current_area` and `current_area_checklist` are one fact split across two keys.**
+- [2026-07-31T08:11:13-06:00] ITERATION 41 — **pages-civic is NOT parked and NOT graduated.** Its issues are clear
+  except owner-gated #80, which alone would satisfy the park rule — but parking requires the area
+  to be loop-COMPLETE, and seven checks have never run. Parking now would claim finished work that
+  was never done. The area stays current; next iteration starts at C1.
+- [2026-07-31T08:11:13-06:00] ITERATION 41 — 1056 tests / 67 files green (was 1045), tsc clean, build:all 0.
+  Eight red proofs across the two issues; two initially failed to fire and **both were the
+  mutation's fault, not the test's** — the recurring lesson of this session.
