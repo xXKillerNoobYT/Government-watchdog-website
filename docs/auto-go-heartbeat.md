@@ -101,23 +101,23 @@ parked_areas:
 current_area_checklist:
   C1_plan_complete: done  # iteration 19 — both bound contracts exist and are substantive (gov1568-upload-ux-spec.md 297 lines, gov1609-upload-provenance-form-model.md 224) and all three bound paths are present
   C1b_plan_vs_code_drift_clean: done  # iteration 19 — probed the spec's non-negotiables rather than trusting a grep: all 7 states from §3 implemented; the "processing" and "verified" hits are comments FORBIDDING them; projectReviewState fails closed and is tested. One real gap found and closed: §4 names PUBLICATION_ELIGIBLE_UI_STATUSES as the set F1 must never render, but the test proved fail-closed for only ONE of its three members plus a made-up value. Now table-driven over the real constant, red-proved
-  C2_qa_resolved: pending
-  C2b_github_issues_ingested: pending
+  C2_qa_resolved: done  # iteration 20 — the 3 pending dev-qa entries (Q3/Q4/Q5) are loop-level, none belongs to this area
+  C2b_github_issues_ingested: done  # iteration 20 — 0 open issues carry area:intake-upload
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: pending
-  C5_tests_pass: pending
-  C6_build_warnings_zero: pending
-  C7_ui_polish: pending  # intake-upload RENDERS (gated upload, supplied-files drawer, supersede view), so C7 is live here and inherits the iteration-16 web binding recorded in area_bindings
+  C4_tests_present: done  # iteration 20 — mutation sweep over 10 exports across all three bound paths: EVERY one produced failures (1, 1, 5, 31, 4, 11, 4, 2, 4, 5). No gap, no test written. Contrast honesty-ledger, where the same method exposed dead code
+  C5_tests_pass: done  # iteration 20 — 982/982 across 63 files
+  C6_build_warnings_zero: done  # iteration 20 — the single repo warning is the private-chunk size, which belongs to build-guards (#49) and is parked there; nothing warns from this area's paths
+  C7_ui_polish: done  # iteration 20 — inherited the iteration-16 web binding AND FOUND IT HALF-BLIND: the CS-inertness sweep hand-listed 11 routes while the router registers 22, so /upload, /cards, /topics, /sources, /body, /meeting, /agenda-boards, /timeline-legacy, /issue, /app and / were never swept. Route list now DERIVED from main.ts via Vite ?raw, with a guard on the derivation itself. Formerly: intake-upload RENDERS (gated upload, supplied-files drawer, supersede view), so C7 is live here and inherits the iteration-16 web binding recorded in area_bindings
   C7b_dev_improvement_polish: pending
   C8_security_reviewed: pending
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: pending
+  C11_github_issues_resolved: done  # iteration 20 — 0 open issues in this area
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 9  # iteration 19 overall; same day
+iteration_count: 10  # iteration 20 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -233,3 +233,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T04:35:00-06:00] ITERATION 19 — area: **intake-upload** (first iteration in the new area) — checks: **C1 and C1b done.** C1: both bound contracts exist and are substantive (`gov1568-upload-ux-spec.md` 297 lines, `gov1609-upload-provenance-form-model.md` 224) and all three bound paths are present. C1b probed the spec's non-negotiables rather than trusting a grep — and the grep would have *misled*: searching for "processing" and "verified" in `gated-upload.ts` returns hits, but every one is a **comment forbidding them**. All seven states from §3 are implemented, and `projectReviewState` fails closed with tests behind it.
 - [2026-07-31T04:35:00-06:00] ITERATION 19 — **the one real C1b finding: an invariant proven by example instead of over its own set.** Spec §4 names `PUBLICATION_ELIGIBLE_UI_STATUSES` as the set the upload surface must never render. That constant holds **three** values (`source-backed`, `archived-source-backed`, `corrected`), and the test proved fail-closed for exactly **one** of them plus an invented `'verified'`. So `archived-source-backed` and `corrected` were unproven, and a value added to the constant later could never be noticed. Replaced with a table-driven assertion over the real constant, covering the bare and `{status}` envelope forms and asserting the value never enters the renderable vocabulary. **This is the same lesson iteration 3 recorded** (assert membership over the real list, never over hand-picked examples) reappearing in a different file — worth noting that the lesson did not transfer on its own. **Red proof:** making `projectReviewState` upgrade `'corrected'` fails with `corrected: expected 'received' to be 'review_pending'`; restored, 33/33.
 - [2026-07-31T04:35:00-06:00] ITERATION 19 — **caught a mistake of my own while adding the test.** The new import initially landed on line 1, *above* the `// @vitest-environment jsdom` docblock, which vitest only honours in the file's first comment block. The suite still passed — these particular assertions are DOM-free — so a green run would have hidden a silently disabled jsdom environment for the other 32 tests in the file. Moved the import below the docblock and confirmed the environment is genuinely active by its setup cost appearing in the run summary (`environment 301ms`). 982 tests / 63 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T05:05:00-06:00] ITERATION 20 — area: intake-upload — **C2, C2b, C4, C5, C6, C7, C11 done.** **C4 by mutation over 10 exports across all three bound paths — every single one produced failures** (1, 1, 5, 31, 4, 11, 4, 2, 4, 5). No coverage gap and no test written; the same method that exposed dead code in honesty-ledger returned a clean bill here, which is what makes it worth trusting in both directions.
+- [2026-07-31T05:05:00-06:00] ITERATION 20 — **C7 inherited the iteration-16 binding and immediately found it HALF-BLIND — my own guard, four iterations old.** The CS-inertness sweep hand-listed **11 routes**; `src/main.ts` registers **22**. It had never checked `/upload`, `/cards`, `/topics`, `/sources`, `/body`, `/meeting`, `/agenda-boards`, `/timeline-legacy`, `/issue`, `/app` or `/` — including, pointedly, the route belonging to the area I had just moved into. **This is the identical hand-picked-list failure iteration 19 criticised one iteration earlier, committed by me four iterations before that.** Fixed structurally rather than by appending 11 strings: the route list is now **derived from the router's own `register()` calls** in `main.ts`, read via Vite `?raw` + `import.meta.glob` (the repo's established no-`node:fs` pattern — I nearly reached for `readFileSync`, which would have broken typecheck since there is deliberately no `@types/node`).
+- [2026-07-31T05:05:00-06:00] ITERATION 20 — **two red proofs, because the fix has two failure modes.** (1) An operable control planted in `comingSoonNote` is still caught by name — `/explainer (reviewer=1): expected <button></button> to have a length of +0 but got 1`. (2) **Breaking the derivation itself** (corrupting the `router.register` regex) fails with `expected 0 to be greater than 15` rather than silently sweeping zero routes — the derivation is guarded because a completeness guard that derives its own scope can go vacuous in a *new* way the original could not. **C8 addition:** `safeHttpUrl` is a correct protocol allow-list that fails closed; added the two evasion shapes it handles but nothing asserted — a `data:` URI carrying markup and a mixed-case `JaVaScRiPt:` scheme. 982 tests / 63 files, tsc clean, `build:all` exit 0.
