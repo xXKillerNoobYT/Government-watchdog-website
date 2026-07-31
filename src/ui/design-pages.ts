@@ -1500,6 +1500,36 @@ function reviewedLocationLabel(location: SavedLocation | null): string {
   return [location.state, location.county, location.region, location.town].filter(Boolean).join(' › ');
 }
 
+/**
+ * GOV-87: the baseline's coverage board carries a fourth tile beside Town/County/State
+ * — `SPEED = DEMAND + FUNDING`, with "fund your area ›". The slot vanished from both
+ * lanes instead of being represented, which is precisely what the handoff forbids.
+ *
+ * It is restored as **CS**: no payment, pledge, or funding capability exists anywhere
+ * in this phase, so there is no contract to await and none is named.
+ *
+ * Two things are deliberately NOT reproduced. The baseline's line "backlog moves
+ * fastest where residents ask & fund it" is an **unsourced causal claim about
+ * processing speed** — restoring the slot must not restore that assertion. And the
+ * "fund your area ›" call to action is rendered as inert text: no `href`, no form, no
+ * control, nothing that could read as a payment path.
+ */
+function fundingSlot(): HTMLElement {
+  ensureComingSoonStyle();
+  return el('article', {
+    class: 'gw-dp-stat gw-dp-stat-unavailable',
+    'data-test': 'location-funding-slot',
+    'data-origin': 'coming-soon',
+  }, [
+    el('strong', {}, ['Funding']),
+    comingSoonNote(
+      'Fund your area',
+      'No payment, pledge, or funding capability exists in this beta. No backlog, '
+      + 'processing-speed, or funding-effect figure is calculated, and none is implied.',
+    ),
+  ]);
+}
+
 function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void {
   const location = readReviewedDeviceLocation();
   const records = reviewedRecords(data);
@@ -1575,6 +1605,7 @@ function renderReviewedLocation(frame: PageFrame, data?: ReadApiResponse): void 
         el('span', {}, ['Coverage unavailable']),
         el('small', { class: 'gw-dp-muted' }, ['No reviewed denominator or freshness value']),
       ])),
+      fundingSlot(),
     ]),
   ], {}, 'location-coverage');
   const disabledDirectoryTiles = (): HTMLElement => {
@@ -1825,6 +1856,7 @@ export function renderLocation(
               el('strong', {}, ['State 21%']),
               el('span', {}, ['Fixture estimate']),
             ]),
+            fundingSlot(),
           ]),
           panel('Pick your state', 'STEP 1 · SYNTHETIC COVERAGE MAP', [
             el('p', { class: 'gw-dp-muted' }, ['The tiles demonstrate selection behavior. They do not represent voting patterns, availability, or current coverage.']),
@@ -1867,6 +1899,7 @@ export function renderLocation(
           el('strong', {}, ['State 21%']),
           el('span', {}, ['Fixture estimate']),
         ]),
+        fundingSlot(),
       ]),
       panel('Pick your state', 'STEP 1 · SYNTHETIC COVERAGE MAP', [
         el('p', { class: 'gw-dp-muted' }, ['The tiles demonstrate selection behavior. They do not represent voting patterns, availability, or current coverage.']),

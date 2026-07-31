@@ -758,6 +758,20 @@ describe('Alerts read-state, tracked count, and device-only delivery preview', (
     expect(preview?.textContent).not.toContain('/v1/me/alert-preferences');
   });
 
+  it('restores the Location funding slot as a Coming Soon marker with no funding claim', () => {
+    // GOV-87: the baseline's fourth coverage-board tile vanished from both lanes.
+    renderLocation(root, REVIEWED_OPTIONS, REVIEWED_DATA);
+    const slot = root.querySelector('[data-test="location-funding-slot"]');
+    expect(slot).not.toBeNull();
+    expect(slot?.textContent).toContain('COMING SOON');
+    expect(slot?.textContent).toContain('No payment, pledge, or funding capability exists');
+    // No numeric coverage or funding value, and no causal speed claim from the baseline.
+    expect(slot?.textContent).not.toMatch(/\d+\s?%/);
+    expect(slot?.textContent).not.toContain('backlog moves fastest');
+    // Inert: the baseline's "fund your area >" CTA must not become a payment path.
+    expect(slot?.querySelectorAll('a, button, input, form, [href]')).toHaveLength(0);
+  });
+
   it('leaves the reviewed lane unchanged: five disabled channels naming the awaited contract', () => {
     renderAlerts(root, REVIEWED_OPTIONS, REVIEWED_DATA);
     const controls = root.querySelector('[data-test="alerts-real-delivery-controls"]')!;

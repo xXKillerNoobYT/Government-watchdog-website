@@ -483,7 +483,36 @@ function editionHistorySelector(): HTMLElement {
   ]);
 }
 
-function simpleSearchTools(): HTMLElement {
+/**
+ * GOV-75: the baseline puts an upsell beside the Simple 90-day search field. It
+ * vanished rather than being marked, so a reviewer diffing against `Home.dc.html`
+ * saw an unexplained omission.
+ *
+ * It is **CS, not DG**: no payment, plan, entitlement, or account tier exists in any
+ * lane, so there is no backend contract to await and none is named here. The
+ * baseline's `$25/yr Local Data Geek` figure is deliberately **omitted** — backend
+ * #131 has not approved customer-facing plan names or pricing, and printing an
+ * unapproved price would be exactly the invented commercial claim this class exists
+ * to prevent. Nothing in the slot is focusable, clickable, or linked.
+ *
+ * `withUpsell` is opt-in because this function also builds the Advanced briefing
+ * (`advancedBriefingGroups`), which GOV-75 requires to stay unchanged.
+ */
+function simpleUpsellSlot(): HTMLElement {
+  return el('aside', {
+    class: 'gw-simple-tool-upsell',
+    'data-test': 'home-simple-upsell',
+    'data-origin': 'coming-soon',
+  }, [
+    comingSoonNote(
+      'Supporter plan',
+      'There is no paid plan, checkout, account tier, or entitlement anywhere in this beta, '
+      + 'and no price has been approved. Nothing on this page can be purchased or subscribed to.',
+    ),
+  ]);
+}
+
+function simpleSearchTools(withUpsell = false): HTMLElement {
   const inputId = 'gw-home-simple-search';
   return el('section', { class: 'gw-simple-tools', 'data-test': 'home-simple-90-day-tools', 'data-origin': 'designed-gap' }, [
     el('div', { class: 'gw-simple-tool-copy' }, [
@@ -506,6 +535,7 @@ function simpleSearchTools(): HTMLElement {
       ]),
       el('small', {}, ['Designed slot · awaiting a reviewed archive-search projection.']),
     ]),
+    ...(withUpsell ? [simpleUpsellSlot()] : []),
   ]);
 }
 
@@ -593,7 +623,7 @@ function renderSimple(root: HTMLElement, model: HomeModel, opts: HomeOptions, se
         el('p', {}, [dateline]),
       ]),
       levelFilter(model.level, setLevel),
-      simpleSearchTools(),
+      simpleSearchTools(true),
       simpleThings(model),
       el('div', { class: 'gw-simple-layout' }, [
         el('aside', { class: 'gw-simple-rail' }, [fastAgenda(model, Boolean(opts.demo)), transparencyAlerts(Boolean(opts.demo))]),
