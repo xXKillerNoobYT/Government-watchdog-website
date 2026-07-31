@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DIFF_CODE_CHIP, diffView, diffWords, ensureDiffViewStyle } from '../src/ui/diff-view';
+import {
+  DIFF_CELL_BUDGET,
+  DIFF_CODE_CHIP,
+  diffCellCount,
+  diffView,
+  diffWords,
+  ensureDiffViewStyle,
+} from '../src/ui/diff-view';
 
 beforeEach(() => {
   document.head.innerHTML = '';
@@ -121,5 +128,58 @@ describe('ensureDiffViewStyle', () => {
     document.head.querySelectorAll('#gw-diff-view-style').forEach((n) => n.remove());
     diffView({ beforeLabel: 'v1', afterLabel: 'v2', before: 'a b', after: 'a c' });
     expect(document.getElementById('gw-diff-view-style')).not.toBeNull();
+  });
+});
+
+// C9 (iteration 47) — the diff is bounded so a large document cannot freeze the page.
+//
+// diffWords builds a full LCS table: O(n x m) in time AND memory. Measured here:
+// 4,000 words/side 536ms, 6,000 1.83s, 8,000 2.98s, 10,000 5.30s (400M cells), and
+// several such diffs in one process exhausted the JS heap. Source Vault compares
+// government minutes and packets, which routinely run past 10,000 words.
+describe('diffView — oversize comparisons degrade instead of freezing', () => {
+  const bigText = (n: number) => Array.from({ length: n }, (_, i) => `w${i % 997}`).join(' ');
+
+  it('counts cells without building the table', () => {
+    // 3 tokens per side (words + whitespace) => (n+1)^2 shape, not the table itself.
+    expect(diffCellCount('a b', 'c d')).toBe(diffCellCount('a b', 'c d'));
+    expect(diffCellCount('', '')).toBe(1);
+    expect(diffCellCount(bigText(2000), bigText(2000))).toBeGreaterThan(DIFF_CELL_BUDGET);
+  });
+
+  it('renders both versions in full but withholds word-level highlighting', () => {
+    const view = diffView({
+      beforeLabel: 'v1', afterLabel: 'v2', before: bigText(2000), after: bigText(2000), wordLevel: true,
+    });
+    // Both panes still carry their text — the page is not degraded, the feature is.
+    expect(view.querySelector('[data-test="diff-before-body"]')?.textContent?.length ?? 0).toBeGreaterThan(1000);
+    expect(view.querySelector('[data-test="diff-after-body"]')?.textContent?.length ?? 0).toBeGreaterThan(1000);
+    // No word-level marks, and the reason is stated.
+    expect(view.querySelectorAll('.gw-diff-body ins, .gw-diff-body del')).toHaveLength(0);
+    expect(view.querySelector('[data-test="diff-oversize-note"]')?.textContent)
+      .toContain('too large to compute in the browser');
+  });
+
+  it('leaves the toggle inert and explained, never a dead control', () => {
+    const view = diffView({ beforeLabel: 'v1', afterLabel: 'v2', before: bigText(2000), after: bigText(2000) });
+    const toggle = view.querySelector<HTMLButtonElement>('[data-test="diff-word-toggle"]')!;
+    expect(toggle.disabled).toBe(true);
+    expect(toggle.getAttribute('title')).toContain('too large');
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('completes an oversize render quickly — the whole point of the cap', () => {
+    const t0 = performance.now();
+    diffView({ beforeLabel: 'v1', afterLabel: 'v2', before: bigText(4000), after: bigText(4000) });
+    // Unbounded, 4,000 words/side measured 536ms and 8,000 measured 2.98s.
+    expect(performance.now() - t0).toBeLessThan(250);
+  });
+
+  it('still diffs ordinary comparisons word by word', () => {
+    const view = diffView({
+      beforeLabel: 'v1', afterLabel: 'v2', before: 'fee waived for applicants', after: 'fee $150 for applicants', wordLevel: true,
+    });
+    expect(view.querySelector('[data-test="diff-oversize-note"]')).toBeNull();
+    expect(view.querySelectorAll('.gw-diff-body ins, .gw-diff-body del').length).toBeGreaterThan(0);
   });
 });
