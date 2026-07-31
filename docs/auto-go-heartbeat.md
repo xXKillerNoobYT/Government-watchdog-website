@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T08:11:13-06:00
-last_task: "GOV-89 + GOV-90 shipped; pages-civic checklist reseeded after a 6-iteration staleness"
+last_run: 2026-07-31T08:30:47-06:00
+last_task: "pages-civic C1 (bound) + C1b drift sweep — /vault origin fixed (PR #164), Boards GS gap filed (#163)"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -123,8 +123,8 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: pending  # iteration 41 — NOT run for this area. No docs/plans/area-pages-civic.md exists
-  C1b_plan_vs_code_drift_clean: pending  # iteration 41 — not run for this area
+  C1_plan_complete: done  # iteration 42 — satisfied BY BINDING, not by a new doc. C1's own rule: where area_bindings exists, that area's `contracts:` ARE the plan. All four resolve (design-information-type-matrix.md, docs/product/, the card-feed and newsletter frontend contracts), as do all 10 paths and all 9 test globs. My iteration-41 note claiming no plan existed was wrong — it read the literal docs/plans/ path instead of the binding
+  C1b_plan_vs_code_drift_clean: done  # iteration 42 — swept all 12 GS rows in the matrix against the renderers. TWO drifts found: (1) /vault rendered a synthetic diff while the shell said live_server — MY defect from GOV-82, fixed in PR #164; (2) matrix §4 declares a GS row for populated Boards cards with no renderer and /boards absent from SHELL_DESIGN_FIXTURE_ROUTES — filed as #163 because it is a scope decision, not a fix
   C2_qa_resolved: blocked  # iteration 41 — #80 is open and labelled owner-decision (the timeline TOWN lane; StatementRecord carries no event date or type). Correctly blocked on a person, not on a missing prerequisite
   C2b_github_issues_ingested: done  # iterations 35-41 — every pages-civic issue read and dispositioned: #76 #84 #83 #82 #78 #89 #90 shipped, #80 investigated and declined as scoped with its blocker recorded on the issue
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
@@ -141,7 +141,7 @@ current_area_checklist:
   C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
   C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
 in_progress: false
-iteration_count: 31
+iteration_count: 32
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -481,3 +481,25 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T08:11:13-06:00] ITERATION 41 — 1056 tests / 67 files green (was 1045), tsc clean, build:all 0.
   Eight red proofs across the two issues; two initially failed to fire and **both were the
   mutation's fault, not the test's** — the recurring lesson of this session.
+- [2026-07-31T08:30:47-06:00] ITERATION 42 — area: pages-civic — checks C1 and C1b. **C1 done by BINDING, not by
+  writing a doc.** C1's own rule says an area whose `area_bindings` lists `contracts:` has a plan;
+  all four contracts, all ten paths and all nine test globs resolve. My iteration-41 note claiming
+  no plan existed was wrong — it checked the literal `docs/plans/` path instead of the binding.
+- [2026-07-31T08:30:47-06:00] ITERATION 42 — **C1b swept all 12 GS rows in the matrix against the renderers and found
+  two drifts.** (1) **My own defect from GOV-82:** the Vault's gated version-compare fixture
+  shipped without adding `/vault` to `SHELL_DESIGN_FIXTURE_ROUTES`, so under `demo=design` the page
+  rendered a synthetic diff while the shell declared `live_server` — the exact disagreement GOV-76
+  and GOV-84 fixed on two other routes. Fixed in PR #164, red-proofed. (2) Matrix §4 declares a GS
+  row for populated Boards cards, but no renderer exists and `/boards` is absent from the route
+  set — the ledger promises a lane the code lacks. Filed as **#163**, not fixed: building it is a
+  scope decision and the honest alternative is changing the ledger row.
+- [2026-07-31T08:30:47-06:00] LESSON — **a green test pinned a pre-fix state for the THIRD time this session.**
+  `design-routes.test.ts` asserted `/vault` stays `live_server` under design preview. That was
+  correct until GOV-82 landed the fixture, then silently wrong — and it is why the drift survived
+  review. Same shape as `/newsletter` (#84) and the Power `\b\d+%` sweep (#83).
+  **When you add a fixture to a route, the test asserting that route has no fixture is part of the
+  change — not a separate discovery three iterations later.**
+- [2026-07-31T08:30:47-06:00] LESSON — **zsh does not glob after parameter expansion.** Verifying the binding, `ls $g`
+  with `g='test/timeline*.test.ts'` returned 0 files and I nearly recorded a false 'stale binding'
+  finding. `ls ${~g}` returns 5. Bash would have expanded it; zsh needs `${~g}`. **Adds to the
+  existing BSD-awk entry: verify the probe before believing a negative result about the repo.**
