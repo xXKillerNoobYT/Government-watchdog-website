@@ -19,6 +19,7 @@ import type {
 } from '../types/read-api';
 import { ensureStyle, gapCardSection, recordCard } from './render';
 import { readMode } from './shell';
+import { ISSUE_SLUGS } from './timeline-design';
 import {
   groupSuppliedFilesByMeeting,
   pendingReviewNotice,
@@ -424,7 +425,18 @@ function timelineUnavailableTools(exactGovernmentLevel: 'town' | 'unavailable'):
         unavailable('timeline-type-deadline-unavailable', 'Deadline'),
         unavailable('timeline-type-vote-unavailable', 'Vote'),
       ]),
-      toolGroup('Issue run', [unavailable('timeline-issue-preset-unavailable', 'Issue preset · unavailable')]),
+      toolGroup('Issue run', [(() => {
+        // GOV-81 AC4: a disabled pill labelled only "unavailable" tells a reviewer
+        // nothing about WHY. The accessible name names the missing contract, so a
+        // screen-reader user gets the same explanation a sighted reviewer reads.
+        const preset = unavailable('timeline-issue-preset-unavailable', 'Issue preset · unavailable');
+        preset.setAttribute(
+          'aria-label',
+          'Issue preset unavailable: typed cross-record issue edges are not supplied. '
+          + 'A reviewed issue/thread contract with receipt-backed edges has not shipped.',
+        );
+        return preset;
+      })()]),
       toolGroup('Event window', [
         unavailable('timeline-window-next-unavailable', 'Next 3 weeks · unavailable'),
         unavailable('timeline-window-90-unavailable', 'Past 90 days · unavailable'),
@@ -676,6 +688,17 @@ export function renderTimelineLevels(
 ): void {
   ensureTimelineHybridStyle();
   const exactGovernmentLevel = options.exactGovernmentLevel ?? 'unavailable';
+  // GOV-81: `?issue=<slug>` is the baseline's canonical deep link into a pre-filtered
+  // issue run. The reviewed lane used to DISCARD it silently, so a reviewer following a
+  // design link landed on an ordinary unfiltered Timeline and could reasonably conclude
+  // the requested issue run has no events. That is the false-completeness reading the DG
+  // class exists to prevent — dropping a parameter on the floor is neither RV nor DG.
+  //
+  // Nothing here filters, orders, highlights or connects anything: typed cross-record
+  // issue edges do not exist yet. The slot's whole job is to say so, by name.
+  const requestedIssue = query.get('issue');
+  const issueSlugKnown = requestedIssue !== null
+    && (ISSUE_SLUGS as readonly string[]).includes(requestedIssue);
   const shell = pageShell(root, 'timeline-levels-page', 'Timeline', {
     admitted: data.access === 'reviewer_internal',
     noteId: 'timeline-overview',
@@ -750,7 +773,38 @@ export function renderTimelineLevels(
       el('span', {}, [`Level: ${level}`]),
       el('span', {}, [`Type: ${type}`]),
       ...(search ? [el('span', { 'data-test': 'timeline-search-filter' }, [`Search: ${search}`])] : []),
+      ...(requestedIssue !== null
+        ? [el('span', {
+            'data-test': 'timeline-issue-filter',
+            'data-issue-slug': requestedIssue,
+            'data-issue-known': String(issueSlugKnown),
+          }, [issueSlugKnown
+            ? `Issue: ${requestedIssue} — requested, not applied`
+            : `Issue: ${requestedIssue} — unrecognised`])]
+        : []),
     ]),
+    ...(requestedIssue !== null ? [el('section', {
+      class: 'gw-state',
+      role: 'status',
+      'data-test': 'timeline-issue-deeplink-unavailable',
+      'data-issue-slug': requestedIssue,
+      'data-issue-known': String(issueSlugKnown),
+    }, [
+      el('h3', {}, [issueSlugKnown
+        ? `Issue run "${requestedIssue}" is not available`
+        : `Issue run "${requestedIssue}" is not a recognised issue`]),
+      el('p', {}, [issueSlugKnown
+        ? 'This deep link was received and is NOT applied. The reviewed lane has no typed '
+          + 'cross-record issue edges, so no run can be assembled — the events below are the '
+          + 'unfiltered reviewed timeline, not this issue.'
+        : 'This deep link was received and is NOT applied. The slug is not one of the '
+          + 'baseline issue runs, and it was not silently treated as "all" — the events below '
+          + 'are the unfiltered reviewed timeline.'],
+      ),
+      el('p', { class: 'gw-muted' }, [
+        'Awaiting a reviewed issue/thread contract supplying typed, receipt-backed edges.',
+      ]),
+    ])] : []),
     timelineFilterBar(query, level, type, filtered.length),
     timelineUnavailableTools(exactGovernmentLevel),
   );

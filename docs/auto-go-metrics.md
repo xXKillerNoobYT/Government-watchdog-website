@@ -39,6 +39,8 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 30 | shell-nav | #72 freshness slots | done | 1 | 1 | 4 | 1800 | none due; clock guard had to be scoped to originBanner, not the module (shell-local-date is a legitimate clock read) |
 | 2026-07-31 | 31 | shell-nav | C1..C13 → ✅ GRADUATED | done | 1 | 0 | 0 | 1200 | none due; SIXTH graduation (17/17); renderShell mutation-swept at 81 failing tests |
 | 2026-07-31 | 32 | data-contract | C1..C13 (C11 in_progress) | in_progress | 2 | 0 | 0 | 1500 | none due; area deliberately NOT graduated — #70 is agent-reachable work not started, not an owner gate; found #70/#85 overlap unrecorded on both, and a stale PR #57 blocker |
+| 2026-07-31 | 33 | pages-civic | #85 orphan deletion | done | 2 | 1 | 3 | 2400 | none due; 201 lines deleted; BSD awk word-boundary failure made grep analysis silently wrong; tsc found what grep missed |
+| 2026-07-31 | 34 | pages-civic | #81 timeline deep link | done | 2 | 1 | 7 | 2100 | none due; repeated the word-ban trap documented one iteration earlier; a red proof reported "no tests" (broken run, not a result) |
 
 ## Findings this iteration
 
