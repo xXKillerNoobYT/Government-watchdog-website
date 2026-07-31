@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T11:11:59-06:00
-last_task: "C9 performance — word-level diff bounded against document-sized inputs (PR #175)"
+last_run: 2026-07-31T11:48:23-06:00
+last_task: "C11b+C12+C13 done; pages-civic PARKED on #80; rotation advanced to data-contract"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -76,7 +76,7 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: pages-civic
+current_area: data-contract
 graduated_areas:
   shell-nav:
     graduated: 2026-07-31
@@ -107,6 +107,32 @@ graduated_areas:
     result: 17 of 17 rows done or n/a — zero pending, zero blocked. FIRST area to graduate on either GOV repo.
     shipped: "#69 (P0, the CS binding class) unblocked #86, #75 and #87; area backlog went 4 -> 0. C7 was BOUND to the web surface rather than inherited as n/a, producing the CS-inertness sweep. C4 measured coverage by mutation and deleted the one gap as dead code."
 parked_areas:
+  pages-civic:
+    parked_at: 2026-07-31
+    state: 15 of 16 resolved (13 done, 2 n/a); C2 blocked
+    blocker: "C2 — open issue #80 carries owner-decision. The three-lane timeline TOWN lane cannot be built honestly: axisPercent places a dot proportionally between two dates, so placing a reviewed record there claims the thing happened then, and StatementRecord carries no event date and no event type. Every other check is done or n/a."
+    resume_when: >-
+      #80 is decided. #163 (Boards GS row with no fixture renderer) stays open as
+      agent-reachable work and is NOT blocked by #80 — its deferral reason is recorded
+      on the issue itself.
+    preserved_checklist:
+      C1_plan_complete: done  # iteration 42 — satisfied BY BINDING, not by a new doc. C1's own rule: where area_bindings exists, that area's `contracts:` ARE the plan. All four resolve (design-information-type-matrix.md, docs/product/, the card-feed and newsletter frontend contracts), as do all 10 paths and all 9 test globs. My iteration-41 note claiming no plan existed was wrong — it read the literal docs/plans/ path instead of the binding
+      C1b_plan_vs_code_drift_clean: done  # iteration 42 — swept all 12 GS rows in the matrix against the renderers. TWO drifts found: (1) /vault rendered a synthetic diff while the shell said live_server — MY defect from GOV-82, fixed in PR #164; (2) matrix §4 declares a GS row for populated Boards cards with no renderer and /boards absent from SHELL_DESIGN_FIXTURE_ROUTES — filed as #163 because it is a scope decision, not a fix
+      C2_qa_resolved: blocked  # iteration 41 — #80 is open and labelled owner-decision (the timeline TOWN lane; StatementRecord carries no event date or type). Correctly blocked on a person, not on a missing prerequisite
+      C2b_github_issues_ingested: done  # iterations 35-41 — every pages-civic issue read and dispositioned: #76 #84 #83 #82 #78 #89 #90 shipped, #80 investigated and declined as scoped with its blocker recorded on the issue
+      C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
+      C4_tests_present: done  # iteration 43 — bound to MUTATION measurement, not line coverage: no coverage tooling is installed and it cannot safely be added here (vitest resolves from the PARENT repo's node_modules, the owner's working copy). Swept all 17 void render entry points; 2 were undetected (ensureDiffViewStyle, ensureTimelineLanesStyle — both would render unstyled with a green suite) and are now covered and red-proofed. Also completed the area binding, which CHANGED the numbers: renderAlerts 0->13, renderPowerTracker 1->22
+      C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
+      C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
+      C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
+      C7b_dev_improvement_polish: done  # iteration 45 — intent applied to the web surface (the SKILL carries 12 iOS references). Runtime-safety hunt found a real precision defect: a partial date '2026-07' was filed as a DAY labelled "NaN"; malformed values gave month label `undefined`. Fixed by routing non-full dates to the existing undated bucket (PR #171), red-proofed. Duplication finding filed as #170
+      C8_security_reviewed: done  # iteration 46 — found and fixed a REAL exploitable path: supplied source URLs were bound to href with no scheme validation anywhere in src/. Planting javascript:alert(1) produced 4 live anchors on the newsletter detail view. Fixed centrally in every module's el() helper via safeExternalHref (PR #173), control-character bypasses covered, red-proofed end to end
+      C9_performance_reviewed: done  # iteration 47 — MEASURED a real cliff: diffWords is a full LCS table, O(n x m) in time AND memory. 10,000 words/side = 5.30s main-thread freeze and 400M cells; several diffs in one process exhausted the JS heap. Bounded by DIFF_CELL_BUDGET (PR #175) — both versions still render in full, only highlighting is withheld. Red-proofed, with a timing assertion
+      C10_cross_platform_parity: "n/a (no second platform)"
+      C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
+      C11b_process_gaps_clean: done  # iteration 48 — found a real process gap: C11 was marked done in iteration 41 when #80 was the only open pages-civic issue, then THIS loop filed #163 (iter 42) and #170 (iter 45) into the same area. A check marked done is a claim about a moment, not a standing guarantee. #170 closed (PR #177), #163 deferred with its reason recorded on the issue
+      C12_claude_md_reflects_area: done  # iteration 48 — two hard stops added: "never invent" includes PRECISION (a month-precision date rendered as a day is invented even when every character came from the backend), and never put a supplied value straight into an href (assertWebSafe does not cover schemes)
+      C13_automation_opportunities_reviewed: done  # iteration 48 — phase 2 empty (Q4 still owner-pending, nothing built without approval). Phase 1 closed one gap as ordinary work: the C8 href fix is central by design but nothing asserted all 25 el() helpers still route through safeExternalHref. Guard added at test/href-guard-coverage.test.ts
   build-guards:
     parked_at: 2026-07-31
     state: 15 of 16 resolved (12 done, 3 n/a); C6 blocked
@@ -123,25 +149,25 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: done  # iteration 42 — satisfied BY BINDING, not by a new doc. C1's own rule: where area_bindings exists, that area's `contracts:` ARE the plan. All four resolve (design-information-type-matrix.md, docs/product/, the card-feed and newsletter frontend contracts), as do all 10 paths and all 9 test globs. My iteration-41 note claiming no plan existed was wrong — it read the literal docs/plans/ path instead of the binding
-  C1b_plan_vs_code_drift_clean: done  # iteration 42 — swept all 12 GS rows in the matrix against the renderers. TWO drifts found: (1) /vault rendered a synthetic diff while the shell said live_server — MY defect from GOV-82, fixed in PR #164; (2) matrix §4 declares a GS row for populated Boards cards with no renderer and /boards absent from SHELL_DESIGN_FIXTURE_ROUTES — filed as #163 because it is a scope decision, not a fix
-  C2_qa_resolved: blocked  # iteration 41 — #80 is open and labelled owner-decision (the timeline TOWN lane; StatementRecord carries no event date or type). Correctly blocked on a person, not on a missing prerequisite
-  C2b_github_issues_ingested: done  # iterations 35-41 — every pages-civic issue read and dispositioned: #76 #84 #83 #82 #78 #89 #90 shipped, #80 investigated and declined as scoped with its blocker recorded on the issue
+  C1_plan_complete: done  # iteration 32 — docs/plans/area-data-contract.md
+  C1b_plan_vs_code_drift_clean: done  # iteration 32
+  C2_qa_resolved: done  # iteration 32 — no data-contract question pending
+  C2b_github_issues_ingested: done  # iteration 32 — #70 ingested and analysed
   C3_hunt_fix_clean: "n/a (retired 2026-07-30)"
-  C4_tests_present: done  # iteration 43 — bound to MUTATION measurement, not line coverage: no coverage tooling is installed and it cannot safely be added here (vitest resolves from the PARENT repo's node_modules, the owner's working copy). Swept all 17 void render entry points; 2 were undetected (ensureDiffViewStyle, ensureTimelineLanesStyle — both would render unstyled with a green suite) and are now covered and red-proofed. Also completed the area binding, which CHANGED the numbers: renderAlerts 0->13, renderPowerTracker 1->22
-  C5_tests_pass: done  # iteration 41 — 1056/1056 across 67 files, and main verified green after every merge
-  C6_build_warnings_zero: done  # iteration 41 — tsc --noEmit clean and build:all exit 0 on every iteration
-  C7_ui_polish: done  # iteration 44 — re-bound from the WiredPart iOS scanner to this web surface (Q2 said to do this when the rotation reached pages-civic). Scanner 2 run as a source sweep: 2 genuine dead controls found and fixed, guard added at test/ui-dead-controls.test.ts with a planted-defect check. Scanners 5 (SQL) and 6 (plan alignment) are n/a here — no SQL in the frontend, and plan alignment is C1b
-  C7b_dev_improvement_polish: done  # iteration 45 — intent applied to the web surface (the SKILL carries 12 iOS references). Runtime-safety hunt found a real precision defect: a partial date '2026-07' was filed as a DAY labelled "NaN"; malformed values gave month label `undefined`. Fixed by routing non-full dates to the existing undated bucket (PR #171), red-proofed. Duplication finding filed as #170
-  C8_security_reviewed: done  # iteration 46 — found and fixed a REAL exploitable path: supplied source URLs were bound to href with no scheme validation anywhere in src/. Planting javascript:alert(1) produced 4 live anchors on the newsletter detail view. Fixed centrally in every module's el() helper via safeExternalHref (PR #173), control-character bypasses covered, red-proofed end to end
-  C9_performance_reviewed: done  # iteration 47 — MEASURED a real cliff: diffWords is a full LCS table, O(n x m) in time AND memory. 10,000 words/side = 5.30s main-thread freeze and 400M cells; several diffs in one process exhausted the JS heap. Bounded by DIFF_CELL_BUDGET (PR #175) — both versions still render in full, only highlighting is withheld. Red-proofed, with a timing assertion
+  C4_tests_present: done  # iteration 32 — mutation sweep on the leak boundary
+  C5_tests_pass: done  # iteration 48 — 1086/1086 across 71 files
+  C6_build_warnings_zero: done  # iteration 48 — tsc clean, build:all 0
+  C7_ui_polish: "n/a (no UI surface — src/data, src/types, src/fixtures, src/state)"
+  C7b_dev_improvement_polish: done  # iteration 32
+  C8_security_reviewed: done  # iteration 46 — safeExternalHref added to src/data/web-safe.ts and swept repo-wide
+  C9_performance_reviewed: done  # iteration 32
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: done  # iteration 41 — 7 shipped, and #80 deferred with an explicit measured reason plus the owner-decision label, which is what this check asks for
-  C11b_process_gaps_clean: pending  # iteration 41 — not run for this area
-  C12_claude_md_reflects_area: pending  # iteration 41 — not run for this area
-  C13_automation_opportunities_reviewed: pending  # iteration 41 — not run for this area
+  C11_github_issues_resolved: in_progress  # iteration 32, re-affirmed iteration 48 — #70 is agent-reachable work NOT owner-gated. Marking it done would claim a deferral that is really an unfinished task. THE AREA THEREFORE DOES NOT GRADUATE. Sequencing recorded: #85 first (done), then types -> shared module -> two migrations
+  C11b_process_gaps_clean: done  # iteration 32
+  C12_claude_md_reflects_area: done  # iteration 32
+  C13_automation_opportunities_reviewed: done  # iteration 32
 in_progress: false
-iteration_count: 37
+iteration_count: 38
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -623,3 +649,36 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T11:11:59-06:00] ITERATION 47 — 1078 tests / 70 files green (was 1073), tsc clean, build:all 0. Five new
   tests including a **timing assertion** (oversize render under 250ms, against 536ms unbounded at
   the same size). Red-proofed: removing the cap fails 3.
+- [2026-07-31T11:48:23-06:00] ITERATION 48 — area: pages-civic — **C11b, C12 and C13 done. Area PARKED, not
+  graduated.** Every check is `done` or `n/a` except C2, correctly blocked on owner decision #80.
+  Parking keeps the block visible and lets the rotation advance; marking C2 `done` would convert an
+  honest 'waiting on a person' into a false 'finished'. `current_area` -> **data-contract**, whose
+  own checklist still carries its honest 16/17 from iteration 32 (C11 `in_progress` on #70).
+- [2026-07-31T11:48:23-06:00] C11b FINDING — **a check marked `done` is a claim about a moment, not a standing
+  guarantee.** C11 passed in iteration 41 when #80 was the only open pages-civic issue; then THIS
+  loop filed #163 (iter 42) and #170 (iter 45) into the same area. Parking would have stranded two
+  agent-reachable issues under a block that does not apply to them. #170 closed (PR #177); #163
+  deferred with its reason recorded ON the issue, not just in the tracker.
+- [2026-07-31T11:48:23-06:00] LESSON — **a behaviour test can pass while the thing it was written for is bypassed.**
+  My GOV-170 tests exercised local-store's helpers (always correct) and stayed green when the
+  shared writer was bypassed inside design-pages. The guarantee #170 asks for is a SOURCE property
+  — one implementation, not two — so it had to be asserted as one.
+- [2026-07-31T11:48:23-06:00] LESSON — **a guard was fooled by its own explanatory comment.** The C13 href-coverage
+  sweep used `src.includes('safeExternalHref')`; the COMMENT above the check satisfied it, so
+  deleting the real call still passed. Comments are now stripped and a real call is required.
+  **A guard that matches prose is not testing behaviour** — strip comments before any source-level
+  assertion about code.
+- [2026-07-31T11:48:23-06:00] ITERATION 48 — 1086 tests / 71 files green (was 1078), tsc clean, build:all 0.
+- [2026-07-31T11:49:55-06:00] ITERATION 48 — **CORRECTION, self-caught: I nearly repeated iteration 42's bug.**
+  My park script matched `parked_area:` (singular). The real key is **`parked_areas:`** (plural,
+  holding build-guards and deploy-release), so the regex matched nothing, the conditional fell
+  through, and **the park was never written** — `current_area` advanced to data-contract while
+  pages-civic's checklist still sat in `current_area_checklist`, about to be silently overwritten.
+  Exactly the advance-without-preserving failure iteration 42 recorded, committed by the same loop
+  six iterations later. Caught because my own verification probe threw instead of printing —
+  **`check-tracker.py` passed throughout, because it validates gate keys, not whether a park
+  actually happened.** Fixed: pages-civic is now under `parked_areas` in the existing schema with
+  its checklist preserved, and data-contract's checklist is seeded from its real iteration-32
+  state rather than inheriting pages-civic's.
+  **Rule reinforced: read the existing key before writing a new one, and never trust a script that
+  reports success without asserting the write landed.**
