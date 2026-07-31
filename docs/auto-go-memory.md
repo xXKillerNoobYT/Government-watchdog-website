@@ -449,6 +449,17 @@
   **Writing a lesson down is not the same as having it available when the same shape recurs**
   — assert the CLAIM, never the vocabulary.
 
+- **[2026-07-31] Before wiring a primitive, check what its INPUTS assert.** #80's lane
+  primitive takes `date` and positions a dot on a time axis — which claims *the event
+  happened then*. `StatementRecord` has no event date and no event type, and every date
+  basis the repo can derive is explicitly `isEventDate: false`. Wiring it would have
+  rendered a capture timestamp as an event time. **A primitive's parameter names are a
+  contract about what the caller is claiming.**
+- **[2026-07-31] Read a ledger row to the end of the sentence.** The matrix classes the Town
+  axis RV — *"Display-order dates come only from agenda/source/scan/validation fields **and
+  are labelled as such**."* The qualifier authorises a labelled ordering list, not a
+  position on a dated axis. An issue quoting the first half of a row is not quoting the row.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
