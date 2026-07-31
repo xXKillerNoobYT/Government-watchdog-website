@@ -878,6 +878,10 @@ function renderNewsletterRoute(
   query: URLSearchParams,
   data?: ReadApiResponse,
 ): void {
+  // GOV-84: the gated fixture lane. `designPreviewActive` is the same session-sticky
+  // reviewer flag the other design routes use; the reviewer half is enforced inside
+  // the renderers, which admit only the reviewer lane before rendering anything.
+  const designFixture = designPreviewActive(query);
   const requestedPublic = query.get('access') === 'public';
   const newsletter = requestedPublic
     ? { ...NEWSLETTER_DIGEST, access: 'public' }
@@ -887,7 +891,11 @@ function renderNewsletterRoute(
     renderNewsletterState(mount, forced as NewsletterStateKind, newsletter.access);
     return;
   }
-  if (query.get('demo') !== 'snapshot') {
+  // The reviewed lane still renders the live contract gap. The gated fixture lane is the
+  // one exception: it exists precisely so the owner can see the populated edition, so it
+  // takes the archive/detail path instead of the gap page. Reviewer admission is still
+  // enforced downstream by `admitReviewerLane`.
+  if (query.get('demo') !== 'snapshot' && !designFixture) {
     if (!data) {
       renderReviewerContextState(mount, 'unavailable');
       return;
@@ -910,10 +918,10 @@ function renderNewsletterRoute(
   }
   const id = query.get('id');
   if (id) {
-    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE);
+    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE, designFixture);
     return;
   }
-  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE);
+  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE, designFixture);
 }
 
 /**
@@ -1097,6 +1105,12 @@ const SHELL_SAMPLE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
 ]);
 const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/home',
+  // GOV-84: the Newsletter fixture lane. The matrix §7 classes the July 21 edition,
+  // debate and lenses GS — "owner design reference only unless an explicit gated
+  // fixture renderer is added". That renderer now exists, so the shell must declare
+  // fixture origin for this route too or shell and content disagree (the exact defect
+  // GOV-76 fixed on /home).
+  '/newsletter',
   '/agenda',
   '/timeline',
   '/power',
@@ -1289,6 +1303,11 @@ router.register('/cards', gated(({ mount, query }) => {
 router.register('/newsletter', gated(({ mount, query }) => {
   if (
     query.get('demo') === 'snapshot'
+    // GOV-84: the gated fixture lane renders synchronously, exactly as /power and the
+    // other design routes do. Routing it through `withReviewerContext` would make the
+    // fixture depend on a live reviewer read it does not use — the shell would declare
+    // fixture origin while the page waited on (or failed) a fetch.
+    || designPreviewActive(query)
     || ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
   ) {
     renderNewsletterRoute(mount, query);
