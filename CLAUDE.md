@@ -141,6 +141,15 @@ never merge to make a red thing disappear, and never merge a PR you have not rea
 - **Never open Stage 98** (public release).
 - **Nothing outward-facing without the owner** — no deploy, no publish, no send.
 - **Never invent** a civic fact, source, vote count, date, or official's position.
+- **Never ship a state-bearing control below the accessibility floors.** Two hard stops,
+  both enforced by tests: interactive controls reach `--gw-tap-min` (**44px**), and
+  state-bearing text — trust chips, the AI disclosure, the origin/fixture banner — reaches
+  `--gw-badge-min` (**13px**). Decorative furniture (kickers, the wordmark tagline) is
+  exempt; the split is defined in
+  [`docs/ui-design-system.md`](docs/ui-design-system.md) §5b, which also records where the
+  MOTY baseline specifies smaller values and why they are not implemented as written.
+  A token existing is not the same as a class using it — both floors shipped violated
+  until 2026-07-31 precisely because the tests asserted the token, not the usage.
 
 ---
 

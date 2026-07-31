@@ -76,8 +76,13 @@ area_bindings:
     paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
     contracts: [docs/plans/, CLAUDE.md]
     tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
-current_area: a11y-responsive
+current_area: ci-tooling
 graduated_areas:
+  a11y-responsive:
+    graduated: 2026-07-31
+    result: 17 of 17 rows done or n/a. THIRD area to graduate.
+    shipped: "All three issues closed (#73 print stylesheet, #74 type floor, #88 tab overflow). Two LIVE accessibility defects found by auditing the running page rather than the source: the origin/fixture banner at 11.5px and the shell search input at 19px, both below hard stops the repo already pinned. Gained two red-proved guards (gov74 type floor, gov88 tap floor) and the deviation ledger."
+
   intake-upload:
     graduated: 2026-07-31
     result: 17 of 17 rows done or n/a. SECOND area to graduate.
@@ -103,7 +108,7 @@ parked_areas:
 # NOTE for the owner: `area:pages-civic` holds 10 of the 26 open issues and is the
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist:
-  C1_plan_complete: done  # iteration 22 — bound contract docs/ui-design-system.md exists (413 lines)
+  C1_plan_complete: pending
   C1b_plan_vs_code_drift_clean: pending
   C2_qa_resolved: pending
   C2b_github_issues_ingested: pending
@@ -111,17 +116,17 @@ current_area_checklist:
   C4_tests_present: pending
   C5_tests_pass: pending
   C6_build_warnings_zero: pending
-  C7_ui_polish: pending  # a11y-responsive RENDERS — inherits the iteration-16 web binding, and this area is where C7's ACCESSIBILITY half finally has a home
+  C7_ui_polish: "n/a (no UI surface — CI workflows and test infrastructure)"
   C7b_dev_improvement_polish: pending
   C8_security_reviewed: pending
   C9_performance_reviewed: pending
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: done  # iteration 24 — all three area issues CLOSED on evidence: #73 (print stylesheet), #74 (type floor + a live 11.5px defect), #88 (tab overflow affordance). Zero open in area:a11y-responsive
+  C11_github_issues_resolved: pending  # 4 open: #110 (flake, owner-decision), #105, #104, #60
   C11b_process_gaps_clean: pending
   C12_claude_md_reflects_area: pending
   C13_automation_opportunities_reviewed: pending
 in_progress: false
-iteration_count: 14  # iteration 24 overall; same day
+iteration_count: 15  # iteration 25 overall; same day
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -252,3 +257,6 @@ Verification commands for this project (all three, every iteration that changes 
 - [2026-07-31T07:35:00-06:00] ITERATION 24 — area: a11y-responsive — **#88 closed with a measured A/B, per pipeline stage 4.** Measured first, and the overflow is **worse than filed**: an **836px track in a 390px viewport, 446px hidden, 4 of 10 items visible**, six offscreen (Boards, Power Tracker, Source Vault, Newsletter, Watchlist, the info note), with `scrollbar-width:none` giving no signal at all. **Severity corrected downward on evidence:** every tab is `tabIndex 0` and focusing an offscreen tab scrolls it into view (`scrollLeft` 0 → 446), so keyboard and AT users reach every destination — this is a discoverability defect for touch, matching the filed P2, not a Severity-1 hidden lock.
 - [2026-07-31T07:35:00-06:00] ITERATION 24 — **the A/B was measured, not argued.** Option B (wrap to rows) was implemented in the live DOM and measured: it does make all ten items one-tap, and it grows the fixed bar **45px → 133px — 16% of an 844px phone viewport, permanently**, on a reading-first civic app. Option A (self-hiding CSS scroll shadows) costs **zero** layout. Chose A because the issue's own framing is *make the hidden overflow discoverable* — the defect is the missing signal, not the existence of scrolling — and B degrades every route to fix navigation on one. **B recorded on the issue with its measured cost** so the owner can override; it is the only option that literally satisfies the baseline's "every destination one tap away".
 - [2026-07-31T07:35:00-06:00] ITERATION 24 — **a screenshot caught my own fix being decorative in the default theme.** The first draft used `rgba(0,0,0,.20)` shadows — invisible on the dark theme's `#0D1218` bar, which is what ships by default. Every test passed, the technique was correct, and the affordance simply did not exist for most users. Now `--gw-border-strong` (mid-tone in both themes), verified live: bar `rgb(13,18,24)`, shadow `rgb(141,153,167)`. A test now forbids a hardcoded black shadow, red-proved. **Also: a `toContain` over the whole media-query tail passed with `overflow-x:auto` deleted from the tab rule** — `.gw-shell-actions` also declares it. Scoped the assertion to the rule body; it then failed correctly. Third vacuous-assertion catch of the session, all from too-wide a slice. 1002 tests / 65 files, tsc clean, `build:all` exit 0.
+- [2026-07-31T08:10:00-06:00] ITERATION 25 — area: a11y-responsive — **✅ AREA GRADUATED (17/17), the third.** C7 was a **real audit of the running page**, not a style-text check, and that is what found the defect: 77 interactive controls, landmarks correct (1 main / 2 nav / 1 header), 30 headings with one h1 and **zero level skips**, no missing alt. **`.gw-shell-search-input` rendered 19px tall inside a 46px form row** — the row met the tap floor but the input is **not label-wrapped**, so tapping the padding focused nothing and the real target was 19px, under this system's own 44px hard stop *and* WCAG 2.2 AA's 24px minimum. Fixed; all 77 controls now clear 44px, verified live.
+- [2026-07-31T08:10:00-06:00] ITERATION 25 — **one audit finding was a false positive from my own detector**, caught before filing: an input flagged as having no accessible name turned out to carry a proper `<label for>` — my check tested `aria-label`/`title`/text content and simply did not look for a label element. Second time this session a probe accused working code. **The pattern is now explicit in memory: when a hunt reports a defect, verify the detector before believing the finding.**
+- [2026-07-31T08:10:00-06:00] ITERATION 25 — **C4 had to change method, and the area is why.** These bound paths export **constants, not functions**, so mutating bodies was inapplicable; mutated the *values* instead — `BADGE_MIN_FONT_PX` 13→9 and `DRAWER_TAP_MIN_PX` 44→24 each failed 2 tests, proving both floors are genuinely guarded rather than merely declared. **C12** found CLAUDE.md carried **nothing** about the accessibility floors despite both being hard stops that shipped violated this session; added both with the reason they were missed — *a token existing is not the same as a class using it*, which is exactly how a 13px token coexisted with an 11.5px banner. Area advanced to **`ci-tooling`** (4 open issues; #110 carries `owner-decision`). 1006 tests / 66 files, tsc clean, `build:all` exit 0.
