@@ -24,6 +24,7 @@ import { applyThemePref, hasExplicitThemePref } from './theme-toggle';
 import { GW_TOKENS } from './tokens';
 import type { EvidenceLink, ReadApiResponse, StatementRecord } from '../types/read-api';
 import {
+  CONFIDENCE_UNAVAILABLE,
   confidenceLabel,
   correctionStatusLabel,
   provenanceBadge,
@@ -381,7 +382,7 @@ function reviewedRecordLabels(record: StatementRecord): HTMLElement {
     labels.push(el('span', {
       class: 'gw-dp-chip gw-dp-caution',
       'data-test': 'reviewed-confidence-unavailable',
-    }, ['Confidence: unavailable']));
+    }, [CONFIDENCE_UNAVAILABLE]));
   }
   return el('div', {
     class: 'gw-dp-toolbox',
