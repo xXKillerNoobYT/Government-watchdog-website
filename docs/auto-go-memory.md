@@ -439,6 +439,16 @@
   other would have to migrate) on both. **When picking up an issue, grep the other open
   issues for its primary file.**
 
+- **[2026-07-31] "No tests" is a broken run, not a result.** A red proof reported `Tests no
+  tests` because shell escaping mangled the mutant into invalid TypeScript. That is neither
+  a pass nor a fail and must never be counted as either. **Verify the mutant compiles before
+  trusting what the run says.**
+- **[2026-07-31] I repeated the word-ban trap one iteration after documenting it.** #85 taught
+  that banning vocabulary (`score|verdict`) forbids honest gap copy; in #81 I immediately
+  wrote `not.toMatch(/\ball\b/)` against copy that says the slug was *not* treated as all.
+  **Writing a lesson down is not the same as having it available when the same shape recurs**
+  — assert the CLAIM, never the vocabulary.
+
 ## Patterns
 
 - **[2026-07-28] The MOTY backlog is a dependency fan, not a flat list.** Issues #69, #70,
