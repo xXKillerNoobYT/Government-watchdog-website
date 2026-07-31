@@ -14,6 +14,7 @@ import {
   type DesignPageOptions,
 } from '../src/ui/design-pages';
 import { TRACKED_KEY, readTracked, writeTracked } from '../src/state/local-store';
+import designPagesSource from '../src/ui/design-pages.ts?raw';
 import {
   PRIVATE_INFO_NOTES,
   type PrivateInfoNoteId,
@@ -933,6 +934,18 @@ describe('GOV-170 shared storage contract', () => {
   it('drops non-true values, so a tampered store cannot mark records tracked', () => {
     localStorage.setItem(TRACKED_KEY, JSON.stringify({ a: true, b: 'yes', c: 1, d: false }));
     expect(readTracked()).toEqual({ a: true });
+  });
+
+  it('defines no private storage implementation — the whole point of GOV-170', () => {
+    // Behaviour tests alone do NOT cover this: they exercise local-store's helpers, which
+    // were always correct. Bypassing the shared writer with a direct localStorage call in
+    // design-pages left all behaviour tests green (verified by red proof). The guarantee
+    // is a SOURCE property — one implementation of the storage contract, not two — so it
+    // is asserted as one.
+    expect(designPagesSource).not.toMatch(/function\s+(read|write)StoredJson/);
+    expect(designPagesSource, 'raw JSON.parse of a stored value').not.toMatch(/JSON\.parse\(\s*value\s*\)/);
+    // No direct localStorage access at all: every read/write goes through local-store.
+    expect(designPagesSource, 'direct localStorage use').not.toMatch(/localStorage\.(getItem|setItem|removeItem)/);
   });
 
   it('watchlist still renders tracked records after the consolidation', () => {
