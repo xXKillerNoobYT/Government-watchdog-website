@@ -90,3 +90,4 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 22. **`test/public-bundle-markers.test.ts` carries 4 raw NUL bytes** (#112) — pre-existing
     from #55's AC4 tests. `file` reports `data`, plain `grep` finds nothing in it, and
     CLAUDE.md section 3's mandated `grep test/` step therefore skips it silently.
+| 2026-07-30 | 7b | pages-civic | Stage 6 (PR review + merge) | done | 1 | 1 | 0 | 1200 | owner-directed sweep of all open PRs; #45 re-verified against current main and merged; defect found to no longer reproduce pre-fix (recorded on PR) |

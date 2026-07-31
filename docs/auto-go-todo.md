@@ -61,14 +61,15 @@ Seeded 2026-07-28 on first run.
       the rotation reaches an area that renders (pages-civic / shell-nav / a11y-responsive).
       `build-guards` can now graduate on the strength of C4–C6, C7b, C9, C11, C11b, C12, C13.
 
-- [ ] **PR #45 is the only open PR, and it is not this loop's work.** `GOV-1520-updated-desing`
-      — MOTY polish pass 1, tablet (768px) grid-blowout overflow on Boards/Vault. It reports
-      `MERGEABLE/CLEAN`, but its checks predate #68 exactly as the whole #55 stack's did, and
-      #68 rewrote the shell IA and grid primitives that a tablet-overflow fix targets — so its
-      green is not only stale, it is stale across the change most likely to invalidate it.
-      **Not merged:** the grant is explicit that a PR I did not produce and have not reviewed
-      is not mine to merge. Next step is to *read* it and re-run its checks against current
-      `main`, not to merge it on a green badge.
+- [x] **PR #45 REVIEWED AND MERGED in iteration 7b (`bebb114`), on owner direction to review
+      all open PRs.** Read in full (6 style-only lines), diagnosis verified as correct CSS,
+      surface confirmed live (out of #85's orphan scope). Local merge onto current `main`:
+      973/973, tsc clean, build green. Browser sweep at 768px with the fix: 0px overflow both
+      modes. **Review's key finding: the bug no longer reproduces on today's main without the
+      fix** — the July 24 content that triggered it is gone, so the fix is prophylactic
+      (the grids were still implicit-`auto`; the next long unwrapped string would have
+      re-broken it). Fresh CI forced via close+reopen (retarget does not re-trigger; reopen
+      does), passed against the current base, then merged. Zero open PRs remain.
 
 - [ ] **#110 — the #59 flake survived both fixes.** Filed this iteration with the measurement
       attached (20560ms vs a 20000ms ceiling; loaded fails, idle passes on the same sha). It
