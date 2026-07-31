@@ -1,6 +1,6 @@
 ---
-last_run: 2026-07-31T11:48:23-06:00
-last_task: "C11b+C12+C13 done; pages-civic PARKED on #80; rotation advanced to data-contract"
+last_run: 2026-07-31T12:19:31-06:00
+last_task: "C11 data-contract — GOV-70 premise measured as aged out; one real duplication fixed (PR #180), remainder escalated"
 last_status: completed
 project: xXKillerNoobYT/Government-watchdog-website
 areas:
@@ -162,12 +162,12 @@ current_area_checklist:
   C8_security_reviewed: done  # iteration 46 — safeExternalHref added to src/data/web-safe.ts and swept repo-wide
   C9_performance_reviewed: done  # iteration 32
   C10_cross_platform_parity: "n/a (no second platform)"
-  C11_github_issues_resolved: in_progress  # iteration 32, re-affirmed iteration 48 — #70 is agent-reachable work NOT owner-gated. Marking it done would claim a deferral that is really an unfinished task. THE AREA THEREFORE DOES NOT GRADUATE. Sequencing recorded: #85 first (done), then types -> shared module -> two migrations
+  C11_github_issues_resolved: blocked  # iteration 49 — #70 is now BLOCKED ON AN OWNER DECISION, not unfinished agent work. Measured: its premise ("a fix has to be applied 3-5 times") has aged out — statement-presenter.ts is already the shared layer with 6 consumers, and exactly ONE per-field message was duplicated repo-wide. That is fixed (PR #180) with a guard. The remainder would add a SECOND presentation system beside the existing one, and converging the badge assembly changes user-visible copy. Escalated on the issue and labelled owner-decision
   C11b_process_gaps_clean: done  # iteration 32
   C12_claude_md_reflects_area: done  # iteration 32
   C13_automation_opportunities_reviewed: done  # iteration 32
 in_progress: false
-iteration_count: 38
+iteration_count: 39
 day_started_at: 2026-07-31
 stop_flag: false
 budget_mode: false
@@ -682,3 +682,23 @@ Verification commands for this project (all three, every iteration that changes 
   state rather than inheriting pages-civic's.
   **Rule reinforced: read the existing key before writing a new one, and never trust a script that
   reports success without asserting the write landed.**
+- [2026-07-31T12:19:31-06:00] ITERATION 49 — area: data-contract — check C11. **#70's premise measured as partly
+  aged out, and I did not build the system it asks for.** It assumes an honesty fix must be applied
+  3-5 times. Measured: `statement-presenter.ts` is ALREADY the shared presentation layer — 318
+  lines, **six consumers** — exporting the vocabulary #70 proposes to create, and the two builders
+  it names call **the same five helpers, once each**. Sweeping every `src/ui` module for per-field
+  'unavailable/not present' messages in more than one file found **exactly one**:
+  `'Confidence: unavailable'`. Fixed (PR #180) with a guard that catches the next one.
+- [2026-07-31T12:19:31-06:00] DECISION — **building `src/types/presentation.ts` + a new card module would stand up a
+  SECOND presentation system beside one all six surfaces already use.** Standing principle: adding
+  a system requires retiring one, and that version retires nothing — the exact shape that left
+  `diff-view.ts` unimported for months. The genuinely remaining work is narrower (converging the
+  badge assembly: nine prefixed badges vs three) and **changes user-visible copy**, so it is a
+  design call. Escalated on #70 with the measurements; issue now labelled `owner-decision`.
+  C11 moves from `in_progress` to **`blocked`** — the honest state, since what remains is a
+  decision rather than unfinished agent work.
+- [2026-07-31T12:19:31-06:00] LESSON — **an issue's premise decays.** #70 was filed 2026-07-26 and was accurate then;
+  the shared layer landed afterwards. **Re-measure the stated problem before implementing the
+  stated solution** — especially for architecture issues, where the proposed remedy is much larger
+  than the remaining defect. Building it as written would have been faithful to the ACs and wrong.
+- [2026-07-31T12:19:31-06:00] ITERATION 49 — 1089 tests / 72 files green (was 1086), tsc clean, build:all 0.
