@@ -21,6 +21,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 12 | honesty-ledger | #86 P1 (CS applied) | done | 3 | 1 | 1 | 2100 | none due; browser check caught two stale copy strings the suite could not see |
 | 2026-07-31 | 13 | honesty-ledger | #75 + #87 P1 (CS applied) | done | 2 | 2 | 2 | 2400 | none due; two measurement artifacts diagnosed (stale dev-server module, no-op hash assignment) |
 | 2026-07-31 | 14 | honesty-ledger | C1b (CS registry audit) | done | 3 | 3 | 0 | 1500 | none due; found the checklist described the wrong area, and a phantom CS registry row this loop had introduced |
+| 2026-07-31 | 15 | honesty-ledger | C4 (coverage by mutation) | done | 1 | 1 | 0 | 1500 | none due; mutation testing beat grep — 4 of 5 "untested" exports were covered behaviourally, the 5th was dead code and was deleted |
 
 ## Findings this iteration
 
