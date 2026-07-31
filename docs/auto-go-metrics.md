@@ -23,6 +23,7 @@ One row per iteration. Read by the weekly `loop-self-improve` pass.
 | 2026-07-31 | 14 | honesty-ledger | C1b (CS registry audit) | done | 3 | 3 | 0 | 1500 | none due; found the checklist described the wrong area, and a phantom CS registry row this loop had introduced |
 | 2026-07-31 | 15 | honesty-ledger | C4 (coverage by mutation) | done | 1 | 1 | 0 | 1500 | none due; mutation testing beat grep — 4 of 5 "untested" exports were covered behaviourally, the 5th was dead code and was deleted |
 | 2026-07-31 | 16 | honesty-ledger | C7 (bound to web surface) | done | 0 | 0 | 1 | 1500 | none due; C7 re-bound per the iteration-10 commitment; CS-inertness sweep over 11 routes x 2 lanes, red-proved |
+| 2026-07-31 | 17 | honesty-ledger | C7b + C8 + C9 | done | 1 | 1 | 0 | 1200 | none due; hunting mandate discharged; zero unsafe sinks, CS copy proven literal, style idempotency measured under 10k calls |
 
 ## Findings this iteration
 
