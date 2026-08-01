@@ -192,6 +192,9 @@ An issue is `done` only when **all** of these hold:
 - [ ] Verification is recorded, and it was done by someone other than you (§4.3), or the
       issue is `in_review` with that reviewer named.
 - [ ] Follow-ups exist as real issues, not as prose.
+- [ ] If the change **ships** — a merge to `main`, or (once the gate lifts) a deploy —
+      its **release-state duties** are met (§4.5). A shipping change with no
+      What-changed / What-to-look-for notes is not done.
 - [ ] The **Did Not Do** list is written (§4.4).
 
 ### 4.2 Evidence requirements
@@ -237,6 +240,52 @@ the thing, and *why*.
 
 *Why this rule exists:* the next agent's biggest risk is assuming your silence means
 coverage. An honest gap is worth more than an implied guarantee.
+
+### 4.5 Release-state duties — every shipping change
+
+*Portfolio directive, owner 2026-07-31 (GOV-1665): the WPR2 release-state process is
+adopted as a **pattern** across every company. This section is this company's instance of
+it. It changes definition-of-done; it grants **no** new release authority.*
+
+**What this company ships today, and what it does not.** This repo has **no live external
+release channel**. Public deploy is on the **GOV-420 hold** (owner chose local-only) and,
+when it lifts, is gated by **GOV-1552**; those two remain the *only* release authority.
+Adopting the duties below authorizes **no deploy, no channel push, no send, no spend** —
+merging is not deploying (see §5 / CLAUDE.md §6, F8). The one thing this company "ships"
+routinely is a **merge to `main`** (the AUTO GO loop holds merge authority). Treat that
+merge as the release event these duties attach to; the deploy-channel row is pre-staged for
+the day the gate lifts, not active now.
+
+The six release-state duties, mapped to this company:
+
+1. **Channel + trigger + cadence.** The active channel is **PR-merge to `main`**, trigger =
+   full suite + `tsc --noEmit` + `npm run build` + CI green with acceptance criteria mapped
+   to tests (§merge bar). No cadence cap applies to a local-only merge. **No public/deploy
+   channel is open** — record that state explicitly rather than inventing one; a Sites
+   deploy channel activates only through GOV-420 / GOV-1552 per `docs/deployment-sites.md`,
+   owner as sole trigger, and *then* a cadence cap is set with the owner.
+2. **Release notes — no notes, not done.** Every PR body carries **What changed**
+   (user-visible) and **What to look for** (the reviewer's re-test focus). A merge with no
+   such notes is not done (§4.1). This is the release note; it lives in the PR, not a comment.
+3. **Feedback sweep → tracked, at least each loop iteration.** Owner and UX/VSR-review
+   feedback is the feedback stream; the AUTO GO loop iteration is the sweep. **Every feedback
+   item becomes a real GOV issue** (one `area:*` label, §merge/branching rules), and its fix
+   PR's notes carry a **re-test line** naming what to re-check. Feedback left as prose is a
+   §4.4 violation with a release label.
+4. **Platform status is part of the cycle, not ad hoc.** Each release cycle checks CI
+   green/red on `main` for **both** repos, self-hosted runner liveness, and ledger drift —
+   the Artificer 60-second sweep. A `TEST` cited in a stage receipt going red on `main` is
+   **regression trigger R1**; declare it the same turn (AOE domain).
+5. **Version/trigger files bump only in the PR that needs them.** `BACKEND_REF` and any
+   release-affecting config are bumped **only** in the same PR as the change requiring the
+   bump — never a lone bump, and never while publication/immutability is recorded incomplete
+   (CLAUDE.md §6 hard stop).
+6. **Notion live-state stays current, same cycle.** Any release/process change is written to
+   the live-state page **append-only, with provenance** (`Source · Date · Confidence ·
+   Owner`) in the same cycle it happens — corrections appended, never overwritten.
+
+**Owner:** AutomationOpsEngineer maintains this section (CI/CD, runners, release wiring).
+Duties 2–3 bind every producer; 4 is AOE's sweep; 6 binds whoever makes the change.
 
 ---
 
@@ -489,6 +538,7 @@ DID NOT   → write the Did Not Do list
 | Date | Change | Source |
 | --- | --- | --- |
 | 2026-07-24 | Edition 1. Initial rulebook: Prime Directives, Table Rules, Aggression, Thoroughness, Forbidden Spells, Party Coordination, Saving Throw, XP/Leveling. | Owner request; aligned to `skills/paperclip/SKILL.md`. |
+| 2026-08-01 | Added §4.5 Release-state duties and a §4.1 DoD line referencing it — this company's instance of the WPR2 release-state pattern. No new release authority; GOV-420 / GOV-1552 unchanged. | Owner portfolio directive 2026-07-31 (GOV-1665); routed by CEO. |
 
 *Additions by the Loremaster append here with evidence links. Hard gates and Prime
 Directives change by owner decision only.*
