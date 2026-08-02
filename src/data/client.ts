@@ -13,7 +13,6 @@ import type { ReadApiResponse } from '../types/read-api';
 import { assertWebSafe } from './web-safe';
 import { apiBase, isLandingOnly, isReviewerInternalEnvelope, toReadModel } from './api';
 import { type AsyncState, failed, resolved } from '../state/async-state';
-import fixtureData from '../fixtures/alpine-sample.json';
 
 export interface ClientConfig {
   /** When true, read the labeled fixture instead of the live API. */
@@ -33,10 +32,25 @@ export function readConfig(env: EnvLike = import.meta.env as unknown as EnvLike)
 }
 
 /**
- * The labeled fixture, swept for raw paths at module load. If a hand edit ever
- * paints a vault/absolute path into the sample, the app fails loud immediately.
+ * Load the labeled sample. Deliberately a dynamic import with NO static counterpart
+ * (GOV-49 step 1b).
+ *
+ * Measured, not assumed: a module reachable through a static import cannot move to a lazy
+ * chunk — Rollup keeps it in the static graph and a dynamic import merely references the copy
+ * already there. The previous `export const FIXTURE = assertWebSafe(fixtureData)` against a
+ * static import therefore pinned **198.4 KB** into the entry of every build and spent ~3.7 ms
+ * sweeping it on every page load.
+ *
+ * Tests import the sample from `test/sample-fixture.ts`. **Do not re-add a static import
+ * here** — one static reference anywhere in `src/` re-pins the bytes.
+ *
+ * The web-safe proof is preserved: swept below before the value escapes this function, and
+ * asserted in CI by `test/client-fixture-web-safe.test.ts`.
  */
-export const FIXTURE: ReadApiResponse = assertWebSafe(fixtureData as ReadApiResponse);
+async function loadSampleFixture(): Promise<ReadApiResponse> {
+  const loaded = await import('../fixtures/alpine-sample.json');
+  return assertWebSafe(loaded.default as unknown as ReadApiResponse);
+}
 
 /** BEH-STATE-2: a response with no records, thread, tree, or gaps is "empty".
  *  Completeness-gap cards (GOV-298) count: a gaps-only response is a real,
@@ -101,7 +115,8 @@ export async function loadReadModel(opts: LoadOptions = {}): Promise<LoadResult>
   }
 
   if (config.useFixtures) {
-    return { state: resolved(FIXTURE, 'fixture', isEmptyResponse), notice: FIXTURE_NOTICE };
+    const sample = await loadSampleFixture();
+    return { state: resolved(sample, 'fixture', isEmptyResponse), notice: FIXTURE_NOTICE };
   }
 
   const liveUnavailable = (reason: string): LoadResult => ({

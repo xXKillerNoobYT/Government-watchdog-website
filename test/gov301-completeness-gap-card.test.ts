@@ -1,3 +1,4 @@
+import { FIXTURE } from './sample-fixture';
 // @vitest-environment jsdom
 //
 // GOV-301 (Stage 2 frontend surface) — render the completeness-gap card (~90
@@ -16,7 +17,7 @@ import {
 } from '../src/ui/timeline';
 import { render } from '../src/ui/render';
 import { resolved } from '../src/state/async-state';
-import { isEmptyResponse, FIXTURE } from '../src/data/client';
+import { isEmptyResponse } from '../src/data/client';
 import { assertWebSafe } from '../src/data/web-safe';
 import type { ReadApiResponse, CompletenessGapCard } from '../src/types/read-api';
 

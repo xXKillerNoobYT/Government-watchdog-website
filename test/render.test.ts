@@ -1,8 +1,9 @@
+import { FIXTURE } from './sample-fixture';
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, STYLE, BADGE_MIN_FONT_PX, DRAWER_TAP_MIN_PX } from '../src/ui/render';
 import { loading, failed, resolved } from '../src/state/async-state';
-import { FIXTURE, isEmptyResponse } from '../src/data/client';
+import { isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse } from '../src/types/read-api';
 // FIXTURE is now the REAL reviewed snapshot (6 source-backed records, no concept
 // graph). Rich card features — typed related-links, source-registry drawer fields,

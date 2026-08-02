@@ -332,8 +332,19 @@ two iterations.
 `test/sample-fixture.ts` helper. Result: **878.0 → 736.3 KB raw, 191.0 → 180.4 KB gzipped**,
 1101 tests green locally, `build:all` clean.
 
-**Why it is NOT merged: it costs 2.4x on the test suite and breaks CI.** Measured
-back-to-back on the same machine:
+**CORRECTION 2026-08-02 (iteration 61) — the "2.4x cost" below was over-read from a single
+comparison, and is NOT established.** Re-measured with three alternating runs per side on one
+machine: `main` gave 8.56 / 6.60 / 6.58 / 6.82 / 7.07 / 9.45 s; 1b gave 6.50 / 6.41 / 6.52 /
+11.97 / 19.39 / 25.21 s. 1b measured both **faster and slower** than main, and the second 1b
+block escalates monotonically — that is machine load drifting during the run, not a property
+of the change. `vite.config.ts` already documents this runner as varying **2.3x in identical
+runs**, which is precisely what was reproduced.
+
+So the CI timeout in iteration 60 cannot be attributed to this change on the evidence
+available. The honest position is that the cost is **unmeasured**, not proven. The table below
+is kept as the original single-shot reading, marked as such.
+
+*(original, single-shot, unreliable:)*
 
 | | `design-routes.test.ts` file | the COMING SOON sweep |
 | --- | --- | --- |

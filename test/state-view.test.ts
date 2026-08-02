@@ -1,7 +1,8 @@
+import { FIXTURE } from './sample-fixture';
 import { describe, it, expect } from 'vitest';
 import { stateView, trustLabel, isAiProduced, readyHeaderMessage, summarizeRecords, FIXTURE_BANNER_TEXT } from '../src/ui/state-view';
 import { idle, loading, failed, resolved } from '../src/state/async-state';
-import { isEmptyResponse, FIXTURE } from '../src/data/client';
+import { isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse, StatementRecord } from '../src/types/read-api';
 
 const empty: ReadApiResponse = { scope: 'alpine', access: 'reviewer_internal', records: [] };
