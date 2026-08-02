@@ -1018,3 +1018,27 @@ Verification commands for this project (all three, every iteration that changes 
   evidence against it is one CI run on a test file the repo itself flags as variance-prone. If
   CI fails again, that is real signal and it reverts with proper grounds.
   1101 tests / 75 files green, tsc clean, bundle 736.3 KB (−141.7 KB).
+- [2026-08-02T14:20:00-06:00] ITERATION 62 — area: none — EASE OFF (93%, ahead 4.8 pts).
+  Went to do #49 step 2 and found **the remaining opportunity is 18.9 KB, not the ~152 KB I had
+  been quoting since iteration 59 — an 8x overstatement.** I had counted bytes without checking
+  reachability.
+  Classified every `main.ts` fixture by whether its use sites are demo/design-gated:
+  **lazy-loadable 18.9 KB** (`concept-graph-demo` 14.3, `agenda-board-projection.sample.dev`
+  4.7); **always reachable 133.3 KB**. `CARD_FEED` (91.9 KB) is the clearest: `renderHomeRoute`
+  passes `cardFeed: CARD_FEED` on every `/home` render and reads `CARD_FEED.access` for the
+  access state. Its own comment says "Real widgets consume existing reviewed Alpine projections
+  (card feed / digest / board)". **That is the data the reviewed Home page renders, not gated
+  synthetic weight.**
+  So step 2 as framed is mostly unavailable: those 133 KB cannot move to a lazy chunk without
+  converting sync route handlers to async — bigger than 1b, touching the router, for data the
+  first paint needs anyway. Lazy-loading what the initial render requires trades size for a
+  waterfall. **The real question underneath is architectural** (should reviewed pages fetch
+  their projection rather than bundle it?) and belongs outside a bundle-size issue.
+  **Third probe bug of the session, and this one was self-evidently impossible.** The first pass
+  reported `state-matrix.json` with ZERO use sites; the filter excluded any line containing
+  `const`, and its only use is `const matrix = narrowToRequestedAccess(STATE_MATRIX, query)`.
+  `noUnusedLocals: true` is on, so a dead const cannot compile — the result could not have been
+  true and should have been rejected before it was investigated.
+  Did NOT attempt the async conversion at 93% budget: that is exactly the shape that produced
+  three reverts this session. Recorded instead, with a recommendation.
+  Docs only. 1101 tests / 75 files green, tsc clean, build clean.
