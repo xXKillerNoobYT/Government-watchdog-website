@@ -28,6 +28,30 @@ layout.
 | **GS** | Gated synthetic | Populate only after reviewer admission plus an explicit fixture flag and the `SYNTHETIC DESIGN FIXTURE — not a live read` notice. Never mix it into reviewed counts or lists. |
 | **CS** | Coming soon | Functionality that **does not exist in any lane** — no reviewed contract, no fixture, no device-local behaviour, and no backend product behind it. Keep the owner-approved slot visible and mark it with the `COMING SOON` marker (`src/ui/coming-soon.ts`). **Never name a backend contract**, because there is none to name. Any control stays disabled. |
 
+### Shipping a GS lane — the shell must be told in the same change
+
+A GS renderer and the route's entry in `SHELL_DESIGN_FIXTURE_ROUTES` (`src/main.ts`) are
+**one change, not two**. Ship the renderer alone and the shell keeps announcing
+`LIVE SERVER CONTEXT` over synthetic content — the page says fixture, the banner says live,
+and the reviewer is told the wrong thing by the surface whose whole job is declaring origin.
+
+This has been the same defect three times: GOV-84 (`/newsletter`), the GOV-82 follow-up
+(`/vault`, which survived two iterations), and GOV-163 (`/boards`, caught only because the
+prior two were remembered). Every test stayed green each time, because the shell and the page
+were each individually correct.
+
+Two rules that fall out of it, both learned the same way:
+
+- **Render a GS lane synchronously.** Routing it through `withReviewerContext` makes a fixture
+  depend on a live reviewed read it never uses, so the shell declares fixture origin while the
+  page waits on — or fails — a fetch. When the backend is down that is not a corner case: the
+  route renders the service gap instead of the fixture. `/newsletter` and `/boards` do this
+  correctly; `/vault?demo=design` still does not.
+- **The test asserting a route has *no* fixture is part of the change that gives it one.** Those
+  assertions are green and silently wrong the moment the lane lands. Prefer a derived
+  completeness guard over an enumerated "not yet" list — the list shrinks to nothing and stops
+  testing anything.
+
 ### CS versus DG — the distinction that makes CS necessary
 
 **DG says the data is missing. CS says the feature is.** They are different
