@@ -175,8 +175,8 @@ parked_areas:
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist: {}  # no active area; see parked_areas for every preserved checklist
 in_progress: false
-iteration_count: 1  # Gate C kickoff — new day. Cumulative across the session is 51; this key is the per-day counter the gate resets, and the two are not the same number.
-day_started_at: 2026-08-01
+iteration_count: 1  # Gate C kickoff (2026-08-02) — new day. Cumulative across the session is 51; this key is the per-day counter the gate resets, and the two are not the same number.
+day_started_at: 2026-08-02
 stop_flag: false
 budget_mode: false
 budget_mode_until: null
@@ -846,3 +846,32 @@ Verification commands for this project (all three, every iteration that changes 
   Deliberately a NEW unit-level file rather than an addition to `design-routes.test.ts`, which
   is at its CI budget on the shared runner (iteration 52 timed out a neighbouring test there).
   1099 tests / 74 files green, tsc clean, build clean.
+- [2026-08-02T00:55:00-06:00] ITERATION 55 (Gate C kickoff, new day) — area: none — EASE OFF
+  (overall 85%, ahead of the ramp by 4.7 pts, 1.4d to reset). No meta-check due. Backlog
+  unchanged: 8 of 11 open issues owner-blocked, the 3 agent-reachable ones all large.
+  **Did pipeline STAGE 1 for #49 rather than starting stage 6 the owner has not authorised.**
+  `docs/plans/gov49-bundle-code-split.md`, every figure measured today, plus the same numbers
+  posted to the issue. Baseline: **878.0 KB raw / 191.0 KB gzipped in ONE client chunk** — no
+  `manualChunks`, no dynamic `import()`, `main.ts` imports every renderer eagerly.
+  **The measurement inverted the obvious approach.** The dominant cost is not route code:
+  `src/fixtures/` is **352.4 KB** of source JSON (`alpine-sample.json` alone 198.4 KB) and its
+  markers are present in the emitted chunk, so ~40% of the payload is gated-synthetic data that
+  only renders behind reviewer admission plus an explicit `demo=` flag. Plan therefore orders
+  *defer the fixtures* first and *per-route splitting* LAST.
+  **The finding that most de-risks the work:** splitting changes the artifact shape the lane
+  guards inspect, so I checked instead of assuming — all four survive. Both `.mjs` guards use
+  recursive `readdirSync` walks rather than entry-file reads, and `publicModuleBoundary()` hooks
+  Rollup `moduleParsed`, which fires per module regardless of chunking. Had one inspected only
+  the entry chunk, splitting would have opened a lane-leak hole with every check green.
+  **Gate C hub read found a real handoff from the backend loop**, including a security-relevant
+  question only this side can answer: is `provenance_note` (deliberately NOT URL-validated,
+  their W-6) rendered as a locator? **Measured: no.** One render site
+  (`pages-program.ts:1475`), reached via `supplied-files.ts:171`, emitted as a text node through
+  `el()`'s `createTextNode` path — never an `href`, `src`, or `innerHTML`. Their assumption
+  holds, but it is safe **by construction, not by validation**: nothing sanitises the field, we
+  simply never put it where a URL would be honoured. Answered on Handoffs with the full list of
+  consumed fields and the note that only `archive_url`/`original_url` reach an `href`, both via
+  `safeExternalHref`. Also accepted their `blocked-by:` commitment (nothing to raise — our
+  blockers are all owner decisions, not backend contracts) and confirmed their #150/#164/#165
+  ordering changes nothing here: those slots are DG today and were not queued.
+  Docs only. 1099 tests / 74 files green, tsc clean, build clean.
