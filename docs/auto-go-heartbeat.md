@@ -970,3 +970,30 @@ Verification commands for this project (all three, every iteration that changes 
   only its verification was wrong. Plan says: settle it before touching `client.ts` again.
   Probe files removed, `main.ts` reverted, tree clean, bundle back to 878.0 KB / 1 chunk.
   No source change. Docs only.
+- [2026-08-02T07:05:00-06:00] ITERATION 60 — area: none — EASE OFF (89%). **#49 step 1b is
+  CORRECT and NOT merged — CI red on a cost I introduced.** Two findings, both worth more than
+  the bytes.
+  Closed the last environmental unknown first: `.env` reaches the bundle identically via the npm
+  script and bare `npx vite` (`VITE_USE_FIXTURES:"true"` present in both, absent without). So
+  candidate (b) was eliminated and the fixtures-on 0/3 was NOT a `.env` problem.
+  **Then the control that changed everything.** On UNMODIFIED main, `FIXTURE_NOTICE` is absent
+  from the bundle in BOTH builds — the `if (config.useFixtures)` branch is eliminated from every
+  production bundle already. The fixture lane is **dev-only and always has been** (filed #194).
+  **So iterations 56 and 58 were both wrong.** They saw fixture bytes vanish from a fixtures-on
+  build and called it a regression. The bytes were never *reachable* — 3/3 on main was the
+  static import being un-shakeable, nothing more. **Bytes present ≠ feature reachable**, and
+  conflating them cost two reverts of a correct change.
+  **I also repeated a mistake written in my own memory:** ran `git checkout --` to undo a red
+  proof while the fix was still UNCOMMITTED, destroying it. Recoverable (one file, scripted),
+  but the rule exists precisely because this is easy to do. Committed first, then red-proofed.
+  **Red proof (post-commit):** re-adding the old shape — static import + module-scope
+  `assertWebSafe` — restores exactly 878.0 KB and 3/3; removing it returns 736.3 KB and 0/3.
+  Mechanism confirmed by mutation, not argument.
+  **Then CI failed and it was mine.** Measured back-to-back: `design-routes.test.ts` 9.15s →
+  21.88s (2.4x), the COMING SOON sweep 1472ms → 3634ms (2.5x). On the shared runner that crossed
+  the sweep's 20s ceiling (30s, red). Cause: the dynamic import makes the 198 KB JSON a module
+  vitest transforms on demand, and that file re-imports `src/main` repeatedly under
+  `vi.resetModules()`. **Source change reverted; branch converted to docs-only so main stays
+  clean and the finding survives.** The change is proven correct — it is blocked on
+  test-infrastructure cost, which the plan now names with three candidate fixes.
+  Remaining: ~152 KB still statically imported by `main.ts`, same pattern. Steps 2–3 untouched.
