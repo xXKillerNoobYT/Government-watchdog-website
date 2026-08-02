@@ -425,3 +425,40 @@ sites. That was a probe bug — the filter excluded any line matching `const`, a
 is `const matrix = narrowToRequestedAccess(STATE_MATRIX, query)`. `noUnusedLocals: true` is
 enabled in `tsconfig.json`, so a genuinely unused const could not compile — which made the
 result impossible on its face and should have been caught before it was believed.*
+
+
+---
+
+## CORRECTION 2026-08-02 (iteration 63) — `BOARD_SAMPLE` is NOT gated, and the classifier that said so is not trustworthy
+
+The step-2 table above marks `agenda-board-projection.sample.dev.json` (4.7 KB) as
+**GATED — lazy-loadable**. **That is wrong.** Its line 953 use site is inside
+`renderHomeRoute`, the unconditional `/home` handler:
+
+```ts
+sampleBoard: requestedAccess ? { ...BOARD_SAMPLE, access: requestedAccess } : BOARD_SAMPLE,
+```
+
+It is passed on every render, exactly like `CARD_FEED`. The classifier marked it gated
+because it tests each use line for the substrings `demo|design|sample`, and the **property
+name** `sampleBoard` contains "sample". That is name matching, not gate detection.
+
+**So the lazy-loadable total is at most 14.3 KB, not 18.9 KB** — and even that is unconfirmed.
+`GRAPH_DEMO` has two real sites: line 549 is genuinely behind `if (demo === 'graph-synthetic')`,
+but line 304 sits in `completeDemoBody()`, whose reachability was **not** traced. Its name
+suggests a demo path; name-based inference is exactly what produced this correction and the
+previous one, so it does not count as evidence.
+
+### The standing lesson for this issue
+
+**Every reachability claim in this plan was produced by substring heuristics, and three of them
+have now been wrong** — `state-matrix` ("zero use sites", impossible under `noUnusedLocals`),
+`BOARD_SAMPLE` (above), and the original "~152 KB remaining" (bytes counted without
+reachability at all).
+
+**Do not act on any GATED/ALWAYS-USED label in this document without reading the use site.**
+The remaining opportunity is small enough — at most 14.3 KB against a 736 KB bundle, under 2% —
+that the measurement cost has clearly exceeded the value. Treat steps 2 and 3 as **closed
+unless the architectural question is taken up**: whether reviewed pages should fetch their
+projections instead of bundling them. That question is worth more than every remaining byte
+here, and it is the owner's to answer.
