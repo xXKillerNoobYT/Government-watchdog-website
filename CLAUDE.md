@@ -86,6 +86,13 @@ person can read; assertions like `.toBe('Saved view: Jackson, Wyoming')` are com
 Every file under `test/` is plain text and greppable (#112 removed the last raw NUL bytes);
 if that ever stops being true, a clean `grep test/` sweep is silently not a sweep.
 
+**Never assert `not.toMatch(/…\b/)` against raw `textContent`.** This repo's honesty tests are
+mostly *negative* — proving a fixture invents no body, date, or URL — and `textContent`
+concatenates adjacent elements with **no separator** (`…Alpine Town CouncilMEETING CADENCE…`),
+so a trailing `\b` has no non-word character to match and the pattern silently never fires.
+Walk text nodes and join on `\n` first, and assert the split actually produced lines. Caught by
+red proof in #163, where the sweep passed with a named council planted in the DOM.
+
 ---
 
 ## 4. Two lanes, and the guards between them

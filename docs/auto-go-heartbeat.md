@@ -182,7 +182,7 @@ budget_mode: false
 budget_mode_until: null
 last_meta_recommender_at: 2026-08-01T21:20:00-06:00  # iteration 51 ran the first GLOBAL pass since iteration 7. A11 (new incident evidence merged into pending Q4 rather than filed as a duplicate question), A12 (the loop names four SKILLS as slash-commands — issue #184), three explicit non-recommendations. NOTE: the command was never missing; `/claude-automation-recommender` is a SKILL in the claude-code-setup plugin and invoking it worked. The earlier "does not exist" reading came from `find -iname`, which matches basenames only and therefore cannot see `<skill>/SKILL.md`.
 last_meta_github_sync_at: 2026-07-30T22:00:00-06:00  # NOT ADVANCED by iteration 51, deliberately. The `github-issues-sync` SKILL body targets xXKillerNoobYT/Weird-Part-Run-… (backend#188); running it verbatim would sync the wrong repo and report success. Left stale so the due-ness stays visible rather than being papered over by a timestamp for work that did not happen.
-last_meta_revise_at: 2026-07-30T22:05:00-06:00  # iteration 7: two targeted CLAUDE.md revisions (grep -a caveat per #112; area-label convention)
+last_meta_revise_at: 2026-08-01T22:40:00-06:00  # iteration 53: two revisions, deliberately to DIFFERENT files. The textContent/\b trap went to CLAUDE.md §3 because no test-owning doc exists; the GS-lane wiring rule went to the MATRIX, which already owns shell origin and the GS class — CLAUDE.md stays thin by pointing at owners rather than absorbing them.
 last_meta_improver_at: 2026-07-29T12:46:00-06:00
 last_meta_self_audit_at: 2026-07-29T12:46:00-06:00
 last_meta_self_improve_at: 2026-07-29T12:46:00-06:00
@@ -803,3 +803,22 @@ Verification commands for this project (all three, every iteration that changes 
   does not inherit the old proof: dropping `/boards` from the set fires it, and renaming the
   const fires the derivation guard.
   1096 tests / 73 files green, tsc clean, build:all clean.
+- [2026-08-01T22:40:00-06:00] ITERATION 53 — area: none (rotation still exhausted) — ran the
+  overdue `revise-claude-md` daily meta-check (last run ~47h against a 20h window; the tracker
+  validator had it STALLED at 4x). **No feature work, and that was the correct call rather than
+  a shortfall:** pace flipped to **EASE OFF** (overall 83%, ahead of the ramp by 4.1 pts, 1.5d
+  to reset), and of 11 open issues only **three** are agent-reachable — #49 (bundle code-split),
+  #95 and #119 (both `BACKEND_REF`, under a hard stop while #123 is incomplete). All three are
+  large; none fits EASE OFF. Inventing smaller work is what the exhausted-rotation note exists
+  to prevent.
+  **Two learnings, filed to different homes on purpose.** The `textContent`/`\b` trap went to
+  `CLAUDE.md` §3 — no test-owning doc exists, so it is genuinely homeless, and §3 already
+  carries the sibling "grep test/ before changing copy" warning. The GS-lane wiring rule went to
+  `docs/design-information-type-matrix.md`, which already owns shell origin and the GS class;
+  putting it in CLAUDE.md would have made a second source of truth for a rule the ledger owns.
+  That split is the thin-CLAUDE.md principle applied, not an accident of placement.
+  The matrix entry records the shape rather than the instance: renderer and
+  `SHELL_DESIGN_FIXTURE_ROUTES` entry are one change (violated three times — #84, the #82
+  follow-up, #163), GS lanes render synchronously (`/vault?demo=design` still does not), and the
+  test asserting a route lacks a fixture belongs to the change that gives it one.
+  1096 tests / 73 files green, tsc clean, build clean.
