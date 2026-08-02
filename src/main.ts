@@ -43,6 +43,7 @@ import {
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
 import {
   renderAlerts as renderDesignAlerts,
+  renderBoardsDesign,
   renderLocation as renderDesignLocation,
   renderPowerTracker as renderDesignPowerTracker,
   renderWatchlist as renderDesignWatchlist,
@@ -1123,6 +1124,10 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   '/vault',
   '/agenda',
   '/timeline',
+  // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84
+  // and the GOV-82 follow-up both shipped a fixture without this line, and each time the
+  // shell announced `live_server` over synthetic content.
+  '/boards',
   '/power',
   '/watchlist',
   '/location',
@@ -1252,6 +1257,16 @@ router.register('/agenda', gated(({ mount, query }) => {
   void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
 }));
 router.register('/boards', gated(({ mount, query }) => {
+  // GOV-163: the matrix §4 GS row ("populated handoff board cards") declared a fixture lane
+  // that no renderer implemented. It renders SYNCHRONOUSLY, following /newsletter rather
+  // than /vault: routing a fixture through `withReviewerContext` makes it depend on a live
+  // reviewer read it never uses, so the shell declares fixture origin while the page waits
+  // on — or fails — a fetch. With the backend down that is not hypothetical, it is what the
+  // page shows.
+  if (designPreviewActive(query)) {
+    renderBoardsDesign(mount, designPageOptions(query));
+    return;
+  }
   void withReviewerContext(mount, query, (data) => renderBoardsDirectoryRoute(mount, query, data));
 }));
 router.register('/issue', gated(({ mount, query }) => {
