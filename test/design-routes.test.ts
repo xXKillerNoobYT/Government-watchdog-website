@@ -157,12 +157,18 @@ describe('MOTY design-handoff route integration', () => {
     expect(markersSeen).toBeGreaterThan(0);
   });
 
+  /**
+   * The canonical reviewed pages. Shared by the landmark test and by the design-lane
+   * completeness guard below, so the two cannot drift apart — the failure mode that let a
+   * hand-listed sweep cover 11 of 22 routes for four iterations.
+   */
+  const CANONICAL_ROUTES = ['/home', '/agenda', '/timeline', '/boards', '/power', '/vault', '/newsletter', '/watchlist', '/alerts'] as const;
+
   it('keeps the shared shell as the sole main landmark on every canonical page', async () => {
     window.location.hash = '#/home?reviewer=1';
     await import('../src/main');
-    const canonicalRoutes = ['/home', '/agenda', '/timeline', '/boards', '/power', '/vault', '/newsletter', '/watchlist', '/alerts'];
 
-    for (const route of canonicalRoutes) {
+    for (const route of CANONICAL_ROUTES) {
       window.location.hash = `#${route}?reviewer=1`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       expect(document.querySelectorAll('main'), route).toHaveLength(1);
@@ -190,6 +196,9 @@ describe('MOTY design-handoff route integration', () => {
       ['/watchlist', 'watchlist-page'],
       ['/location', 'location-page'],
       ['/alerts', 'alerts-page'],
+      // GOV-163: Boards joins its four siblings — same `beginPage` frame, same
+      // `design-fixture-banner`, so it belongs in this loop rather than in a special case.
+      ['/boards', 'boards-design-page'],
     ] as const;
 
     for (const [route, testId] of routes) {
@@ -234,15 +243,27 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     });
 
-    // Routes with no design fixture yet must stay reviewed, never claim one.
-    for (const route of ['/boards']) {
-      window.location.hash = `#${route}`;
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-      await vi.waitFor(() => {
-        expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'), route)
-          .toBe('live_server');
-      });
-      expect(app.querySelector('[data-test="design-fixture-banner"]'), route).toBeNull();
+    // GOV-163 closed the last gap, so this group is no longer a list of routes awaiting a
+    // fixture — it is a COMPLETENESS guard. An enumerated "not yet" list shrinks to nothing
+    // and silently stops testing anything (it was down to one entry before this change).
+    //
+    // It reads SOURCE rather than re-navigating. The first version swept all nine canonical
+    // routes through jsdom with `waitFor`, which duplicated navigations this test already
+    // performs AND pushed the file far enough over the shared runner's budget to time out a
+    // NEIGHBOURING test (the landmark sweep, 1.5s locally, 20.8s on CI — the #59 variance
+    // class). Same property, no added navigation.
+    const declared = mainSource.slice(
+      mainSource.indexOf('const SHELL_DESIGN_FIXTURE_ROUTES'),
+      mainSource.indexOf(']);', mainSource.indexOf('const SHELL_DESIGN_FIXTURE_ROUTES')),
+    );
+    // Guard the derivation: a rename would otherwise assert against an empty slice.
+    expect(declared).toContain('SHELL_DESIGN_FIXTURE_ROUTES');
+    for (const route of CANONICAL_ROUTES) {
+      expect(
+        declared,
+        `${route} is canonical but is not in SHELL_DESIGN_FIXTURE_ROUTES, so the shell would `
+        + `announce live_server over a design fixture`,
+      ).toContain(`'${route}'`);
     }
   });
 

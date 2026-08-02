@@ -2475,6 +2475,118 @@ export function renderAlerts(
   ]));
 }
 
+/* ------------------------------------------------------- GOV-163 boards fixture */
+
+/**
+ * GOV-163 — the gated design-fixture lane for `#/boards`.
+ *
+ * The matrix §4 classes "Populated handoff board cards" as **GS**: "the owner fixture
+ * demonstrates layout only and is not executed as the reviewed directory." The ledger
+ * declared that lane; no renderer implemented it, so the ledger promised a reviewable
+ * surface that did not exist. This is that renderer — the same gap #76 (Home), #84
+ * (Newsletter) and #83 (Power) closed on their pages.
+ *
+ * **Layout only, and the matrix says so twice.** Every one of the four Boards DG rows
+ * exists because the backend supplies no body record: no body name, no cadence, no member
+ * or role, no official link. A fixture that invented any of them would manufacture exactly
+ * the civic claims those rows are keeping honest. So each card renders its *slots* with a
+ * self-describing placeholder naming the contract that would fill it, and asserts nothing.
+ *
+ * **`TopicTreeResponse` is not read here, deliberately.** The matrix §4 GS row carries its
+ * own prohibition — "Never use `TopicTreeResponse` as a shortcut to populate them" — and §4
+ * repeats it as a reviewer check ("TopicTree is not Boards"). This renderer takes no
+ * response argument at all, which is the structural version of that rule: there is no
+ * reviewed payload in scope to be tempted by.
+ */
+const BOARDS_FIXTURE_LANES = [
+  { level: 'town', label: 'Town boards' },
+  { level: 'county', label: 'County boards' },
+  { level: 'state', label: 'State bodies' },
+] as const;
+
+/** Each slot names the contract that would populate it, and asserts no civic value. */
+const BOARDS_CARD_SLOTS: readonly (readonly [string, string])[] = [
+  ['BODY NAME', 'Stands in for a policy-cleared body name from GET /v1/bodies. No body is named.'],
+  ['MEETING CADENCE', 'Stands in for a body schedule and freshness field. No cadence is inferred from agenda dates.'],
+  ['MEMBERS AND ROLES', 'Stands in for membership rows with effective dates and sources. No person is named.'],
+  ['OFFICIAL LINKS', 'Stands in for body site, calendar, agenda, and contact links. No URL is supplied.'],
+];
+
+function boardsFixtureCard(level: string, ordinal: number): HTMLElement {
+  return el('article', {
+    class: 'gw-dp-boards-card',
+    'data-test': 'boards-design-card',
+    'data-level': level,
+    'data-origin': 'fixture',
+  }, [
+    el('div', { class: 'gw-dp-boards-card-head' }, [
+      el('span', { class: 'gw-dp-boards-card-chip' }, [DESIGN_FIXTURE_LABEL]),
+      el('span', { class: 'gw-dp-boards-card-ordinal' }, [`CARD ${ordinal}`]),
+    ]),
+    el('dl', { class: 'gw-dp-boards-slots' }, BOARDS_CARD_SLOTS.flatMap(([label, text]) => [
+      el('dt', { class: 'gw-dp-boards-slot-label' }, [label]),
+      el('dd', { class: 'gw-dp-boards-slot-value', 'data-test': 'boards-design-slot' }, [text]),
+    ])),
+  ]);
+}
+
+/**
+ * Renders the Boards directory design fixture. Takes no `ReadApiResponse` on purpose —
+ * see the module note above.
+ */
+export function renderBoardsDesign(root: HTMLElement, options: DesignPageOptions = {}): void {
+  const frame = beginPage(
+    root,
+    'boards-design',
+    'Boards',
+    'A layout demonstration of populated body cards. No government body, cadence, member, or official link is asserted.',
+    'boards-overview',
+    options,
+  );
+  if (!frame) return;
+
+  // Belt and braces: `beginPage` already gates on reviewer access, but the fixture content
+  // below is the only thing on this page, so an options shape that somehow reached here
+  // without fixture admission must render nothing synthetic rather than fall through.
+  if (!frame.fixture) {
+    frame.content.append(notice(
+      'Design preview is not active',
+      'The Boards fixture renders only behind reviewer admission and an explicit design-preview flag. '
+      + 'The reviewed Boards directory is the default lane for this route.',
+      'info',
+      { 'data-test': 'boards-design-inactive' },
+    ));
+    return;
+  }
+
+  frame.content.append(notice(
+    'Layout demonstration only',
+    'These cards show the shape of a populated body directory. Every value is a placeholder naming the '
+    + 'backend contract that would fill it — no body, cadence, member, role, or official link is real, and '
+    + 'reviewed civic topics are never relabelled as government bodies.',
+    'caution',
+    { 'data-test': 'boards-design-notice' },
+  ));
+  frame.content.append(infoNoteGroup('Boards fixture explanations', [
+    'boards-overview',
+    'boards-directory',
+    'boards-body',
+  ]));
+
+  let ordinal = 0;
+  for (const lane of BOARDS_FIXTURE_LANES) {
+    frame.content.append(panel(
+      lane.label,
+      'SYNTHETIC LAYOUT LANE',
+      [el('div', { class: 'gw-dp-boards-grid' }, [
+        boardsFixtureCard(lane.level, (ordinal += 1)),
+        boardsFixtureCard(lane.level, (ordinal += 1)),
+      ])],
+      { 'data-test': 'boards-design-lane', 'data-level': lane.level },
+    ));
+  }
+}
+
 export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 .gw-design-root{font-family:var(--gw-font);color:var(--gw-text);background:var(--gw-page-bg);min-height:100%;line-height:var(--gw-leading)}
 .gw-dp-page,.gw-dp-gated{min-height:100%;color:var(--gw-text);background:var(--gw-page-bg)}
@@ -2620,6 +2732,14 @@ export const DESIGN_PAGES_STYLE = `${GW_TOKENS}
 @media (max-width:860px){.gw-dp-power-grid,.gw-dp-alert-grid,.gw-dp-location-grid,.gw-dp-workbench-grid{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:640px){.gw-dp-inner,.gw-dp-gated,.gw-dp-page[data-mode="simple"] .gw-dp-inner{width:100%;padding:var(--gw-space-4)}.gw-dp-page-head{display:grid}.gw-dp-watch-row,.gw-dp-alert-row{grid-template-columns:auto minmax(0,1fr)}.gw-dp-watch-row .gw-dp-remove,.gw-dp-alert-row .gw-dp-mark-read{grid-column:1/-1;width:100%}.gw-dp-location-selects,.gw-dp-coverage-grid,.gw-dp-compare,.gw-dp-alert-trigger-checklist{grid-template-columns:1fr}.gw-dp-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.gw-dp-county-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gw-dp-ledger-table{display:block;overflow-x:auto}.gw-dp-panel{padding:var(--gw-space-4)}.gw-dp-newspaper-story{column-count:1}.gw-dp-newspaper-rule{align-items:flex-start;flex-direction:column;gap:var(--gw-space-1)}}
 @media (prefers-reduced-motion:reduce){.gw-dp-page *{scroll-behavior:auto!important;transition:none!important}}
+.gw-dp-boards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gw-space-4)}
+.gw-dp-boards-card{border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);background:var(--gw-caution-bg);padding:var(--gw-space-4);display:grid;gap:var(--gw-space-3)}
+.gw-dp-boards-card-head{display:flex;align-items:center;justify-content:space-between;gap:var(--gw-space-2);flex-wrap:wrap}
+.gw-dp-boards-card-chip,.gw-dp-boards-card-ordinal{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;color:var(--gw-caution-text-strong);min-height:var(--gw-badge-min);display:inline-flex;align-items:center}
+.gw-dp-boards-slots{margin:0;display:grid;gap:var(--gw-space-2)}
+.gw-dp-boards-slot-label{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;letter-spacing:.6px;color:var(--gw-text-secondary);min-height:var(--gw-badge-min);display:flex;align-items:center}
+.gw-dp-boards-slot-value{margin:0 0 var(--gw-space-2);color:var(--gw-text-secondary)}
+@media(max-width:800px){.gw-dp-boards-grid{grid-template-columns:1fr}}
 `;
 
 function ensureDesignPagesStyle(): void {

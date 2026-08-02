@@ -765,3 +765,41 @@ Verification commands for this project (all three, every iteration that changes 
   81% and the script warns overall hits 100 *before* Fable — all models stop at that wall,
   1.5d to reset. Paperclip unreachable, so the burn split between this loop and the backend's
   20-minute cadence is **unmeasured, not estimated**. Owner's call which loop yields, if either.
+- [2026-08-01T21:40:00-06:00] ITERATION 52 — area: pages-civic (PARKED on #80, not resumed) —
+  worked **#163**, which the park note explicitly recorded as agent-reachable. Built the
+  gated Boards GS fixture the matrix §4 already declared: `renderBoardsDesign` in
+  `design-pages.ts` (where its four siblings live — no new module), `/boards` added to
+  `SHELL_DESIGN_FIXTURE_ROUTES` **in the same commit as the renderer**, since #84 and the
+  #82 follow-up each shipped a fixture without it and each time the shell announced
+  `live_server` over synthetic content.
+  **Scope call, stated rather than assumed:** the issue offered "build it" or "downgrade the
+  matrix row". The matrix is the binding authority and already says GS, so making code match
+  it is implementation; changing the row would edit the authority, which is the owner's.
+  Followed `/newsletter` not `/vault` on gating: `/vault?demo=design` routes its fixture
+  through `withReviewerContext`, making it depend on a live reviewer read it never uses. With
+  `:8791` down that is not academic — it renders the service gap instead of the fixture.
+  **Red proof, 5 mutations, and the second one found a vacuous guard of my own.** Planting
+  `Alpine Town Council` in a slot left the honesty sweep GREEN. Cause: `textContent`
+  concatenates adjacent elements with no separator (`…Alpine Town CouncilMEETING CADENCE…`),
+  so a trailing `\b` has no non-word character to match against and every `\b`-terminated
+  pattern was silently unenforceable. Fixed at the extraction with a TreeWalker joining text
+  nodes on `\n`, plus an assertion that the extraction actually separates — then all five
+  mutations failed correctly: named body, planted date, planted URL, fixture rendered without
+  admission, and a reviewed response wired into the signature.
+  A sixth mutation was **refused by its own precondition** (`if (!frame.fixture) {` matched 5
+  sites across other renderers); re-anchored uniquely rather than mutating a sibling by
+  accident.
+  Converted `design-routes.test.ts`'s "routes with no design fixture yet" group — down to a
+  single entry and about to become an empty, vacuous loop — into a **derived completeness
+  guard** over a shared `CANONICAL_ROUTES` const, so a future canonical route added without a
+  design lane fails instead of passing silently.
+  **CI then failed and the failure was mine.** The completeness guard swept all nine
+  canonical routes through jsdom with `waitFor` — duplicating navigations the same test
+  already performs — and pushed the file far enough over the shared runner's budget to time
+  out a NEIGHBOURING test (the landmark sweep: 1.5s locally, 20.8s on CI, the #59 variance
+  class). Rewrote it to assert the property from `main.ts?raw` source instead of by
+  navigating: same coverage, no added navigation, and the file is now 13.2s — cheaper than
+  the 14.5s baseline before the change. Re-red-proofed the new guard, since a rewritten guard
+  does not inherit the old proof: dropping `/boards` from the set fires it, and renaming the
+  const fires the derivation guard.
+  1096 tests / 73 files green, tsc clean, build:all clean.
