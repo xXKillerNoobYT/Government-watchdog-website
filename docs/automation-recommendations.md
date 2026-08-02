@@ -147,3 +147,61 @@ renders as text (`el()` uses `createTextNode`) and the **backend is the sanitisi
 exactly as the client gate is not the confidentiality boundary. Adding a content judgement
 here would move a security boundary into the browser, which is the opposite of this repo's
 standing architecture.
+
+## Global scan — 2026-08-01 (iteration 51)
+
+First **global** pass since iteration 7 (2026-07-30); the intervening passes were area-scoped.
+Scope: `package.json`, `.claude/`, `~/.claude/commands/auto-go.md` and every skill it chains,
+`docs/`, and the incident record in `docs/auto-go-memory.md` for iterations 8–50.
+
+**A11 — new evidence for A3, filed as evidence rather than as a new recommendation.**
+A3 ("no repo-level Claude Code automation exists") is still true — `.claude/` holds
+`launch.json` and `settings.local.json`, no `settings.json` and **no hooks at all**. It has
+been waiting on Q4 since 2026-07-29. What is new is that the gap has since **caused a real
+defect**, which A3 was arguing for hypothetically:
+
+> `npx tsc --noEmit && npm run build` was run as one command and `git commit` as the *next*
+> command. The type error suppressed the success message but did not stop the commit. A PR
+> went up broken carrying a message that claimed "tsc clean."
+
+That is not a discipline failure that more care fixes — it is shell chaining being relied on
+as a gate. A `PreToolUse` hook on `Bash(git commit*)` running **`tsc --noEmit` only** makes
+the gate structural, and is the repo's own standing principle applied (*push complexity down
+into deterministic code*; a tested script over repeated manual steps).
+
+**This is deliberately narrower than the pre-commit hook this file declined on 2026-07-29.**
+That one ran the full three-command ritual and was declined because it duplicated CI's work
+on the same variance-prone self-hosted runner that produced the #59 timeout flake. This runs
+one typecheck, locally, on the agent's machine, and never touches the runner. The declined
+rationale does not reach it. Recorded explicitly so a later pass does not read the old
+decline as covering this.
+
+*No new Q&A filed — appended as dated evidence under Q4 instead. Growing the decision queue
+with a near-duplicate of a pending question is the failure mode this file exists to avoid.*
+
+**A12 — the loop's own chained checks name four skills as slash-commands.**
+`auto-go.md` dispatches `/claude-automation-recommender`, `/claude-md-improver` and
+`/hunt-fix-loop` in command syntax; all three are **SKILL bodies**, not commands. The same
+file uses the correct phrasing elsewhere ("Invoke the `github-issues-sync` SKILL.md body").
+This produced a false "the command does not exist" reading on **both** this loop and the
+backend loop, and the backend recorded it on the shared Notion page as durable fact on
+2026-07-31. Filed as **issue #184**; corrected on Notion. The fix is wording in a file shared
+with WiredPart, so it is the owner's call, not this loop's.
+
+### Explicitly not recommended (this pass)
+
+**A copy-assertion guard for user-visible strings.** The failure "a test asserting a route
+*lacks* a feature stays green and silently wrong once the feature lands" hit **three** times
+in one session (`/newsletter`, `/vault`, the Power `\b\d+%` sweep), so unlike A7 this one
+clears the non-zero trigger. Declined anyway: the check that would catch it is
+`grep test/ <string>` before editing copy — a one-liner already written into `CLAUDE.md` §3.
+Wrapping a one-line grep in a skill adds a system and retires nothing. The real fix already
+shipped structurally — the route sweep now *derives* its route list instead of enumerating it,
+which is what turned 11-of-22 coverage into full coverage.
+
+**A backend-availability probe.** `:8791` has been down for ~15 iterations and each one
+rediscovers it. Tempting, but it is one `curl` and the loop already reports it; a health-check
+system would be a second thing to maintain for a value a single command returns.
+
+**Anything for MCP.** Playwright and context7 are both already available to this session; the
+repo needs no new server. Recorded so a later scan does not "discover" them.

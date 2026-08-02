@@ -105,6 +105,21 @@ hook (or `/verify` skill) on edits under `src/` that reuses the already-exported
 feedback instead of waiting for the full build chain. Purely additive, reuses existing logic,
 no second source of truth. **APPROVE / DEFER / REJECT?**
 
+**ADDENDUM 2026-08-01 (iteration 51) — the hypothetical became an incident.** This question
+was filed arguing that an agent editing `src/` has no fast feedback. Since then the gap
+caused a real defect: `npx tsc --noEmit && npm run build` was run as one command and
+`git commit` as the *next*, so the type error suppressed the success message but **did not
+stop the commit** — a PR went up broken carrying a message claiming "tsc clean."
+
+That reframes the ask. The valuable hook is not primarily about *speed* of feedback, it is
+about the verification being **structurally unable to be bypassed** by shell chaining. A
+`PreToolUse` hook on `Bash(git commit*)` running `tsc --noEmit` alone would have blocked it.
+
+Narrower than the pre-commit hook declined on 2026-07-29: that one ran the full three-command
+ritual on the self-hosted runner and would have compounded the #59 flake. This is one local
+typecheck and never touches the runner. Still **APPROVE / DEFER / REJECT** — and still not
+built, because building an unapproved automation is exactly what this file forbids.
+
 *A1 (wire `e2e:local` into CI) and A2 (remove duplicated CI steps) were filed as issues #104
 and #105 rather than as Q&A — they are ordinary work with a clear right answer, not design
 decisions. They still need owner merge like any other change.*

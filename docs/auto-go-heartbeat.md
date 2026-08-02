@@ -175,13 +175,13 @@ parked_areas:
 # largest lane by far; it sits at rotation position 3, so strict order reaches it last.
 current_area_checklist: {}  # no active area; see parked_areas for every preserved checklist
 in_progress: false
-iteration_count: 40
-day_started_at: 2026-07-31
+iteration_count: 1  # Gate C kickoff — new day. Cumulative across the session is 51; this key is the per-day counter the gate resets, and the two are not the same number.
+day_started_at: 2026-08-01
 stop_flag: false
 budget_mode: false
 budget_mode_until: null
-last_meta_recommender_at: 2026-07-30T22:05:00-06:00  # iteration 7 ran the pass scoped to the day's deltas (A5/A6 + one explicit non-recommendation), honoring iteration 6's "next iteration" flag rather than deferring a third time
-last_meta_github_sync_at: 2026-07-30T22:00:00-06:00  # iteration 7: labels created and ALL 33 open issues classified (0 unclassified) — the first sync with a real selector
+last_meta_recommender_at: 2026-08-01T21:20:00-06:00  # iteration 51 ran the first GLOBAL pass since iteration 7. A11 (new incident evidence merged into pending Q4 rather than filed as a duplicate question), A12 (the loop names four SKILLS as slash-commands — issue #184), three explicit non-recommendations. NOTE: the command was never missing; `/claude-automation-recommender` is a SKILL in the claude-code-setup plugin and invoking it worked. The earlier "does not exist" reading came from `find -iname`, which matches basenames only and therefore cannot see `<skill>/SKILL.md`.
+last_meta_github_sync_at: 2026-07-30T22:00:00-06:00  # NOT ADVANCED by iteration 51, deliberately. The `github-issues-sync` SKILL body targets xXKillerNoobYT/Weird-Part-Run-… (backend#188); running it verbatim would sync the wrong repo and report success. Left stale so the due-ness stays visible rather than being papered over by a timestamp for work that did not happen.
 last_meta_revise_at: 2026-07-30T22:05:00-06:00  # iteration 7: two targeted CLAUDE.md revisions (grep -a caveat per #112; area-label convention)
 last_meta_improver_at: 2026-07-29T12:46:00-06:00
 last_meta_self_audit_at: 2026-07-29T12:46:00-06:00
@@ -731,3 +731,37 @@ Verification commands for this project (all three, every iteration that changes 
   is unsafe because `node_modules` resolves from the parent checkout. Same dependency constraint
   that stopped coverage tooling at C4 — now a recurring blocker worth the owner's attention.
 - [2026-07-31T12:45:55-06:00] ITERATION 50 — 1089 tests / 72 files green, tsc clean, build:all 0.
+- [2026-08-01T21:20:00-06:00] ITERATION 51 (Gate C kickoff, new day) — area: none (rotation
+  still exhausted; no area work invented). Meta-check pass at owner direction. **The
+  iteration's real finding is a correction to itself.** Filed #184 claiming
+  `/claude-automation-recommender` "does not exist at any scope" — then found it does, along
+  with every other name I called missing. `find -iname` matches the **basename**, and skills
+  live as `<skill-name>/SKILL.md`, so the identifying string is in the *directory*: that probe
+  reports every skill on the machine as absent. Re-probed with `-ipath` plus a planted negative
+  control (`zzz-not-a-real-command` → 0) and all six resolved. Corrected #184 in place and
+  withdrew its recommendation, which would have retired a working capability.
+  **The backend loop recorded the identical false negative on the shared Notion page on
+  2026-07-31** ("three commands do not exist at any scope"). Two loops, one bad probe shape,
+  both written down as durable fact — the error propagated through shared memory faster than
+  the correction. Posted a CORRECTION to the GOV live-state page and proposed we both carry the
+  probe command inside any "X does not exist" claim from now on. What the backend got *right*
+  is what saved this: its rule *"read the dispatch before recording a check as blocked"* is why
+  I re-examined the finding instead of shipping it.
+  **Ran the recommender for real** once it turned out to work — first global pass since
+  iteration 7. A11 folds new incident evidence into the *pending* Q4 rather than filing a
+  near-duplicate question (the `tsc && build` / `git commit` chaining gap that shipped a broken
+  PR is no longer hypothetical); A12 records that `auto-go.md` dispatches four SKILL bodies in
+  slash-command syntax (#184). Three explicit non-recommendations, incl. a copy-assertion guard
+  that clears the non-zero trigger and is still declined — the fix is a one-line `grep test/`
+  already in CLAUDE.md §3, and wrapping it in a skill retires nothing.
+  `last_meta_github_sync_at` deliberately NOT advanced: the sync skill targets WiredPart
+  (backend#188), so the honest state is "still due", not "ran".
+  **Coordination written to Notion per owner direction** — the backend rotation opened
+  `read-api` today, which owns `file_read_api.py`, the sole Backend→Website crossing, so this
+  side's needs are now on the page while the binding is still being decided: `:8791` is still
+  refused (four merged fixture surfaces remain test-verified but never eye-verified), plus the
+  `assertWebSafe` and fail-closed-status constraints the binding should know about.
+  **Pace flagged, not throttled:** Fable 67% (PUSH, 10.9 pts behind ramp) but overall weekly
+  81% and the script warns overall hits 100 *before* Fable — all models stop at that wall,
+  1.5d to reset. Paperclip unreachable, so the burn split between this loop and the backend's
+  20-minute cadence is **unmeasured, not estimated**. Owner's call which loop yields, if either.
