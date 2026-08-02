@@ -1,3 +1,4 @@
+import { FIXTURE } from './sample-fixture';
 // @vitest-environment jsdom
 //
 // GOV-49 (1a) — the shipped fixture is web-safe, asserted directly.
@@ -20,7 +21,7 @@
 // not the export from `src/data/client`. Planting an absolute vault path in the real sample
 // left all 44 of their tests green.
 import { describe, expect, it } from 'vitest';
-import { FIXTURE } from '../src/data/client';
+
 import { assertWebSafe } from '../src/data/web-safe';
 
 describe('GOV-49 — the shipped fixture stays web-safe without a module-scope sweep', () => {

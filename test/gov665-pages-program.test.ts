@@ -1,3 +1,4 @@
+import { FIXTURE } from './sample-fixture';
 // @vitest-environment jsdom
 //
 // GOV-665 — Wave 2 pages program: Fast Agenda, timeline levels/filters, and
@@ -6,7 +7,7 @@
 import { readMode } from '../src/ui/shell';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderBoardsDirectory, renderFastAgenda, renderTimelineLevels } from '../src/ui/pages-program';
-import { FIXTURE } from '../src/data/client';
+
 import type { AgendaBoard } from '../src/types/agenda-board';
 import type { ReadApiResponse } from '../src/types/read-api';
 import boardSampleData from '../src/fixtures/agenda-board-projection.sample.dev.json';

@@ -997,3 +997,24 @@ Verification commands for this project (all three, every iteration that changes 
   clean and the finding survives.** The change is proven correct — it is blocked on
   test-infrastructure cost, which the plan now names with three candidate fixes.
   Remaining: ~152 KB still statically imported by `main.ts`, same pattern. Steps 2–3 untouched.
+- [2026-08-02T12:20:00-06:00] ITERATION 61 — area: none — STEADY (89%). **Corrected iteration
+  60's own conclusion, then re-proposed #49 1b.**
+  Iteration 60 reverted 1b claiming a measured "2.4x test-suite cost, definitively mine". Set
+  out to fix that cost; the first measurement instead showed 1b **faster** than main (8.39s vs
+  13.87s) — a direct contradiction, which per this repo's own rule means a broken measurement,
+  not a surprising truth.
+  **Re-measured, three alternating runs per side:** main 8.56/6.60/6.58/6.82/7.07/9.45 s;
+  1b 6.50/6.41/6.52/11.97/19.39/25.21 s. 1b measured both faster AND slower, and its second
+  block escalates monotonically — machine load drifting mid-run. `vite.config.ts` already
+  documents this runner as varying **2.3x in identical runs**; that is exactly what was
+  reproduced. **The cost is UNMEASURED, not proven**, and iteration 60 over-read a single
+  comparison into a definitive attribution.
+  Also measured `json: { stringify: true }` as a candidate mitigation (6.99s) — kept out of the
+  change, since there is now no established cost to mitigate and it is a repo-wide config
+  change.
+  **Re-proposing 1b unchanged and letting CI arbitrate**, which is the honest experiment: the
+  change is already proven correct (red proof in iteration 60 — re-adding the static import
+  restores exactly 878.0 KB / 3-of-3, removing it gives 736.3 KB / 0-of-3), and the only
+  evidence against it is one CI run on a test file the repo itself flags as variance-prone. If
+  CI fails again, that is real signal and it reverts with proper grounds.
+  1101 tests / 75 files green, tsc clean, bundle 736.3 KB (−141.7 KB).

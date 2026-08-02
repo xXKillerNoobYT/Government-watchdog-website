@@ -1,5 +1,6 @@
+import { FIXTURE } from './sample-fixture';
 import { describe, it, expect, vi } from 'vitest';
-import { loadReadModel, readConfig, isEmptyResponse, FIXTURE } from '../src/data/client';
+import { loadReadModel, readConfig, isEmptyResponse } from '../src/data/client';
 import { assertWebSafe, RAW_PATH_FORBIDDEN_KEYS } from '../src/data/web-safe';
 import type { ReadApiResponse } from '../src/types/read-api';
 // REAL reviewed backend output, captured from `read_api.reviewer_internal_records(...)`
