@@ -369,3 +369,59 @@ static import is the pin, confirmed by mutation rather than argument.
 **Remaining upside:** ~152 KB of fixture JSON still statically imported by `main.ts`
 (`alpine-card-feed.json` 91.9 KB and eight smaller files), each pinned by the same
 module-scope-sweep pattern. Steps 2 and 3 are untouched.
+
+
+---
+
+## Step 2 — the remaining upside is 18.9 KB, not ~152 KB (measured iteration 62)
+
+Earlier notes said roughly 152 KB of fixture JSON remained "statically imported by `main.ts`,
+same pattern". **That overstated the opportunity by about 8x**, because it counted bytes rather
+than checking reachability. Classified every use site:
+
+| fixture | KB | const | reachable without a demo/design flag? |
+| --- | --- | --- | --- |
+| `alpine-card-feed.json` | 91.9 | `CARD_FEED` | **always used** — `renderHomeRoute` |
+| `alpine-newsletter-digest.json` | 17.7 | `NEWSLETTER_DIGEST` | **always used** |
+| `concept-graph-real.json` | 12.7 | `GRAPH_REAL` | **always used** (10 sites) |
+| `state-matrix.json` | 5.7 | `STATE_MATRIX` | **always used** |
+| `alpine-supersede-events.json` | 2.0 | `SUPERSEDE_EVENTS` | **always used** |
+| `agenda-board-projection.json` | 1.4 | `BOARD_PROJECTION` | **always used** |
+| `alpine-supplied-files.json` | 1.1 | `SUPPLIED_FILES` | **always used** |
+| `alpine-upload-intake.json` | 0.8 | — | **always used** |
+| `concept-graph-demo.json` | 14.3 | `GRAPH_DEMO` | GATED — lazy-loadable |
+| `agenda-board-projection.sample.dev.json` | 4.7 | `BOARD_SAMPLE` | GATED — lazy-loadable |
+
+**Lazy-loadable: 18.9 KB. Always reachable: 133.3 KB.**
+
+`CARD_FEED` is the clearest case: `renderHomeRoute` passes `cardFeed: CARD_FEED` on every
+`/home` render and reads `CARD_FEED.access` to decide the access state. The code comment says
+so plainly — *"Real widgets consume existing reviewed Alpine projections (card feed / digest /
+board)"*. This is **not** gated-synthetic dead weight; it is the data the reviewed Home page
+renders.
+
+### What that means
+
+**Step 2 as originally framed is mostly not available.** Those 133.3 KB cannot move to a lazy
+chunk without converting synchronous route handlers to async — a much larger change than 1b,
+touching the router rather than one module, for data the first paint needs anyway. Lazy-loading
+data the initial render requires trades bundle size for a waterfall and is usually a loss.
+
+**The real question underneath is architectural, not a code-split:** the reviewed pages ship
+their content as bundled JSON rather than fetching it. Whether Home should read its projection
+from the API instead of a bundled fixture is a product decision about how this site is
+supposed to work — worth asking, but not something to resolve inside a bundle-size issue.
+
+### Recommendation
+
+1. **Do the 18.9 KB** (`concept-graph-demo`, `agenda-board-projection.sample.dev`) with the
+   pattern 1b established. Small, and genuinely demo-gated.
+2. **Do not attempt the 133.3 KB as a code-split.** Raise the architectural question separately
+   if bundle size matters more than it currently appears to.
+3. Step 3 (per-route splitting) is unaffected and still last.
+
+*Method note: the first classification pass reported `state-matrix.json` as having **zero** use
+sites. That was a probe bug — the filter excluded any line matching `const`, and its only use
+is `const matrix = narrowToRequestedAccess(STATE_MATRIX, query)`. `noUnusedLocals: true` is
+enabled in `tsconfig.json`, so a genuinely unused const could not compile — which made the
+result impossible on its face and should have been caught before it was believed.*
