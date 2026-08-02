@@ -1,6 +1,6 @@
 # GOV-49 — Code-split the private-beta bundle
 
-**Pipeline stage: 1 (plan) + 2 (acceptance criteria). Not implemented.**
+**Pipeline stage: 1 (plan) + 2 (acceptance criteria).**
 Written 2026-08-02 by the AUTO GO loop. Every number below was measured on that date
 against `origin/main`, not estimated — re-measure before acting, because a plan whose
 premise has decayed is worse than no plan (the lesson from GOV-70).
@@ -311,3 +311,50 @@ This plan does **not** claim the work should start now. At the time of writing t
 pace verdict is EASE OFF and this is the largest remaining item; it is written so that
 whoever picks it up — a later iteration or the owner — starts from measurements rather than
 from the guesswork this document replaces.
+
+
+---
+
+## Step 1b — WORKS, is CORRECT, and is blocked on test-suite cost (iteration 60)
+
+Iterations 56 and 58 both reverted this change after seeing the fixture disappear from the
+`VITE_USE_FIXTURES=true` build, and both called that a regression. **A control build on
+unmodified `main` disproved it.** `FIXTURE_NOTICE` is absent from main's bundle too, in *both*
+builds — the `if (config.useFixtures)` branch is eliminated from every production bundle
+already (filed as **#194**). The fixture lane is dev-only and always has been.
+
+So the 3/3 fixture strings on `main` were never evidence the lane worked. They were the static
+import being un-shakeable. **Bytes present ≠ feature reachable**, and conflating the two cost
+two iterations.
+
+**What was built and measured.** `src/data/client.ts` holding no static reference to
+`alpine-sample.json`, the sample reached through `await import(...)`, tests reading it from a
+`test/sample-fixture.ts` helper. Result: **878.0 → 736.3 KB raw, 191.0 → 180.4 KB gzipped**,
+1101 tests green locally, `build:all` clean.
+
+**Why it is NOT merged: it costs 2.4x on the test suite and breaks CI.** Measured
+back-to-back on the same machine:
+
+| | `design-routes.test.ts` file | the COMING SOON sweep |
+| --- | --- | --- |
+| `main` | 9.15 s | 1472 ms |
+| with 1b | 21.88 s | 3634 ms |
+
+On the shared runner that crossed the sweep's 20 s ceiling — 30 s, CI red. The cause is that
+the dynamic import makes the 198 KB JSON a separate module vitest transforms on demand, and
+`design-routes.test.ts` re-imports `src/main` repeatedly under `vi.resetModules()`.
+
+**This is a solvable problem, not a dead end**, and it is squarely a test-infrastructure
+question rather than a product one. Options for whoever picks it up, cheapest first:
+inline the JSON for the test environment (`test.server.deps`), give that one sweep a longer
+budget the way its neighbour already has, or make the sweep stop re-importing `src/main` per
+route. **Do not re-attempt 1b without addressing the transform cost first** — the source
+change itself is already proven correct by the red proof below.
+
+**Red proof.** Re-adding the old shape — static import plus module-scope `assertWebSafe` —
+restores exactly 878.0 KB and 3/3 fixture strings; removing it returns 736.3 KB and 0/3. The
+static import is the pin, confirmed by mutation rather than argument.
+
+**Remaining upside:** ~152 KB of fixture JSON still statically imported by `main.ts`
+(`alpine-card-feed.json` 91.9 KB and eight smaller files), each pinned by the same
+module-scope-sweep pattern. Steps 2 and 3 are untouched.
