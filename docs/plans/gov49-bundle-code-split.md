@@ -75,6 +75,71 @@ guards change before the work is done.**
 
 Three steps, in dependency order. Steps 1 and 2 are independent of each other.
 
+### Sharpening measured 2026-08-02 (iteration 56) — start with ONE line, not eleven files
+
+`alpine-sample.json` is 198.4 KB, the single largest item, and **it is never used in any real
+build.** Traced end to end:
+
+- Its only runtime consumer is `if (config.useFixtures) { … FIXTURE … }` in
+  `src/data/client.ts`.
+- `useFixtures` reads `VITE_USE_FIXTURES`, defaulting to `'false'`. **No `.env` file exists**
+  (only `.env.example`, which sets `false`), no build script sets it, and CI does not set it.
+  Only test files set it to `'true'`.
+- The exported `FIXTURE` const is referenced as a value by **zero** source modules. Its five
+  importers are all under `test/`.
+
+**And yet it ships** — three distinctive fixture strings were found verbatim in the emitted
+chunk. The reason is one line:
+
+```ts
+export const FIXTURE: ReadApiResponse = assertWebSafe(fixtureData as ReadApiResponse);
+```
+
+That is a **side-effecting call at module scope**, so Rollup cannot tree-shake the import even
+though nothing reads the result. One line pins ~198 KB of source JSON into every build, and the
+sweep also costs **~3.7 ms** (median of 5, range 2.3–5.4) on every page load for every user.
+
+**Do not simply delete it.** The eager sweep is deliberate — the comment above it says a hand
+edit painting an absolute path into the sample must fail loud immediately. That guard has to be
+preserved, moved to a test rather than dropped.
+
+This splits into two independently shippable pieces, which is why it belongs above the original
+step 1:
+
+- **1a — the startup cost.** Move the eager `assertWebSafe` off module scope.
+- **1b — the 198 KB.** Convert to `await import(...)` inside the `useFixtures` branch.
+
+#### ⚠️ 1a WAS ATTEMPTED AND REVERTED. Read this before trying it again.
+
+Implemented and reverted in iteration 56. Moving the sweep into the `useFixtures` branch and
+leaving `export const FIXTURE = fixtureData as ReadApiResponse` looks correct, typechecks, and
+passes the **entire 1099-test suite**. Measured effect on the default build:
+
+| | before | after |
+| --- | --- | --- |
+| raw | 878.0 KB | **736.3 KB** |
+| gzipped | 191.0 KB | **180.4 KB** |
+| fixture strings in bundle | 3/3 | **0/3** |
+
+It appears to be a free 141 KB win. **It is not.** Building with fixtures actually enabled —
+a real `.env` carrying `VITE_USE_FIXTURES=true` — also produced **0/3**: the fixture lane ships
+with its data tree-shaken away, so the one build that needs the sample is the one that loses it.
+Reverting restores 3/3.
+
+Nothing in the test suite catches this, because no test builds with fixtures on; the suite runs
+against source, where `FIXTURE` resolves fine. **Only building both ways and grepping the
+emitted chunk exposes it.**
+
+The mechanism was not fully isolated, and the plan deliberately does not guess: what is measured
+is that removing the module-scope side effect makes the JSON eliminable in *both* builds, not
+just the one where it is unused. The eager `assertWebSafe` was, incidentally, the thing keeping
+the fixture lane working at all.
+
+**So 1a and 1b are not separable after all.** Whoever does this must do 1b — an explicit
+`await import(...)` inside the branch, which creates a real reference the bundler cannot drop —
+and must verify **both** builds by grepping the emitted artifact. Add that to the acceptance
+criteria; the suite alone will not tell you.
+
 **1 — Defer the fixture JSON behind dynamic `import()`.** The largest win by a wide margin
 and the lowest risk, because fixtures are already reachable only through
 `designPreviewActive` / `demo=` branches. Converting those branches to `await import(...)`
