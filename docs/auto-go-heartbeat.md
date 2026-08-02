@@ -793,4 +793,13 @@ Verification commands for this project (all three, every iteration that changes 
   single entry and about to become an empty, vacuous loop — into a **derived completeness
   guard** over a shared `CANONICAL_ROUTES` const, so a future canonical route added without a
   design lane fails instead of passing silently.
+  **CI then failed and the failure was mine.** The completeness guard swept all nine
+  canonical routes through jsdom with `waitFor` — duplicating navigations the same test
+  already performs — and pushed the file far enough over the shared runner's budget to time
+  out a NEIGHBOURING test (the landmark sweep: 1.5s locally, 20.8s on CI, the #59 variance
+  class). Rewrote it to assert the property from `main.ts?raw` source instead of by
+  navigating: same coverage, no added navigation, and the file is now 13.2s — cheaper than
+  the 14.5s baseline before the change. Re-red-proofed the new guard, since a rewritten guard
+  does not inherit the old proof: dropping `/boards` from the set fires it, and renaming the
+  const fires the derivation guard.
   1096 tests / 73 files green, tsc clean, build:all clean.

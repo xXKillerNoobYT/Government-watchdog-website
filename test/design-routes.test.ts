@@ -243,25 +243,28 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     });
 
-    // GOV-163 closed the last gap, so this group is no longer a list of routes still
-    // awaiting a fixture — it is now a COMPLETENESS guard. An enumerated "not yet" list
-    // shrinks to nothing and silently stops testing anything (it was down to one entry
-    // before this change); a derived sweep instead fails the moment a canonical route is
-    // added without a design lane, which is the condition worth catching.
-    let fixtureRoutesSeen = 0;
+    // GOV-163 closed the last gap, so this group is no longer a list of routes awaiting a
+    // fixture — it is a COMPLETENESS guard. An enumerated "not yet" list shrinks to nothing
+    // and silently stops testing anything (it was down to one entry before this change).
+    //
+    // It reads SOURCE rather than re-navigating. The first version swept all nine canonical
+    // routes through jsdom with `waitFor`, which duplicated navigations this test already
+    // performs AND pushed the file far enough over the shared runner's budget to time out a
+    // NEIGHBOURING test (the landmark sweep, 1.5s locally, 20.8s on CI — the #59 variance
+    // class). Same property, no added navigation.
+    const declared = mainSource.slice(
+      mainSource.indexOf('const SHELL_DESIGN_FIXTURE_ROUTES'),
+      mainSource.indexOf(']);', mainSource.indexOf('const SHELL_DESIGN_FIXTURE_ROUTES')),
+    );
+    // Guard the derivation: a rename would otherwise assert against an empty slice.
+    expect(declared).toContain('SHELL_DESIGN_FIXTURE_ROUTES');
     for (const route of CANONICAL_ROUTES) {
-      window.location.hash = `#${route}`;
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-      await vi.waitFor(() => {
-        expect(
-          app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'),
-          `${route} is canonical but declares no design-fixture lane under design preview`,
-        ).toBe('fixture');
-      });
-      fixtureRoutesSeen += 1;
+      expect(
+        declared,
+        `${route} is canonical but is not in SHELL_DESIGN_FIXTURE_ROUTES, so the shell would `
+        + `announce live_server over a design fixture`,
+      ).toContain(`'${route}'`);
     }
-    // Guard the guard: a selector change would otherwise make the sweep vacuous.
-    expect(fixtureRoutesSeen).toBe(CANONICAL_ROUTES.length);
   });
 
   it('does not render synthetic page content until design preview is explicit', async () => {
