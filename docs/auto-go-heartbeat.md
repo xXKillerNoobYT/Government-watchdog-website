@@ -1042,3 +1042,24 @@ Verification commands for this project (all three, every iteration that changes 
   Did NOT attempt the async conversion at 93% budget: that is exactly the shape that produced
   three reverts this session. Recorded instead, with a recommendation.
   Docs only. 1101 tests / 75 files green, tsc clean, build clean.
+- [2026-08-02T15:30:00-06:00] ITERATION 63 — area: none — EASE OFF (95%, 0.8d to reset).
+  Went to do the 18.9 KB and **found my own classifier wrong again — fifth probe bug this
+  session.** `BOARD_SAMPLE` was labelled GATED; its line-953 use site is inside
+  `renderHomeRoute`, the unconditional `/home` handler, passed on every render exactly like
+  `CARD_FEED`. The classifier matched the substring "sample" in the **property name**
+  `sampleBoard`. Name matching, not gate detection.
+  So the lazy-loadable total is **at most 14.3 KB, not 18.9** — and even that is unconfirmed:
+  `GRAPH_DEMO` line 549 is genuinely behind `if (demo === 'graph-synthetic')`, but line 304 is
+  in `completeDemoBody()` whose reachability I did not trace. Its *name* suggests a demo path,
+  and name-based inference is precisely what produced this correction.
+  **Did not make a code change on a classifier now known to be unreliable, at 95% of budget.**
+  **Closed steps 2 and 3 with reasoning rather than leaving them as open temptations.** Three
+  of this plan's reachability claims have been wrong (`state-matrix` "zero uses" — impossible
+  under `noUnusedLocals`; `BOARD_SAMPLE`; the original "~152 KB"). Remaining upside is under 2%
+  of a 736 KB bundle; measurement cost has plainly exceeded value. The plan now says: do not act
+  on any GATED label here without reading the use site, and the question actually worth asking
+  is architectural — should reviewed pages fetch their projections rather than bundle them?
+  That is the owner's call and worth more than every remaining byte.
+  **Session tally worth carrying:** five probe/tooling errors, zero code defects found by them.
+  The instruments were the problem all session, not the codebase.
+  Docs only. 1101 tests / 75 files green, tsc clean, build clean.
