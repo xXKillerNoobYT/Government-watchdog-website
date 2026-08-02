@@ -135,6 +135,43 @@ is that removing the module-scope side effect makes the JSON eliminable in *both
 just the one where it is unused. The eager `assertWebSafe` was, incidentally, the thing keeping
 the fixture lane working at all.
 
+#### ⚠️ 1b WAS ALSO ATTEMPTED AND REVERTED (iteration 58). Two formulations, same failure.
+
+Implemented properly this time — no static import at all:
+
+```ts
+async function loadSampleFixture(): Promise<ReadApiResponse> {
+  const module = await import('../fixtures/alpine-sample.json');
+  return assertWebSafe(module.default as unknown as ReadApiResponse);
+}
+```
+
+with the five `FIXTURE` importers repointed to a `test/sample-fixture.ts` helper so production
+code kept no module-scope reference. `tsc` clean, **all 1101 tests green**.
+
+**Both builds emitted 0/3 fixture strings and ONE chunk.** The dynamic import produced no
+separate chunk at all, so the JSON was eliminated rather than deferred — the same end state as
+the 1a attempt, reached by a different route. `json: { stringify: true }` was tried as a probe
+(the theory being that Vite's per-key named exports let Rollup shake the object); it changed
+nothing: still 1 chunk, still 0/3.
+
+**Mechanism NOT isolated. Do not treat this section as a diagnosis.** What is established:
+
+- `vite.config.ts` sets no `inlineDynamicImports`, no `manualChunks`, no lib mode, so nothing
+  obvious forbids splitting.
+- The flag *is* wired: on unmodified `main`, default and `VITE_USE_FIXTURES=true` builds have
+  **different** JS hashes. So the earlier finding stands — this is a real regression, not a
+  measurement artifact. (That doubt was raised and checked rather than assumed.)
+- Whatever drops the JSON acts on **both** builds and survives both a lazy-sweep formulation
+  and a true dynamic import.
+
+**What the next attempt should do differently.** Stop optimising and first answer one question
+in isolation: *does a dynamic `import()` of any JSON in this project produce a separate chunk?*
+Build a one-line throwaway case and look at `dist/client/assets/`. If it does not, the problem
+is the build configuration, not `client.ts`, and no amount of rewriting the client will fix it.
+Two iterations have now rewritten the consumer without establishing that the mechanism they
+depend on works here at all.
+
 #### The pattern is systemic, not one line (measured iteration 57)
 
 Checked every fixture for the same shape. **350.6 of 352.4 KB — 99.5% — is pinned by a

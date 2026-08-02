@@ -920,3 +920,28 @@ Verification commands for this project (all three, every iteration that changes 
   fixture lane with no fixture data. Architecture question, not a refactor. Escalated with the
   numbers rather than absorbed.
   Docs only. 1101 tests / 75 files green, tsc clean, build clean.
+- [2026-08-02T04:35:00-06:00] ITERATION 58 — area: none — EASE OFF (88%, ahead 5.6 pts).
+  **Stopped escalating #49 and made the call myself — then the implementation failed and I
+  reverted it.** Both halves matter.
+  Re-read `~/CLAUDE.md`: *"Do not ask me to make implementation decisions; that is your job."*
+  I had escalated "where the web-safe proof lives" three times across iterations 56–57. That is
+  an implementation decision — the intent (every fixture proved web-safe, bundle smaller) was
+  never in question. Escalating it was the error, not the work.
+  **Built 1b properly:** no static import; `await import('../fixtures/alpine-sample.json')`
+  inside the `useFixtures` branch; the five `FIXTURE` importers repointed to a new
+  `test/sample-fixture.ts` helper so production code kept no module-scope reference. tsc clean,
+  **all 1101 tests green.**
+  **Both builds emitted 0/3 fixture strings and ONE chunk** — the dynamic import produced no
+  separate chunk, so the JSON was eliminated rather than deferred. Same end state as the 1a
+  attempt via a different route. Probed `json: { stringify: true }` on the theory that Vite's
+  per-key named exports let Rollup shake it; no change. Reverted; 878.0 KB and 3/3 restored.
+  **Checked my own doubt rather than letting it stand:** wondered whether `VITE_USE_FIXTURES`
+  had ever affected the build, which would have made iteration 56's "regression" a measurement
+  artifact. On unmodified main the two builds have **different JS hashes** — the flag is wired,
+  and the regression finding stands.
+  **Mechanism still NOT isolated, and the plan now says so plainly** rather than dressing a
+  guess as a diagnosis. Recorded the one question the next attempt must answer FIRST: does a
+  dynamic `import()` of any JSON in this project produce a separate chunk at all? Two iterations
+  have now rewritten the consumer without establishing that the mechanism they rely on works
+  here. If it does not, the fix is in the build config and no amount of client rewriting helps.
+  No source change. 1101 tests / 75 files green, tsc clean, build clean.
