@@ -135,6 +135,40 @@ is that removing the module-scope side effect makes the JSON eliminable in *both
 just the one where it is unused. The eager `assertWebSafe` was, incidentally, the thing keeping
 the fixture lane working at all.
 
+#### The pattern is systemic, not one line (measured iteration 57)
+
+Checked every fixture for the same shape. **350.6 of 352.4 KB — 99.5% — is pinned by a
+module-scope `assertWebSafe` call**, in 11 of 12 files:
+
+| fixture | KB | module scope |
+| --- | --- | --- |
+| `alpine-sample.json` | 198.4 | `const FIXTURE = assertWebSafe(...)` in `client.ts` |
+| `alpine-card-feed.json` | 91.9 | `const CARD_FEED = assertWebSafe(...)` in `main.ts` |
+| `alpine-newsletter-digest.json` | 17.7 | side effect |
+| `concept-graph-demo.json` | 14.3 | side effect |
+| `concept-graph-real.json` | 12.7 | side effect |
+| `state-matrix.json` | 5.7 | side effect |
+| `agenda-board-projection.sample.dev.json` | 4.7 | side effect |
+| `alpine-supersede-events.json` | 2.0 | side effect |
+| `agenda-board-projection.json` | 1.4 | side effect |
+| `alpine-supplied-files.json` | 1.1 | side effect |
+| `alpine-upload-intake.json` | 0.8 | bare `assertWebSafe(x);` statement |
+| `notifications.sample.json` | 1.8 | **plain binding — the only one** |
+
+Two forms appear and both count: `const X = assertWebSafe(data)` and a bare
+`assertWebSafe(data);` statement. A first pass matched only the assignment form and
+misclassified `alpine-upload-intake` as plain; a planted negative control caught it. Any
+future audit of this must match both.
+
+**What this means for the work.** The eager sweep is a deliberate, repo-wide honesty habit —
+every fixture is proved web-safe before it can be rendered — and it is *also* the single
+reason none of it tree-shakes. Those are the same line. So 1b is not "add one dynamic
+import": it is a decision about **where the web-safe proof lives** for all 12 fixtures, with
+the 1a experiment showing that moving it naively drops data the fixtures-on build needs.
+
+That is an architecture question, not a refactor, and it is worth the owner's eye before
+anyone starts.
+
 **So 1a and 1b are not separable after all.** Whoever does this must do 1b — an explicit
 `await import(...)` inside the branch, which creates a real reference the bundler cannot drop —
 and must verify **both** builds by grepping the emitted artifact. Add that to the acceptance

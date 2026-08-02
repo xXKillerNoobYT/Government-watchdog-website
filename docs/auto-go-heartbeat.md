@@ -901,3 +901,22 @@ Verification commands for this project (all three, every iteration that changes 
   directly, plus a non-vacuity check (>50k chars, records present) so emptying the fixture cannot
   make it pass hollow. Red-proofed: planted vault path → fails.
   1101 tests / 75 files green, tsc clean, build clean.
+- [2026-08-02T03:20:00-06:00] ITERATION 57 — area: none — EASE OFF (87%, ahead 5.3 pts).
+  Completed the #49 measurement rather than starting 1b, which I have now twice flagged as
+  needing the owner's eye and will not begin unprompted on the last of the week's budget.
+  **The pattern is systemic: 350.6 of 352.4 KB (99.5%) of fixture data is pinned by a
+  module-scope `assertWebSafe` call, in 11 of 12 files.** Two forms both pin —
+  `const X = assertWebSafe(data)` and a bare `assertWebSafe(data);` statement.
+  **My first probe reported 349.8 KB and called `alpine-upload-intake` "plain"; a planted
+  negative control proved that a false negative** — the regex required `= call(ident)` and
+  missed statement-form calls, which are more purely side-effecting, not less. Corrected, and
+  the plan now warns any future audit to match both forms. Second time this session a negative
+  control has caught my own probe (the first was `-iname` vs `-ipath`).
+  **The reframe this produces is the real output.** The eager sweep is a deliberate repo-wide
+  honesty habit — every fixture proved web-safe before anything can render it — AND the single
+  reason none of it tree-shakes. Same line. So 1b is not "add a dynamic import"; it is a
+  decision about where the web-safe proof lives for all twelve fixtures, and iteration 56
+  demonstrated that moving it naively yields a build that passes 1099 tests while shipping a
+  fixture lane with no fixture data. Architecture question, not a refactor. Escalated with the
+  numbers rather than absorbed.
+  Docs only. 1101 tests / 75 files green, tsc clean, build clean.
