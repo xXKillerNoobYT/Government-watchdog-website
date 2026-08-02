@@ -822,3 +822,27 @@ Verification commands for this project (all three, every iteration that changes 
   follow-up, #163), GS lanes render synchronously (`/vault?demo=design` still does not), and the
   test asserting a route lacks a fixture belongs to the change that gives it one.
   1096 tests / 73 files green, tsc clean, build clean.
+- [2026-08-01T23:50:00-06:00] ITERATION 54 — area: none (rotation exhausted) — **corrected a
+  wrong statement I put into the BINDING LEDGER one iteration ago.** Iteration 53 wrote into
+  `docs/design-information-type-matrix.md` that `/vault?demo=design` was routed wrongly and
+  should render synchronously like `/newsletter` and `/boards`. Measured this iteration:
+  **false, and acting on it would have broken the page.** `designFixture` has 3 uses in
+  `renderSourceVault`, and the operative one is a single swap —
+  `designFixture ? versionCompareFixture() : versionCompare()`. Everything else on the page
+  (`collectSources(data)`, source rows, counts, the access gate) comes from the reviewed
+  response. `/vault` is a **hybrid** lane: reviewed content plus ONE synthetic panel. It needs
+  `withReviewerContext`; making it synchronous would strip the reviewed half.
+  **How the error happened, because it is the reusable part:** the rule was generalised from
+  two *pure* lanes and written down without measuring the third. It went into the highest-
+  authority document in the repo, where a later agent would have read it as a directive. The
+  corrected note now states the actual test — *does the design lane render **any** reviewed
+  value?* — and is marked CORRECTION rather than silently rewritten.
+  **A corrected sentence does not stop the next "fix", so the property is now executable.**
+  `test/vault-hybrid-design-lane.test.ts` (3 tests): reviewed rows and the synthetic panel
+  render together; the design flag changes the compare panel and nothing else (row counts
+  identical with and without); neither renders outside the reviewer lane. Red-proofed by
+  mutating **both** `sourceContent()` sites — a single-site mutation would have left the other
+  layout rendering and looked like a vacuous guard. Failure message names the trap directly.
+  Deliberately a NEW unit-level file rather than an addition to `design-routes.test.ts`, which
+  is at its CI budget on the shared runner (iteration 52 timed out a neighbouring test there).
+  1099 tests / 74 files green, tsc clean, build clean.

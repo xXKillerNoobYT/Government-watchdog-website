@@ -42,11 +42,22 @@ were each individually correct.
 
 Two rules that fall out of it, both learned the same way:
 
-- **Render a GS lane synchronously.** Routing it through `withReviewerContext` makes a fixture
-  depend on a live reviewed read it never uses, so the shell declares fixture origin while the
-  page waits on — or fails — a fetch. When the backend is down that is not a corner case: the
-  route renders the service gap instead of the fixture. `/newsletter` and `/boards` do this
-  correctly; `/vault?demo=design` still does not.
+- **Render a *pure* GS lane synchronously — and check which kind you have first.** A pure
+  lane renders nothing but fixture content, so routing it through `withReviewerContext` makes
+  it depend on a reviewed read it never uses: the shell declares fixture origin while the page
+  waits on — or fails — a fetch. With the backend down that is not a corner case, it is what
+  the route shows. `/newsletter` and `/boards` are pure and render synchronously.
+
+  **A hybrid lane is the opposite case and must keep the read.** `/vault?demo=design` renders
+  reviewed source rows, counts and the access gate from the response and swaps exactly **one**
+  panel for a synthetic one (`designFixture ? versionCompareFixture() : versionCompare()`).
+  It needs `withReviewerContext`; making it synchronous would strip the reviewed half of the
+  page. *(CORRECTION 2026-08-01 — supersedes the first version of this bullet, which listed
+  `/vault` as doing this wrong. It was not measured before being written down. The test is
+  whether the design lane renders **any** reviewed value, not whether it renders a fixture.)*
+
+  The shell rule is unaffected by the distinction: **any** route that can render synthetic
+  content under design preview belongs in `SHELL_DESIGN_FIXTURE_ROUTES`, pure or hybrid.
 - **The test asserting a route has *no* fixture is part of the change that gives it one.** Those
   assertions are green and silently wrong the moment the lane lands. Prefer a derived
   completeness guard over an enumerated "not yet" list — the list shrinks to nothing and stops
