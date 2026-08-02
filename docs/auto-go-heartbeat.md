@@ -875,3 +875,29 @@ Verification commands for this project (all three, every iteration that changes 
   blockers are all owner decisions, not backend contracts) and confirmed their #150/#164/#165
   ordering changes nothing here: those slots are DG today and were not queued.
   Docs only. 1099 tests / 74 files green, tsc clean, build clean.
+- [2026-08-02T02:10:00-06:00] ITERATION 56 — area: none — EASE OFF (85%, ahead 4 pts).
+  Continued #49 stage 1. **Attempted step 1a, measured a regression in my own change, and
+  reverted it.** The finding is the deliverable.
+  Traced the biggest bundle item: `alpine-sample.json` (198.4 KB) is consumed only by
+  `if (config.useFixtures)`, `useFixtures` defaults false, **no `.env` exists**, no build script
+  and no CI job sets `VITE_USE_FIXTURES`, and the exported `FIXTURE` is referenced as a value by
+  **zero** source modules (its 5 importers are all tests). Yet 3/3 distinctive fixture strings
+  were verbatim in the emitted chunk. Mechanism: `assertWebSafe(fixtureData)` at MODULE SCOPE is
+  a side-effecting call on the import, so Rollup cannot drop it — one line pinning 198 KB, plus
+  **~3.7 ms** (median of 5) of sweep on every page load for a branch that never runs.
+  **1a looked free and was not.** Moving the sweep into the branch: 878.0 → **736.3 KB raw**,
+  191.0 → **180.4 KB gz**, fixture strings 3/3 → 0/3, tsc clean, **all 1099 tests green.** Then
+  built with a real `.env` carrying `VITE_USE_FIXTURES=true`: **also 0/3** — the one build that
+  needs the sample is the one that loses it. Reverted; 3/3 restored.
+  **Nothing in the suite catches this**, because no test builds with fixtures on — the suite runs
+  against source where `FIXTURE` resolves fine. Only building BOTH ways and grepping the emitted
+  artifact exposes it. Recorded in the plan as a do-not-retry-blind warning: 1a and 1b are **not
+  separable**, and the acceptance criteria now require verifying both builds.
+  **A red proof also corrected a claim I had already written into a source comment.** I stated
+  three suites assert `assertWebSafe(FIXTURE)` on this export; planting an absolute vault path
+  left all 44 of their tests green. Their `FIXTURE` is a **local constant**, not the client
+  export — the module-scope call really was the only import-time enforcement.
+  **Kept from the attempt:** `test/client-fixture-web-safe.test.ts` — asserts the real export
+  directly, plus a non-vacuity check (>50k chars, records present) so emptying the fixture cannot
+  make it pass hollow. Red-proofed: planted vault path → fails.
+  1101 tests / 75 files green, tsc clean, build clean.
