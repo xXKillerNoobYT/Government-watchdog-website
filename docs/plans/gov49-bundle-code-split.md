@@ -135,6 +135,47 @@ is that removing the module-scope side effect makes the JSON eliminable in *both
 just the one where it is unused. The eager `assertWebSafe` was, incidentally, the thing keeping
 the fixture lane working at all.
 
+#### ✅ THE ISOLATED EXPERIMENT WAS RUN (iteration 59). Two of three unknowns are now closed.
+
+The previous section asked one question first: *does a dynamic `import()` of any JSON here
+produce a separate chunk?* Answered by building throwaway modules behind a condition Rollup
+cannot statically decide (`window.location.hash === '__zz_probe_never__'`).
+
+**Result 1 — splitting works, including for JSON.** Three chunks emitted; the throwaway JSON
+landed in its own `zz-probe-data-*.js` with its marker inside it. So *"the build config
+forbids splitting"* is **false** and can be struck from the hypothesis list. Nothing in
+`vite.config.ts` needs changing.
+
+**Result 2 — and this is the one that matters.** Re-pointing the same dynamic import at the
+**real** `alpine-sample.json` produced **no chunk for it**: the fixture stayed in the entry,
+which grew to 879.4 KB carrying 3/3 fixture strings, while the throwaway `.ts` module still
+split fine.
+
+The difference is not the file's size or contents. It is that `src/data/client.ts` **also
+statically imports it**. A module reachable through a static import cannot be moved into a
+lazy chunk — Rollup must keep it in the static graph, and the dynamic import simply
+references it there. **A dynamic import added *alongside* a static one buys nothing.**
+
+That retroactively explains 1a: moving only the sweep left the static import in place, so the
+bytes could never leave the entry regardless.
+
+**What remains unexplained — exactly one thing.** Iteration 58 *did* remove the static import
+and *did* use a dynamic one, which by Results 1 and 2 is the structurally correct shape, and
+it still emitted 0/3 in the fixtures-on build. Two candidate explanations remain, and the next
+attempt should separate them before writing any code:
+
+1. **The default build's 0/3 is correct and expected.** With `useFixtures` provably false,
+   the branch is dead and the chunk is rightly never emitted. Only the *fixtures-on* reading
+   was ever anomalous.
+2. **The fixtures-on build may not have been reading `.env` in that invocation.** It was run
+   as a bare `npx vite build`, not through `npm run build:private-beta`. On unmodified `main`
+   the flag does change the output hash, so the flag works in general — but that was measured
+   through the npm script, not the bare invocation.
+
+**Check (2) first — it is one command** and would mean iteration 58's implementation was
+correct all along and only its verification was faulty. Do not rewrite `client.ts` again
+before settling it.
+
 #### ⚠️ 1b WAS ALSO ATTEMPTED AND REVERTED (iteration 58). Two formulations, same failure.
 
 Implemented properly this time — no static import at all:

@@ -945,3 +945,28 @@ Verification commands for this project (all three, every iteration that changes 
   have now rewritten the consumer without establishing that the mechanism they rely on works
   here. If it does not, the fix is in the build config and no amount of client rewriting helps.
   No source change. 1101 tests / 75 files green, tsc clean, build clean.
+- [2026-08-02T05:40:00-06:00] ITERATION 59 — area: none — EASE OFF (88%, ahead 4.9 pts).
+  **Ran the isolated experiment the plan demanded instead of rewriting the consumer a third
+  time. Two of three unknowns closed.**
+  Method: throwaway `.ts` + `.json` modules dynamic-imported behind
+  `window.location.hash === '__zz_probe_never__'` — a condition Rollup cannot statically
+  decide, so neither branch can be eliminated.
+  **Result 1 — splitting works, including for JSON.** 3 chunks emitted; the throwaway JSON got
+  its own `zz-probe-data-*.js` with the marker inside. *"The build config forbids splitting"*
+  is FALSE and struck from the hypothesis list. `vite.config.ts` needs no change.
+  **Result 2 — the real cause.** The same dynamic import pointed at the REAL
+  `alpine-sample.json` produced NO chunk: the fixture stayed in the entry (879.4 KB, 3/3),
+  while the `.ts` probe still split. The difference is not size or content — it is that
+  `client.ts` **also statically imports it**. A module reachable via a static import cannot
+  move to a lazy chunk; the dynamic import just references the static copy. **Adding a dynamic
+  import alongside a static one buys nothing** — which retroactively explains why 1a could
+  never have worked.
+  **One unknown left, and it is now precisely scoped.** Iteration 58 removed the static import
+  AND used a dynamic one — structurally correct by Results 1–2 — yet still showed 0/3 on the
+  fixtures-on build. Two candidates: (a) the default build's 0/3 is CORRECT (dead branch,
+  chunk rightly not emitted) and only the fixtures-on reading was anomalous; (b) that build was
+  run as a bare `npx vite build` rather than through the npm script, so `.env` may not have
+  been read. **(b) is one command to check** and would mean iteration 58's code was right and
+  only its verification was wrong. Plan says: settle it before touching `client.ts` again.
+  Probe files removed, `main.ts` reverted, tree clean, bundle back to 878.0 KB / 1 chunk.
+  No source change. Docs only.
