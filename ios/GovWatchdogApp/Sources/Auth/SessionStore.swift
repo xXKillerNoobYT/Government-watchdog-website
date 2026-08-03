@@ -11,10 +11,18 @@ import Security
 ///
 ///   * `kSecAttrAccessibleAfterFirstUnlock` — readable after the first unlock
 ///     following a boot (so a backgrounded relaunch still works), but never while
-///     the device has not been unlocked since boot, and never restored to a
-///     *different* device.
+///     the device has not been unlocked since boot.
 ///   * **non-synchronizable** (`kSecAttrSynchronizable = false`) — the token never
 ///     leaves this device via iCloud Keychain.
+///
+/// Scope note (GOV-1681): `AfterFirstUnlock` **without** `...ThisDeviceOnly` can
+/// ride an *encrypted device backup* to another device on restore;
+/// `kSecAttrSynchronizable = false` blocks iCloud-Keychain sync only, not
+/// backup-restore. That is low risk for a revocable 7-day session token, and the
+/// accessibility class is fixed here because spec §4c-3 mandates
+/// `kSecAttrAccessibleAfterFirstUnlock` verbatim. Tightening to
+/// `...AfterFirstUnlockThisDeviceOnly` is a spec-level hardening decision for
+/// CTO/CEO, not a client-side change to make unilaterally.
 ///
 /// The store is deliberately tiny and free of any logging: a `SecItem*` status is
 /// surfaced as a typed error, never printed, because the value it guards is a live

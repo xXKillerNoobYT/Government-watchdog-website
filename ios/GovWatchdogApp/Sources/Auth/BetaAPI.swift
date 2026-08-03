@@ -28,12 +28,15 @@ enum BetaAPI {
     static let consumePath = "api/beta/magic-link/consume"
     static let signOutPath = "api/beta/sessions/current"
 
-    /// Account-deletion request (App Store Guideline 5.1.1(v)). **No HTTP route for
-    /// this exists in the delivered backend yet** — the accounts package has the
-    /// lifecycle primitives but leg 4c-2 wired only the sign-in routes. This path is
-    /// the proposed contract addendum; until a backend route answers it, the
-    /// deletion screen renders an honest "backend route pending" state rather than
-    /// faking success (AC #3 = *honest* state, never a client-side delete).
+    /// Account-deletion request (App Store Guideline 5.1.1(v)). **Delivered** by
+    /// GOV-1565 (backend `main` @ `ae04c8b`, PR #199): `POST` here, authed via the
+    /// same `gw_beta_session` cookie this client replays, queues the request and
+    /// answers `200`/`202`, which `AuthClient.requestAccountDeletion` maps to
+    /// `.submitted` — so the deletion screen shows the honest "Request received"
+    /// state against the merged backend. The `.routePending` branch is retained as a
+    /// fail-closed fallback: a `404` (e.g. the beta flag is off, or an older backend
+    /// pin) still renders an honest "backend route pending" state rather than faking
+    /// success (AC #3 = *honest* state, never a client-side delete).
     static let deletionPath = "api/beta/account/deletion-request"
 }
 
