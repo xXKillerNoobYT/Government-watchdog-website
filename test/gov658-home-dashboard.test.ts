@@ -4,7 +4,8 @@
 // `#/home` surface to existing reviewer-internal projections only: real cards and
 // digest rows may render; unavailable baseline slots must stay explicit (or DEV
 // sample under ?demo=sample) and may never fabricate verdict, language, archive,
-// search, price, or media data.
+// search, price, or civic values. Neutral product media may link out, but Home
+// never embeds its synthetic frames or figures.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHome, renderHomeReadModel } from '../src/ui/home';
 import { applyMode } from '../src/ui/shell';
@@ -208,12 +209,29 @@ describe('GOV-658 Home dashboard — Advanced mode honesty map', () => {
       'No reviewed language-watch flags are available',
     );
     const explainer = root.querySelector('[data-test="home-explainer-video"]');
-    expect(explainer?.getAttribute('data-origin')).toBe('coming-soon');
-    expect(explainer?.querySelector('[data-test="coming-soon-note"]')?.textContent).toContain('COMING SOON');
-    expect(explainer?.querySelector('[data-test="home-explainer-link"]')?.getAttribute('href')).toBe('#/explainer');
-    // An unbuilt feature must not borrow the language of a missing civic record.
-    expect(explainer?.textContent).not.toMatch(/no video URL|playback status|Source:/i);
+    expect(explainer?.getAttribute('data-origin')).toBe('product-media');
+    expect(explainer?.querySelector('[data-test="coming-soon-note"]')).toBeNull();
+    expect(explainer?.querySelector('[data-test="home-explainer-link"]')?.getAttribute('href'))
+      .toBe('#/explainer?demo=sample');
+    expect(explainer?.textContent).toContain('Silent visual walkthrough · 1 minute 13 seconds');
+    expect(explainer?.textContent).toContain('hypothetical, not a live or reviewed Alpine finding');
+    expect(explainer?.textContent).not.toMatch(/Cedar Street|\$480|14 homes|\d+%/i);
   });
+
+  it.each(['advanced', 'simple'] as const)(
+    'keeps the neutral product-media CTA available without synthetic civic figures in %s mode',
+    (mode) => {
+      applyMode(mode);
+      renderHome(root, opts());
+
+      const explainer = root.querySelector('[data-test="home-explainer-video"]');
+      expect(explainer?.getAttribute('data-origin')).toBe('product-media');
+      expect(explainer?.querySelector('[data-test="home-explainer-link"]')?.getAttribute('href'))
+        .toBe('#/explainer?demo=sample');
+      expect(explainer?.querySelector('video')).toBeNull();
+      expect(explainer?.textContent).not.toMatch(/Cedar Street|\$480|14 homes|\d+%/i);
+    },
+  );
 
   it('keeps unsupported civic values absent while preserving their designed slots', () => {
     renderHome(root, opts());
@@ -319,8 +337,15 @@ describe('GOV-53 Home live reviewer-model contextual notes', () => {
         'home-summary',
         'home-records',
         'home-gaps',
+        'home-explainer',
       ]);
       expect(notes.filter((note) => note.dataset.infoNote?.startsWith('private-projection-'))).toHaveLength(6);
+      const explainer = root.querySelector('[data-test="home-explainer-video"]');
+      expect(explainer?.getAttribute('data-origin')).toBe('product-media');
+      expect(explainer?.querySelector('[data-test="home-explainer-link"]')?.getAttribute('href'))
+        .toBe('#/explainer?demo=sample');
+      expect(explainer?.querySelector('video')).toBeNull();
+      expect(explainer?.textContent).not.toMatch(/Cedar Street|\$480|14 homes|\d+%/i);
       const methodPanel = document.getElementById(
         root.querySelector<HTMLButtonElement>('[data-info-note="home-summary"]')?.getAttribute('aria-controls') ?? '',
       );

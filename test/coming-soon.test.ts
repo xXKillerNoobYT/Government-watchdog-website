@@ -25,7 +25,7 @@ describe('coming soon primitives', () => {
   });
 
   it('keeps Coming Soon copy distinct from the designed-gap data language', () => {
-    const note = comingSoonNote('Explainer video', 'A produced walkthrough video will land here.');
+    const note = comingSoonNote('Scheduled delivery', 'Email and text delivery will land here.');
     expect(note.textContent).not.toMatch(/not wired yet|designed gap|reviewed contract/i);
   });
 

@@ -90,20 +90,92 @@ describe('MOTY design-handoff route integration', () => {
       window.location.hash = `#${route}?reviewer=1`;
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       expect(document.querySelector('[data-test="shell-alerts-chip"]'), route).not.toBeNull();
-      expect(document.querySelector('[data-test="shell-demo"]'), route).not.toBeNull();
+      expect(document.querySelector('[data-test="shell-demo"]')?.getAttribute('href'), route)
+        .toBe('#/explainer?demo=sample');
     }
   });
 
-  it('renders the explainer route as an unbuilt feature, not a data gap', async () => {
+  it('loads synthetic media only on the explicit, truthfully labelled explainer route', async () => {
     window.location.hash = '#/home?reviewer=1';
     await import('../src/main');
 
     window.location.hash = '#/explainer?reviewer=1';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
 
-    const note = document.querySelector('[data-test="coming-soon-note"]');
-    expect(note?.textContent).toContain('COMING SOON');
-    expect(note?.textContent).toContain('Explainer video');
+    expect(document.querySelector('[data-test="explainer-overview"]')).not.toBeNull();
+    expect(document.querySelector('[data-test="explainer-video"]')).toBeNull();
+    expect(document.querySelector('[data-test="explainer-player"]')).toBeNull();
+    expect(document.querySelector('[data-test="coming-soon-note"]')).toBeNull();
+    expect(document.querySelector('[data-test="explainer-open-demo"]')?.getAttribute('href'))
+      .toBe('#/explainer?demo=sample');
+    expect(document.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+      .toBe('product_demo');
+
+    window.location.hash = '#/explainer?reviewer=1&demo=sample';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+    const video = document.querySelector<HTMLVideoElement>('[data-test="explainer-video"]');
+    expect(video).not.toBeNull();
+    expect(video?.hasAttribute('controls')).toBe(true);
+    expect(video?.hasAttribute('playsinline')).toBe(true);
+    expect(video?.getAttribute('preload')).toBe('metadata');
+    expect(video?.hasAttribute('autoplay')).toBe(false);
+    expect(video?.hasAttribute('loop')).toBe(false);
+    expect(video?.getAttribute('poster')).toContain('government-watchdog-explainer-poster');
+    expect(video?.querySelector('source')?.getAttribute('src'))
+      .toContain('government-watchdog-explainer');
+    expect(video?.querySelector('source')?.getAttribute('type')).toBe('video/mp4');
+    expect(video?.getAttribute('aria-describedby'))
+      .toBe('gw-explainer-demo-notice gw-explainer-transcript-summary');
+
+    const notice = document.querySelector('[data-test="explainer-demo-notice"]');
+    expect(notice?.getAttribute('data-origin')).toBe('fixture');
+    expect(notice?.textContent).toContain('hypothetical scenario and figures');
+    expect(notice?.textContent).toContain('not a live or reviewed Alpine finding');
+
+    const transcript = document.querySelector('[data-test="explainer-transcript"]');
+    expect(transcript?.textContent).toContain('silent 1 minute 13 second animation');
+    expect(transcript?.querySelectorAll('li')).toHaveLength(8);
+    for (const requiredVisualDetail of [
+      'item 7a',
+      'private front yards',
+      'eminent domain',
+      'public sidewalk',
+      '$480,000',
+      'Cedar Street',
+      '14 homes',
+      'September 3',
+      'August 20',
+      '61%',
+      '34%',
+      '12%',
+      'Town May Take Cedar St. Land to Build a Sidewalk',
+      '6 of 14',
+      'Alpine Town Hall',
+      'packet version 2',
+      'August 30',
+      '96%',
+    ]) {
+      expect(transcript?.textContent, requiredVisualDetail).toContain(requiredVisualDetail);
+    }
+    expect(transcript?.textContent).toContain('Every place, event, date, amount, percentage');
+    expect(transcript?.textContent).toContain('not a live or reviewed Alpine finding');
+
+    const explainerStyle = document.getElementById('gw-explainer-style')?.textContent ?? '';
+    expect(explainerStyle).toContain('color:var(--gw-accent-text-on)');
+    expect(explainerStyle).not.toContain('--gw-accent-ink');
+    expect(explainerStyle).toContain('@media print');
+    expect(explainerStyle).toContain('background:#fff!important;color:#000!important');
+    expect(explainerStyle).toContain('.gw-explainer-intro,.gw-explainer-notice');
+    expect(explainerStyle).toContain('.gw-explainer p,.gw-explainer-kicker,.gw-explainer-figure figcaption');
+    expect(explainerStyle).toContain('.gw-explainer-video{display:none!important}');
+    expect(explainerStyle).toContain('.gw-explainer-transcript>ol{display:grid!important}');
+
+    const origin = document.querySelector('[data-test="shell-origin-banner"]');
+    expect(origin?.getAttribute('data-origin')).toBe('product_demo');
+    expect(origin?.textContent).toContain('ILLUSTRATIVE PRODUCT DEMO');
+    expect(origin?.textContent).not.toContain('LIVE SERVER CONTEXT');
+    expect(document.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
     expect(document.querySelector('[data-test="explainer-back"]')?.getAttribute('href')).toBe('#/home');
   });
 

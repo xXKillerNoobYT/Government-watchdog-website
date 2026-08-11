@@ -76,7 +76,12 @@ Newsletter, and Watchlist. Alerts and Location are deliberately not tabs: the
 handoff reaches Alerts from a persistent header chip and Location from the
 header place pill, keeping the tab row to the surfaces a reader moves between
 while leaving both personal surfaces one tap away from anywhere. The explainer
-walkthrough is reached from the header Demo control.
+walkthrough is reached from the header Demo control. That control selects the
+explicit `#/explainer?demo=sample` product-media lane: the player remains behind
+reviewer admission, uses a dedicated `ILLUSTRATIVE PRODUCT DEMO` shell origin,
+and carries a persistent notice that its hypothetical scenario and figures are
+not a live or reviewed Alpine finding. Plain `#/explainer` remains media-free,
+and the video/poster stay outside the anonymous public build graph.
 
 The Alerts chip may show an unread count **only** on a route already admitted to
 design-fixture mode, where the number describes device-local sample cards. On a

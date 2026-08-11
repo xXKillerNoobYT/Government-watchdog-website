@@ -1143,6 +1143,10 @@ const SHELL_FORCED_STATE_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
 function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
   const designFixture = designPreviewActive(query);
   const demo = query.get('demo');
+  // The explainer is product education, not a civic response. Its dedicated
+  // origin prevents LIVE SERVER CONTEXT from appearing above hypothetical
+  // figures and keeps fixture Alerts counts out of this non-alerting surface.
+  if (path === '/explainer') return 'product_demo';
   const explicitFixture =
     (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
     || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
@@ -1238,9 +1242,12 @@ router.register('/home', gated(({ mount, query }) => {
   }
   void withReviewerContext(mount, query, (data) => renderHomeReadModel(mount, data));
 }));
-// Designed slot for the handoff's promo walkthrough. Carries no civic data, so
-// it needs no fixture gate — only the Coming Soon statement that it is unbuilt.
-router.register('/explainer', gated(({ mount }) => renderExplainer(mount)));
+// The media contains a hypothetical civic scenario. Reviewer admission comes
+// from `gated`; the explicit URL-local sample flag is the second GS boundary.
+// Plain `/explainer` remains a media-free overview.
+router.register('/explainer', gated(({ mount, query }) => renderExplainer(mount, {
+  demo: query.get('demo') === 'sample',
+})));
 router.register('/app', gated(({ mount, query }) => {
   if (query.get('demo') === 'sample') {
     renderBoardsRoute(mount, query);

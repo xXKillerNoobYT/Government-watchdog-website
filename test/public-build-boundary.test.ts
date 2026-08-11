@@ -47,6 +47,7 @@ describe('public build module-graph boundary', () => {
       '/src/data/reviewer-normalize.ts',
       '/src/state/reviewer-context.ts',
       '/src/ui/home.ts',
+      '/src/ui/explainer.ts',
       '/src/ui/notification-panel.ts',
       '/src/ui/private-info-note.ts',
       '/src/ui/private-info-note-definitions.ts',
@@ -54,6 +55,8 @@ describe('public build module-graph boundary', () => {
       '/src/types/notification.ts',
       '/src/fixtures/notifications.sample.json',
       '/src/fixtures/concept-graph-real.json',
+      '/src/assets/government-watchdog-explainer.mp4',
+      '/src/assets/government-watchdog-explainer-poster.jpg',
       '/design/private-review.png',
     ];
     for (const privateModule of privateModules) {

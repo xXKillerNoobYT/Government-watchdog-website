@@ -25,7 +25,7 @@ import { renderPrivateInfoNote } from './private-info-note';
 import { safeExternalHref } from '../data/web-safe';
 
 export type ShellMode = 'simple' | 'advanced';
-export type ShellOrigin = 'fixture' | 'reviewed_snapshot' | 'live_server';
+export type ShellOrigin = 'fixture' | 'reviewed_snapshot' | 'live_server' | 'product_demo';
 
 /** Shared per-user reading mode used by the approved page designs. */
 const MODE_KEY = 'gw_home_mode';
@@ -405,8 +405,9 @@ function alertsChip(path: string, fixture: boolean): HTMLAnchorElement {
 function demoButton(): HTMLAnchorElement {
   return el('a', {
     class: 'gw-shell-demo',
-    href: '#/explainer',
+    href: '#/explainer?demo=sample',
     'data-test': 'shell-demo',
+    'aria-label': 'Watch the 1 minute 13 second illustrative product demo',
   }, ['▶ Demo']);
 }
 
@@ -521,16 +522,25 @@ function simpleTools(): HTMLElement {
 function originBanner(origin: ShellOrigin, refreshedAt?: string, freshness?: Partial<Record<GovLevel, string>>): HTMLElement {
   const fixture = origin === 'fixture';
   const live = origin === 'live_server';
+  const productDemo = origin === 'product_demo';
   const children: (Node | string)[] = [
     el('strong', {}, [
-      fixture ? 'SYNTHETIC DESIGN FIXTURE' : live ? 'LIVE SERVER CONTEXT' : 'REVIEWED SNAPSHOT',
+      fixture
+        ? 'SYNTHETIC DESIGN FIXTURE'
+        : productDemo
+          ? 'ILLUSTRATIVE PRODUCT DEMO'
+          : live
+            ? 'LIVE SERVER CONTEXT'
+            : 'REVIEWED SNAPSHOT',
     ]),
     el('span', {}, [
       fixture
         ? 'visual-review sample · not a live read'
-        : live
-          ? 'same-origin authorization and reviewed records · no captured fallback'
-          : 'reviewer-internal archived projection · not a live read',
+        : productDemo
+          ? 'hypothetical scenario and figures · not a live or reviewed Alpine finding'
+          : live
+            ? 'same-origin authorization and reviewed records · no captured fallback'
+            : 'reviewer-internal archived projection · not a live read',
     ]),
   ];
   if (refreshedAt) {
@@ -542,21 +552,23 @@ function originBanner(origin: ShellOrigin, refreshedAt?: string, freshness?: Par
   // string verbatim or its explicit gap; nothing here can invent a time.
   children.push(el('span', { class: 'gw-shell-origin-freshness', 'data-test': 'shell-origin-freshness' },
     (['town', 'county', 'state'] as const).flatMap((level) => {
-      const supplied = freshness?.[level];
+      const supplied = productDemo ? undefined : freshness?.[level];
       return [el('span', {
         class: 'gw-shell-origin-level',
         'data-test': 'shell-origin-level',
         'data-level': level,
-        'data-state': supplied ? 'supplied' : 'unavailable',
+        'data-state': productDemo ? 'not-applicable' : supplied ? 'supplied' : 'unavailable',
       }, [
         el('b', {}, [level.toUpperCase()]),
-        supplied
+        productDemo
+          ? el('span', {}, ['not applicable to demo'])
+          : supplied
           ? el('time', { datetime: supplied }, [supplied])
           : el('span', {}, ['freshness unavailable']),
       ])];
     })));
   const status = el('div', {
-    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : live ? 'live' : 'reviewed'}`,
+    class: `gw-shell-origin gw-shell-origin-${fixture ? 'fixture' : productDemo ? 'product-demo' : live ? 'live' : 'reviewed'}`,
     role: 'status',
     'data-test': 'shell-origin-banner',
     'data-origin': origin,
@@ -697,7 +709,7 @@ html,body{margin:0}
 .gw-shell-origin-level{display:inline-flex;align-items:center;gap:5px}
 .gw-shell-origin-level b{letter-spacing:.08em}
 .gw-shell-origin-level[data-state="unavailable"]{opacity:.85;font-style:italic}
-.gw-shell-origin-fixture{border-bottom-color:var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text)}
+.gw-shell-origin-fixture,.gw-shell-origin-product-demo{border-bottom-color:var(--gw-tone-caution-line);background:var(--gw-tone-caution-well);color:var(--gw-caution-text)}
 .gw-shell-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .gw-shell-header{position:sticky;top:0;z-index:20;background:var(--gw-header-bg);border-bottom:var(--gw-border-w) solid var(--gw-border-subtle)}
 .gw-shell-bar{display:flex;align-items:center;gap:18px;max-width:1460px;margin:0 auto;padding:14px 28px}
@@ -926,6 +938,7 @@ html,body{margin:0}
   .gw-shell-origin,
   .gw-shell-origin-wrap,
   .gw-shell-origin-fixture,
+  .gw-shell-origin-product-demo,
   .gw-shell-footer,
   .gw-shell-footer-brand,
   .gw-shell-footer-links { display: revert !important; }
