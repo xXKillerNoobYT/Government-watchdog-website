@@ -117,3 +117,45 @@ Two coherent paths:
 **Answer §5.1–5.3 first (minutes, free), then decide.** If Sites supports a custom domain and any persistent storage, **path A defers real money at no capability cost** and the private beta keeps running exactly as it does today. If it does not, **Fly.io ~$5–8/mo** remains the right pick for the reason originally given — it is the most direct match to the loopback contract — with **Render ~$7 fixed** as the choice if predictability matters more than fit.
 
 **Either way, GOV-1552's contradiction needs one line from Isaac** before any platform work proceeds.
+
+---
+
+# ADDENDUM — Sites capability evidence (2026-08-11, later same day)
+
+**Source:** Isaac supplied `https://capability-arcade.weirdtoocompany.chatgpt.site` — *"this is what GPT says it can do"* — a Sites-hosted capability page. Read directly.
+
+**⚠️ Read this addendum with its limitation stated up front: that page is a plain-language field guide, NOT a technical specification.** It establishes what the platform *offers*; it does not establish what it *requires* or which runtimes it supports. Everything below is labelled accordingly.
+
+## What it settles (§5 questions 2 and 3 — now ANSWERED)
+
+| § | Question | Page's answer | Verdict |
+|---|---|---|---|
+| 5.2 | Persistent storage? | *"Yes. A site can be built with durable data and file storage **when those capabilities are configured**. A plain one-page site does not need them, so they are not added automatically."* | ✅ **Storage exists** |
+| 5.3 | Can it serve the API surface? | Server logic is listed **BUILDABLE**: *"APIs, business rules, validation, background jobs, calculations, and secure server-side workflows."* | ✅ **APIs + jobs exist** |
+| — | Auth (already in use for GOV) | *"Yes, when authentication and server-side access rules are added. **Hiding a button in the browser is not security; the backend must enforce who can read or change data.**"* | ✅ **Confirmed, and the framing is correct** |
+| 5.1 | **Custom domain?** | **Not addressed anywhere on the page.** | ❌ **STILL UNVERIFIED** |
+| 5.4 | Build-time secret for the private-repo artifact? | Only indirectly: *"What can't settings magically provide? Private data access, **third-party credentials**, legal permission, payment authority…"* — credentials are deliberate connections. | ⚠️ **Still unclear** |
+
+## ⭐ What it does NOT settle — and this is the finding that changes the recommendation
+
+**Sites is materially more capable than "a static host."** It runs server logic, databases, auth and scheduled jobs. **But GOV's backend is not generically shaped — it is specifically shaped:**
+
+| GOV requires | Sites offers | Gap |
+|---|---|---|
+| A long-lived **Python** process (`service/run.py`) | A **JavaScript** worker (`dist/server/index.js`, per `deployment-sites.md`) + "APIs / background jobs" | **Nothing on the page says arbitrary Python runs.** Biggest unresolved gap. |
+| **SQLite on a mounted volume** (`/data/gw.db`) | "durable data and file storage **when configured**" — shape unspecified | A configured/hosted store is not a mounted volume. SQLite-on-a-volume may not port. |
+| **Loopback bind** with an `ALLOWED_BIND_HOSTS` guard that refuses to start otherwise | Platform-managed routing | The guard is a *fail-closed safety property*, not a config knob. Unclear how it survives a managed worker model. |
+
+**Therefore: moving the existing GOV backend to Sites is a REWRITE, not a migration.** Python → JS worker and SQLite-on-a-volume → configured storage are re-architecture, and the loopback guard would need re-expressing. **Free in money; expensive in effort and in re-earned assurance** — every gate in `gov1543` was verified against the current shape.
+
+## Revised recommendation
+
+**This strengthens Fly.io for the app as it exists today**, and simultaneously **opens Sites as the right default for anything built fresh**:
+
+- **For the existing gated front door →** Fly.io **~$5–8/mo** (or Render ~$7 fixed). It runs the artifact **as built**, with zero rewrite and zero re-verification of the fail-closed guarantees. The original "most direct match to the loopback contract" reasoning holds and is now better evidenced.
+- **For anything new →** Sites is the strong default: real code with editable source, server logic, storage, auth, AI routes, **$0 incremental**, and it already hosts the GOV frontend today.
+- **Path A (defer to Sites) is still viable ONLY IF** §5.1 (custom domain) comes back yes **and** you accept a backend rewrite. **It is not the cheap option it first appeared to be** — the cost moved from dollars to engineering.
+
+**One question still worth 5 minutes before any spend: does Sites support a custom domain?** If no, `watchdog.isaac4alpine.com` alone decides it.
+
+**Unchanged:** GOV-1552 remains owner-gated (recurring spend + DNS + public reachability), and **its record still contradicts itself** on whether the platform pick is locked or open. That contradiction blocks GOV-784 regardless of which platform wins.
