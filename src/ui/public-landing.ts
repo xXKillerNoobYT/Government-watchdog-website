@@ -102,6 +102,58 @@ export function renderPublicLanding(root: HTMLElement): void {
     ]),
   ]);
 
+  // The walkthrough is an ILLUSTRATION, not a record. Resolution 2026-041 and
+  // the Cedar Street project are constructed, and the percentages are stated
+  // targets rather than measurements (owner, 2026-08-11: "just an example
+  // really, made up numbers, but the goal").
+  //
+  // Labelling that in the page — not only inside the video — is the point. This
+  // product's argument is that unsourced civic claims should not be taken on
+  // trust. A demo that quietly presented invented figures as findings would
+  // concede that argument on the landing page, and a resident who later worked
+  // out the difference would not extend trust a second time. The label costs
+  // nothing; being caught without it costs the thesis.
+  const explainer = el('section', {
+    id: 'how-it-works',
+    class: 'gw-public-section gw-public-explainer',
+    'aria-labelledby': 'explainer-title',
+    'data-test': 'public-explainer',
+  }, [
+    el('div', { class: 'gw-public-section-intro' }, [
+      el('p', { class: 'gw-public-kicker' }, ['EXAMPLE WALKTHROUGH · 73 SECONDS · NO SOUND']),
+      el('h2', { id: 'explainer-title' }, ['How Government Watchdog works']),
+      el('p', {}, [
+        'One sidewalk notice, followed from the line it occupies in a meeting packet to the vote that decides it.',
+      ]),
+    ]),
+    el('figure', { class: 'gw-explainer-figure' }, [
+      el('video', {
+        class: 'gw-explainer-video',
+        controls: '',
+        preload: 'none',
+        playsinline: '',
+        poster: '/media/explainer-poster.jpg',
+        src: '/media/explainer.mp4',
+        'aria-describedby': 'explainer-disclosure explainer-summary',
+      }),
+      el('figcaption', { id: 'explainer-disclosure', class: 'gw-explainer-disclosure' }, [
+        el('strong', {}, ['Illustrative example — not Alpine records. ']),
+        el('span', {}, [
+          'Resolution 2026-041, the Cedar Street project, the parcel counts and the dollar figures are constructed to show how the tool reads an agenda item. They are not real filings. The participation percentages are the outcome this product aims for, not a measured result.',
+        ]),
+      ]),
+    ]),
+    el('div', { class: 'gw-explainer-summary', id: 'explainer-summary' }, [
+      el('h3', {}, ['What the walkthrough shows']),
+      el('p', {}, [
+        'The video is silent. In text: a routine agenda line reads "authorizing acquisition of certain real property interests by negotiated purchase or condemnation." Rewritten as plain questions, it means the town may force the sale of strips of fourteen front yards to build a sidewalk. The walkthrough then shows that item in Simple view — one story, one deadline, one next step — and in Advanced view, with the cost breakdown, the public comments on file, and a flag marking money added to the packet after the notice went out.',
+      ]),
+      el('p', { class: 'gw-explainer-point' }, [
+        'The gap it describes is the reason this product exists: the people most affected by a decision are usually the least likely to have been told in time to respond.',
+      ]),
+    ]),
+  ]);
+
   const availability = el('section', {
     id: 'status',
     class: 'gw-public-availability',
@@ -250,7 +302,7 @@ export function renderPublicLanding(root: HTMLElement): void {
 
   root.append(
     header,
-    el('main', {}, [hero, availability, quickLook, safety, advanced, coverage]),
+    el('main', {}, [hero, explainer, availability, quickLook, safety, advanced, coverage]),
     footer,
   );
 }
@@ -259,6 +311,16 @@ export const PUBLIC_STYLE = `${GW_TOKENS}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;background:var(--gw-page-bg)}
 body{margin:0;background:var(--gw-page-bg)}
+.gw-public-explainer{padding-top:8px}
+.gw-explainer-figure{margin:20px 0 0;padding:0}
+.gw-explainer-video{width:100%;max-width:900px;height:auto;display:block;border-radius:var(--gw-radius);background:#0d1117;border:1px solid var(--gw-rule)}
+.gw-explainer-disclosure{max-width:900px;margin-top:10px;padding:10px 12px;border-left:3px solid var(--gw-accent,#d08a3e);background:rgba(208,138,62,.08);font:400 13px/1.5 var(--gw-font);color:var(--gw-text)}
+.gw-explainer-disclosure strong{font-weight:700}
+.gw-explainer-summary{max-width:900px;margin-top:18px}
+.gw-explainer-summary h3{margin:0 0 6px;font:700 15px/1.3 var(--gw-font)}
+.gw-explainer-summary p{margin:0 0 10px;font-size:15px}
+.gw-explainer-point{font-weight:600}
+@media (max-width:640px){.gw-explainer-disclosure{font-size:12.5px}}
 .gw-public-root{min-height:100vh;color:var(--gw-text);background:var(--gw-page-bg);font:400 16px/1.55 var(--gw-font-serif)}
 .gw-public-header{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--gw-header-bg) 94%,transparent);border-bottom:var(--gw-border-w) solid var(--gw-border);backdrop-filter:blur(12px)}
 .gw-public-header-inner{max-width:1210px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}

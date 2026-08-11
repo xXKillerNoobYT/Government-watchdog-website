@@ -92,28 +92,55 @@ export function renderCrawlAsset(source: string, origin: string): string {
   return rendered;
 }
 
+/** Read a repo file as bytes. Split out so the shim stays a single overload. */
+async function readFileBinary(path: string): Promise<Uint8Array> {
+  const { readFile } = await import('node:fs/promises');
+  return readFile(path);
+}
+
+/** Repo files copied verbatim into both lanes, at a stable unhashed name. */
+export const SHARED_BINARY_ASSETS = [
+  'media/explainer.mp4',
+  'media/explainer-poster.jpg',
+] as const;
+
 /**
- * Emit robots.txt and sitemap.xml into BOTH build lanes.
+ * Emit shared public-surface files into BOTH build lanes.
  *
  * Why a plugin rather than `public/`: the public lane sets `publicDir: false`
  * (see below), so an asset dropped in `public/` reaches the private-beta build
- * ONLY — and the public lane is precisely the one that faces crawlers. Placing
- * them in `public/` would fail silently in the only case that matters.
+ * ONLY — and the public lane is precisely the one that faces crawlers and
+ * anonymous visitors. Placing these in `public/` would fail silently in the
+ * only case that matters.
  *
- * These files are crawl hygiene, never a security boundary. The gate is.
+ * Two kinds travel through here:
+ *   - crawl-control text (robots.txt, sitemap.xml) — origin substituted, and
+ *     the build FAILS rather than shipping an unresolved placeholder. These are
+ *     crawl hygiene, never a security boundary. The gate is.
+ *   - shared binary media — copied byte-for-byte at a stable filename so the
+ *     landing markup can reference it without an import graph entry (which the
+ *     public module boundary would reject, correctly).
  */
-export function crawlControl(): Plugin {
+export function emitSharedAssets(): Plugin {
   return {
-    name: 'government-watchdog-crawl-control',
+    name: 'government-watchdog-shared-assets',
     apply: 'build',
     async generateBundle() {
       const origin = process.env.GW_SITE_ORIGIN ?? DEFAULT_SITE_ORIGIN;
       const { readFile } = await import('node:fs/promises');
       const { fileURLToPath } = await import('node:url');
       const here = fileURLToPath(new URL('.', import.meta.url));
+
       for (const fileName of ['robots.txt', 'sitemap.xml']) {
         const source = await readFile(`${here}crawl-control/${fileName}`, 'utf8');
         this.emitFile({ type: 'asset', fileName, source: renderCrawlAsset(source, origin) });
+      }
+
+      for (const path of SHARED_BINARY_ASSETS) {
+        // Binary: no substitution, no hashing. The markup references a fixed
+        // name, so a content hash here would simply break the reference.
+        const source = await readFileBinary(`${here}${path}`);
+        this.emitFile({ type: 'asset', fileName: path, source });
       }
     },
   };
@@ -135,7 +162,7 @@ export default defineConfig(({ mode }) => {
     // Crawl control ships in BOTH lanes: the public lane faces crawlers, and
     // the private lane is what Sites serves today. The module boundary is
     // public-only because only that lane must exclude private modules.
-    plugins: publicLane ? [publicModuleBoundary(), crawlControl()] : [crawlControl()],
+    plugins: publicLane ? [publicModuleBoundary(), emitSharedAssets()] : [emitSharedAssets()],
     // A real HTML root selects the module graph before Rollup discovers imports.
     // An HTML transform is too late for this security boundary: it can rewrite
     // the generated tag while leaving the already-discovered private graph.
