@@ -159,3 +159,68 @@ Two coherent paths:
 **One question still worth 5 minutes before any spend: does Sites support a custom domain?** If no, `watchdog.isaac4alpine.com` alone decides it.
 
 **Unchanged:** GOV-1552 remains owner-gated (recurring spend + DNS + public reachability), and **its record still contradicts itself** on whether the platform pick is locked or open. That contradiction blocks GOV-784 regardless of which platform wins.
+
+---
+
+# DECISION BRIEF — answers received, schema measured (2026-08-11, final)
+
+**Isaac returned authoritative answers to all ten questions.** Combined with a measurement of what the backend actually is, the decision resolves — and it is **better than either original option**.
+
+## The answers that matter
+
+| # | Answer | Effect |
+|---|---|---|
+| **1 Custom domain** | **YES** — apex + subdomain, CNAME/validation, managed TLS. `watchdog.isaac4alpine.com` attachable. | **Fly no longer wins by default.** |
+| **2 Python** | **NO** — Cloudflare Worker-compatible JS/TS, request-handling only. No `service/run.py`. | Port = **rewrite**. |
+| **3 Storage** | **NO mounted volume** — managed **D1** (structured) + **R2** (blobs). `/data/gw.db` must be assumed **ephemeral**. | SQLite-on-a-volume does not port. |
+| **4 Process model** | **Request-scoped worker. No continuous process, no documented cron.** | **Background jobs are impossible on Sites.** |
+| **5 Build secrets** | **No Sites-managed build-time secret.** Runtime env/secrets yes. | Don't plan a private-repo fetch during a Sites build. |
+| **6 SMTP/587** | **Not a documented guarantee — treat as unsupported.** Outbound HTTPS yes. | Magic-link email can't rely on SMTP here. |
+| **7 Allowlist** | **YES** — custom email allowlist, **changeable without redeploy**; server code receives **verified email + stable per-Site user ID**. No published numeric max. | **This replaces the beta gate AND magic-link.** |
+| **8 Cost** | Included **during public beta**, account-wide limits, no published quotas. | **$0 is beta inclusion, not a permanent contract.** |
+| **9 Rollback/logs** | Yes — saved versions redeployable, server/Worker logs available. | Adequate for a pilot. |
+| **10 Multi-project** | Yes, already true (Arcade + GOV coexist). | Confirmed, not assumed. |
+
+## What the backend actually is — measured, not estimated
+
+**81 tables across 36 migrations and 324 Python files.** Classified:
+
+| Layer | Tables | Share | Can Sites do it? |
+|---|---|---|---|
+| **Auth / beta-gate** — `beta_allowlist`, `beta_magic_tokens`, `beta_sessions`, `auth_sessions`, `access_grants`, `beta_waitlist`, `cohort_state`, `consent_preferences`, `email_outbox`, `email_delivery_log`, … | **13** | **16%** | ✅ **Replaced by the Sites access policy** |
+| **Background / job-queue** — `event_jobs`, `crawl_runs`, `ai_extraction_runs`, `job_transitions`, `mcp_jobs`, `paperclip_outbox`, … | **10** | **12%** | ❌ **No cron, no long-running process (answer 4)** |
+| **Civic-domain platform** — `documents`, `sources`, `source_versions`, `meetings`, `agenda_items`, `evidence_links`, `embeddings`, `reviewer_decisions`, `areas`, `ledger_*`, `mcp_*`, … | **58** | **72%** | ❌ **Needs a real backend** |
+
+**So Sites replaces 16% of the schema. 84% still needs a backend — and 12% of that is precisely what Sites documents as unsupported.**
+
+## ⭐ The decision — and it is a sequencing answer, not a platform answer
+
+**At P3e, every flag stays OFF and the published lane stays honestly EMPTY.** The pilot's job is *"can an admitted resident reach a gated front door and understand it?"* — **it does not need the 72% yet.** That becomes real at **P8**, when published civic content exists.
+
+### NOW — run the pilot on Sites. $0. No Fly account.
+1. Attach `watchdog.isaac4alpine.com` (answer 1).
+2. Keep access `custom`; add 2 admitted emails → verify identity **and revocation** → advance 3 → ≤15 (answer 7). **Test the ladder incrementally — no published maximum exists.**
+3. **Delete the magic-link build from the pilot's critical path entirely.**
+
+### LATER — when the published lane fills (P8), the Python platform needs a host.
+**Fly.io ~$5–8/mo**, running the artifact as built. By then it serves 58 tables of real civic evidence, which justifies the spend. **Hybrid is the end state: Sites = frontend + access gate; Fly = the Python platform.**
+
+## What this deletes from the critical path — the real saving
+
+Not the ~$60–100/yr. **It removes an entire authentication subsystem from the pilot:**
+
+- **13 tables** of beta-gate/magic-link/session machinery, unbuilt.
+- **`gov1543` F2** — *"replace placeholder email adapter with a real provider adapter"* — **its premise evaporates.** No magic link ⇒ no transactional email ⇒ **the SMTP/587 problem (answer 6) never has to be solved.**
+- **`gov1543` F1** (session-cookie `SameSite` Lax→Strict) — **also moot for the pilot**; its entire justification was the magic-link click carrying a cookie cross-context. Sites owns the session.
+- Both F1 and F2 were mandated *"before any real user email flows."* **There are now no user email flows in the pilot.**
+
+## Caveats — stated, not buried
+
+- **$0 is public-beta inclusion, not a guaranteed permanently free contract** (answer 8). Account-wide limits exist and are unpublished. **Do not architect as though the price is contractual.**
+- **The ≤15 ladder must be tested incrementally** — no numeric maximum is published (answer 7).
+- **Verify revocation, not just admission.** Removing an email must actually deny access; test it before advancing the ladder.
+- **This defers the backend; it does not cancel it.** 72% of the schema still needs a host the day published content is real.
+
+## ⚠️ Still blocking, and independent of all of the above
+
+**GOV-1552's record contradicts itself** — description: card `08b58d66` accepted 2026-07-24, picks locked (Fly + domain + $15 cap). Comment 2026-08-02: *"three interaction cards rejected; Isaac must reply with which platform to use (or cancel)."* Isaac confirms he did not change that record. **It needs one authoritative line from him, and GOV-784 stays blocked until it gets one — whichever platform wins.**
