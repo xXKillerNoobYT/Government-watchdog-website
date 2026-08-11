@@ -71,6 +71,55 @@ export function publicModuleBoundary(): Plugin {
 }
 
 /**
+ * Default origin for absolute URLs in the emitted sitemap. Override with
+ * GW_SITE_ORIGIN when the custom domain is attached — a sitemap must use the
+ * host that serves it, so a stale value is worse than none.
+ */
+export const DEFAULT_SITE_ORIGIN = 'https://alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site';
+
+/** Substitute the build-time origin, refusing to ship an unresolved placeholder. */
+export function renderCrawlAsset(source: string, origin: string): string {
+  const trimmed = origin.replace(/\/+$/, '');
+  if (!/^https?:\/\/[^/\s]+$/.test(trimmed)) {
+    throw new Error(
+      `GW_SITE_ORIGIN must be a bare absolute origin like https://example.com — got "${origin}"`,
+    );
+  }
+  const rendered = source.replaceAll('__SITE_ORIGIN__', trimmed);
+  if (rendered.includes('__SITE_ORIGIN__')) {
+    throw new Error('crawl-control asset still contains __SITE_ORIGIN__ after substitution');
+  }
+  return rendered;
+}
+
+/**
+ * Emit robots.txt and sitemap.xml into BOTH build lanes.
+ *
+ * Why a plugin rather than `public/`: the public lane sets `publicDir: false`
+ * (see below), so an asset dropped in `public/` reaches the private-beta build
+ * ONLY — and the public lane is precisely the one that faces crawlers. Placing
+ * them in `public/` would fail silently in the only case that matters.
+ *
+ * These files are crawl hygiene, never a security boundary. The gate is.
+ */
+export function crawlControl(): Plugin {
+  return {
+    name: 'government-watchdog-crawl-control',
+    apply: 'build',
+    async generateBundle() {
+      const origin = process.env.GW_SITE_ORIGIN ?? DEFAULT_SITE_ORIGIN;
+      const { readFile } = await import('node:fs/promises');
+      const { fileURLToPath } = await import('node:url');
+      const here = fileURLToPath(new URL('.', import.meta.url));
+      for (const fileName of ['robots.txt', 'sitemap.xml']) {
+        const source = await readFile(`${here}crawl-control/${fileName}`, 'utf8');
+        this.emitFile({ type: 'asset', fileName, source: renderCrawlAsset(source, origin) });
+      }
+    },
+  };
+}
+
+/**
  * The public and private-beta builds intentionally start from different module
  * graphs. Hiding private routes in the DOM is not an asset boundary: if both
  * lanes shared `src/main.ts`, Rollup would still package reviewer fixtures and
@@ -83,7 +132,10 @@ export default defineConfig(({ mode }) => {
   const publicLane = mode === 'public';
 
   return {
-    plugins: publicLane ? [publicModuleBoundary()] : [],
+    // Crawl control ships in BOTH lanes: the public lane faces crawlers, and
+    // the private lane is what Sites serves today. The module boundary is
+    // public-only because only that lane must exclude private modules.
+    plugins: publicLane ? [publicModuleBoundary(), crawlControl()] : [crawlControl()],
     // A real HTML root selects the module graph before Rollup discovers imports.
     // An HTML transform is too late for this security boundary: it can rewrite
     // the generated tag while leaving the already-discovered private graph.

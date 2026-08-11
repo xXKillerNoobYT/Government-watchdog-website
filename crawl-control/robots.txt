@@ -1,0 +1,90 @@
+# Government Watchdog — Alpine · crawl control
+#
+# ⚠️ THIS FILE IS HYGIENE, NOT SECURITY.
+# robots.txt is advisory. A crawler that ignores it still reaches every URL.
+# The security boundary is the application gate: gated routes answer a constant
+# 404 while their flags are off, and admission is the login/allowlist path.
+# Never treat a Disallow line as protection for anything that must stay private.
+#
+# Purpose (owner direction, 2026-08-11): the beta is public on the web for
+# geographic reach, so the sitemap stays deliberately small and bot crawling
+# stays limited. Only the landing page is offered to general crawlers.
+#
+# Emitted into BOTH build lanes by the `government-watchdog-crawl-control`
+# plugin in vite.config.ts. The public lane sets `publicDir: false`, so a file
+# dropped in `public/` would silently reach the private build ONLY — which is
+# the exact lane that does not need it. Hence the single source here.
+
+# ── General crawlers: landing page only ───────────────────────────────────
+User-agent: *
+Allow: /$
+Allow: /favicon.svg
+Allow: /og.png
+Disallow: /app
+Disallow: /api/
+Disallow: /data/
+Disallow: /assets/
+# `?gate=` renders every access state for UX review. Never a crawl surface.
+Disallow: /*?gate=
+Disallow: /*?
+Crawl-delay: 10
+
+# ── AI training / bulk scrapers: nothing, in either lane ──────────────────
+# This is a civic-trust product. Residents' interactions with a government
+# accountability site should not become training data or bulk-scraped corpora
+# by default. Declining is the honest posture, and costs the product nothing.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: omgili
+Disallow: /
+
+User-agent: Timpibot
+Disallow: /
+
+Sitemap: __SITE_ORIGIN__/sitemap.xml

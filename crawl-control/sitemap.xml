@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Government Watchdog — Alpine · deliberately minimal sitemap.
+
+  ONE url, on purpose (owner direction, 2026-08-11: "making the sitemap small
+  and limited"). The landing page is the only surface offered to crawlers.
+
+  Everything else is gated: the app shell, `/api/*`, the `?gate=` access-state
+  previews, and the published civic lane (which stays honestly empty until the
+  publication gate opens). None of those belong in a sitemap — listing a URL
+  does not make it reachable, it only advertises that it exists.
+
+  `__SITE_ORIGIN__` is substituted at build time from GW_SITE_ORIGIN. A sitemap
+  must use absolute URLs on the host that serves it, so this must be rebuilt
+  when the custom domain is attached. The build fails loudly rather than
+  shipping an unsubstituted placeholder.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>__SITE_ORIGIN__/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
