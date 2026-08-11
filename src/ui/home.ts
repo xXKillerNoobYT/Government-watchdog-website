@@ -448,18 +448,19 @@ function languageWatch(fixture: boolean): HTMLElement {
 }
 
 function explainerVideo(): HTMLElement {
-  // Not a designed gap. A gap says a civic record is missing and names the reviewed
-  // contract that would fill it; this slot is waiting on a video nobody has made.
-  // Promising "no video URL is connected" implies a pipeline that does not exist.
+  // Product education, not a civic value. The Home card never embeds the media
+  // or repeats its hypothetical figures; it only links to the explicit GS route.
   return widget('How Government Watchdog Works', 'EXPLAINER VIDEO', [
-    comingSoonNote(
-      'Explainer video',
-      'The walkthrough has not been produced. This is a product feature that exists in no lane yet, not a civic record waiting on a reviewed source.',
-    ),
-    el('a', { href: '#/explainer', class: 'gw-home-link', 'data-test': 'home-explainer-link' }, [
-      'What the walkthrough will cover ›',
+    el('p', { class: 'gw-home-explainer-meta' }, [
+      'Silent visual walkthrough · 1 minute 13 seconds',
     ]),
-  ], { 'data-test': 'home-explainer-video', 'data-origin': 'coming-soon' }, 'home-explainer');
+    el('p', { class: 'gw-home-explainer-notice' }, [
+      'Illustrative product media. The scenario and figures are hypothetical, not a live or reviewed Alpine finding.',
+    ]),
+    el('a', { href: '#/explainer?demo=sample', class: 'gw-home-link', 'data-test': 'home-explainer-link' }, [
+      'Watch the clearly labelled demo ›',
+    ]),
+  ], { 'data-test': 'home-explainer-video', 'data-origin': 'product-media' }, 'home-explainer');
 }
 
 function simpleThings(model: HomeModel): HTMLElement {
@@ -975,6 +976,7 @@ function renderLiveAdvanced(
     el('div', { class: 'gw-home-live-advanced', 'data-test': 'home-live-advanced' }, [
       liveRecords(records),
       liveProjectionGaps(),
+      explainerVideo(),
     ]),
   );
 }
@@ -994,6 +996,7 @@ function renderLiveSimple(
       ]),
       liveHomeSummary(data, records, 'h2', false),
       liveRecords(records),
+      explainerVideo(),
       liveProjectionGaps(),
       el('footer', { class: 'gw-simple-footer' }, [
         'We Watch. We Report. You Decide. · Advanced changes density and layout, never the authorized facts.',
@@ -1048,6 +1051,8 @@ export const HOME_STYLE = `${GW_TOKENS}
 .gw-home-empty strong{display:block;color:var(--gw-text);margin-bottom:var(--gw-space-2)}
 .gw-home-empty p{margin:.35rem 0 0}.gw-home-source-note{font-family:var(--gw-font-mono);font-size:var(--gw-text-xs);color:var(--gw-text-muted)}
 .gw-home-widget>.gw-home-link{display:inline-block;margin-top:var(--gw-space-3)}
+.gw-home-explainer-meta{font-weight:800;color:var(--gw-text)}
+.gw-home-explainer-notice{margin-top:var(--gw-space-3);padding:var(--gw-space-3);border-left:3px solid var(--gw-caution-line);background:var(--gw-caution-bg);color:var(--gw-caution-text)}
 .gw-home-demo{font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:700;color:var(--gw-caution-text-strong);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-3) var(--gw-space-4);margin-bottom:var(--gw-space-5)}
 .gw-home-verdict{display:grid;gap:var(--gw-space-3);background:var(--gw-caution-bg);border:var(--gw-border-w) solid var(--gw-caution-line);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-home-verdict-subject{margin:0;font-family:var(--gw-font-mono);font-size:var(--gw-text-badge);font-weight:800;text-transform:uppercase;color:var(--gw-caution-text-strong)}

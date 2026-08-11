@@ -2,7 +2,7 @@
  * COMING SOON primitives (MOTY full-application pass).
  *
  * A Coming Soon marker names a product FEATURE that is not built in any lane
- * yet (search, alert delivery, payments, the explainer video). It is
+ * yet (search, alert delivery, or payments). It is
  * deliberately distinct from the honest-empty / designed-gap copy used when
  * reviewed civic DATA is missing: a gap describes an information slot awaiting
  * a reviewed contract; Coming Soon describes functionality that does not

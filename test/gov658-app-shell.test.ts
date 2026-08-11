@@ -116,7 +116,7 @@ describe('GOV-658 shell — approved primary navigation', () => {
     expect(tabHrefs).not.toContain('#/explainer');
 
     expect(root.querySelector('[data-test="shell-alerts-chip"]')?.getAttribute('href')).toBe('#/alerts');
-    expect(root.querySelector('[data-test="shell-demo"]')?.getAttribute('href')).toBe('#/explainer');
+    expect(root.querySelector('[data-test="shell-demo"]')?.getAttribute('href')).toBe('#/explainer?demo=sample');
     expect(root.querySelector('[data-test="shell-jurisdiction"]')?.getAttribute('href')).toBe('#/location');
   });
 
@@ -302,6 +302,18 @@ describe('GOV-658 shell — functional shared controls with honest preview label
     renderShell(root, { active: '/home' });
     expect(root.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
     expect(root.querySelector('[data-test="shell-alerts-chip"]')).not.toBeNull();
+  });
+
+  it('keeps product-demo origin separate from fixture Alerts counts', () => {
+    localStorage.removeItem('gw_alerts_read');
+
+    renderShell(root, { active: '/explainer', origin: 'product_demo', fixture: false });
+
+    expect(root.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
+    expect(root.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+      .toBe('product_demo');
+    expect(root.querySelector('[data-test="shell-origin-banner"]')?.textContent)
+      .toContain('ILLUSTRATIVE PRODUCT DEMO');
   });
 
   it('drops the badge once every fixture card is read', () => {
@@ -490,6 +502,25 @@ describe('GOV-658 shell — footer honesty', () => {
     expect(live?.textContent).toMatch(/LIVE SERVER CONTEXT/i);
     expect(live?.textContent).toMatch(/no captured fallback/i);
     expect(live?.textContent).not.toMatch(/REVIEWED SNAPSHOT/i);
+
+    renderShell(root, { active: '/explainer', origin: 'product_demo' });
+    const productDemo = root.querySelector('[data-test="shell-origin-banner"]');
+    expect(root.getAttribute('data-origin')).toBe('product_demo');
+    expect(productDemo?.getAttribute('data-origin')).toBe('product_demo');
+    expect(productDemo?.textContent).toMatch(/ILLUSTRATIVE PRODUCT DEMO/i);
+    expect(productDemo?.textContent).toMatch(/not a live or reviewed Alpine finding/i);
+    expect(productDemo?.textContent).not.toMatch(/LIVE SERVER CONTEXT/i);
+    expect(productDemo?.querySelector('time')).toBeNull();
+    expect([...productDemo!.querySelectorAll('[data-test="shell-origin-level"]')].every(
+      (level) => level.getAttribute('data-state') === 'not-applicable',
+    )).toBe(true);
+
+    const originNote = root.querySelector<HTMLButtonElement>('[data-info-note="shell-origin"]');
+    originNote?.click();
+    const originPanel = document.getElementById(originNote?.getAttribute('aria-controls') ?? '');
+    expect(originPanel?.textContent).toContain('illustrative product-demo media');
+    expect(originPanel?.textContent).toContain('hypothetical content, not a civic response');
+    expect(originPanel?.textContent).toContain('not a live or reviewed Alpine finding');
   });
 });
 
@@ -593,7 +624,9 @@ describe('GOV-658 shell — contextual information notes', () => {
     const originText = originPanelId
       ? document.querySelector(`#${originPanelId}`)?.textContent
       : '';
-    expect(originText).toMatch(/live server data, a reviewed archived snapshot, or a synthetic design fixture/i);
+    expect(originText).toMatch(
+      /live server data, a reviewed archived snapshot, a synthetic design fixture, or illustrative product-demo media/i,
+    );
     expect(root.getAttribute('data-origin')).toBe('live_server');
     expect(root.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
       .toBe('live_server');
@@ -659,7 +692,8 @@ describe('GOV-73 print stylesheet', () => {
     expect(hiding.length, 'found at least one display:none rule').toBeGreaterThan(0);
     const hidden = hiding.join(' ');
     for (const sel of [
-      '.gw-shell-banner-slot', '.gw-shell-origin', '.gw-shell-origin-fixture', '.gw-shell-footer',
+      '.gw-shell-banner-slot', '.gw-shell-origin', '.gw-shell-origin-fixture',
+      '.gw-shell-origin-product-demo', '.gw-shell-footer',
     ]) {
       expect(printBlock(), `${sel} present`).toContain(sel);
       expect(hidden, `${sel} must NOT be in a display:none rule`).not.toContain(sel);

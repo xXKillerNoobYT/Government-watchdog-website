@@ -100,7 +100,13 @@ will resolve it.
 | Alert delivery channels (email/text, push, cadence, destination verification) | Alerts | `#/alerts` | ✅ #86 |
 | Supporter-plan upsell (baseline's "$25/yr Local Data Geek") | Home (Simple) | `#/home` | ✅ #75 |
 | "Fund your area" CTA | Location | `#/location` | ✅ #87 |
-| Explainer video | Explainer; Home | `#/explainer`, `#/home` | ✅ shipped earlier |
+
+**Removed 2026-08-10 — Explainer video.** The owner-supplied, produced asset now
+exists, so the Explainer and Home slots are no longer CS. The Home card is neutral
+product media; playback is **GS** because the animation contains hypothetical civic
+records and figures. It renders only after reviewer admission plus the explicit
+`#/explainer?demo=sample` selection, under both a product-demo shell origin and a
+visible non-live-data notice. Plain `#/explainer` attaches no media.
 
 **Removed 2026-07-31 — the account "manage" affordance.** It was listed here as CS
 pending #71. It is **DG**, and the Global-shell table above has always said so: a contract
@@ -143,6 +149,7 @@ and the backend-supplied trust vocabulary.
 | --- | --- | --- | --- |
 | Brand, primary navigation, footer disclosure, responsive tool placement | **DG** | The approved shell structure and AI caution are present on every admitted page; they contain no civic facts. Its eight-tab order is Home, Fast Agenda, Timeline, Boards, Power Tracker, Source Vault, Newsletter, and Watchlist; Alerts, Location, and the explainer are reached from persistent header controls rather than tabs. | No data API. Any deliberate navigation or hierarchy departure needs owner approval. |
 | Header Alerts chip unread badge | **GS** | The badge counts unread device-local fixture cards and renders only on a route already admitted to design-fixture mode. On a reviewed route the chip is a plain link — a count would assert a civic-alert volume the client cannot know, and a zero would assert quiet. | Civic `GET /v1/me/alerts` plus a read-state contract. Until both exist, no reviewed count may render. |
+| Demo control and explainer product media | **GS** | The persistent Demo control opens `#/explainer?demo=sample`. The optimized owner-supplied video and poster render only after reviewer admission plus that explicit flag, under `ILLUSTRATIVE PRODUCT DEMO` and an adjacent notice that the scenario and figures are hypothetical. The dedicated product-demo origin suppresses fixture Alert counts and never claims live-server context or civic freshness. Plain `#/explainer` is a media-free overview. | No civic API. The exact media, poster, transcript, notice, and asset hashes are one reviewed product-media release unit. They must remain outside the anonymous public build graph. |
 | Simple/Advanced mode, theme, print | **DL** | The shell owns the single `gw_home_mode` control; pages do not render duplicate mode switches. Theme and mode change presentation only, and print invokes the browser. Both modes preserve the same facts and gaps. | Optional account preference sync only; local mode must continue to work without it. |
 | Location chip | **DL** | Shows the saved browser label, with Alpine as the design fallback. It does not prove identity or official coverage. | `GET /v1/locations`, `GET /v1/coverage`, and `PATCH /v1/me/location` before claiming an account-locked or covered place. |
 | Global search | **DL** | Routes the entered query to the current reviewed Timeline filter. It is not a full archive search. | A reviewed cross-record search contract with scope, type, range, result count, and receipts. |
@@ -163,6 +170,7 @@ and the backend-supplied trust vocabulary.
 | Transparency alerts | **DG** | The slot remains visible and says document-change tracking is not connected. | Source-version events plus reviewed transparency-alert generation. |
 | Latest verdict | **DG** | No official, score, promise/action alignment, or outcome is inferred from statements. | Reviewed power-profile verdict product with policy-cleared official, promise, action, comparison, review label, and receipts. |
 | Language Watch | **DG** | No wording is classified in the browser. | Backend-supplied exact excerpt, locator, AI-presented label, reviewer state, and source receipts. |
+| Explainer walkthrough | **GS** | Every Home lane shows the same neutral 1:13 product-media card with no civic figures. It links to the explicitly selected gated demo; playback, poster, example scenario, and visual transcript do not render on Home. | No civic API. Keep the product-media review unit and public-build exclusion described in the Global-shell row. |
 | Source Vault summary, edition versions, honesty metrics, 90-day search | **DG** | Their designed slots remain unavailable; a digest source count is not promoted to vault verification, version history, quality scoring, or an archive index. | Source stats/versions, newsletter edition versions, approved quality metrics, and reviewed search endpoints. |
 | County and State editions | **DG** | The layouts remain visible and honestly empty because the admitted projections are Alpine-first. | Separately authorized county and state projections with the same web-safe trust contract. |
 | Populated Home sample widgets | **GS** | Available only on the explicit reviewer fixture path with a sample banner. | Never a production source. Replace each value only with the matching reviewed contract above. |
