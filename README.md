@@ -1,7 +1,9 @@
 # Government Watchdog Website
 
-Frontend website project for Government Watchdog. The deployed Alpine beta is
-currently private/reviewer-internal.
+Frontend website project for Government Watchdog. It contains separate Anonymous
+Free and private/reviewer artifacts. The deployed Alpine beta was observed publicly
+accessible on 2026-08-11 while still serving the private client, so the live release
+remains blocked.
 
 ## Role
 
@@ -55,17 +57,17 @@ safe frontend/backend contracts.
 
 The Alpine Sites beta is deployed at
 [`alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site`](https://alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site/)
-with private/custom access. It is not public yet. The exact site name, main-branch
-release rule, update steps, rollback procedure, and public-release blockers are
-recorded in [`docs/deployment-sites.md`](docs/deployment-sites.md).
+and was observed with public access on 2026-08-11 while live v9 still served
+the private client. That mismatch is a blocked incident, not a public launch.
+The default build now fails closed to the Anonymous Free artifact; exact access,
+release, rollback, and remaining product gates are recorded in
+[`docs/deployment-sites.md`](docs/deployment-sites.md).
 
-For the hosted beta, Sites custom access is the login and the security boundary
-for the static root and assets. After Sites admits the approved owner, the exact
-production host plus a private-beta build marker opens Home directly; this is a
-UI-routing acknowledgement, not a second authentication system. The server
-worker also checks the managed reviewer allowlist on requests Sites dispatches
-through it. The email-address/magic-link panel is development scaffolding; it
-is not the hosted login path and does not send email.
+A future hosted private beta requires Sites custom access as the static root and
+asset boundary. The server worker separately checks the managed reviewer
+allowlist only on requests Sites dispatches through it; current public-provider
+behavior proves that check is not a static-asset boundary by itself. The
+email-address/magic-link panel remains development scaffolding, not hosted login.
 
 The minimum standard for any civic content shown in the beta is recorded in
 [`docs/content-quality-baseline.md`](docs/content-quality-baseline.md). Evidence,
@@ -87,8 +89,9 @@ cp .env.example .env   # optional; defaults to fixture mode
 npm run dev            # vite dev server at http://127.0.0.1:5173
 npm run typecheck      # tsc --noEmit
 npm test               # vitest (web-safe, adapter, state, render)
-npm run build          # private-beta Sites artifact (legacy/default deploy lane)
+npm run build          # Sites-shaped artifact containing only Anonymous Free
 npm run build:public   # Anonymous Free artifact + compiled-asset safety scan
+npm run build:private-beta # explicit reviewer artifact; never deploy while Sites is public
 npm run build:all      # build and verify both isolated browser lanes
 npm run preview        # serve the production build locally
 ```

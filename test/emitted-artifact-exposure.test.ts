@@ -242,6 +242,15 @@ describe('where the emitted scan is enforced (#55 AC2)', () => {
     expect(scripts['build:public']).toContain('--emitted dist/public');
   });
 
+  it('audits the final Sites public artifact after building the public graph', () => {
+    const sitesBuild = scripts['build:sites-public'];
+    expect(sitesBuild).toContain('vite build --mode public --outDir ../dist/client');
+    expect(sitesBuild).toContain('--emitted dist/client');
+    expect(sitesBuild.indexOf('vite build')).toBeLessThan(
+      sitesBuild.indexOf('--emitted dist/client'),
+    );
+  });
+
   it('runs the emitted scan after the bundler, not before it', () => {
     // Ordering is the whole point: scanning before `vite build` would read a
     // stale or absent artifact and pass vacuously.

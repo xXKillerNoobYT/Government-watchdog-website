@@ -26,6 +26,7 @@ import { decodeObfuscation } from './check-no-direct-exposure.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_ROOT = resolve(REPO_ROOT, 'dist/public');
+const SITES_CLIENT_ROOT = resolve(REPO_ROOT, 'dist/client');
 
 export const FORBIDDEN_PUBLIC_MARKERS = [
   'reviewer_internal',
@@ -231,6 +232,14 @@ export function assertPublicBundle(root = PUBLIC_ROOT) {
   }
 }
 
+/** Give a target-aware recovery instruction when a sibling lane is unsafe. */
+export function publicPackageRemediation(target, selectedLane = 'dist/public') {
+  if (target === 'sites-client') {
+    return 'Remove the sibling browser artifact, re-run npm run build, then package the verified full dist/ tree.';
+  }
+  return `Deploy ${selectedLane} itself, not its parent directory.`;
+}
+
 /**
  * Validate a directory that is about to be published as the public package.
  *
@@ -239,33 +248,54 @@ export function assertPublicBundle(root = PUBLIC_ROOT) {
  * separate because `build:all` deliberately produces a combined `dist/` for
  * verification — that workspace has a clean public lane but is not a package.
  */
-export function assertPublicPackage(root = PUBLIC_ROOT) {
+export function assertPublicPackage(root = PUBLIC_ROOT, { target = 'public' } = {}) {
   assertPublicBundle(root);
   const siblings = privateSiblingArtifacts(root);
   if (siblings.length) {
+    const selectedLane = relative(REPO_ROOT, root);
     throw new Error(
       `${relative(REPO_ROOT, dirname(root))} holds a private client artifact beside the public lane `
       + `and must never be deployed as a public package:\n${siblings.map((s) => `  - ${s}`).join('\n')}\n`
-      + `Deploy ${relative(REPO_ROOT, root)} itself, not its parent directory.`,
+      + publicPackageRemediation(target, selectedLane),
     );
   }
 }
 
+/**
+ * Parse the executable checker's intentionally small CLI surface.
+ *
+ * The target is explicit rather than auto-detected: choosing the wrong
+ * directory must fail, not silently scan a stale sibling artifact.
+ */
+export function publicBundleCommand(args) {
+  const allowed = new Set(['--package', '--sites-client']);
+  const unknown = args.filter((arg) => !allowed.has(arg));
+  if (unknown.length) {
+    throw new Error(`unknown argument(s): ${unknown.join(', ')}`);
+  }
+  return {
+    asPackage: args.includes('--package'),
+    target: args.includes('--sites-client') ? 'sites-client' : 'public',
+  };
+}
+
 function main() {
-  // `--package` asserts the stronger deployment-package claim. Bare invocation
-  // keeps the original content-only contract, so it stays meaningful against the
-  // combined `dist/` a full `build:all` leaves behind.
-  const asPackage = process.argv.includes('--package');
+  // `--package` asserts the stronger deployment-package claim. The default
+  // target stays the canonical `dist/public`; `--sites-client` checks the
+  // exact browser directory that the Sites packaging helper will publish.
   try {
-    if (asPackage) assertPublicPackage(); else assertPublicBundle();
+    const command = publicBundleCommand(process.argv.slice(2));
+    const root = command.target === 'sites-client' ? SITES_CLIENT_ROOT : PUBLIC_ROOT;
+    if (command.asPackage) assertPublicPackage(root, { target: command.target });
+    else assertPublicBundle(root);
     console.log(
-      `✓ public ${asPackage ? 'deployment package' : 'bundle'} boundary passed: `
-      + `${relative(REPO_ROOT, PUBLIC_ROOT)} contains no protected markers`
-      + `${asPackage ? ' and sits beside no private client artifact' : ''}.`,
+      `✓ public ${command.asPackage ? 'deployment package' : 'bundle'} boundary passed: `
+      + `${relative(REPO_ROOT, root)} contains no protected markers`
+      + `${command.asPackage ? ' and sits beside no private client artifact' : ''}.`,
     );
   } catch (error) {
     console.error(
-      `\n✗ public ${asPackage ? 'deployment package' : 'bundle'} boundary FAILED:\n`
+      '\n✗ public bundle/package boundary FAILED:\n'
       + `${error instanceof Error ? error.message : error}\n`,
     );
     process.exit(1);
