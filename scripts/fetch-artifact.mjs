@@ -1,47 +1,58 @@
 /**
  * GOV-1527 (Phase 1c of GOV-1523): resolve the BACKEND_REF pin, obtain the
- * matching web artifact, verify it, and stage it for the website build/service.
+ * matching PRIVATE-RUNTIME artifact, verify it, and stage it for the website
+ * build/service.
  *
  * Implements the consumer half of `Docs/gov1523-artifact-contract-spec.md`
- * (§3 pin, §4 token, §6 fail-closed). NOTHING here is re-implemented from the
- * backend: the two data lanes and the service are produced by the pinned
- * backend's own `scripts/export_web_artifact.py` (local mode) or downloaded
- * from its GitHub Release (hosted mode). This script only fetches + VERIFIES.
+ * (§3 pin, §6 fail-closed). NOTHING here is re-implemented from the backend:
+ * the reviewer lane and service are produced and canonically verified by the pinned
+ * backend's own `scripts/export_web_artifact.py` in explicit `local:` mode.
+ * The public GitHub Release channel is never a valid transport for the private
+ * runtime: a commit/tag pin fails before any network request.
  *
- * Fail-closed contract (§6): any missing token / missing artifact / commit
- * mismatch / sha mismatch / unknown schema_version aborts with a non-zero exit
+ * Fail-closed contract (§6): any hosted ref / missing artifact / profile or
+ * commit mismatch / sha mismatch / unknown schema_version aborts non-zero
  * — never a stale/cached artifact, never a half-open app. The single documented
  * escape hatch is an explicit `LANDING_ONLY=1`, which stages NO /api surface.
  *
  * Usage:
- *   node scripts/fetch-artifact.mjs                 # read ./BACKEND_REF
+ *   node scripts/fetch-artifact.mjs                 # fails while pin is hosted
  *   BACKEND_REF=local:/path/to/backend node scripts/fetch-artifact.mjs
  *   LANDING_ONLY=1 node scripts/fetch-artifact.mjs  # public landing only
  *
  * Env:
  *   BACKEND_REF              override the ./BACKEND_REF file (SHA, tag, or local:PATH)
- *   GW_BACKEND_DEPLOY_TOKEN  fine-grained Contents:read PAT (hosted download only; never logged)
  *   GW_DEMO_DB               registry/demo DB the local builder projects lanes from
  *   LANDING_ONLY             "1"/"true" => stage nothing, fail-closed landing build
  *   GW_ARTIFACT_DIR          output stage dir (default ./.artifact)
- *   GW_ARTIFACT_TARBALL      pre-built gw-web-artifact-*.tar.gz to stage instead of
- *                            building/downloading (GOV-1544: offline Docker/CI
- *                            verification). Verification is NOT weakened: the
- *                            manifest commit is still cross-checked against the
- *                            pin and the sha256 recomputed — a wrong tarball fails.
+ *   GW_ARTIFACT_TARBALL      explicit local gw-private-runtime-*.tar.gz to stage
+ *                            instead of building. BACKEND_REF must still be
+ *                            local:PATH and exact v2/private verification remains.
  */
 
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
-  cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
-  statSync, writeFileSync,
+  existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync,
+  writeFileSync,
 } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const REPO_ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
+const ARTIFACT_FORMAT_VERSION = 2;
 const KNOWN_SCHEMA_VERSIONS = new Set([1]);
-const ARTIFACT_PREFIX = 'gw-web-artifact-';
+const PRIVATE_RUNTIME_PROFILE = 'private-runtime';
+const ARTIFACT_PREFIX = 'gw-private-runtime-';
+const MANIFEST_KEYS = new Set([
+  'artifact_format_version',
+  'artifact_profile',
+  'artifact_sha256',
+  'backend_commit',
+  'gate_functions',
+  'generated_at_utc',
+  'row_counts',
+  'schema_version',
+]);
 
 function die(msg) {
   // Fail closed: loud, non-zero, no partial artifact left staged.
@@ -77,6 +88,12 @@ export function classifyRef(ref) {
   die(`unrecognized BACKEND_REF ${JSON.stringify(ref)} — expected a 40-char SHA, a tag, or local:PATH`);
 }
 
+/** Private data may not cross the repository's public hosted Release channel. */
+export function privateArtifactTransportViolation(kind) {
+  if (kind.mode === 'local') return null;
+  return 'hosted public Release refs cannot transport a private-runtime artifact';
+}
+
 /**
  * Content digest — MUST byte-match the backend's `_content_digest`
  * (export_web_artifact.py): sha256 over sorted (relpath, bytes) pairs, each
@@ -89,8 +106,10 @@ export function contentDigest(fileRoot) {
   const walk = (dir) => {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
-      if (statSync(full).isDirectory()) walk(full);
-      else files.push(full);
+      const stat = lstatSync(full);
+      if (stat.isDirectory()) walk(full);
+      else if (stat.isFile()) files.push(full);
+      else throw new Error(`artifact contains a non-regular member: ${relative(fileRoot, full)}`);
     }
   };
   walk(fileRoot);
@@ -109,39 +128,101 @@ export function contentDigest(fileRoot) {
   return hasher.digest('hex');
 }
 
-/** Verify a staged, extracted artifact tree against the contract (§3/§6). */
-export function verifyArtifact(root, { expectCommit } = {}) {
+function artifactFiles(root) {
+  const files = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      const stat = lstatSync(full);
+      if (stat.isDirectory()) walk(full);
+      else if (stat.isFile()) files.push(relative(root, full).split('\\').join('/'));
+      else files.push(`!non-regular:${relative(root, full).split('\\').join('/')}`);
+    }
+  };
+  walk(root);
+  return files.sort();
+}
+
+/** Pure contract audit for one extracted private-runtime artifact. */
+export function privateRuntimeContractViolations(root, { expectCommit } = {}) {
+  const violations = [];
   const manifestPath = join(root, 'manifest.json');
-  if (!existsSync(manifestPath)) die('artifact has no manifest.json');
+  if (!existsSync(manifestPath)) return ['artifact has no manifest.json'];
   let manifest;
   try {
     manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   } catch (e) {
-    die(`manifest.json is not valid JSON: ${e.message}`);
+    return [`manifest.json is not valid JSON: ${e.message}`];
   }
 
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest))
+    return ['manifest.json is not a JSON object'];
+
+  const keys = Object.keys(manifest).sort();
+  if (keys.length !== MANIFEST_KEYS.size || keys.some((key) => !MANIFEST_KEYS.has(key)))
+    violations.push('manifest.json does not have the exact v2 field set');
+  if (manifest.artifact_format_version !== ARTIFACT_FORMAT_VERSION)
+    violations.push(`artifact_format_version must be ${ARTIFACT_FORMAT_VERSION}`);
+  if (manifest.artifact_profile !== PRIVATE_RUNTIME_PROFILE)
+    violations.push(`artifact_profile must be ${JSON.stringify(PRIVATE_RUNTIME_PROFILE)}`);
   if (!KNOWN_SCHEMA_VERSIONS.has(manifest.schema_version))
-    die(`unknown schema_version ${JSON.stringify(manifest.schema_version)} `
-      + `(website knows ${[...KNOWN_SCHEMA_VERSIONS].join(', ')})`);
+    violations.push(`unknown schema_version ${JSON.stringify(manifest.schema_version)}`);
 
   if (!/^[0-9a-f]{40}$/.test(manifest.backend_commit ?? ''))
-    die(`manifest.backend_commit is not a 40-char SHA: ${JSON.stringify(manifest.backend_commit)}`);
+    violations.push('manifest.backend_commit is not a lowercase 40-char SHA');
 
   if (expectCommit && manifest.backend_commit !== expectCommit)
-    die(`commit mismatch: BACKEND_REF resolves to ${expectCommit} but artifact was built from `
-      + `${manifest.backend_commit}`);
+    violations.push(`commit mismatch: expected ${expectCommit}, found ${manifest.backend_commit}`);
 
-  const recomputed = contentDigest(root);
-  if (recomputed !== manifest.artifact_sha256)
-    die(`artifact_sha256 mismatch: manifest says ${manifest.artifact_sha256}, recomputed ${recomputed}`);
+  if (JSON.stringify(manifest.gate_functions) !== JSON.stringify(['read_api.reviewer_internal_records']))
+    violations.push('gate_functions do not match the private-runtime profile');
+  if (typeof manifest.generated_at_utc !== 'string'
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(manifest.generated_at_utc))
+    violations.push('generated_at_utc is not an explicit ISO-8601 datetime');
 
-  // The gated lane must never be reachable as a static asset (§2 clause 2 /
-  // §5). It lives only under the service dir tree at rest; the build must not
-  // copy it into the static output — enforced by the build (see package.json)
-  // and asserted by local_e2e.sh step 5c.
-  for (const required of ['data/published.json', 'data/reviewer_internal.json', 'service/run.py'])
-    if (!existsSync(join(root, required))) die(`artifact missing required member ${required}`);
+  const counts = manifest.row_counts;
+  if (!counts || typeof counts !== 'object' || Array.isArray(counts)
+    || Object.keys(counts).length !== 1
+    || !Number.isSafeInteger(counts.reviewer_internal)
+    || counts.reviewer_internal < 0)
+    violations.push('row_counts must contain one non-negative reviewer_internal count');
 
+  const files = artifactFiles(root);
+  for (const file of files) {
+    if (file.startsWith('!non-regular:')) violations.push(file.slice(1));
+    else if (file === 'data/published.json') violations.push('private runtime contains public lane');
+    else if (file !== 'manifest.json' && file !== 'data/reviewer_internal.json'
+      && !file.startsWith('service/')) violations.push(`unexpected artifact member ${file}`);
+  }
+  for (const required of ['manifest.json', 'data/reviewer_internal.json', 'service/run.py', 'service/schema.sql'])
+    if (!files.includes(required)) violations.push(`artifact missing required member ${required}`);
+
+  let reviewerRows;
+  try {
+    reviewerRows = JSON.parse(readFileSync(join(root, 'data/reviewer_internal.json'), 'utf8'));
+  } catch (e) {
+    violations.push(`data/reviewer_internal.json is not valid JSON: ${e.message}`);
+  }
+  if (!Array.isArray(reviewerRows)) violations.push('data/reviewer_internal.json is not a JSON array');
+  else if (counts?.reviewer_internal !== reviewerRows.length)
+    violations.push('row_counts.reviewer_internal does not match the private lane');
+
+  try {
+    const recomputed = contentDigest(root);
+    if (recomputed !== manifest.artifact_sha256)
+      violations.push(`artifact_sha256 mismatch: manifest says ${manifest.artifact_sha256}, recomputed ${recomputed}`);
+  } catch (e) {
+    violations.push(e.message);
+  }
+
+  return violations;
+}
+
+/** Verify a staged, extracted private-runtime tree against the v2 contract. */
+export function verifyArtifact(root, { expectCommit } = {}) {
+  const violations = privateRuntimeContractViolations(root, { expectCommit });
+  if (violations.length) die(`private-runtime artifact contract failed:\n- ${violations.join('\n- ')}`);
+  const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
   return manifest;
 }
 
@@ -153,7 +234,7 @@ function buildFromLocal(checkout, outDir) {
     die(`local backend checkout ${abs} has no scripts/export_web_artifact.py — `
       + `is it at (or past) the pinned ref?`);
   const db = process.env.GW_DEMO_DB;
-  const args = [builder, '--out-dir', outDir];
+  const args = [builder, '--profile', PRIVATE_RUNTIME_PROFILE, '--out-dir', outDir];
   if (db) args.push('--db', db);
   let stdout;
   try {
@@ -167,70 +248,78 @@ function buildFromLocal(checkout, outDir) {
   return { tarball: join(outDir, tarball), builderManifest: safeJson(stdout) };
 }
 
-/** commit/tag — download the Release asset for the ref (token never logged). */
-async function downloadRelease(ref, outDir) {
-  const token = (process.env.GW_BACKEND_DEPLOY_TOKEN ?? '').trim();
-  const short = /^[0-9a-f]{40}$/.test(ref) ? ref.slice(0, 12) : ref;
-  const asset = `${ARTIFACT_PREFIX}${short}.tar.gz`;
-  const dest = join(outDir, asset);
-  // Prefer gh (ambient auth); fall back to a token-authenticated API download
-  // (GOV-1544: the Docker build stage has no gh). Either way the token rides
-  // env/headers only — never argv, never echoed.
+function localCheckoutCommit(checkout) {
+  let commit;
   try {
-    if (token) process.env.GH_TOKEN = token;
-    execFileSync('gh', [
-      'release', 'download', ref,
-      '--repo', 'xXKillerNoobYT/Government-watchdog',
-      '--pattern', asset, '--dir', outDir, '--clobber',
-    ], { stdio: ['ignore', 'ignore', 'inherit'] });
-  } catch {
-    try {
-      await downloadReleaseViaApi(ref, asset, dest, token);
-    } catch (e) {
-      die(`could not download ${asset} for ref ${ref} — missing GW_BACKEND_DEPLOY_TOKEN or `
-        + `no Release asset (fail closed, no stale reuse). ${e.message}`);
-    }
+    commit = execFileSync('git', ['-C', resolve(checkout), 'rev-parse', 'HEAD'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
+  } catch (e) {
+    die(`cannot resolve exact local backend HEAD: ${e.message}`);
   }
-  if (!existsSync(dest)) die(`release download reported success but ${asset} is absent`);
-  return { tarball: dest };
+  if (!/^[0-9a-f]{40}$/.test(commit)) die('local backend HEAD is not a full commit SHA');
+  return commit;
 }
 
-/** GitHub REST fallback: find the Release carrying `asset`, stream it to `dest`. */
-async function downloadReleaseViaApi(ref, asset, dest, token) {
-  if (!token) throw new Error('no gh CLI and no GW_BACKEND_DEPLOY_TOKEN');
-  const api = 'https://api.github.com/repos/xXKillerNoobYT/Government-watchdog';
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-  // A pin that is a tag maps directly; a 40-char commit pin is located by its
-  // asset name across recent releases (backend CI names assets by short sha).
-  let release = null;
-  const byTag = await fetch(`${api}/releases/tags/${encodeURIComponent(ref)}`, { headers });
-  if (byTag.ok) {
-    release = await byTag.json();
-  } else {
-    const list = await fetch(`${api}/releases?per_page=100`, { headers });
-    if (!list.ok) throw new Error(`releases list HTTP ${list.status}`);
-    release = (await list.json()).find((r) => (r.assets ?? []).some((a) => a.name === asset)) ?? null;
+/** Ask the exact local backend contract implementation to verify archive bytes. */
+function verifyArchiveWithLocalBackend(checkout, tarball, expectedCommit) {
+  const code = [
+    'import sys',
+    'from pathlib import Path',
+    'sys.path.insert(0, sys.argv[1])',
+    'import export_web_artifact as artifact',
+    'artifact.inspect_artifact(Path(sys.argv[2]),',
+    '    expected_profile=artifact.PRIVATE_RUNTIME_PROFILE,',
+    '    expected_commit=sys.argv[3])',
+  ].join('\n');
+  try {
+    execFileSync('python3', [
+      '-c', code,
+      join(resolve(checkout), 'scripts'),
+      resolve(tarball),
+      expectedCommit,
+    ], { stdio: ['ignore', 'ignore', 'inherit'] });
+  } catch (e) {
+    die(`exact local backend rejected private-runtime archive bytes: ${e.message}`);
   }
-  if (!release) throw new Error(`no Release found for ${ref}`);
-  const found = (release.assets ?? []).find((a) => a.name === asset);
-  if (!found) throw new Error(`Release ${release.tag_name} has no asset ${asset}`);
-  const download = await fetch(found.url, {
-    headers: { ...headers, Accept: 'application/octet-stream' },
-    redirect: 'follow',
-  });
-  if (!download.ok) throw new Error(`asset download HTTP ${download.status}`);
-  writeFileSync(dest, Buffer.from(await download.arrayBuffer()));
 }
 
 function safeJson(s) {
   try { return JSON.parse(s); } catch { return null; }
 }
 
+export function archiveMemberViolations(tarball) {
+  let names;
+  let verbose;
+  try {
+    names = execFileSync('tar', ['-tzf', tarball], { encoding: 'utf8' })
+      .split('\n').filter(Boolean);
+    verbose = execFileSync('tar', ['-tvzf', tarball], { encoding: 'utf8' })
+      .split('\n').filter(Boolean);
+  } catch (e) {
+    return [`archive listing failed: ${e.message}`];
+  }
+  const violations = [];
+  if (names.length !== verbose.length) violations.push('archive listing count is inconsistent');
+  if (new Set(names).size !== names.length) violations.push('archive contains duplicate members');
+  for (const name of names) {
+    const parts = name.split('/');
+    if (!name || name.startsWith('/') || name.includes('\\')
+      || parts.some((part) => !part || part === '.' || part === '..'))
+      violations.push(`archive contains unsafe member ${JSON.stringify(name)}`);
+    else if (name === 'data/published.json') violations.push('archive contains the public lane');
+    else if (name !== 'manifest.json' && name !== 'data/reviewer_internal.json'
+      && !name.startsWith('service/')) violations.push(`archive contains unexpected member ${name}`);
+  }
+  for (const line of verbose) {
+    if (!line.trimStart().startsWith('-'))
+      violations.push('archive contains a non-regular entry');
+  }
+  return violations;
+}
+
 function extract(tarball, into) {
+  const violations = archiveMemberViolations(tarball);
+  if (violations.length) die(`unsafe private-runtime archive:\n- ${violations.join('\n- ')}`);
   rmSync(into, { recursive: true, force: true });
   mkdirSync(into, { recursive: true });
   try {
@@ -242,6 +331,10 @@ function extract(tarball, into) {
 
 async function main() {
   const artifactDir = resolve(process.env.GW_ARTIFACT_DIR ?? join(REPO_ROOT, '.artifact'));
+  // A previous v1 fetch wrote the public projection into Vite's source tree.
+  // Remove that generated file before every mode so a stale lane cannot ride a
+  // later private or landing-only build.
+  rmSync(join(REPO_ROOT, 'public', 'data', 'published.json'), { force: true });
 
   // Fail-closed escape hatch (§6): explicit landing-only, zero /api surface.
   if (flag('LANDING_ONLY')) {
@@ -261,51 +354,46 @@ async function main() {
   rmSync(artifactDir, { recursive: true, force: true });
   mkdirSync(work, { recursive: true });
 
+  if (privateArtifactTransportViolation(kind)) {
+    die(`BACKEND_REF=${JSON.stringify(ref)} names a hosted public Release channel; `
+      + 'private-runtime artifacts require explicit local:PATH until a protected, '
+      + 'authenticated delivery channel is implemented and verified');
+  }
+
   let tarball;
   let expectCommit;
   const preBuilt = (process.env.GW_ARTIFACT_TARBALL ?? '').trim();
   if (preBuilt) {
-    // GOV-1544: offline Docker/CI verification from a pre-built tarball. The
-    // pin still decides which commit is acceptable — verifyArtifact below
-    // cross-checks manifest.backend_commit and recomputes the sha256, so a
-    // stale or tampered tarball fails the build exactly like a bad download.
     if (!existsSync(preBuilt)) die(`GW_ARTIFACT_TARBALL=${preBuilt} does not exist`);
-    console.log(`GW_ARTIFACT_TARBALL — staging pre-built tarball (pin ${ref} still enforced).`);
+    console.log('GW_ARTIFACT_TARBALL — staging explicit local private-runtime tarball.');
     tarball = resolve(preBuilt);
-    expectCommit = kind.mode === 'commit' ? kind.commit : undefined;
-  } else if (kind.mode === 'local') {
+    expectCommit = localCheckoutCommit(kind.path);
+  } else {
     console.log(`BACKEND_REF=local:${kind.path} — building artifact from local checkout (no token).`);
     // For local mode the "resolved ref" is the checkout HEAD; the builder stamps
     // it into manifest.backend_commit, so we cross-check against git HEAD.
-    try {
-      expectCommit = execFileSync('git', ['-C', resolve(kind.path), 'rev-parse', 'HEAD'],
-        { encoding: 'utf8' }).trim();
-    } catch { expectCommit = undefined; }
+    expectCommit = localCheckoutCommit(kind.path);
     ({ tarball } = buildFromLocal(kind.path, work));
-  } else {
-    expectCommit = kind.mode === 'commit' ? kind.commit : undefined; // tag -> host resolves
-    console.log(`BACKEND_REF=${ref} (${kind.mode}) — downloading Release artifact.`);
-    ({ tarball } = await downloadRelease(ref, work));
   }
 
+  // The producer's v2 verifier proves exact canonical gzip/tar bytes, including
+  // normalized metadata and absence of PAX/trailing data. The consumer then
+  // independently checks paths and extracted semantics below.
+  verifyArchiveWithLocalBackend(kind.path, tarball, expectCommit);
   const staged = join(artifactDir, 'artifact');
   extract(tarball, staged);
   const manifest = verifyArtifact(staged, { expectCommit });
-
-  // Publish the public lane to the static layer; keep the gated lane + service
-  // OUT of the static bundle (served only through /api by the service).
-  const publicData = join(REPO_ROOT, 'public', 'data');
-  mkdirSync(publicData, { recursive: true });
-  cpSync(join(staged, 'data', 'published.json'), join(publicData, 'published.json'));
 
   writeFileSync(join(artifactDir, 'INTEGRATION.json'), JSON.stringify({
     mode: kind.mode, staged: true, backend_ref: ref,
     backend_commit: manifest.backend_commit,
     artifact_sha256: manifest.artifact_sha256,
+    artifact_format_version: manifest.artifact_format_version,
+    artifact_profile: manifest.artifact_profile,
     schema_version: manifest.schema_version,
     row_counts: manifest.row_counts,
     service_entry: 'service/run.py',
-    gated_lane: 'artifact/data/reviewer_internal.json (service-only, never static)',
+    gated_lane: 'artifact/data/reviewer_internal.json (local/private service-only, never static)',
   }, null, 2) + '\n');
 
   console.log('✓ artifact verified & staged:');
