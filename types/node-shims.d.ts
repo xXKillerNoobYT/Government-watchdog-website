@@ -13,6 +13,7 @@
  */
 
 declare module 'node:fs' {
+  export function existsSync(path: string | URL): boolean;
   export function mkdtempSync(prefix: string): string;
   export function mkdirSync(path: string, options?: { recursive?: boolean }): string | undefined;
   export function readFileSync(path: string | URL, encoding: 'utf8'): string;

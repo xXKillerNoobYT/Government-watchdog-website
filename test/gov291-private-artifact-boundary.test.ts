@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 // test needs only the executable subprocess seam for denial-before-mutation.
 import { execFileSync } from 'node:child_process';
 import {
-  mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,
+  existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -84,6 +84,7 @@ function deniedFetchPreservesSentinels(
   expect(readFileSync(join(root, 'public/data/published.json'), 'utf8')).toBe('public sentinel\n');
   expect(readFileSync(join(root, '.artifact/sentinel'), 'utf8')).toBe('artifact sentinel\n');
   expect(readFileSync(join(external, 'sentinel'), 'utf8')).toBe('external sentinel\n');
+  expect(existsSync(join(root, 'scripts/__pycache__'))).toBe(false);
 }
 
 describe('issue #291 private-runtime artifact boundary', () => {
@@ -163,12 +164,36 @@ describe('issue #291 private-runtime artifact boundary', () => {
     deniedFetchPreservesSentinels(
       (root) => ({ BACKEND_REF: `local:${root}` }),
       (root) => {
-        writeFileSync(join(root, 'scripts/export_web_artifact.py'), '# incompatible v1 exporter\n');
+        writeFileSync(join(root, 'scripts/export_web_artifact.py'), [
+          'from pathlib import Path',
+          `Path(${JSON.stringify(join(root, '.artifact/sentinel'))}).write_text('mutated\\n')`,
+          'ARTIFACT_FORMAT_VERSION = 1',
+          "PRIVATE_RUNTIME_PROFILE = 'legacy-private'",
+          'def inspect_artifact(*args, **kwargs): pass',
+          '',
+        ].join('\n'));
         execFileSync('git', ['init', '-q', root]);
         execFileSync('git', ['-C', root, 'config', 'user.email', 'test@example.invalid']);
         execFileSync('git', ['-C', root, 'config', 'user.name', 'Test']);
         execFileSync('git', ['-C', root, 'add', 'scripts/export_web_artifact.py']);
         execFileSync('git', ['-C', root, 'commit', '-qm', 'incompatible exporter']);
+      },
+    );
+    deniedFetchPreservesSentinels(
+      (root) => ({ BACKEND_REF: `local:${root}` }),
+      (root) => {
+        writeFileSync(join(root, 'scripts/export_web_artifact.py'), [
+          'ARTIFACT_FORMAT_VERSION = 2',
+          "PRIVATE_RUNTIME_PROFILE = 'private-runtime'",
+          'def inspect_artifact(*args, **kwargs): pass',
+          "if __name__ == '__main__': raise SystemExit('simulated compatible-producer failure')",
+          '',
+        ].join('\n'));
+        execFileSync('git', ['init', '-q', root]);
+        execFileSync('git', ['-C', root, 'config', 'user.email', 'test@example.invalid']);
+        execFileSync('git', ['-C', root, 'config', 'user.name', 'Test']);
+        execFileSync('git', ['-C', root, 'add', 'scripts/export_web_artifact.py']);
+        execFileSync('git', ['-C', root, 'commit', '-qm', 'failing compatible exporter']);
       },
     );
     deniedFetchPreservesSentinels({
@@ -196,5 +221,7 @@ describe('issue #291 private-runtime artifact boundary', () => {
     expect(source).toContain("'status', '--porcelain=v1', '--untracked-files=all'");
     expect(source).toContain('LANDING_ONLY is disabled for artifact integration');
     expect(source).toContain('const postBuildCommit = localCheckoutCommit(kind.path)');
+    expect(source).toContain("mkdtempSync(join(REPO_ROOT, '.artifact-stage-'))");
+    expect(source).toContain('installVerifiedArtifact(candidateDir)');
   });
 });

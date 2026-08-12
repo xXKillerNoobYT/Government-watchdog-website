@@ -134,6 +134,8 @@ describe('where the package assertion is enforced (#55)', () => {
     expect(dockerfile).not.toContain('LANDING_ONLY');
     expect(dockerfile).not.toContain('GW_ARTIFACT_TARBALL');
     expect(dockerignore.split(/\r?\n/)).toContain('.artifact-local');
+    expect(dockerignore.split(/\r?\n/)).toContain('.artifact-stage-*');
+    expect(dockerignore.split(/\r?\n/)).toContain('.artifact-backup-*');
     expect(dockerignore.split(/\r?\n/)).toContain('gw-web-artifact-*.tar.gz');
     expect(dockerignore.split(/\r?\n/)).toContain('gw-private-runtime-*.tar.gz');
     expect(dockerignore).not.toContain('deliberately NOT ignored');

@@ -26,8 +26,8 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
-  existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync,
-  writeFileSync,
+  existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
+  renameSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
@@ -36,6 +36,10 @@ const ARTIFACT_FORMAT_VERSION = 2;
 const KNOWN_SCHEMA_VERSIONS = new Set([1]);
 const PRIVATE_RUNTIME_PROFILE = 'private-runtime';
 const ARTIFACT_PREFIX = 'gw-private-runtime-';
+let transientArtifactDir = null;
+process.on('exit', () => {
+  if (transientArtifactDir) rmSync(transientArtifactDir, { recursive: true, force: true });
+});
 const MANIFEST_KEYS = new Set([
   'artifact_format_version',
   'artifact_profile',
@@ -228,20 +232,41 @@ function localBackendBuilder(checkout) {
   return builder;
 }
 
+function isolatedPythonEnv() {
+  const env = {
+    PYTHONDONTWRITEBYTECODE: '1',
+    PYTHONNOUSERSITE: '1',
+  };
+  for (const key of ['PATH', 'LANG', 'LC_ALL', 'TMPDIR']) {
+    if (process.env[key]) env[key] = process.env[key];
+  }
+  return env;
+}
+
+/** Parse the exporter as data; never import or execute producer code here. */
 function assertLocalBackendV2(checkout) {
-  const scriptsDir = join(resolve(checkout), 'scripts');
+  const builder = localBackendBuilder(checkout);
   const code = [
-    'import sys',
-    'sys.path.insert(0, sys.argv[1])',
-    'import export_web_artifact as artifact',
-    'assert artifact.ARTIFACT_FORMAT_VERSION == 2',
-    "assert artifact.PRIVATE_RUNTIME_PROFILE == 'private-runtime'",
-    'assert callable(artifact.inspect_artifact)',
+    'import ast, sys',
+    'from pathlib import Path',
+    "tree = ast.parse(Path(sys.argv[1]).read_text(encoding='utf-8'))",
+    'constants = {}',
+    'functions = set()',
+    'for node in tree.body:',
+    '    if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):',
+    '        try: constants[node.targets[0].id] = ast.literal_eval(node.value)',
+    '        except (ValueError, TypeError): pass',
+    '    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):',
+    '        functions.add(node.name)',
+    "assert constants.get('ARTIFACT_FORMAT_VERSION') == 2",
+    "assert constants.get('PRIVATE_RUNTIME_PROFILE') == 'private-runtime'",
+    "assert 'inspect_artifact' in functions",
   ].join('\n');
   try {
-    execFileSync('python3', ['-c', code, scriptsDir], {
+    execFileSync('python3', ['-B', '-I', '-c', code, builder], {
       stdio: ['ignore', 'ignore', 'pipe'],
       encoding: 'utf8',
+      env: isolatedPythonEnv(),
     });
   } catch (e) {
     const detail = String(e.stderr ?? '').trim().split('\n').at(-1) ?? e.message;
@@ -252,11 +277,25 @@ function assertLocalBackendV2(checkout) {
 function buildFromLocal(checkout, outDir) {
   const builder = localBackendBuilder(checkout);
   const db = process.env.GW_DEMO_DB;
-  const args = [builder, '--profile', PRIVATE_RUNTIME_PROFILE, '--out-dir', outDir];
+  const args = ['--profile', PRIVATE_RUNTIME_PROFILE, '--out-dir', outDir];
   if (db) args.push('--db', db);
+  const runner = [
+    'import runpy, sys',
+    'scripts_dir, script, *args = sys.argv[1:]',
+    'sys.path.insert(0, scripts_dir)',
+    'sys.argv = [script, *args]',
+    "runpy.run_path(script, run_name='__main__')",
+  ].join('\n');
   let stdout;
   try {
-    stdout = execFileSync('python3', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
+    stdout = execFileSync('python3', [
+      '-B', '-I', '-c', runner, dirname(builder), builder, ...args,
+    ], {
+      cwd: outDir,
+      encoding: 'utf8',
+      env: isolatedPythonEnv(),
+      stdio: ['ignore', 'pipe', 'inherit'],
+    });
   } catch (e) {
     die(`local builder exited non-zero (deny-list or build failure): ${e.message}`);
   }
@@ -267,10 +306,9 @@ function buildFromLocal(checkout, outDir) {
 }
 
 function localCheckoutCommit(checkout) {
-  // Prove this is a compatible backend checkout before any generated-output
-  // cleanup. A valid Git repository alone is not an artifact producer.
+  // File existence is non-executing. Resolve identity and reject dirty source
+  // before parsing its contract surface.
   localBackendBuilder(checkout);
-  assertLocalBackendV2(checkout);
   let commit;
   let status;
   try {
@@ -289,6 +327,7 @@ function localCheckoutCommit(checkout) {
     die(`local backend artifact source is dirty in contract-relevant paths (${count} entries); `
       + 'commit or isolate the exact source before integration');
   }
+  assertLocalBackendV2(checkout);
   return commit;
 }
 
@@ -305,11 +344,15 @@ function verifyArchiveWithLocalBackend(checkout, tarball, expectedCommit) {
   ].join('\n');
   try {
     execFileSync('python3', [
-      '-c', code,
+      '-B', '-I', '-c', code,
       join(resolve(checkout), 'scripts'),
       resolve(tarball),
       expectedCommit,
-    ], { stdio: ['ignore', 'ignore', 'inherit'] });
+    ], {
+      cwd: dirname(tarball),
+      env: isolatedPythonEnv(),
+      stdio: ['ignore', 'ignore', 'inherit'],
+    });
   } catch (e) {
     die(`exact local backend rejected private-runtime archive bytes: ${e.message}`);
   }
@@ -361,6 +404,27 @@ function extract(tarball, into) {
   }
 }
 
+/** Replace the last verified stage only after the candidate is fully verified. */
+function installVerifiedArtifact(candidateDir) {
+  const artifactDir = join(REPO_ROOT, '.artifact');
+  let backupDir = null;
+  if (existsSync(artifactDir)) {
+    backupDir = mkdtempSync(join(REPO_ROOT, '.artifact-backup-'));
+    rmSync(backupDir, { recursive: true, force: true });
+    renameSync(artifactDir, backupDir);
+  }
+  try {
+    renameSync(candidateDir, artifactDir);
+  } catch (e) {
+    if (backupDir && existsSync(backupDir) && !existsSync(artifactDir)) {
+      renameSync(backupDir, artifactDir);
+      backupDir = null;
+    }
+    die(`could not install verified artifact without losing the prior stage: ${e.message}`);
+  }
+  if (backupDir) rmSync(backupDir, { recursive: true, force: true });
+}
+
 async function main() {
   // Reject every unsupported transport/mode before changing generated output.
   // This ordering is load-bearing: a typo or hostile caller must not be able to
@@ -391,9 +455,11 @@ async function main() {
     die('legacy public/data/published.json exists; refusing to overwrite or delete source-tree bytes — inspect and remove it explicitly');
   }
 
-  const artifactDir = join(REPO_ROOT, '.artifact');
-  const work = join(artifactDir, '.download');
-  rmSync(artifactDir, { recursive: true, force: true });
+  // Build and validate beside the current artifact. An incompatible or failing
+  // producer never touches the last verified stage.
+  const candidateDir = mkdtempSync(join(REPO_ROOT, '.artifact-stage-'));
+  transientArtifactDir = candidateDir;
+  const work = join(candidateDir, '.download');
   mkdirSync(work, { recursive: true });
 
   console.log(`BACKEND_REF=local:${kind.path} — building artifact from clean local checkout (no token).`);
@@ -409,11 +475,11 @@ async function main() {
   // normalized metadata and absence of PAX/trailing data. The consumer then
   // independently checks paths and extracted semantics below.
   verifyArchiveWithLocalBackend(kind.path, tarball, expectCommit);
-  const staged = join(artifactDir, 'artifact');
+  const staged = join(candidateDir, 'artifact');
   extract(tarball, staged);
   const manifest = verifyArtifact(staged, { expectCommit });
 
-  writeFileSync(join(artifactDir, 'INTEGRATION.json'), JSON.stringify({
+  writeFileSync(join(candidateDir, 'INTEGRATION.json'), JSON.stringify({
     mode: kind.mode, staged: true, backend_ref: ref,
     backend_commit: manifest.backend_commit,
     artifact_sha256: manifest.artifact_sha256,
@@ -424,6 +490,9 @@ async function main() {
     service_entry: 'service/run.py',
     gated_lane: 'artifact/data/reviewer_internal.json (local/private service-only, never static)',
   }, null, 2) + '\n');
+
+  installVerifiedArtifact(candidateDir);
+  transientArtifactDir = null;
 
   console.log('✓ artifact verified & staged:');
   console.log(JSON.stringify(manifest, null, 2));
