@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+// @ts-expect-error The repo deliberately carries no global Node typings; this
+// test needs only the executable subprocess seam for denial-before-mutation.
+import { execFileSync } from 'node:child_process';
+import {
+  mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+declare const process: {
+  env: Record<string, string | undefined>;
+  execPath: string;
+};
 
 // The production verifier is an executable JavaScript module rather than app code.
 // @ts-expect-error No declaration file is needed for this build-time module.
@@ -41,6 +51,32 @@ function privateArtifactRoot(): string {
   };
   writeFileSync(join(root, 'manifest.json'), `${JSON.stringify(manifest)}\n`);
   return root;
+}
+
+function deniedFetchPreservesSentinels(env: Record<string, string>): void {
+  const root = mkdtempSync('/private/tmp/gw-fetch-denial-');
+  const external = mkdtempSync('/private/tmp/gw-fetch-external-');
+  roots.push(root, external);
+  mkdirSync(join(root, 'scripts'), { recursive: true });
+  mkdirSync(join(root, 'public/data'), { recursive: true });
+  mkdirSync(join(root, '.artifact'), { recursive: true });
+  writeFileSync(
+    join(root, 'scripts/fetch-artifact.mjs'),
+    readFileSync(new URL('../scripts/fetch-artifact.mjs', import.meta.url), 'utf8'),
+  );
+  writeFileSync(join(root, 'BACKEND_REF'), `${'b'.repeat(40)}\n`);
+  writeFileSync(join(root, 'public/data/published.json'), 'public sentinel\n');
+  writeFileSync(join(root, '.artifact/sentinel'), 'artifact sentinel\n');
+  writeFileSync(join(external, 'sentinel'), 'external sentinel\n');
+
+  expect(() => execFileSync(process.execPath, [join(root, 'scripts/fetch-artifact.mjs')], {
+    cwd: root,
+    env: { ...process.env, GW_ARTIFACT_DIR: '', ...env },
+    stdio: 'pipe',
+  })).toThrow();
+  expect(readFileSync(join(root, 'public/data/published.json'), 'utf8')).toBe('public sentinel\n');
+  expect(readFileSync(join(root, '.artifact/sentinel'), 'utf8')).toBe('artifact sentinel\n');
+  expect(readFileSync(join(external, 'sentinel'), 'utf8')).toBe('external sentinel\n');
 }
 
 describe('issue #291 private-runtime artifact boundary', () => {
@@ -109,6 +145,19 @@ describe('issue #291 private-runtime artifact boundary', () => {
     expect(privateArtifactTransportViolation(classifyRef('web-artifact-deadbeef'))).toContain('hosted');
   });
 
+  it('rejects unsupported inputs before mutating source, generated output, or caller paths', () => {
+    deniedFetchPreservesSentinels({ LANDING_ONLY: '1' });
+    deniedFetchPreservesSentinels({ BACKEND_REF: 'b'.repeat(40) });
+    deniedFetchPreservesSentinels({
+      BACKEND_REF: 'local:/does/not/need/to/exist',
+      GW_ARTIFACT_TARBALL: '/untrusted/private.tar.gz',
+    });
+    deniedFetchPreservesSentinels({
+      BACKEND_REF: 'local:/does/not/need/to/exist',
+      GW_ARTIFACT_DIR: join(tmpdir(), 'caller-selected-artifact-dir'),
+    });
+  });
+
   it('contains no hosted download implementation or deploy-token path', () => {
     const source = readFileSync(new URL('../scripts/fetch-artifact.mjs', import.meta.url), 'utf8');
     expect(source).not.toContain('downloadRelease(');
@@ -116,10 +165,11 @@ describe('issue #291 private-runtime artifact boundary', () => {
     expect(source).not.toContain("execFileSync('gh'");
     expect(source).toContain("'--profile', PRIVATE_RUNTIME_PROFILE");
     expect(source.indexOf('if (privateArtifactTransportViolation(kind))'))
-      .toBeLessThan(source.indexOf('GW_ARTIFACT_TARBALL is disabled'));
+      .toBeLessThan(source.indexOf("const artifactDir = join(REPO_ROOT, '.artifact')"));
     expect(source.indexOf('verifyArchiveWithLocalBackend(kind.path, tarball, expectCommit)'))
       .toBeLessThan(source.indexOf('extract(tarball, staged)'));
     expect(source).toContain('GW_ARTIFACT_TARBALL is disabled');
+    expect(source).toContain('GW_ARTIFACT_DIR is disabled');
     expect(source).toContain("'status', '--porcelain=v1', '--untracked-files=all'");
     expect(source).toContain('LANDING_ONLY is disabled for artifact integration');
     expect(source).toContain('const postBuildCommit = localCheckoutCommit(kind.path)');

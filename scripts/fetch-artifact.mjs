@@ -21,7 +21,6 @@
  * Env:
  *   BACKEND_REF              override the ./BACKEND_REF file (SHA, tag, or local:PATH)
  *   GW_DEMO_DB               registry/demo DB the local builder projects lanes from
- *   GW_ARTIFACT_DIR          output stage dir (default ./.artifact)
  */
 
 import { createHash } from 'node:crypto';
@@ -329,38 +328,43 @@ function extract(tarball, into) {
 }
 
 async function main() {
-  const artifactDir = resolve(process.env.GW_ARTIFACT_DIR ?? join(REPO_ROOT, '.artifact'));
-  // A previous v1 fetch wrote the public projection into Vite's source tree.
-  // Remove that generated file before every mode so a stale lane cannot ride a
-  // later private or landing-only build.
-  rmSync(join(REPO_ROOT, 'public', 'data', 'published.json'), { force: true });
-
+  // Reject every unsupported transport/mode before changing generated output.
+  // This ordering is load-bearing: a typo or hostile caller must not be able to
+  // use a rejected request to delete an arbitrary directory or source-tree file.
   if ((process.env.LANDING_ONLY ?? '').trim()) {
     die('LANDING_ONLY is disabled for artifact integration: use the independent `npm run build` public-free lane');
+  }
+  if ((process.env.GW_ARTIFACT_TARBALL ?? '').trim()) {
+    die('GW_ARTIFACT_TARBALL is disabled: an untrusted prebuilt archive cannot prove source origin');
+  }
+  if ((process.env.GW_ARTIFACT_DIR ?? '').trim()) {
+    die('GW_ARTIFACT_DIR is disabled: private integration may replace only the repository-owned .artifact output');
   }
 
   const ref = resolveBackendRef();
   const kind = classifyRef(ref);
-  const work = join(artifactDir, '.download');
-  rmSync(artifactDir, { recursive: true, force: true });
-  mkdirSync(work, { recursive: true });
-
   if (privateArtifactTransportViolation(kind)) {
     die(`BACKEND_REF=${JSON.stringify(ref)} names a hosted public Release channel; `
       + 'private-runtime artifacts require explicit local:PATH until a protected, '
       + 'authenticated delivery channel is implemented and verified');
   }
 
-  let tarball;
-  let expectCommit;
-  if ((process.env.GW_ARTIFACT_TARBALL ?? '').trim()) {
-    die('GW_ARTIFACT_TARBALL is disabled: an untrusted prebuilt archive cannot prove source origin');
+  // Validate the exact source before cleaning the script-owned generated output.
+  const expectCommit = localCheckoutCommit(kind.path);
+  const legacyPublished = join(REPO_ROOT, 'public', 'data', 'published.json');
+  if (existsSync(legacyPublished)) {
+    die('legacy public/data/published.json exists; refusing to overwrite or delete source-tree bytes — inspect and remove it explicitly');
   }
+
+  const artifactDir = join(REPO_ROOT, '.artifact');
+  const work = join(artifactDir, '.download');
+  rmSync(artifactDir, { recursive: true, force: true });
+  mkdirSync(work, { recursive: true });
+
   console.log(`BACKEND_REF=local:${kind.path} — building artifact from clean local checkout (no token).`);
   // The local source must be clean in every contract-relevant path. The builder
   // stamps that exact HEAD, and the consumer cross-checks it below.
-  expectCommit = localCheckoutCommit(kind.path);
-  ({ tarball } = buildFromLocal(kind.path, work));
+  const { tarball } = buildFromLocal(kind.path, work);
   const postBuildCommit = localCheckoutCommit(kind.path);
   if (postBuildCommit !== expectCommit) {
     die(`local backend HEAD moved during artifact build: ${expectCommit} -> ${postBuildCommit}`);
