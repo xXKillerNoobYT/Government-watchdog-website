@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json';
+import dockerignore from '../.dockerignore?raw';
 import dockerfile from '../Dockerfile?raw';
 import entrypoint from '../deploy/entrypoint.sh?raw';
 
@@ -132,6 +133,8 @@ describe('where the package assertion is enforced (#55)', () => {
     expect(dockerfile).not.toMatch(/^RUN npm run build$/m);
     expect(dockerfile).not.toContain('LANDING_ONLY');
     expect(dockerfile).not.toContain('GW_ARTIFACT_TARBALL');
+    expect(dockerignore.split(/\r?\n/)).toContain('.artifact-local');
+    expect(dockerignore).not.toContain('deliberately NOT ignored');
     expect(entrypoint).toContain('verified private-runtime artifact is missing');
     expect(entrypoint).toMatch(/if \[ ! -d \/srv\/artifact \]; then[\s\S]*exit 1/);
     expect(entrypoint).not.toContain('serving static landing only');
