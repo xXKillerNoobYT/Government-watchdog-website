@@ -53,7 +53,9 @@ function privateArtifactRoot(): string {
   return root;
 }
 
-function deniedFetchPreservesSentinels(env: Record<string, string>): void {
+function deniedFetchPreservesSentinels(
+  envOrFactory: Record<string, string> | ((root: string, external: string) => Record<string, string>),
+): void {
   const root = mkdtempSync('/private/tmp/gw-fetch-denial-');
   const external = mkdtempSync('/private/tmp/gw-fetch-external-');
   roots.push(root, external);
@@ -68,6 +70,9 @@ function deniedFetchPreservesSentinels(env: Record<string, string>): void {
   writeFileSync(join(root, 'public/data/published.json'), 'public sentinel\n');
   writeFileSync(join(root, '.artifact/sentinel'), 'artifact sentinel\n');
   writeFileSync(join(external, 'sentinel'), 'external sentinel\n');
+  const env = typeof envOrFactory === 'function'
+    ? envOrFactory(root, external)
+    : envOrFactory;
 
   expect(() => execFileSync(process.execPath, [join(root, 'scripts/fetch-artifact.mjs')], {
     cwd: root,
@@ -141,6 +146,8 @@ describe('issue #291 private-runtime artifact boundary', () => {
 
   it('allows local checkout transport and denies both hosted pin forms', () => {
     expect(privateArtifactTransportViolation(classifyRef('local:/tmp/backend'))).toBeNull();
+    expect(privateArtifactTransportViolation(classifyRef('local:'))).toContain('empty');
+    expect(privateArtifactTransportViolation(classifyRef('local:relative/backend'))).toContain('absolute');
     expect(privateArtifactTransportViolation(classifyRef('b'.repeat(40)))).toContain('hosted');
     expect(privateArtifactTransportViolation(classifyRef('web-artifact-deadbeef'))).toContain('hosted');
   });
@@ -148,6 +155,9 @@ describe('issue #291 private-runtime artifact boundary', () => {
   it('rejects unsupported inputs before mutating source, generated output, or caller paths', () => {
     deniedFetchPreservesSentinels({ LANDING_ONLY: '1' });
     deniedFetchPreservesSentinels({ BACKEND_REF: 'b'.repeat(40) });
+    deniedFetchPreservesSentinels({ BACKEND_REF: 'local:' });
+    deniedFetchPreservesSentinels({ BACKEND_REF: 'local:relative/backend' });
+    deniedFetchPreservesSentinels((root) => ({ BACKEND_REF: `local:${root}` }));
     deniedFetchPreservesSentinels({
       BACKEND_REF: 'local:/does/not/need/to/exist',
       GW_ARTIFACT_TARBALL: '/untrusted/private.tar.gz',

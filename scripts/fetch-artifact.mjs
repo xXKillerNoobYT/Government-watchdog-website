@@ -29,7 +29,7 @@ import {
   existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 const REPO_ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
 const ARTIFACT_FORMAT_VERSION = 2;
@@ -78,7 +78,11 @@ export function classifyRef(ref) {
 
 /** Private data may not cross the repository's public hosted Release channel. */
 export function privateArtifactTransportViolation(kind) {
-  if (kind.mode === 'local') return null;
+  if (kind.mode === 'local') {
+    if (!kind.path) return 'local private-runtime checkout path is empty';
+    if (!isAbsolute(kind.path)) return 'local private-runtime checkout path must be absolute';
+    return null;
+  }
   return 'hosted public Release refs cannot transport a private-runtime artifact';
 }
 
@@ -215,12 +219,17 @@ export function verifyArtifact(root, { expectCommit } = {}) {
 }
 
 /** local:PATH — build the artifact from a checkout using ITS OWN builder. */
-function buildFromLocal(checkout, outDir) {
+function localBackendBuilder(checkout) {
   const abs = resolve(checkout);
   const builder = join(abs, 'scripts', 'export_web_artifact.py');
   if (!existsSync(builder))
     die(`local backend checkout ${abs} has no scripts/export_web_artifact.py — `
       + `is it at (or past) the pinned ref?`);
+  return builder;
+}
+
+function buildFromLocal(checkout, outDir) {
+  const builder = localBackendBuilder(checkout);
   const db = process.env.GW_DEMO_DB;
   const args = [builder, '--profile', PRIVATE_RUNTIME_PROFILE, '--out-dir', outDir];
   if (db) args.push('--db', db);
@@ -237,6 +246,9 @@ function buildFromLocal(checkout, outDir) {
 }
 
 function localCheckoutCommit(checkout) {
+  // Prove this is a compatible backend checkout before any generated-output
+  // cleanup. A valid Git repository alone is not an artifact producer.
+  localBackendBuilder(checkout);
   let commit;
   let status;
   try {
@@ -343,9 +355,10 @@ async function main() {
 
   const ref = resolveBackendRef();
   const kind = classifyRef(ref);
-  if (privateArtifactTransportViolation(kind)) {
-    die(`BACKEND_REF=${JSON.stringify(ref)} names a hosted public Release channel; `
-      + 'private-runtime artifacts require explicit local:PATH until a protected, '
+  const transportViolation = privateArtifactTransportViolation(kind);
+  if (transportViolation) {
+    die(`BACKEND_REF=${JSON.stringify(ref)} is not an accepted private transport: ${transportViolation}. `
+      + 'Private-runtime artifacts require an explicit absolute local:PATH until a protected, '
       + 'authenticated delivery channel is implemented and verified');
   }
 
