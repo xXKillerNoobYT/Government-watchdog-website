@@ -15,3 +15,5 @@ docs/evidence
 # Private-runtime archives must never enter a Docker build context or remote
 # builder cache. The removed prebuilt-artifact flow is intentionally unsupported.
 .artifact-local
+gw-web-artifact-*.tar.gz
+gw-private-runtime-*.tar.gz
