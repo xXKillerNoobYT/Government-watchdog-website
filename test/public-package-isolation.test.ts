@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json';
+import dockerfile from '../Dockerfile?raw';
 
 // The production checker is an executable JavaScript module rather than app code.
 // @ts-expect-error No declaration file is needed for this build-time module.
-import { privateSiblingLanes } from '../scripts/check-public-bundle.mjs';
+import * as publicBundleModule from '../scripts/check-public-bundle.mjs';
+
+const { privateSiblingLanes, publicBundleCommand, publicPackageRemediation } = publicBundleModule;
 
 /**
  * Issue #55, final acceptance criterion: a public deployment package must fail
@@ -82,6 +85,52 @@ describe('public deployment package isolation (#55)', () => {
 describe('where the package assertion is enforced (#55)', () => {
   const scripts = packageJson.scripts as Record<string, string>;
 
+  it('makes the default artifact the dedicated Sites public package (#54)', () => {
+    expect(scripts.build).toBe('npm run build:sites-public');
+    expect(scripts['build:sites-public']).not.toContain('build:private-beta');
+    expect(scripts['build:sites-public']).not.toContain('build:all');
+  });
+
+  it('builds and scans the public graph in the final Sites client directory', () => {
+    const sitesBuild = scripts['build:sites-public'];
+    const build = 'vite build --mode public --outDir ../dist/client';
+    const exposure = '--emitted dist/client';
+    const publicPackage = '--package --sites-client';
+    const prepare = 'node scripts/prepare-sites-build.mjs';
+
+    expect(sitesBuild).toContain('prepare-sites-build.mjs --clean');
+    expect(sitesBuild).toContain(build);
+    expect(sitesBuild).toContain(exposure);
+    expect(sitesBuild).toContain(publicPackage);
+    expect(sitesBuild.indexOf(build)).toBeLessThan(sitesBuild.indexOf(exposure));
+    expect(sitesBuild.indexOf(exposure)).toBeLessThan(sitesBuild.indexOf(publicPackage));
+    expect(sitesBuild.indexOf(publicPackage)).toBeLessThan(sitesBuild.lastIndexOf(prepare));
+  });
+
+  it('selects the final Sites path explicitly and rejects unknown checker flags', () => {
+    expect(publicBundleCommand([])).toEqual({ asPackage: false, target: 'public' });
+    expect(publicBundleCommand(['--package'])).toEqual({ asPackage: true, target: 'public' });
+    expect(publicBundleCommand(['--sites-client', '--package'])).toEqual({
+      asPackage: true,
+      target: 'sites-client',
+    });
+    expect(() => publicBundleCommand(['--publci'])).toThrow(/unknown argument/);
+  });
+
+  it('never tells a Sites operator to package dist/client without its worker and binding', () => {
+    const remediation = publicPackageRemediation('sites-client', 'dist/client');
+    expect(remediation).toContain('package the verified full dist/ tree');
+    expect(remediation).not.toContain('Deploy dist/client itself');
+  });
+
+  it('keeps artifact-backed reviewer integration on the explicit private build', () => {
+    expect(scripts['build:integrated']).toBe(
+      'npm run fetch:artifact && node scripts/prepare-sites-build.mjs --clean && npm run build:private-beta',
+    );
+    expect(dockerfile).toMatch(/^RUN npm run build:private-beta$/m);
+    expect(dockerfile).not.toMatch(/^RUN npm run build$/m);
+  });
+
   it('runs the package form at the end of the public build', () => {
     // `build:public` cleans `dist/` first, so the public lane is alone there and
     // the sibling assertion is meaningful. This is the enforcement point; losing
@@ -91,6 +140,7 @@ describe('where the package assertion is enforced (#55)', () => {
 
   it('offers the package validator as its own entry point for a deploy path', () => {
     expect(scripts['check:public-package']).toContain('--package');
+    expect(scripts['check:sites-public-package']).toContain('--package --sites-client');
   });
 
   it('keeps the content-only check available for the combined verification workspace', () => {

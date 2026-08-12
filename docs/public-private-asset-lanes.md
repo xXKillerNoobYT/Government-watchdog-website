@@ -3,10 +3,10 @@
 Government Watchdog produces two browser artifacts from separate entry points.
 This is a data-safety boundary, not a theme or navigation choice.
 
-| Lane | Entry | Output | Civic data rule |
-|---|---|---|---|
-| Anonymous Free | `src/public-main.ts` | `dist/public` | No private captures, samples, private admission code, or gated API route. Until a separately approved public projection exists, the designed civic slots render honest unavailable states. |
-| Private beta | `src/main.ts` | `dist/client` | Protected by the hosting admission boundary. May contain clearly labelled review fixtures and private tools; it must never be served as the anonymous artifact. |
+| Lane | Entry | Canonical output | Sites default package | Civic data rule |
+|---|---|---|---|---|
+| Anonymous Free | `src/public-main.ts` | `dist/public` | rebuilt directly as `dist/client` by `npm run build` | No private captures, samples, private admission code, or gated API route. Until a separately approved public projection exists, the designed civic slots render honest unavailable states. |
+| Private beta | `src/main.ts` | `dist/client` | never while Sites access is public | May contain clearly labelled review fixtures and private tools; it must never be served as the anonymous artifact. |
 
 ## Build commands
 
@@ -14,6 +14,7 @@ This is a data-safety boundary, not a theme or navigation choice.
 npm run build:public
 npm run build:private-beta
 npm run build:all
+npm run build
 ```
 
 `npm run build:public` enforces an allowlist over Rollup's parsed local module
@@ -26,9 +27,17 @@ compiled output rather than checking only rendered HTML.
 
 The standalone public command removes the entire previous `dist` directory
 before it builds. This prevents a stale `dist/client` private artifact from
-surviving beside an otherwise safe public bundle. Public packaging must use
-`dist/public`; `npm run build:all` intentionally produces both lanes for
-verification and is not itself a public deployment artifact.
+surviving beside an otherwise safe public bundle. `npm run build` applies the
+same public entry-graph boundary while emitting directly into Sites' required
+`dist/client` browser slot, then runs both completed-byte guards and the public
+package-shape check against that final path before adding `dist/server` and
+`.openai` metadata. The embedded `public-free` marker and module graph define
+the lane; the directory name alone does not.
+
+`npm run build:all` intentionally produces both canonical lanes for verification
+and is not itself a deployment artifact. `npm run build:private-beta` remains
+explicit for local gated testing. Staging a public-free package changes no Sites
+access policy or live version and grants no deployment authority.
 
 The lane is chosen by the build process (`vite --mode public` or
 `vite --mode private-beta`). URL parameters, fragments, browser storage,

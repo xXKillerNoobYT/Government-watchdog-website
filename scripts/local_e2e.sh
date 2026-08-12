@@ -144,7 +144,11 @@ curl -sf "http://127.0.0.1:$SERVICE_PORT/api/health" >/dev/null 2>&1 || fail "se
 
 # --- step 4: build the site + start preview with /api proxy -----------------
 say "4/6 build site + start vite preview (127.0.0.1:$PREVIEW_PORT, /api -> service)"
-npm run build >/dev/null
+# This harness exercises the authenticated reviewer/API integration. The
+# default Sites build intentionally packages the anonymous public-free lane,
+# so select the private-beta artifact explicitly here.
+node scripts/prepare-sites-build.mjs --clean
+npm run build:private-beta >/dev/null
 npm run preview -- --port "$PREVIEW_PORT" --strictPort >/dev/null 2>&1 &
 PREVIEW_PID=$!
 for _ in $(seq 1 40); do

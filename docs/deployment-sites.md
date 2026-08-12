@@ -11,7 +11,7 @@ eventually publishing the Alpine Government Watchdog frontend.
 | Sites slug | `alpine-government-watchdog-beta` |
 | Production URL | `https://alpine-government-watchdog-beta.weirdtoocompany.chatgpt.site/` |
 | Sites project binding | `.openai/hosting.json` |
-| Current access | `custom` / private beta |
+| Observed access (2026-08-11) | `public` — release blocked by website issue #54 |
 | Custom domain | none |
 | Canonical product source | GitHub `xXKillerNoobYT/Government-watchdog-website`, branch `main` |
 | Sites source branch | managed Sites repository, branch `main` |
@@ -23,15 +23,15 @@ without the Town's authorization and the required DNS control.
 The project ID in `.openai/hosting.json` is an opaque binding. Reuse it; never
 create a second Sites project for this app. Repository write credentials and
 Sites bypass tokens are short-lived secrets and must never be committed.
+Re-read provider access before every release; this dated row is evidence, not
+permission to preserve or change visibility.
 
 ## Owner login and private access
 
-The hosted beta does **not** implement its own email magic-link service. Sites
-is the authentication boundary. Its `custom` access policy admits the approved
-owner account before the owner-only static root and assets are available. The
-static build contains a `gw-sites-private-beta=owner-only` marker; browser code
-accepts it only on the exact production hostname and uses it solely to route an
-already-admitted owner past the obsolete duplicate login panel.
+The hosted beta does **not** implement its own email magic-link service. A
+private beta requires Sites `custom` access to admit the approved owner before
+the static root and assets are available. The private build marker is only a
+UI-routing acknowledgement after that admission; it is not authentication.
 
 For requests Sites dispatches through `dist/server/index.js`, the worker adds a
 second fail-closed check: it reads the platform-provided
@@ -41,9 +41,10 @@ inject only a boolean `approved` marker; the email address is never added to the
 page or browser bundle. Missing configuration returns `503`; missing or
 non-allowlisted identity returns the same non-enumerating `403`; worker
 responses are private/no-store and noindex. The worker check is defense in
-depth; the Sites `custom` access policy remains the static-asset boundary.
+depth for dispatched requests. Anonymous 200 responses for live v9's hashed
+client asset proved it does not gate static files in the current public topology.
 
-For the current owner-only beta:
+For any future owner-only beta:
 
 1. keep Sites access at `custom` and keep only the approved owner in its access
    list;
@@ -87,12 +88,14 @@ npm ci
 npm run typecheck
 npm test
 npm run build
+npm run check:sites-public-package
 ```
 
 `git status --short` must be empty before packaging. The production build must
 contain all three Sites pieces:
 
-- `dist/client/index.html` and static assets;
+- `dist/client/index.html` and static assets containing the `public-free` lane
+  marker and the Alpine Free title, with no private media or fixture modules;
 - `dist/server/index.js`, the fail-closed owner-authorization fallback worker;
   and
 - `dist/.openai/hosting.json`, copied from the existing project binding.
@@ -100,10 +103,41 @@ contain all three Sites pieces:
 The build script copies the reviewed worker source. When Sites dispatches an
 HTML fallback through it, the worker rewrites the document's runtime origin so
 metadata uses the deployed host rather than localhost. Release verification
-must also confirm that Sites access is still custom/owner-only and that an
-unauthorized browser cannot fetch the app assets.
+must compare the intended lane with fresh provider access. The explicit
+`npm run build:private-beta` command is for local/private verification only and
+must not be saved or deployed while access is public.
 
 ## Save and deploy with Sites
+
+Changing the default package does not save, deploy, or alter access. Any future
+release still requires explicit approval for the exact commit and archive,
+deployment of that saved version, and lane-appropriate post-deploy probes. Do
+not combine this containment change with an access mutation.
+
+### Public-free containment procedure (default build)
+
+For the current default artifact, leave the existing access policy and runtime
+environment unchanged. After exact-version approval only:
+
+1. reuse `.openai/hosting.json` and verify the clean exact `origin/main` commit;
+2. run the release checks above and record final `dist/client`, worker, and
+   hosting-config hashes;
+3. package the full verified `dist/` tree, save it against that same commit,
+   deploy only the saved version, and poll it to `succeeded`;
+4. anonymously require `/`, its referenced hashed JavaScript/CSS, `robots.txt`,
+   and `sitemap.xml` to return 200; verify the index marker/title and run the
+   public-byte guards over the exact downloaded assets; and
+5. require private app/API/data/media paths and source maps to remain denied or
+   absent, with no reviewer fixture or private media in the downloadable graph.
+
+The public-free shell has no reviewer Home, eight-tab shell, Alerts account bell,
+or Newsletter-detail surface. Those are not acceptance criteria for this lane,
+and an authorized-browser smoke adds no distinct public-free proof.
+
+### Future custom/private-beta procedure only
+
+The following procedure applies only after `custom` owner-only access is restored
+and verified. It does not apply to the current default public-free package.
 
 Use the installed Sites plugin (`@sites`) from this repository and tell it to
 update the existing project from the verified GitHub `main` commit. The release
@@ -140,20 +174,20 @@ runtime value. An approved session must enter Home directly and must not render
 the obsolete local magic-link scaffold. Test a signed-out/incognito request
 separately and confirm the protected app and static assets remain unavailable.
 
-For the current owner-only/private beta, use the private deployment action. If
-the access policy is shared or public, Sites requires the open-world deployment
-action and explicit owner approval.
+Use the action appropriate to the freshly read access policy. Public/shared
+access requires the open-world action and explicit owner approval; custom
+owner-only access requires the private action. Neither is authorized by a build.
 
 ## Public-release gate
 
-The Sites project supports public access, but **this build is not a public
-product yet**. Its worker now protects every asset with an explicit owner
-allowlist, but the browser bundle still contains a local `?reviewer=1`
-walkthrough path plus reviewer/synthetic projection modules. Simply changing
-the Sites access policy would still not create a reviewed public-data lane.
+The default Sites artifact is now the civic-data-empty Anonymous Free shell.
+That can remove private client bytes from a future exact deployment, but it is
+not a public-product launch and does not close #54's revocable private-session
+requirements. The reviewer client still contains private walkthrough and
+synthetic projection modules and remains unsafe under public access.
 
-Before changing Sites access from `custom` to `public`, all of these must be
-true:
+Before treating a public-access deployment as a product launch—or authorizing
+a future `custom` to `public` change—all of these must be true:
 
 - a separately reviewed public authorization/data path replaces the private
   owner-only worker policy;
@@ -167,10 +201,10 @@ true:
 - an anonymous/incognito smoke test proves protected routes and assets remain
   inaccessible.
 
-After those gates pass, use Sites access controls to change this existing
-project to `public`, deploy the already-saved approved version, wait for success,
-and verify the stable URL anonymously. Do not create a replacement project just
-to change visibility.
+After those gates pass and only with owner approval, reuse this existing project,
+deploy the already-saved approved version, wait for success, and verify the stable
+URL anonymously. If access is already public, do not churn visibility merely to
+perform the release. Never create a replacement project just to change access.
 
 ## Rollback
 
@@ -182,3 +216,6 @@ Sites versions are immutable release points. If a deployment regresses:
 4. fix forward on GitHub `main`, then repeat the exact-commit release process.
 
 Rolling back Sites does not rewrite GitHub history.
+Saved v8 and v9 are private-lane archives: redeploying either while access is
+public can restore the exposure. A rollback target must therefore be checked
+against its embedded lane and the current access policy, not its version number.

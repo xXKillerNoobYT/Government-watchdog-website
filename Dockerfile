@@ -34,7 +34,10 @@ RUN --mount=type=secret,id=gw_deploy_token \
     fi; \
     BACKEND_REF="$BACKEND_REF" GW_ARTIFACT_TARBALL="$GW_ARTIFACT_TARBALL" \
     LANDING_ONLY="$LANDING_ONLY" node scripts/fetch-artifact.mjs
-RUN npm run build
+# This image is the authenticated same-origin backend deployment, not the
+# public Sites package. Select its private browser lane explicitly now that
+# the repository default fails closed to the Sites public-free artifact.
+RUN npm run build:private-beta
 
 FROM python:3.12-slim AS runtime
 # Caddy is a single static binary — take it from the official image.

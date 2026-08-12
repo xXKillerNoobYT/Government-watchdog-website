@@ -59,3 +59,9 @@ jobs:
 
       - name: Public downloadable-asset safety boundary
         run: npm run check:public-bundle
+
+      # The combined build above proves lane isolation but deliberately leaves
+      # both browser artifacts under dist/. Execute the actual Sites default as
+      # a separate final shape check so CI verifies exactly what can be saved.
+      - name: Sites deployable public-free package
+        run: npm run build
