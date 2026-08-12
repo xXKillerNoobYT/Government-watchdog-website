@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json';
 import dockerfile from '../Dockerfile?raw';
+import entrypoint from '../deploy/entrypoint.sh?raw';
 
 // The production checker is an executable JavaScript module rather than app code.
 // @ts-expect-error No declaration file is needed for this build-time module.
@@ -129,6 +130,11 @@ describe('where the package assertion is enforced (#55)', () => {
     );
     expect(dockerfile).toMatch(/^RUN npm run build:private-beta$/m);
     expect(dockerfile).not.toMatch(/^RUN npm run build$/m);
+    expect(dockerfile).not.toContain('LANDING_ONLY');
+    expect(dockerfile).not.toContain('GW_ARTIFACT_TARBALL');
+    expect(entrypoint).toContain('verified private-runtime artifact is missing');
+    expect(entrypoint).toMatch(/if \[ ! -d \/srv\/artifact \]; then[\s\S]*exit 1/);
+    expect(entrypoint).not.toContain('serving static landing only');
   });
 
   it('runs the package form at the end of the public build', () => {

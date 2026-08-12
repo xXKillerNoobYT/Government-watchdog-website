@@ -51,10 +51,10 @@ Config (all optional): `GW_BACKEND_CHECKOUT`, `GW_REGISTRY_DB`,
 | File | Role |
 |---|---|
 | `BACKEND_REF` | the future compatibility pin. Its current commit value is deliberately rejected for private-runtime transport; `local:PATH` is the only accepted private mode. |
-| `scripts/fetch-artifact.mjs` | reject commit/tag before network → build explicit local v2 `private-runtime` → validate archive paths/types and extracted profile/commit/digest/counts → stage. `LANDING_ONLY=1` remains the artifact-free escape hatch. |
+| `scripts/fetch-artifact.mjs` | reject commit/tag before network → require clean contract-relevant local source → build explicit local v2 `private-runtime` → validate archive paths/types and extracted profile/commit/digest/counts → stage. |
 | `scripts/check-no-direct-exposure.mjs` | §5 build check — fails the build if the loopback service port leaks into any client/static/deploy surface. Runs in `npm run build` + CI. |
 | `vite.config.ts` | same-origin `/api` proxy (dev + preview) → `127.0.0.1:$GW_SERVICE_PORT`. |
-| `src/data/api.ts` | same-origin client + `{reviewer_internal_records}` → read-model adapter + `LANDING_ONLY` flag. |
+| `src/data/api.ts` | same-origin client + `{reviewer_internal_records}` → read-model adapter. Its legacy `VITE_LANDING_ONLY` presentation flag does not authorize artifact integration; use the independent default public build. |
 | `scripts/local_e2e.sh` | the §8 one-command demo above. |
 | `scripts/seed_demo_session.py` | demo-only: seed one approved reviewer session so the gated `/api` path can be exercised without a live mail flow. |
 
@@ -64,7 +64,8 @@ Config (all optional): `GW_BACKEND_CHECKOUT`, `GW_REGISTRY_DB`,
 |---|---|
 | commit or tag `BACKEND_REF` | **build fails before network**; a public Release is never accepted as private transport. |
 | local profile / archive member / sha / commit / row-count / schema mismatch | **build fails** — no stale/cached reuse (`fetch-artifact.mjs` aborts non-zero). |
-| protected private channel absent | Private Docker/hosted integration stays intentionally unavailable. The public-free Sites build remains independent and artifact-free. |
+| protected private channel absent | Private Docker/hosted integration stays intentionally unavailable. There is no private-image landing fallback; the public-free Sites build is the independent artifact-free lane. |
+| `LANDING_ONLY` passed to artifact integration | **build fails**; `npm run build` is the only reviewed artifact-free public path. |
 | feature flags off (append-only, no row = off) | gated endpoints answer constant `404`; deploying activates nothing. |
 | service down / unreachable from proxy | `/api/*` → 502; the public landing stays fully functional. |
 | unauthenticated / unapproved user | existing gated-beta states only; **no** civic data on any pre-auth surface. |

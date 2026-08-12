@@ -116,8 +116,12 @@ describe('issue #291 private-runtime artifact boundary', () => {
     expect(source).not.toContain("execFileSync('gh'");
     expect(source).toContain("'--profile', PRIVATE_RUNTIME_PROFILE");
     expect(source.indexOf('if (privateArtifactTransportViolation(kind))'))
-      .toBeLessThan(source.indexOf('const preBuilt'));
+      .toBeLessThan(source.indexOf('GW_ARTIFACT_TARBALL is disabled'));
     expect(source.indexOf('verifyArchiveWithLocalBackend(kind.path, tarball, expectCommit)'))
       .toBeLessThan(source.indexOf('extract(tarball, staged)'));
+    expect(source).toContain('GW_ARTIFACT_TARBALL is disabled');
+    expect(source).toContain("'status', '--porcelain=v1', '--untracked-files=all'");
+    expect(source).toContain('LANDING_ONLY is disabled for artifact integration');
+    expect(source).toContain('const postBuildCommit = localCheckoutCommit(kind.path)');
   });
 });

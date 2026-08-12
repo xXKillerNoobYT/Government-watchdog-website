@@ -12,22 +12,16 @@
  *
  * Fail-closed contract (§6): any hosted ref / missing artifact / profile or
  * commit mismatch / sha mismatch / unknown schema_version aborts non-zero
- * — never a stale/cached artifact, never a half-open app. The single documented
- * escape hatch is an explicit `LANDING_ONLY=1`, which stages NO /api surface.
+ * — never a stale/cached artifact, never a half-open app.
  *
  * Usage:
  *   node scripts/fetch-artifact.mjs                 # fails while pin is hosted
  *   BACKEND_REF=local:/path/to/backend node scripts/fetch-artifact.mjs
- *   LANDING_ONLY=1 node scripts/fetch-artifact.mjs  # public landing only
  *
  * Env:
  *   BACKEND_REF              override the ./BACKEND_REF file (SHA, tag, or local:PATH)
  *   GW_DEMO_DB               registry/demo DB the local builder projects lanes from
- *   LANDING_ONLY             "1"/"true" => stage nothing, fail-closed landing build
  *   GW_ARTIFACT_DIR          output stage dir (default ./.artifact)
- *   GW_ARTIFACT_TARBALL      explicit local gw-private-runtime-*.tar.gz to stage
- *                            instead of building. BACKEND_REF must still be
- *                            local:PATH and exact v2/private verification remains.
  */
 
 import { createHash } from 'node:crypto';
@@ -58,11 +52,6 @@ function die(msg) {
   // Fail closed: loud, non-zero, no partial artifact left staged.
   console.error(`\n✗ artifact fetch FAILED (fail-closed): ${msg}\n`);
   process.exit(1);
-}
-
-/** Truthy env flag: "1"/"true"/"yes" (case-insensitive). */
-function flag(name) {
-  return ['1', 'true', 'yes'].includes(String(process.env[name] ?? '').trim().toLowerCase());
 }
 
 /** Resolve the pin: explicit env override wins, else the committed ./BACKEND_REF. */
@@ -250,13 +239,23 @@ function buildFromLocal(checkout, outDir) {
 
 function localCheckoutCommit(checkout) {
   let commit;
+  let status;
   try {
     commit = execFileSync('git', ['-C', resolve(checkout), 'rev-parse', 'HEAD'],
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
+    status = execFileSync('git', [
+      '-C', resolve(checkout), 'status', '--porcelain=v1', '--untracked-files=all', '--',
+      'scripts', 'requirements.txt', 'Database/migrations',
+    ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
   } catch (e) {
-    die(`cannot resolve exact local backend HEAD: ${e.message}`);
+    die(`cannot resolve exact local backend source identity: ${e.message}`);
   }
   if (!/^[0-9a-f]{40}$/.test(commit)) die('local backend HEAD is not a full commit SHA');
+  if (status) {
+    const count = status.split('\n').filter(Boolean).length;
+    die(`local backend artifact source is dirty in contract-relevant paths (${count} entries); `
+      + 'commit or isolate the exact source before integration');
+  }
   return commit;
 }
 
@@ -336,16 +335,8 @@ async function main() {
   // later private or landing-only build.
   rmSync(join(REPO_ROOT, 'public', 'data', 'published.json'), { force: true });
 
-  // Fail-closed escape hatch (§6): explicit landing-only, zero /api surface.
-  if (flag('LANDING_ONLY')) {
-    rmSync(artifactDir, { recursive: true, force: true });
-    mkdirSync(artifactDir, { recursive: true });
-    writeFileSync(join(artifactDir, 'INTEGRATION.json'), JSON.stringify({
-      mode: 'landing_only', staged: false,
-      note: 'LANDING_ONLY=1 — public landing + waitlist only, no gated data, no service, no /api.',
-    }, null, 2) + '\n');
-    console.log('LANDING_ONLY=1 — staged public landing only (no /api surface). This is an explicit choice, not a degrade.');
-    return;
+  if ((process.env.LANDING_ONLY ?? '').trim()) {
+    die('LANDING_ONLY is disabled for artifact integration: use the independent `npm run build` public-free lane');
   }
 
   const ref = resolveBackendRef();
@@ -362,18 +353,17 @@ async function main() {
 
   let tarball;
   let expectCommit;
-  const preBuilt = (process.env.GW_ARTIFACT_TARBALL ?? '').trim();
-  if (preBuilt) {
-    if (!existsSync(preBuilt)) die(`GW_ARTIFACT_TARBALL=${preBuilt} does not exist`);
-    console.log('GW_ARTIFACT_TARBALL — staging explicit local private-runtime tarball.');
-    tarball = resolve(preBuilt);
-    expectCommit = localCheckoutCommit(kind.path);
-  } else {
-    console.log(`BACKEND_REF=local:${kind.path} — building artifact from local checkout (no token).`);
-    // For local mode the "resolved ref" is the checkout HEAD; the builder stamps
-    // it into manifest.backend_commit, so we cross-check against git HEAD.
-    expectCommit = localCheckoutCommit(kind.path);
-    ({ tarball } = buildFromLocal(kind.path, work));
+  if ((process.env.GW_ARTIFACT_TARBALL ?? '').trim()) {
+    die('GW_ARTIFACT_TARBALL is disabled: an untrusted prebuilt archive cannot prove source origin');
+  }
+  console.log(`BACKEND_REF=local:${kind.path} — building artifact from clean local checkout (no token).`);
+  // The local source must be clean in every contract-relevant path. The builder
+  // stamps that exact HEAD, and the consumer cross-checks it below.
+  expectCommit = localCheckoutCommit(kind.path);
+  ({ tarball } = buildFromLocal(kind.path, work));
+  const postBuildCommit = localCheckoutCommit(kind.path);
+  if (postBuildCommit !== expectCommit) {
+    die(`local backend HEAD moved during artifact build: ${expectCommit} -> ${postBuildCommit}`);
   }
 
   // The producer's v2 verifier proves exact canonical gzip/tar bytes, including

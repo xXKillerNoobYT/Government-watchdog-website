@@ -114,11 +114,12 @@ that same origin, `hosted-access.ts:32` would hand every anonymous visitor an
 and synthetic data are excluded from public assets, not merely hidden in the
 DOM."* This plan treats that as the load-bearing requirement.
 
-`VITE_LANDING_ONLY` (`src/data/api.ts:33-35`, consumed at
-`src/data/client.ts:93-98`, plumbed through `Dockerfile` `ARG LANDING_ONLY` and
-`scripts/fetch-artifact.mjs`) is a genuine fail-closed build choice — but it only
-removes the **`/api` surface**. It does not remove a single fixture import from
-the bundle. It is necessary and not sufficient.
+> **Superseded integration note (2026-08-12):** `LANDING_ONLY` is no longer an
+> artifact-integration or Docker option. It built the private browser graph and
+> therefore could not prove a public lane. The only reviewed artifact-free path
+> is the separate default `npm run build` public-free graph; private integration
+> fails closed until a verified local or protected private-runtime artifact is
+> available. See website #95 and backend #291.
 
 ---
 
