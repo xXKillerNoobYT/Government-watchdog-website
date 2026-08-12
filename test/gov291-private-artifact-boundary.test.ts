@@ -55,6 +55,7 @@ function privateArtifactRoot(): string {
 
 function deniedFetchPreservesSentinels(
   envOrFactory: Record<string, string> | ((root: string, external: string) => Record<string, string>),
+  setup?: (root: string, external: string) => void,
 ): void {
   const root = mkdtempSync('/private/tmp/gw-fetch-denial-');
   const external = mkdtempSync('/private/tmp/gw-fetch-external-');
@@ -70,6 +71,7 @@ function deniedFetchPreservesSentinels(
   writeFileSync(join(root, 'public/data/published.json'), 'public sentinel\n');
   writeFileSync(join(root, '.artifact/sentinel'), 'artifact sentinel\n');
   writeFileSync(join(external, 'sentinel'), 'external sentinel\n');
+  setup?.(root, external);
   const env = typeof envOrFactory === 'function'
     ? envOrFactory(root, external)
     : envOrFactory;
@@ -158,6 +160,17 @@ describe('issue #291 private-runtime artifact boundary', () => {
     deniedFetchPreservesSentinels({ BACKEND_REF: 'local:' });
     deniedFetchPreservesSentinels({ BACKEND_REF: 'local:relative/backend' });
     deniedFetchPreservesSentinels((root) => ({ BACKEND_REF: `local:${root}` }));
+    deniedFetchPreservesSentinels(
+      (root) => ({ BACKEND_REF: `local:${root}` }),
+      (root) => {
+        writeFileSync(join(root, 'scripts/export_web_artifact.py'), '# incompatible v1 exporter\n');
+        execFileSync('git', ['init', '-q', root]);
+        execFileSync('git', ['-C', root, 'config', 'user.email', 'test@example.invalid']);
+        execFileSync('git', ['-C', root, 'config', 'user.name', 'Test']);
+        execFileSync('git', ['-C', root, 'add', 'scripts/export_web_artifact.py']);
+        execFileSync('git', ['-C', root, 'commit', '-qm', 'incompatible exporter']);
+      },
+    );
     deniedFetchPreservesSentinels({
       BACKEND_REF: 'local:/does/not/need/to/exist',
       GW_ARTIFACT_TARBALL: '/untrusted/private.tar.gz',

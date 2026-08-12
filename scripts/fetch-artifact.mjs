@@ -228,6 +228,27 @@ function localBackendBuilder(checkout) {
   return builder;
 }
 
+function assertLocalBackendV2(checkout) {
+  const scriptsDir = join(resolve(checkout), 'scripts');
+  const code = [
+    'import sys',
+    'sys.path.insert(0, sys.argv[1])',
+    'import export_web_artifact as artifact',
+    'assert artifact.ARTIFACT_FORMAT_VERSION == 2',
+    "assert artifact.PRIVATE_RUNTIME_PROFILE == 'private-runtime'",
+    'assert callable(artifact.inspect_artifact)',
+  ].join('\n');
+  try {
+    execFileSync('python3', ['-c', code, scriptsDir], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+      encoding: 'utf8',
+    });
+  } catch (e) {
+    const detail = String(e.stderr ?? '').trim().split('\n').at(-1) ?? e.message;
+    die(`local backend checkout does not implement the required canonical v2 private-runtime contract: ${detail}`);
+  }
+}
+
 function buildFromLocal(checkout, outDir) {
   const builder = localBackendBuilder(checkout);
   const db = process.env.GW_DEMO_DB;
@@ -249,6 +270,7 @@ function localCheckoutCommit(checkout) {
   // Prove this is a compatible backend checkout before any generated-output
   // cleanup. A valid Git repository alone is not an artifact producer.
   localBackendBuilder(checkout);
+  assertLocalBackendV2(checkout);
   let commit;
   let status;
   try {
