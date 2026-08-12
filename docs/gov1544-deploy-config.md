@@ -1,51 +1,60 @@
-# GOV-1544 — deploy implementation (P3b of GOV-1523)
+# GOV-1544 — deploy implementation status (superseded private transport)
 
-Implements the GOV-1543 execution plan (`docs/gov1543-deploy-execution-plan.md`)
-§2 runbook step 1–2 on the website side. **Committed but inert**: nothing is
-deployed, no account exists, zero spend, until the P3d owner card is accepted.
+This document originally described the Phase-3 private Docker deployment built
+from a combined backend artifact downloaded through the public GitHub Release
+channel. That transport is unsafe and is superseded by backend issue #291 and
+website issue #95.
 
-## Pieces
+## Current fail-closed state
 
-| File | Role |
+| Surface | Current behavior |
 |---|---|
-| `Dockerfile` | multi-stage: node build (fetch+verify pinned artifact, fail-closed) → python3.12-slim + caddy runtime. Deploy token only via BuildKit secret mount — never a layer. |
-| `deploy/Caddyfile` | edge on :8080 — serves `dist/`, proxies `/api/*` → `127.0.0.1:8100` (the one sanctioned service-port reference). |
-| `deploy/entrypoint.sh` | first boot: init empty DB from the artifact's seedless `service/schema.sql`; start service on loopback :8100; exec caddy (PID 1). |
-| `fly.toml` | one machine, one mapped port (8080), `/api/health` check, `/data` volume. Placeholder app name until P3d. |
-| `scripts/dev_smtp_sink.py` | loopback SMTP sink for the e2e magic-link leg (dev-adapter path; nothing leaves the machine). |
+| Default `npm run build` | Builds and verifies the civic-data-empty public-free Sites package. It does not fetch a backend artifact. |
+| `scripts/fetch-artifact.mjs` | Rejects commit/tag refs before network. It accepts only a clean explicit `local:PATH`, builds the backend format-v2 `private-runtime` profile, invokes the backend canonical archive verifier, then independently verifies the extracted contract. |
+| `Dockerfile` | Private-runtime image definition only. It deliberately fails with the committed hosted `BACKEND_REF`; no deploy token, prebuilt archive, or landing-only bypass exists. |
+| `deploy/Caddyfile` / `deploy/entrypoint.sh` | Retained for local topology verification only; they authorize no hosted deployment. |
 
-## Build verification (all local, no token, no spend)
+Do not pass a GitHub token or legacy Release asset to this build. A token cannot
+make a public asset private. Do not restore `GW_ARTIFACT_TARBALL`,
+`GW_BACKEND_DEPLOY_TOKEN`, or a public-Release download path as a workaround.
+
+## Local verification
 
 ```bash
-# fail-closed proof: no token, no tarball -> the build MUST die at fetch
-DOCKER_BUILDKIT=1 docker build .
+# Public artifact-free lane:
+npm run build
 
-# full local verification from a pre-built tarball (pin still enforced:
-# manifest commit cross-check + sha256 recompute happen in-build)
-DOCKER_BUILDKIT=1 docker build \
-  --build-arg BACKEND_REF=<backend-sha> \
-  --build-arg GW_ARTIFACT_TARBALL=.artifact-local/gw-web-artifact-<short>.tar.gz .
+# Private integration against an exact clean backend checkout carrying the
+# format-v2 split contract (currently backend PR #294):
+BACKEND_REF=local:/absolute/path/to/clean/backend \
+GW_DEMO_DB=/absolute/path/to/registry.db \
+npm run build:integrated
 
-# hosted (P3c only): fly deploy --build-secret gw_deploy_token=<PAT>
+# Full loopback authorization and static-boundary proof:
+GW_BACKEND_CHECKOUT=/absolute/path/to/clean/backend npm run e2e:local
 ```
 
-`scripts/check-no-direct-exposure.mjs` now also scans `Dockerfile`, `fly.toml`
-and `deploy/` — mapping the service port (8100/8791) anywhere outside the two
-sanctioned in-container references fails the build (§5 double enforcement).
+These commands create local build artifacts only. They do not save or deploy a
+Sites version, create infrastructure, change access, spend money, or contain the
+legacy exposed asset.
 
-## e2e (extended)
+## Activation prerequisites
 
-`npm run e2e:local` step 5d, when the pinned artifact carries the GOV-1544
-wiring: flag-off constant 404 on `/api/beta/*` → owner-gated enable (throwaway
-DB) → waitlist + magic-link request (neutral 200s) → REAL `SmtpAdapter` SMTP
-handshake to the loopback sink → verify 302 `/#/app` + `SameSite=Strict`
-HttpOnly Secure cookie → sign-out → service-log sweep (hash-only, no plaintext
-address) → `published.json` honestly empty. Skips loudly on a pre-GOV-1544
-artifact.
+Private hosting remains blocked until all of the following have issue-backed,
+exact-version evidence:
 
-## Runtime env (service process only, set at P3c)
+1. the affected legacy public asset is contained through an explicitly
+   authorized incident-response action;
+2. reviewer-runtime artifacts use an authenticated, revocable, non-public
+   delivery channel;
+3. the website carries the reviewed compatibility/snapshot/profile lock from
+   #95 rather than trusting only a self-declared artifact manifest;
+4. a new unique immutable public artifact is built from non-empty,
+   owner-approved published data and passes exact archive scans;
+5. anonymous and authorized retrieval, revocation, rollback, and deployment
+   smokes pass for the exact candidate; and
+6. separate owner approval covers platform, spend, credentials, access, and
+   deployment.
 
-`GW_SMTP_HOST/PORT/USERNAME/PASSWORD`, `GW_MAIL_FROM` (credentials only —
-activation stays the owner-gated DB flags), optional `GW_SMTP_SECURITY`
-(`starttls` default; `none` refused off-loopback), `GW_VERIFY_BASE_URL`
-(public origin in magic-link emails), `GW_DB_PATH` (default `/data/gw.db`).
+The earlier SMTP/session configuration notes remain historical input only; they
+are not a live deployment runbook while the private artifact channel is blocked.

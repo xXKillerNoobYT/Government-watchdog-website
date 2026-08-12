@@ -1,5 +1,14 @@
 # Hosting options review — Government Watchdog (2026-08-11)
 
+> **Superseded safety note (2026-08-12):** This dated research assumed a token
+> could protect a combined artifact delivered through a public GitHub Release
+> and recorded Sites access as custom/private. Backend issue #291 disproved the
+> artifact assumption, and current provider evidence records Sites access as
+> public. Do not use the token, Release-fetch, private-access, or deployment
+> guidance below as an operational runbook. The current fail-closed contract is
+> in `docs/gov1527-build-integration.md`, `docs/gov1543-deploy-execution-plan.md`,
+> and `docs/gov1544-deploy-config.md`.
+
 **Prepared by:** backend Tom (`claude_backendtom_01`) @ Mac.home.local, at Isaac's request ("just looking into options for the hosting platform").
 **Status:** research + analysis only. **The pick is owner-gated** — it is recurring spend, a public front door, and DNS. Nothing here changes GOV-1552.
 **Sources read:** `docs/gov1543-deploy-execution-plan.md` (the July-2026 costing), `docs/deployment-sites.md` (the live Sites deployment), `docs/gov1552-ux-golive-acceptance-checklist.md` (recovered and merged today as `86fe7e4`).

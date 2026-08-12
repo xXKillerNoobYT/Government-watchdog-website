@@ -9,7 +9,8 @@
 # machine:
 #   1. Resolve BACKEND_REF=local:<checkout> -> build the artifact with the
 #      pinned backend's OWN builder -> run the §2 deny-list tests against it.
-#   2. Verify the manifest (commit match vs HEAD, artifact_sha256, schema_version).
+#   2. Verify the v2 private-runtime manifest (profile, commit, digest, schema,
+#      exact gated lane and service roots; no public lane).
 #   3. Start service/run.py on loopback; assert a non-loopback bind is refused.
 #   4. Build the site + start `vite preview` (127.0.0.1:4173) with /api proxied.
 #   5. Smoke: (a) unauth -> landing only, gated -> 403, /api/notifications -> 404
@@ -269,10 +270,11 @@ PY
     fail "plaintext email address found in the service log (F2 violation)"
   fi
 
-  # Public data surface stays honestly EMPTY (pre-P8).
-  rows=$("$WORK/venv/bin/python" -c "import json;print(len(json.load(open('dist/client/data/published.json'))))" 2>/dev/null || echo "?")
-  [ "$rows" = "0" ] || fail "published.json expected honestly-empty (0 rows), got $rows"
-  say "  (d) beta front door: 404-when-off, neutral 200s, Strict cookie, sign-out, hash-only logs, empty public lane — OK"
+  # The private profile contains no public projection at all. An empty file is
+  # still the wrong lane and would allow the profiles to drift back together.
+  [ ! -e dist/client/data/published.json ] \
+    || fail "private client unexpectedly contains data/published.json"
+  say "  (d) beta front door: 404-when-off, neutral 200s, Strict cookie, sign-out, hash-only logs, no public lane — OK"
 else
   say "  (d) SKIPPED beta front-door smoke — pinned artifact predates GOV-1544 wiring"
 fi

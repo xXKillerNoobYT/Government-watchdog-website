@@ -96,6 +96,15 @@ npm run build:all      # build and verify both isolated browser lanes
 npm run preview        # serve the production build locally
 ```
 
+Private-runtime integration is deliberately local-only while backend issue
+#291 is open. `npm run build:integrated` requires
+`BACKEND_REF=local:/absolute/backend/checkout`; commit/tag refs fail before any
+GitHub Release download. The default `npm run build` remains the independent,
+civic-data-empty Sites public-free package and does not fetch a backend artifact.
+The private Dockerfile has no landing-only fallback: it fails until a protected
+private artifact channel can be verified. Use the default Sites build for the
+artifact-free public shell.
+
 The lane boundary and its asset-level acceptance check are documented in
 [`docs/public-private-asset-lanes.md`](docs/public-private-asset-lanes.md).
 Simple/Advanced remains a reading-layout preference; it cannot switch the build

@@ -1,19 +1,20 @@
-# Beta release plan — public waitlist page, gated civic app, Stage 98 closed
+# SUPERSEDED — Beta release plan (historical record only)
 
-**Owner decision this plan implements:** ship a genuinely PUBLIC waitlist /
-marketing page that anyone on the internet can reach, keep the civic app behind
-the reviewer/beta gate, and keep **Stage 98 (full public release) CLOSED**.
-
-**Status:** plan. Nothing here is an action. Every hard gate in the company
-charter still binds: no raw/private/unreviewed material is published, public
-release is deferred to the Stage 98 owner gate, the frontend never recomputes
-trust, and civic DATA gaps use designed-gap copy (Coming Soon is only for
-unbuilt FEATURES).
-
-**Scope boundary:** this plan opens exactly one thing — an unauthenticated
-marketing/waitlist surface with **zero civic content**. It does not open any
-civic data lane, does not create a public civic projection, and does not change
-what a non-approved person can see of Alpine.
+> **Do not operate from any section of this document.** The entire plan was
+> superseded on 2026-08-12 after current provider evidence showed Sites access
+> is public and backend issue #291 proved the legacy combined Release artifact
+> anonymously exposed reviewer-internal bytes. Its private-access assumptions,
+> empty-public-artifact procedure, source-pin deployment steps, and combined
+> image/`BACKEND_REF` rollback are unsafe and invalid. They remain below only as
+> historical decision context.
+>
+> Current fail-closed source guidance is `docs/deployment-sites.md`,
+> `docs/gov1527-build-integration.md`, `docs/gov1543-deploy-execution-plan.md`,
+> and `docs/gov1544-deploy-config.md`. The public lane is the independent
+> civic-data-empty default Sites build. Private runtime has no hosted, prebuilt,
+> token, landing-only, or legacy rollback path until a protected channel exists.
+> No release, rollback, access, save, deployment, DNS, credential, or spending
+> action is authorized by this archived document.
 
 ---
 
@@ -114,11 +115,12 @@ that same origin, `hosted-access.ts:32` would hand every anonymous visitor an
 and synthetic data are excluded from public assets, not merely hidden in the
 DOM."* This plan treats that as the load-bearing requirement.
 
-`VITE_LANDING_ONLY` (`src/data/api.ts:33-35`, consumed at
-`src/data/client.ts:93-98`, plumbed through `Dockerfile` `ARG LANDING_ONLY` and
-`scripts/fetch-artifact.mjs`) is a genuine fail-closed build choice — but it only
-removes the **`/api` surface**. It does not remove a single fixture import from
-the bundle. It is necessary and not sufficient.
+> **Superseded integration note (2026-08-12):** `LANDING_ONLY` is no longer an
+> artifact-integration or Docker option. It built the private browser graph and
+> therefore could not prove a public lane. The only reviewed artifact-free path
+> is the separate default `npm run build` public-free graph; private integration
+> fails closed until a verified local or protected private-runtime artifact is
+> available. See website #95 and backend #291.
 
 ---
 

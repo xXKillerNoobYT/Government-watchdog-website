@@ -2,6 +2,8 @@ node_modules
 dist
 .vite
 .artifact
+.artifact-stage-*
+.artifact-backup-*
 .git
 .paperclip
 .playwright-mcp
@@ -12,5 +14,8 @@ docs/evidence
 /gov*.png
 .env
 .env.*
-# .artifact-local is deliberately NOT ignored: it carries the pre-built
-# tarball for offline local Docker verification (GW_ARTIFACT_TARBALL).
+# Private-runtime archives must never enter a Docker build context or remote
+# builder cache. The removed prebuilt-artifact flow is intentionally unsupported.
+.artifact-local
+gw-web-artifact-*.tar.gz
+gw-private-runtime-*.tar.gz

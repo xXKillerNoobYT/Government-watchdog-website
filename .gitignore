@@ -24,6 +24,8 @@ npm-debug.log*
 # (contains the gated reviewer-internal lane + service subset; local/vault-only
 # data boundary). Rebuilt from BACKEND_REF on every build/e2e run.
 /.artifact/
+/.artifact-stage-*/
+/.artifact-backup-*/
 gw-web-artifact-*.tar.gz
 # The public lane is staged into public/data by fetch-artifact.mjs at build time.
 /public/data/published.json
