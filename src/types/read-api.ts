@@ -460,6 +460,23 @@ export interface ReadApiResponse {
 // --- Supplied source files (GOV-1566 F2, consumes the B6 web-safe projection) -
 
 /**
+ * The `supplied_file_dto` wire version this consumer binds to (GOV-1987 AC#8,
+ * `Docs/gov1987-supplied-file-dto-v1-contract.md`). The website aligns to this
+ * EXACT version and never re-shapes it. A bump is a separate exact-version
+ * reviewed integration, never a silent widening.
+ */
+export type SuppliedFileDtoVersion = 'supplied_file_dto/v1' | (string & {});
+
+/**
+ * Clearance of the supplied-file projection. The AUTHORITATIVE value is
+ * `web_safe` (GOV-1987 §1): every file in the payload is reviewer-cleared for
+ * the web. This is deliberately NOT `reviewer_internal` — that is `read_api`'s
+ * reviewer-only lane, a different contract. The consumer never upgrades,
+ * re-interprets, or re-derives this value client-side.
+ */
+export type SuppliedFileAccess = 'web_safe' | (string & {});
+
+/**
  * One reviewed supplied source file, as projected by the Backend **B6 web-safe
  * read endpoint** (GOV-1566 §7). B6 is the ONLY thing that crosses the
  * Backend→Website boundary for the file-intake feature, and it returns ONLY
@@ -479,8 +496,13 @@ export interface ReadApiResponse {
 export interface SuppliedSourceFile {
   /** Stable web-safe id for the reviewed file (NOT a raw path or raw-bytes sha). */
   file_id: string;
-  /** Review-cleared display title (sanitized of any private original filename). */
-  title: string;
+  /**
+   * Reviewer-curated display title, or `null`. Per `supplied_file_dto/v1` §2/§3
+   * this is `null` today (no reviewer-title column exists) and is NEVER
+   * back-filled from the raw uploader `original_filename` — that would be
+   * forbidden fabrication. The consumer renders an honest heading when null.
+   */
+  title: string | null;
   /** Public file kind, e.g. `agenda_packet` | `minutes` | `transcript` | `pdf`. */
   source_type?: string | null;
   /** Tie to the meeting this file documents (matches the timeline meeting id). */
@@ -521,12 +543,30 @@ export interface SuppliedSourceFile {
  * filename, uploader, version, or `review_state` of the pending items.
  */
 export interface SuppliedFilesProjection {
-  /** Same gate as the read API — supplied files render only reviewer-internal. */
-  access?: AccessState | null;
+  /** Alpine-only scope marker (`supplied_file_dto/v1` §1). */
+  scope?: 'alpine' | (string & {});
+  /**
+   * Payload clearance — AUTHORITATIVE `web_safe` (`supplied_file_dto/v1` §1).
+   * Every file is reviewer-cleared for the web; this is NOT `reviewer_internal`
+   * (that is `read_api`'s separate reviewer lane). The consumer never re-derives
+   * a review state from it — presence in `files` is the web-safe verdict.
+   */
+  access?: SuppliedFileAccess | null;
+  /** Static origin marker: the projection only ever serves reviewer-cleared files. */
+  dataOrigin?: 'reviewed_snapshot' | (string & {});
+  /** Pinned wire version the consumer binds to (GOV-1987 AC#8). */
+  dtoVersion?: SuppliedFileDtoVersion;
   /** Reviewed (web_safe) files only. Empty array = honestly nothing reviewed yet. */
   files: SuppliedSourceFile[];
   /** Count of files still in review; content of those files is never projected. */
   pending_review_count?: number | null;
+  /**
+   * F3 before/after supersede views. `supplied_file_dto/v1` still emits the B6
+   * `{superseded_file_id, new_file_id, diff}` shape; aligning it to the website
+   * {@link SupersedeEvent} shape is a tracked v1.1 follow-up (contract §5.5) and
+   * is out of scope for AC#8. F3 consumes the separate {@link SupersedeProjection}.
+   */
+  supersede_views?: unknown[];
 }
 
 // --- Supersede before/after (GOV-1566 F3, consumes the B6 web-safe projection) -

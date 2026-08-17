@@ -1,5 +1,8 @@
 {
-  "access": "reviewer_internal",
+  "scope": "alpine",
+  "access": "web_safe",
+  "dataOrigin": "reviewed_snapshot",
+  "dtoVersion": "supplied_file_dto/v1",
   "files": [
     {
       "file_id": "sf_2f1a9c",

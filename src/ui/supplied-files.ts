@@ -21,6 +21,13 @@ import type { SuppliedSourceFile, SuppliedFilesProjection } from '../types/read-
 
 const UNTIED_MEETING_GROUP = '__untied_reviewed_file__';
 
+/**
+ * The exact supplied-file wire version this consumer binds to (GOV-1987 AC#8,
+ * `supplied_file_dto/v1`). Pinned so a backend bump is a loud, deliberate
+ * re-integration rather than a silent drift.
+ */
+export const SUPPLIED_FILE_DTO_VERSION = 'supplied_file_dto/v1';
+
 /** The meeting / agenda-item a drawer is asking supplied files for. */
 export interface SuppliedFilesContext {
   meetingId?: number | string | null;
@@ -119,6 +126,18 @@ export function pendingReviewNotice(
   const count = Math.floor(raw);
   if (count <= 0) return undefined;
   return `${count} supplied file${count === 1 ? '' : 's'} pending review — not shown until independently reviewed.`;
+}
+
+/**
+ * Honest heading for one reviewed file. Uses the reviewer-curated `title` when
+ * present; otherwise an honest, content-free label. Per `supplied_file_dto/v1`
+ * §2/§3 `title` is `null` today and MUST NOT be back-filled from the raw
+ * uploader filename or any guessed value — the file's kind and civic ties are
+ * carried by {@link suppliedFileMeta} rows, not by this heading. This is the
+ * honest-unavailable render (fail-closed), never a fabricated title.
+ */
+export function suppliedFileHeading(file: SuppliedSourceFile): string {
+  return present(file.title) ? String(file.title) : 'Reviewed source file';
 }
 
 /** Ordered, present-only metadata rows for one reviewed file. */

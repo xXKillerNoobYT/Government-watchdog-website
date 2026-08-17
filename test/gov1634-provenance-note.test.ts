@@ -31,7 +31,7 @@ function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string 
 }
 
 function projection(files: SuppliedSourceFile[], pending?: number): SuppliedFilesProjection {
-  return { access: 'reviewer_internal', files, pending_review_count: pending };
+  return { access: 'web_safe', files, pending_review_count: pending };
 }
 
 describe('GOV-1634 suppliedFileProvenanceNote (present-only, verbatim)', () => {
