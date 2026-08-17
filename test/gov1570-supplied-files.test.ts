@@ -18,6 +18,7 @@ import {
   groupSuppliedFilesByMeeting,
   pendingReviewNotice,
   suppliedFileMeta,
+  suppliedFileHeading,
 } from '../src/ui/supplied-files';
 import { renderSuppliedFiles } from '../src/ui/pages-program';
 import { assertWebSafe, RawPathLeak, RAW_PATH_FORBIDDEN_KEYS } from '../src/data/web-safe';
@@ -138,5 +139,26 @@ describe('GOV-1570 render (source drawer)', () => {
   it('the rendered DOM carries no raw-path marker', () => {
     const node = renderSuppliedFiles(FIXTURE, q);
     expect(node.outerHTML).not.toMatch(/\/Users\/|\/home\/|Obsidian Vault|\.sha256/);
+  });
+});
+
+describe('GOV-2033 design-fixture honest-null title parity', () => {
+  // The authoritative `supplied_file_dto/v1` structurally emits `title: null` (no
+  // reviewer-title column exists). This design fixture is reachable only in
+  // explicit design-preview mode, so a hand-authored non-null title would show a
+  // richer heading than the live DTO ever renders. Pin the parity: every fixture
+  // file carries an honest-`null` title and renders the honest-unavailable
+  // heading, never a synthetic card title. Re-populating a title fails loud here.
+  it('every design-fixture file has an honest-null title', () => {
+    expect(FIXTURE.files.length).toBeGreaterThan(0);
+    for (const f of FIXTURE.files) {
+      expect(f.title).toBeNull();
+    }
+  });
+
+  it('each renders the honest "Reviewed source file" heading, never a synthetic title', () => {
+    for (const f of FIXTURE.files) {
+      expect(suppliedFileHeading(f)).toBe('Reviewed source file');
+    }
   });
 });
