@@ -138,9 +138,21 @@ describe('GOV-2024 · AC#4 — honest-unavailable, never a guessed value', () =>
 describe('GOV-2024 · AC#7 — Simple/Advanced cannot alter eligibility', () => {
   const MODE_KEY = 'gw_home_mode';
   const query = new URLSearchParams();
+  let store: Record<string, string> = {};
 
+  // Stub localStorage with an in-memory store (matches gov665-pages-program):
+  // CI's jsdom does not implement the full Storage API, so we own the backing
+  // store rather than relying on the environment's localStorage.
   beforeEach(() => {
-    localStorage.clear();
+    store = {};
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, value: string) => { store[key] = value; },
+        clear: () => { store = {}; },
+      },
+    });
   });
 
   function renderInMode(mode: 'simple' | 'advanced'): string {
