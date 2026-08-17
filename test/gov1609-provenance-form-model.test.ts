@@ -61,7 +61,7 @@ function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string 
   return { ...p };
 }
 function projection(files: SuppliedSourceFile[]): SuppliedFilesProjection {
-  return { access: 'reviewer_internal', files };
+  return { access: 'web_safe', files };
 }
 const query = new URLSearchParams();
 

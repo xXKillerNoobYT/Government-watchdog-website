@@ -24,6 +24,7 @@ import {
   groupSuppliedFilesByMeeting,
   pendingReviewNotice,
   safeHttpUrl,
+  suppliedFileHeading,
   suppliedFileMeta,
   suppliedFileProvenanceNote,
 } from './supplied-files';
@@ -1470,7 +1471,7 @@ function suppliedFileCard(file: SuppliedSourceFile): HTMLElement {
     'data-file-id': file.file_id,
     ...(file.agenda_item_id ? { 'data-agenda-item-id': file.agenda_item_id } : {}),
   }, [
-    el('h3', {}, [file.title]),
+    el('h3', {}, [suppliedFileHeading(file)]),
     ...meta.map((row) => el('p', { class: 'gw-muted', 'data-test': `supplied-file-${row.key}` }, [`${row.label}: ${row.value}`])),
     ...(provenanceNote ? [el('p', { class: 'gw-muted', 'data-test': 'supplied-file-provenance-note' }, [`Provenance: ${provenanceNote}`])] : []),
     ...(originalHref ? [el('a', { href: originalHref, target: '_blank', rel: 'noopener noreferrer', 'data-test': 'supplied-file-original' }, ['View reviewed file ↗'])] : []),

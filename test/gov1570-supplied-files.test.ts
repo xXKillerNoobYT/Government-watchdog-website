@@ -26,12 +26,12 @@ import suppliedFilesData from '../src/fixtures/alpine-supplied-files.json';
 
 const FIXTURE = suppliedFilesData as unknown as SuppliedFilesProjection;
 
-function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string }): SuppliedSourceFile {
+function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string | null }): SuppliedSourceFile {
   return { ...p };
 }
 
 function projection(files: SuppliedSourceFile[], pending?: number): SuppliedFilesProjection {
-  return { access: 'reviewer_internal', files, pending_review_count: pending };
+  return { access: 'web_safe', files, pending_review_count: pending };
 }
 
 describe('GOV-1570 supplied-files tie (meeting / agenda item)', () => {
@@ -85,7 +85,7 @@ describe('GOV-1570 web-safe boundary', () => {
   it('the raw review_state key is denylisted (never crosses the wire)', () => {
     expect(RAW_PATH_FORBIDDEN_KEYS as readonly string[]).toContain('review_state');
     // A projection carrying it fails loud rather than rendering a raw state.
-    const leaky = { access: 'reviewer_internal', files: [{ file_id: 'x', title: 'X', review_state: 'pending' }] };
+    const leaky = { access: 'web_safe', files: [{ file_id: 'x', title: 'X', review_state: 'pending' }] };
     expect(() => assertWebSafe(leaky)).toThrow(RawPathLeak);
   });
 

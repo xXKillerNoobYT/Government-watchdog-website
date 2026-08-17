@@ -1,0 +1,38 @@
+{
+  "access": "web_safe",
+  "dataOrigin": "reviewed_snapshot",
+  "dtoVersion": "supplied_file_dto/v1",
+  "files": [
+    {
+      "agenda_item_id": null,
+      "archive_url": null,
+      "file_id": "file-compat-minutes",
+      "meeting_id": "148",
+      "original_url": null,
+      "provenance_note": null,
+      "published_by": null,
+      "source_date": "2026-06-23T00:00:00.000+00:00",
+      "source_type": "minutes",
+      "title": null,
+      "version": 1,
+      "version_group_id": "vg-compat-minutes"
+    },
+    {
+      "agenda_item_id": "ai_148_03",
+      "archive_url": null,
+      "file_id": "file-compat-packet",
+      "meeting_id": "148",
+      "original_url": "https://web.archive.org/web/2026/alpine-packet-148.pdf",
+      "provenance_note": "Handed to the Watchdog by the Town Clerk at the June 9 meeting.",
+      "published_by": null,
+      "source_date": "2026-06-09T00:00:00.000+00:00",
+      "source_type": "agenda_packet",
+      "title": null,
+      "version": 1,
+      "version_group_id": "vg-compat-packet"
+    }
+  ],
+  "pending_review_count": 2,
+  "scope": "alpine",
+  "supersede_views": []
+}

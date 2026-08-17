@@ -34,7 +34,7 @@ import supersedeData from '../src/fixtures/alpine-supersede-events.json';
 
 const FIXTURE = supersedeData as unknown as SupersedeProjection;
 
-function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string }): SuppliedSourceFile {
+function file(p: Partial<SuppliedSourceFile> & { file_id: string; title: string | null }): SuppliedSourceFile {
   return { ...p };
 }
 
