@@ -143,6 +143,35 @@ Every future network response remains subject to the reviewer access gate,
 `assertWebSafe`, the raw/private-field denylist, exact origin/freshness labels,
 and the backend-supplied trust vocabulary.
 
+### Served `/v1` projection source (GOV-2180 → backend GOV-1816 / GOV-1817)
+
+`AgendaBoard`, `CardFeed`, and `NewsletterDigestResponse` are the three RV
+projections the backend now serves VERBATIM over `/v1` (`/v1/agenda-board`,
+`/v1/card-feed`, `/v1/newsletter-digest`), each nested under `data` inside the
+mandatory GOV-1817 envelope (`scope` / `access` / `origin` / `generatedAt` /
+`sourceFreshness`), computed live from the reviewed registry (`origin = live`)
+behind the civic gate. `src/data/v1-projections.ts` is the same-origin consumer:
+it validates the envelope, re-sweeps for raw paths, unwraps `data` through the
+same web-safe walk the fixtures use, and fails closed to the existing gated / gap
+states. It NEVER recomputes trust or synthesizes freshness.
+
+- **The binding class does not move — these slots stay RV.** RV already covers a
+  captured snapshot *and* a live reviewed read; what changes is the *provenance*
+  of the RV value, from a checked-in captured snapshot toward an `origin = live`
+  served read. The served response is still labelled by its own `origin`, never
+  relabelled as live when it is a snapshot.
+- **`sourceFreshness` is an honest empty map this slice.** Its absence renders as
+  a Designed Gap (`hasSourceFreshness()` is `false`); no `as-of` is invented.
+- **Migration status (this slice):** the consumer client and the reversible flip
+  (`VITE_SERVED_PROJECTIONS`, default OFF → the checked-in
+  `src/fixtures/*.json`) have landed. The MOTY RV render routes still read the
+  fixtures by default. The cutover — wiring those routes to the served path,
+  flipping the default to served, and retiring the checked-in projection
+  fixtures — awaits a reachable same-origin `/v1` bridge to an authorized
+  reviewer session so live equivalence can be evidenced without regressing the
+  MOTY screens to gap states. Until then the fixtures remain the captured-snapshot
+  fallback and are NOT deleted.
+
 ## Global shell
 
 | Major information group | Class | Current binding | Backend contract needed |
