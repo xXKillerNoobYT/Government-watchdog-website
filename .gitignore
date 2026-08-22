@@ -35,3 +35,7 @@ gw-web-artifact-*.tar.gz
 /gov1527-*.png
 # GOV-1544 — local pre-built artifact tarballs for offline Docker verification
 /.artifact-local/
+
+# GOV-2208 — python bytecode from the gpt_review lane + its tests
+__pycache__/
+*.pyc
