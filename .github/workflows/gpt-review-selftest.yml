@@ -1,0 +1,44 @@
+# GOV-2208 — self-test for the GPT independent review lane (website/PUBLIC leg).
+#
+# The website repo is JS-first and has no repo-wide pytest CI, so the lane's own
+# unit tests would otherwise never run in CI. This workflow runs them — but ONLY
+# when the lane's code, tests, or workflows change (path filter). That keeps the
+# lane's correctness a real gate on lane changes, without coupling it to unrelated
+# website PRs. runs-on: ubuntu-latest — PUBLIC repo, hosted minutes are free ($0).
+#
+# Unlike gpt-review.yml (advisory, continue-on-error, never a gate), THIS job is a
+# normal required-style check: if someone edits scripts/gpt_review/** and breaks a
+# SPA condition (C1 scan-before-transmit, C2 advisory-only, C5 diff-only) the guard
+# tests go red and the change is stopped at the source.
+name: GPT review lane — self-test
+
+on:
+  pull_request:
+    paths:
+      - "scripts/gpt_review/**"
+      - "tests/test_gov2208_gpt_review_*.py"
+      - ".github/workflows/gpt-review.yml"
+      - ".github/workflows/gpt-review-selftest.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    name: gpt_review unit + structural guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: python -m pip install --quiet pytest
+
+      - name: Run gpt_review lane tests (C1/C2/C5 guards)
+        env:
+          PYTHONPATH: ${{ github.workspace }}/scripts
+        run: python -m pytest tests/test_gov2208_gpt_review_*.py -q
