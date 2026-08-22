@@ -17,9 +17,19 @@ declare const process: { env: Record<string, string | undefined> };
 // exposed port — it binds 127.0.0.1 only, and the proxy is the sole bridge.
 // Port is env-overridable so local_e2e.sh can pick a free one.
 const SERVICE_PORT = Number(process.env.GW_SERVICE_PORT ?? 8791);
+// GOV-2180 — same-origin `/v1` bridge to the loopback view-API service
+// (`scripts/view_api.py`, GOV-1816/GOV-1817), which binds 127.0.0.1 only on its
+// own port. The browser still talks ONLY to this origin; the proxy is the sole
+// bridge, exactly like `/api`. Dev/preview only — production must forward `/v1`
+// to the view-API service in the hosting layer (tracked in the cutover issue).
+const VIEW_API_PORT = Number(process.env.GW_VIEW_API_PORT ?? 8792);
 const apiProxy = {
   '/api': {
     target: `http://127.0.0.1:${SERVICE_PORT}`,
+    changeOrigin: false, // same-origin contract: do not rewrite Host
+  },
+  '/v1': {
+    target: `http://127.0.0.1:${VIEW_API_PORT}`,
     changeOrigin: false, // same-origin contract: do not rewrite Host
   },
 };
