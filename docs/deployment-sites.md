@@ -44,6 +44,39 @@ responses are private/no-store and noindex. The worker check is defense in
 depth for dispatched requests. Anonymous 200 responses for live v9's hashed
 client asset proved it does not gate static files in the current public topology.
 
+### The `/v1` projection namespace is reserved, not yet bridged
+
+`src/data/v1-projections.ts` calls `/v1/<projection>` on the site origin and
+nowhere else — a root-relative path is the whole same-origin contract, so there
+is no second hostname and no CORS surface to configure. **No forward exists
+yet.** The view API is a loopback service and where it runs in production is an
+open hosting decision (issue #233), so the worker reserves the namespace and
+answers a stated `503`, *"The same-origin projection bridge is not configured at
+this origin."*
+
+The reservation replaces two dishonest answers, both measured against the worker
+before it landed: with `accept: text/html` the SPA fallback returned **200 and
+the application shell**, because `isSpaNavigation` reads any extension-less 404
+as a client route; with `accept: application/json` it returned a bare 404 asset
+miss, which says "nothing here" when the truth is "not configured." The `503`
+maps to `unavailable` in `fetchProjection`, so the UI renders its existing gap
+state rather than partial or impersonated data.
+
+Two properties are load-bearing and are asserted in `test/sites-worker-auth.test.ts`:
+
+- The reservation runs **after** the identity gate. Answering earlier would give
+  an unapproved caller a different response for `/v1/...` than for any other
+  path — a route oracle. The test asserts anonymous responses to the two are
+  byte-identical.
+- Only the exact `/v1` segment is claimed. `/v1x/...`, `/version` and
+  `/assets/v1/...` still reach assets.
+
+**Ownership and rollback.** The reservation is `PROJECTION_PREFIX` and its guard
+in `scripts/sites-worker.mjs`; deleting those lines restores the previous
+behaviour with no other change, and no hosting configuration depends on it.
+Wiring the actual forward belongs to the change that also brings the upstream,
+so that no binding shape is guessed here.
+
 For any future owner-only beta:
 
 1. keep Sites access at `custom` and keep only the approved owner in its access
