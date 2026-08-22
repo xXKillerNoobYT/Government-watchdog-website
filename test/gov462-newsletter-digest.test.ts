@@ -99,7 +99,7 @@ describe('GOV-462 §6.1 — assertDigestWebSafe', () => {
   it('fails LOUD on a non-null localSourcePath carrying an absolute path', () => {
     const poisoned = JSON.parse(JSON.stringify(digestData)) as NewsletterDigestResponse;
     poisoned.digests[0].sections.sourceTrail[0].localSourcePath =
-      '/Users/IA/Obsidian Vault/raw.txt' as unknown as null;
+      '/Users/reviewer/Obsidian Vault/raw.txt' as unknown as null;
     expect(() => assertDigestWebSafe(poisoned)).toThrow(RawPathLeak);
   });
 

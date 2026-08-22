@@ -43,7 +43,7 @@ clean, `npm run build` succeeds.
 | Agent — *Bill — Campaign Manager* | `5d5048b1-3d2c-43e1-843c-c87f96491539` |
 
 Bill's agent record runs the **existing** `hermes -p bill` profile with cwd
-`/Users/IA/Documents/Bill`, via `hermesCommand: /Users/IA/.local/bin/bill`. It is the same
+`~/Documents/Bill`, via `hermesCommand: ~/.local/bin/bill`. It is the same
 Bill, not a second one. The GOV copies (project `5a2564df`, goal `746b65e6`) are `cancelled`
 with descriptions pointing here.
 
@@ -226,7 +226,7 @@ Before filing:
 - Website → `xXKillerNoobYT/Government-watchdog-website`, backend →
   `xXKillerNoobYT/Government-Watchdog`. **Both repos are live on GitHub and `gh` reaches
   both.** An earlier draft of this document said backend filing was blocked for want of a
-  remote; that was wrong. The *local clone* at `/Users/IA/GitHub/Government-Watchdog` has no
+  remote; that was wrong. The *local clone* at `~/GitHub/Government-Watchdog` has no
   remote (§5.2 still applies to it), but the GitHub repo exists and is actively merging.
 - **Re-dedupe against work that shipped 2026-07-24 evening before filing anything.** Four
   backend PRs merged during the authoring session and may close or shrink drafts:
@@ -339,7 +339,7 @@ that you have to do it."* Everything here is preparing instructions and structur
 is drafted-and-sent, no resident is contacted, no list is modified.**
 
 ### 4.1 What Bill confirmed (answered via terminal, 2026-07-24)
-His response is at `/Users/IA/Documents/Bill/CLAUDE_CODE_PAPERCLIP_HANDOFF_RESPONSE.md`.
+His response is at `~/Documents/Bill/CLAUDE_CODE_PAPERCLIP_HANDOFF_RESPONSE.md`.
 
 - **Campaign domain is `isaac4alpine.com`.** `beside.com` is not a stale README typo —
   Beside is the campaign **phone / AI-receptionist service**. The `README.md:16` reference is
@@ -388,13 +388,13 @@ His response is at `/Users/IA/Documents/Bill/CLAUDE_CODE_PAPERCLIP_HANDOFF_RESPO
 
 ## 5. Hygiene, backups, memory bank
 
-### 5.1 Website agent clone `/Users/IA/GitHub/Government-watchdog-website`
+### 5.1 Website agent clone `~/GitHub/Government-watchdog-website`
 Push `GOV-658-design-tokens` and `GOV-658-pr-29` (unpushed at `3d6518a`) as an off-machine
 backup. After the MOTY PR merges: `git fetch && git switch main && git merge --ff-only` —
 **never `reset --hard`**. Rescue `stash@{0}` via `git stash branch rescue/pr-31-codex-wip`.
 Wait for agents to be idle before touching their working directories.
 
-### 5.2 Backend clone `/Users/IA/GitHub/Government-Watchdog` — **has no git remote**
+### 5.2 Backend clone `~/GitHub/Government-Watchdog` — **has no git remote**
 `git bundle create ~/Backups/gov-watchdog-backend-$(date +%F).bundle --all` **first**; this
 clone is the only copy. Then rescue the real untracked deliverables, delete the six 15-byte
 goal-UUID junk files and `.DS_Store`, and gitignore `.playwright-mcp/`. Creating a private
@@ -406,7 +406,7 @@ the campaign company migration with IDs, and the clone states. Append a design-o
 section to the existing design-layout inventory note.
 
 ### 5.4 Parent-clone doc drift
-`docs/product/` and `docs/prompts/` in `/Users/IA/Code/Government-watchdog-website` — 3 files
+`docs/product/` and `docs/prompts/` in `~/Code/Government-watchdog-website` — 3 files
 identical to what was committed, 8 drifting by 2–10 lines. Reconcile or delete.
 
 ---

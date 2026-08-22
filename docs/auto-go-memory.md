@@ -207,7 +207,7 @@
 
 - **[2026-07-30] A chained `cd` persists through the whole command, and it reset the owner's
   working copy.** The Bash tool resets cwd between calls, so this loop compensates by writing
-  `cd /Users/IA/Code/Government-watchdog-website && gh ...`. In iteration 6 a cleanup command
+  `cd ~/Code/Government-watchdog-website && gh ...`. In iteration 6 a cleanup command
   chained `cd <owner clone> && gh push --delete ... && git fetch && git reset --hard origin/main`
   — the `gh` call needed the owner's clone, but the `reset` was meant for the **worktree**. It
   ran where the `cd` had put it. The owner's checkout jumped 97f23d8 → 5ad3eba and the 11

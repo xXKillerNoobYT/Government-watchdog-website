@@ -39,7 +39,7 @@ The product should be designed to scale:
 
 Planning source of truth currently lives in the Obsidian vault:
 
-`/Users/IA/Documents/Obsidian Vault/01_projects/Government-Watchdog/Docs/`
+`~/Documents/Obsidian Vault/01_projects/Government-Watchdog/Docs/`
 
 Important setup note:
 
