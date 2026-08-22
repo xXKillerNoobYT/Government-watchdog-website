@@ -14,7 +14,7 @@
  * GITHUB_OUTPUT. It never prints the report or an offending value.
  */
 
-import { appendFileSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -76,6 +76,19 @@ export function prepareCleanupReport(report, rawArtifactPath) {
   };
 }
 
+export function removeRawReport(
+  rawArtifactPath,
+  { unlinkFile = unlinkSync, fileExists = existsSync } = {},
+) {
+  try {
+    unlinkFile(rawArtifactPath);
+  } catch {
+    if (fileExists(rawArtifactPath)) {
+      throw new InvalidCleanupReport('Raw cleanup report could not be deleted');
+    }
+  }
+}
+
 function main(argv = process.argv.slice(2), env = process.env) {
   if (argv.length !== 1 || !env.GITHUB_OUTPUT) {
     throw new InvalidCleanupReport('Usage or Actions output destination is invalid');
@@ -105,11 +118,7 @@ function main(argv = process.argv.slice(2), env = process.env) {
   } finally {
     // Raw operational evidence is private-by-construction. Delete it on every
     // path, including malformed input and output-write failure.
-    try {
-      unlinkSync(rawArtifactPath);
-    } catch {
-      // Absence is already the desired terminal state.
-    }
+    removeRawReport(rawArtifactPath);
   }
 }
 

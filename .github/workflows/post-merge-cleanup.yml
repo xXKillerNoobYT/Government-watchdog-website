@@ -17,6 +17,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: post-merge-cleanup
   cancel-in-progress: false
@@ -26,34 +29,24 @@ jobs:
     name: Dry-run merged-branch / worktree sweep (cross-repo via Backend script)
     runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
     steps:
+      - name: Mask private runner paths
+        run: |
+          mask_path() {
+            value="$1"
+            [ -n "$value" ] || return 0
+            echo "::add-mask::$value"
+            escaped="${value//\//\\/}"
+            echo "::add-mask::$escaped"
+          }
+          mask_path "$HOME"
+          mask_path "$GITHUB_WORKSPACE"
+          mask_path "$RUNNER_TEMP"
+          mask_path "${RUNNER_WORKSPACE:-}"
+
       - name: Checkout (keep this repo's state current on the runner)
         uses: actions/checkout@v7
-
-      - name: Resolve script path
-        id: script
-        run: |
-          # Cleanup script lives in the Backend repo. Both checkouts live on
-          # the same self-hosted Mac runner host.
-          #
-          # #218: this repository is PUBLIC, so the runner's absolute layout must not
-          # appear in tracked source or in step output. The location is resolved from
-          # the runner's own $HOME (overridable by GW_BACKEND_CHECKOUT) and every
-          # message below prints the repo-relative tail only.
-          rel="scripts/cleanup_merged_worktrees.py"
-          checkout="${GW_BACKEND_CHECKOUT:-$HOME/Code/Government-watchdog}"
-          script="$checkout/$rel"
-          if [ ! -f "$script" ]; then
-            echo "::error::Cleanup script not found at <backend-checkout>/$rel — set GW_BACKEND_CHECKOUT on the runner"
-            exit 1
-          fi
-          # The absolute path goes to the ENV, never to a step output. An Actions
-          # expression is substituted into the rendered `run` script that Actions
-          # prints in the public log, so an output would re-disclose exactly what
-          # resolving it from $HOME just removed. $GW_CLEANUP_SCRIPT renders as its
-          # own literal name and expands only inside the runner's shell.
-          echo "GW_CLEANUP_SCRIPT=$script" >> "$GITHUB_ENV"
-          # Only the repo-relative tail is safe to echo.
-          echo "rel=$rel" >> "$GITHUB_OUTPUT"
+        with:
+          persist-credentials: false
 
       - name: Resolve Paperclip API URL
         id: api
@@ -64,11 +57,25 @@ jobs:
         id: sweep
         run: |
           set -u
+          # Resolve and consume the private backend path inside this one shell.
+          # Never persist it through GITHUB_ENV: Actions prints persisted values
+          # in every later step's environment block.
+          rel="scripts/cleanup_merged_worktrees.py"
+          checkout="${GW_BACKEND_CHECKOUT:-$HOME/Code/Government-watchdog}"
+          script="$checkout/$rel"
+          echo "::add-mask::$checkout"
+          echo "::add-mask::$script"
+          if [ ! -f "$script" ]; then
+            echo "::error::Cleanup script not found at <backend-checkout>/$rel — set GW_BACKEND_CHECKOUT on the runner"
+            exit 1
+          fi
+          echo "script_rel=$rel" >> "$GITHUB_OUTPUT"
+
           mkdir -p Logs
           ts="$(date -u +%Y%m%dT%H%M%SZ)"
           out="Logs/post-merge-cleanup-${ts}.json"
           err="Logs/post-merge-cleanup-${ts}.stderr"
-          if ! python3 "$GW_CLEANUP_SCRIPT" \
+          if ! python3 "$script" \
               --api-url "${{ steps.api.outputs.url }}" \
               --json >"$out" 2>"$err"; then
             rm -f "$out" "$err"
@@ -91,7 +98,7 @@ jobs:
             echo "## Post-Merge Cleanup — Dry-Run (cross-repo)"
             echo ""
             echo "Trigger: \`${{ github.event_name }}\` on \`${{ github.ref }}\`"
-            echo "Script:  \`${{ steps.script.outputs.rel }}\` in the runner backend checkout"
+            echo "Script:  \`${{ steps.sweep.outputs.script_rel }}\` in the runner backend checkout"
             echo "Mode:    dry-run (no removals — \`--apply\` is gated on the Paperclip daily routine 804d7f7c)"
             echo ""
             if [ "${{ steps.sweep.outputs.report_status }}" != "" ]; then

@@ -14,7 +14,7 @@ declare const process: {
 
 // The production checker is an executable JavaScript module rather than app code.
 // @ts-expect-error No declaration file is needed for this workflow helper.
-import { aggregateCleanupReport } from '../scripts/prepare-cleanup-report.mjs';
+import { aggregateCleanupReport, removeRawReport } from '../scripts/prepare-cleanup-report.mjs';
 
 const WORKFLOW = readFileSync('.github/workflows/post-merge-cleanup.yml', 'utf8');
 const SCRIPT = join(process.cwd(), 'scripts/prepare-cleanup-report.mjs');
@@ -135,6 +135,18 @@ describe('#218 cleanup report privacy boundary', () => {
     expect(outputs).toBe('');
     expect(artifact).toBeUndefined();
   });
+
+  it('fails closed when raw evidence still exists after a deletion error', () => {
+    expect(() => removeRawReport('Logs/private.json', {
+      unlinkFile: () => { throw new Error('planted deletion failure'); },
+      fileExists: () => true,
+    })).toThrow('Raw cleanup report could not be deleted');
+
+    expect(() => removeRawReport('Logs/already-gone.json', {
+      unlinkFile: () => { throw new Error('already absent'); },
+      fileExists: () => false,
+    })).not.toThrow();
+  });
 });
 
 describe('#218 post-merge workflow publication contract', () => {
@@ -156,5 +168,22 @@ describe('#218 post-merge workflow publication contract', () => {
     expect(WORKFLOW).toContain("if: always() && steps.sweep.outputs.artifact != ''");
     expect(WORKFLOW).toContain('rm -f "$out"');
     expect(WORKFLOW).toContain('post-merge-cleanup-dry-run-summary');
+  });
+
+  it('masks runner roots before checkout and never persists the private script path', () => {
+    const mask = WORKFLOW.indexOf('- name: Mask private runner paths');
+    const checkout = WORKFLOW.indexOf('uses: actions/checkout@v7');
+    const resolve = WORKFLOW.indexOf('script="$checkout/$rel"');
+    const invoke = WORKFLOW.indexOf('python3 "$script"');
+    expect(mask).toBeGreaterThan(-1);
+    expect(checkout).toBeGreaterThan(mask);
+    expect(resolve).toBeGreaterThan(checkout);
+    expect(invoke).toBeGreaterThan(resolve);
+    expect(WORKFLOW).toContain('mask_path "$HOME"');
+    expect(WORKFLOW).toContain('escaped="${value//\\//\\\\/}"');
+    expect(WORKFLOW).toContain('persist-credentials: false');
+    expect(WORKFLOW).toContain('permissions:\n  contents: read');
+    expect(WORKFLOW).not.toContain('>> "$GITHUB_ENV"');
+    expect(WORKFLOW).not.toContain('GW_CLEANUP_SCRIPT=');
   });
 });
