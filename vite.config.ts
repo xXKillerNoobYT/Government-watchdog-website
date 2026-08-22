@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vitest/config';
+import { defaultExclude, defineConfig } from 'vitest/config';
+import type { TestProjectConfiguration } from 'vitest/config';
 import type { Plugin } from 'vite';
 
 // Minimal ambient `process` — this config runs in Node, but the repo omits
@@ -22,6 +23,92 @@ const apiProxy = {
     changeOrigin: false, // same-origin contract: do not rewrite Host
   },
 };
+
+/**
+ * Test files whose cases boot the entire application inside jsdom.
+ *
+ * Each of these calls `await import('../src/main')` from a case whose `beforeEach`
+ * runs `vi.resetModules()`, so every case re-executes the whole ~70-module app graph
+ * and re-renders. The slowest single case sweeps 44 route renders (22 registered
+ * routes x 2 lanes) and costs ~14.4s on an idle machine — 72% of `testTimeout`
+ * before any contention exists.
+ *
+ * Everything else in `test/` is milliseconds per case. That order-of-magnitude gap is
+ * the whole of issue #110: a 3x contention penalty on a 12ms case is 36ms, but on a
+ * 14.4s case it is a red build. So these files get `groupOrder: 1` below and run one
+ * at a time with the machine to themselves, after the other suites have finished at
+ * `groupOrder: 0` with full file parallelism.
+ *
+ * The invariant is about scheduling, not patience: bound concurrency only where
+ * per-case cost is within one order of magnitude of the timeout. #98 already showed
+ * that raising `testTimeout` against a load problem only buys headroom until the
+ * headroom runs out, and this list is deliberately NOT a second place to do that.
+ *
+ * `test/app-boot-suite-registry.test.ts` fails the build if a file that boots the app
+ * is missing here, so the list cannot silently rot as suites are added.
+ */
+export const APP_BOOT_SUITES = [
+  'test/design-routes.test.ts',
+  'test/gov658-home-dashboard.test.ts',
+  'test/gov668-wave3-pages.test.ts',
+  'test/gov671-wave4-pages.test.ts',
+  'test/reviewer-context-routes.test.ts',
+  'test/sites-auth-entry.test.ts',
+  'test/timeline-route-loading.test.ts',
+] as const;
+
+/**
+ * #110 — two test groups run one after the other rather than all 79 files at once.
+ *
+ * `sequence.groupOrder` is what makes this a scheduling fix and not a throttle: group 0
+ * finishes completely before group 1 starts, so the app-boot suites get the whole machine
+ * instead of a share of it. No timeout is raised and no worker count is guessed, which is
+ * the distinction from #98 — a threshold fix against a load problem only buys headroom
+ * until the headroom runs out, and this is the third time that would have been tried.
+ *
+ * Group 1 is serialized by pool assignment, which is a detour worth explaining because
+ * the two obvious spellings both fail:
+ *
+ * - `fileParallelism: false` on the project is a NO-OP. Vitest lists `fileParallelism`,
+ *   `maxWorkers` and `minWorkers` in `NonProjectOptions`; a project may not set them, and
+ *   before this array was annotated `TestProjectConfiguration[]` the compiler accepted it
+ *   silently. Measured with it in place: the seven suites still ran concurrently — 190s of
+ *   file time inside an 80s wall clock — and the flake reproduced inside the group. The
+ *   annotation now makes that a type error, so nobody repeats it.
+ * - `poolOptions.forks.singleFork` IS project-scoped and does serialize them, but it puts
+ *   all seven in ONE reused process. Measured: `design-routes` went from 28.9s to 99.3s
+ *   and two cases failed. Ninety app boots of accumulated jsdom in a single process is its
+ *   own load problem — these suites need a fresh worker per file, not a shared one.
+ *
+ * So: `pool` IS project-scoped, and the root caps the `threads` pool at one worker. The
+ * app-boot project is the only user of that pool, so the cap reaches it alone while the
+ * parallel project keeps the default `forks` pool at full width. One worker at a time,
+ * `isolate` still default-true, fresh environment per file.
+ */
+export const TEST_PROJECTS: TestProjectConfiguration[] = [
+  {
+    extends: true,
+    test: {
+      name: 'parallel',
+      pool: 'forks',
+      include: ['test/**/*.test.ts'],
+      exclude: [...defaultExclude, ...APP_BOOT_SUITES],
+      sequence: { groupOrder: 0 },
+    },
+  },
+  {
+    extends: true,
+    test: {
+      name: 'app-boot',
+      include: [...APP_BOOT_SUITES],
+      // Root `poolOptions` below caps this pool at one worker. `pool` IS project-
+      // scoped; `maxWorkers`/`maxThreads` are not, which is why the cap lives at the
+      // root and the two groups are told apart by which pool they use.
+      pool: 'threads',
+      sequence: { groupOrder: 1 },
+    },
+  },
+];
 
 export const PUBLIC_LOCAL_MODULES = new Set([
   '/public-entry/index.html',
@@ -153,24 +240,22 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
-      include: ['test/**/*.test.ts'],
-      // Vitest's 5s default is tuned for unit tests. Several suites here are
-      // full route integrations: each case does `await import('../src/main')`,
-      // which transforms and boots the entire 70-module app inside jsdom, then
-      // waits for a render. That is genuinely seconds of work — the slowest
-      // observed case is ~3.6s on an idle machine, leaving under 1.4s of margin.
+      // `include` is deliberately NOT set here. `extends: true` MERGES array options
+      // into each project rather than replacing them, so a root-level glob would union
+      // itself onto the app-boot project's explicit file list and hand that project all
+      // 79 suites — silently undoing the split while still reporting two projects.
+      // Each project therefore owns its own `include`.
       //
-      // The self-hosted CI runner erases that margin. Every PR push currently
-      // triggers `push` and `pull_request` together, so two full suites run
-      // concurrently on one physical machine; identical local runs already vary
-      // 2.3x in total test time (8.8s / 11.1s / 20.3s). The result is #59: the
-      // same commit goes green on one twin and red on the other, and the failing
-      // case differs between runs.
-      //
-      // 20s keeps a true hang failing — well inside the job budget — while
-      // giving a correct-but-slow integration case room to finish under load.
-      // This is headroom for real work, not suppression: the assertions pass
-      // whenever they are allowed to run to completion.
+      // #110 — the timeout flake is contention, not slowness. See TEST_PROJECTS.
+      // The cap is here rather than in the app-boot project because `maxThreads` is a
+      // root-only option; the `threads` pool is used by that project alone.
+      poolOptions: { threads: { maxThreads: 1, minThreads: 1 } },
+      projects: TEST_PROJECTS,
+      // Unchanged by #110, and deliberately so. Vitest's 5s default is tuned for unit
+      // tests; the app-boot suites do genuinely seconds of work per case, so 20s is the
+      // ceiling that still fails a true hang while letting a correct-but-slow
+      // integration case finish. #59 and #98 raised this once already — the scheduling
+      // change above exists precisely so it never has to be raised a second time.
       testTimeout: 20_000,
     },
   };
