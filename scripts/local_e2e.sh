@@ -39,7 +39,12 @@ fail() { printf '\n\033[31m[e2e] FAIL: %s\033[0m\n' "$*" >&2; exit 1; }
 # --- locate a backend checkout with the pinned builder ----------------------
 BACKEND="${GW_BACKEND_CHECKOUT:-}"
 if [ -z "$BACKEND" ]; then
-  for c in /Users/IA/Code/Government-watchdog /Users/IA/GitHub/Government-watchdog /Users/IA/GitHub/Government-Watchdog; do
+  # #218: this repository is PUBLIC, so no contributor's absolute layout is tracked
+  # here. Candidates are resolved from the running user's own $HOME; set
+  # GW_BACKEND_CHECKOUT to point anywhere else. Behaviour on an existing machine is
+  # unchanged — $HOME expands to what these lines used to hard-code.
+  for c in "$HOME/Code/Government-watchdog" "$HOME/Code/gov-watchdog-backend" \
+           "$HOME/GitHub/Government-watchdog" "$HOME/GitHub/Government-Watchdog"; do
     if [ -f "$c/scripts/export_web_artifact.py" ]; then BACKEND="$c"; break; fi
   done
 fi

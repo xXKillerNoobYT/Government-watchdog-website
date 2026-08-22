@@ -12,7 +12,7 @@ describe('assertWebSafe (frontend transport raw-path sweep)', () => {
   });
 
   it('rejects an absolute filesystem path in a value', () => {
-    expect(() => assertWebSafe({ x: '/Users/IA/Obsidian Vault/Source-Data/raw.txt' })).toThrow(RawPathLeak);
+    expect(() => assertWebSafe({ x: '/Users/reviewer/Obsidian Vault/Source-Data/raw.txt' })).toThrow(RawPathLeak);
   });
 
   it('rejects a Windows drive-absolute path', () => {
@@ -40,7 +40,7 @@ describe('findRawPathLeaksInText (transport-level raw-bytes scan)', () => {
   });
 
   it('flags an absolute/vault path hidden in the raw bytes', () => {
-    const text = JSON.stringify({ x: '/Users/IA/Obsidian Vault/Source-Data/raw.txt' });
+    const text = JSON.stringify({ x: '/Users/reviewer/Obsidian Vault/Source-Data/raw.txt' });
     expect(findRawPathLeaksInText(text).length).toBeGreaterThan(0);
   });
 

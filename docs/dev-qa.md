@@ -26,9 +26,9 @@ now labelled `owner-decision`) and cross-repo backend #191. The owner decision r
 what should own hunting, not whether C3 stays.
 
 **Measurement:** `/auto-go.md`'s C3 says "Invoke `/hunt-fix-loop` focused on this area."
-`/hunt-fix-loop` does not exist. `find /Users/IA/.claude -iname "*hunt-fix-loop*"` matches
+`/hunt-fix-loop` does not exist. `find ~/.claude -iname "*hunt-fix-loop*"` matches
 only the unrelated `hunt-fix-loop-heartbeat` scheduled-task directory;
-`/Users/IA/.claude/commands/` has `hunt-fix.md`, which is the separate HUNT FIX cron routine
+`~/.claude/commands/` has `hunt-fix.md`, which is the separate HUNT FIX cron routine
 with its own heartbeat and soul, not a callable body.
 
 **Consequence:** C3 is a required area-graduation check that has been silently doing nothing.
