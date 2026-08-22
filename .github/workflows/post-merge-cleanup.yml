@@ -77,18 +77,12 @@ jobs:
           fi
           rm -f "$err"
 
-          if node scripts/prepare-cleanup-report.mjs "$out"; then
-            : # The validated helper set the relative artifact output.
-          else
-            status=$?
+          if ! node scripts/prepare-cleanup-report.mjs "$out"; then
             rm -f "$out"
-            if [ "$status" -eq 2 ]; then
-              echo "::notice::Raw cleanup report withheld because it contains private runner paths."
-            else
-              echo "::error::Cleanup report validation failed; raw output withheld."
-              exit 1
-            fi
+            echo "::error::Cleanup report validation failed; raw output withheld."
+            exit 1
           fi
+          echo "::notice::Raw cleanup report withheld; aggregate-only artifact prepared."
 
       - name: Summarise to GitHub step summary
         if: always()
@@ -107,19 +101,19 @@ jobs:
               echo "- would remove worktrees: ${{ steps.sweep.outputs.would_remove_worktrees }}"
               echo "- preserved: ${{ steps.sweep.outputs.preserved_count }}"
               echo "- failed: ${{ steps.sweep.outputs.failed_count }}"
-              if [ "${{ steps.sweep.outputs.report_status }}" = "withheld" ]; then
-                echo "- raw JSON artifact: withheld (private runner paths detected)"
+              if [ "${{ steps.sweep.outputs.report_status }}" = "aggregate-only" ]; then
+                echo "- raw JSON artifact: withheld (aggregate-only public artifact)"
               fi
             else
               echo "(no validated JSON report produced — see job log)"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload dry-run JSON artifact
+      - name: Upload aggregate-only dry-run summary
         if: always() && steps.sweep.outputs.artifact != ''
         uses: actions/upload-artifact@v4
         with:
-          name: post-merge-cleanup-dry-run
+          name: post-merge-cleanup-dry-run-summary
           path: ${{ steps.sweep.outputs.artifact }}
           if-no-files-found: warn
           retention-days: 14

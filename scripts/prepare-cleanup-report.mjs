@@ -6,15 +6,15 @@
  * The backend cleanup tool deliberately reports exact repository and worktree
  * paths so an operator can make a safe deletion decision. Those paths are useful
  * private evidence, but they are not safe to print or upload from this PUBLIC
- * repository's Actions run. This helper extracts only aggregate counts and makes
- * the raw artifact publishable only when every string is free of machine-absolute
- * path shapes.
+ * repository's Actions run. This helper never republishes the raw object. It
+ * creates a new artifact from an exact aggregate-field allowlist, so arbitrary
+ * current or future backend strings remain private by construction.
  *
  * The CLI writes only fixed keys, integer counts, and a relative artifact path to
  * GITHUB_OUTPUT. It never prints the report or an offending value.
  */
 
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -26,54 +26,36 @@ const COUNT_FIELDS = [
   'failed_count',
 ];
 
-const POSIX_PRIVATE_ROOT = /(?:^|[\s"'`(=])\/(?:Users|home|private|tmp|var|Volumes|opt|srv|mnt|root|etc|run|workspace|github|runner)(?:\/|\b)/;
-const WINDOWS_DRIVE_PATH = /(?:^|[\s"'`(=])[A-Za-z]:[\\/]/;
-const WINDOWS_UNC_PATH = /(?:^|[\s"'`(=])\\\\[^\\\s]+\\[^\\\s]+/;
-const FILE_URL = /\bfile:\/\//i;
-
 export class InvalidCleanupReport extends Error {}
 
-/** Return true without exposing which value matched. */
-export function containsPrivateAbsolutePath(value) {
-  return FILE_URL.test(value)
-    || POSIX_PRIVATE_ROOT.test(value)
-    || WINDOWS_DRIVE_PATH.test(value)
-    || WINDOWS_UNC_PATH.test(value);
-}
-
-function stringsIn(value) {
-  if (typeof value === 'string') return [value];
-  if (Array.isArray(value)) return value.flatMap(stringsIn);
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value).flatMap(([key, child]) => [key, ...stringsIn(child)]);
-  }
-  return [];
-}
-
-export function inspectCleanupReport(report) {
+/**
+ * Build a new public artifact from an exact allowlist. Nothing from a branch,
+ * path, gate detail, error, candidate, repository, or future backend field can
+ * cross this boundary because those values are never copied.
+ */
+export function aggregateCleanupReport(report) {
   if (report === null || Array.isArray(report) || typeof report !== 'object') {
     throw new InvalidCleanupReport('Cleanup report must be a JSON object');
   }
 
-  const counts = {};
+  const aggregate = {
+    report_format_version: 1,
+    privacy_status: 'aggregate-only',
+  };
   for (const field of COUNT_FIELDS) {
     const value = report[field];
     if (!Number.isSafeInteger(value) || value < 0) {
       throw new InvalidCleanupReport(`Cleanup report has an invalid ${field}`);
     }
-    counts[field] = value;
+    aggregate[field] = value;
   }
-
-  return {
-    counts,
-    publishable: !stringsIn(report).some(containsPrivateAbsolutePath),
-  };
+  return aggregate;
 }
 
-function outputLines({ counts, publishable }, artifactPath) {
-  const lines = COUNT_FIELDS.map((field) => `${field}=${counts[field]}`);
-  lines.push(`report_status=${publishable ? 'publishable' : 'withheld'}`);
-  if (publishable) lines.push(`artifact=${artifactPath}`);
+function outputLines(aggregate, artifactPath) {
+  const lines = COUNT_FIELDS.map((field) => `${field}=${aggregate[field]}`);
+  lines.push('report_status=aggregate-only');
+  lines.push(`artifact=${artifactPath}`);
   return `${lines.join('\n')}\n`;
 }
 
@@ -83,12 +65,13 @@ function safeRelativeArtifactPath(value) {
     && /^Logs\/post-merge-cleanup-\d{8}T\d{6}Z\.json$/.test(value);
 }
 
-export function prepareCleanupReport(report, artifactPath) {
-  if (!safeRelativeArtifactPath(artifactPath)) {
+export function prepareCleanupReport(report, rawArtifactPath) {
+  if (!safeRelativeArtifactPath(rawArtifactPath)) {
     throw new InvalidCleanupReport('Cleanup artifact path must be the expected relative Logs path');
   }
+  const artifactPath = rawArtifactPath.replace(/\.json$/, '-summary.json');
   return {
-    ...inspectCleanupReport(report),
+    aggregate: aggregateCleanupReport(report),
     artifactPath,
   };
 }
@@ -98,17 +81,36 @@ function main(argv = process.argv.slice(2), env = process.env) {
     throw new InvalidCleanupReport('Usage or Actions output destination is invalid');
   }
 
-  const artifactPath = argv[0];
-  let report;
+  const rawArtifactPath = argv[0];
   try {
-    report = JSON.parse(readFileSync(artifactPath, 'utf8'));
-  } catch {
-    throw new InvalidCleanupReport('Cleanup report is not valid JSON');
-  }
+    let report;
+    try {
+      report = JSON.parse(readFileSync(rawArtifactPath, 'utf8'));
+    } catch {
+      throw new InvalidCleanupReport('Cleanup report is not valid JSON');
+    }
 
-  const prepared = prepareCleanupReport(report, artifactPath);
-  appendFileSync(env.GITHUB_OUTPUT, outputLines(prepared, artifactPath), { encoding: 'utf8' });
-  return prepared.publishable ? 0 : 2;
+    const prepared = prepareCleanupReport(report, rawArtifactPath);
+    writeFileSync(
+      prepared.artifactPath,
+      `${JSON.stringify(prepared.aggregate, null, 2)}\n`,
+      { encoding: 'utf8' },
+    );
+    appendFileSync(
+      env.GITHUB_OUTPUT,
+      outputLines(prepared.aggregate, prepared.artifactPath),
+      { encoding: 'utf8' },
+    );
+    return 0;
+  } finally {
+    // Raw operational evidence is private-by-construction. Delete it on every
+    // path, including malformed input and output-write failure.
+    try {
+      unlinkSync(rawArtifactPath);
+    } catch {
+      // Absence is already the desired terminal state.
+    }
+  }
 }
 
 const invokedAsScript = process.argv[1]
