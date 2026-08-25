@@ -8,6 +8,7 @@
 import type { AsyncState } from '../state/async-state';
 import type { ReadApiResponse, StatementRecord, EvidenceLink, ConceptEdge, AgendaItemMember, AgendaThreadResponse } from '../types/read-api';
 import { stateView, trustLabel, recordTone, isAiProduced, readyHeaderMessage, FIXTURE_BANNER_TEXT, AI_LABEL_TEXT } from './state-view';
+import type { StateSurface } from './state-view';
 import { trustLegend, LEGEND_TITLE } from './legend';
 import { drawerFields, relatedLinksFor, verbatimLabel, confidenceLabel, speakerLabel, provenanceBadge } from './statement-presenter';
 import {
@@ -63,6 +64,13 @@ export interface RecordSurfaceInfoOptions {
    * shared empty state because `AsyncState` deliberately drops that payload.
    */
   access?: ReadApiResponse['access'];
+  /**
+   * Route-specific loading/empty/error/ready wording (GOV-2261). Defaults to the
+   * timeline surface so existing callers are unchanged; context projections
+   * (`/body`, `/meeting`) pass their own so a forced state names the requested
+   * surface instead of "the timeline".
+   */
+  surface?: StateSurface;
 }
 
 function recordSurfaceHeading(
@@ -895,7 +903,7 @@ export function render(
   info: RecordSurfaceInfoOptions = {},
 ): void {
   ensureStyle();
-  const view = stateView(state, notice);
+  const view = stateView(state, notice, info.surface);
   const access = state.status === 'ready' && state.data
     ? state.data.access
     : info.access;
