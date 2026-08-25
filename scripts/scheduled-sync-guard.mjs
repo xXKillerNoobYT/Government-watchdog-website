@@ -120,10 +120,13 @@ const SECRET_LIKE = [
  * Reduce any raw provider text to a safe single line. We never echo the payload;
  * we emit only the classification and, when present, the parsed reset wall-clock.
  * Everything else is dropped, not merely masked, so a novel secret shape can't
- * ride through in an unexpected field.
+ * ride through in an unexpected field. `nowMs` is threaded to
+ * `classifyProviderError` so the reset year is chosen relative to the caller's
+ * clock, never `Date.now()` at read time — the output is fully deterministic
+ * under a fixed `nowMs` and cannot rot as wall-clock time passes.
  */
-export function sanitizeForOperator(rawMessage) {
-  const cls = classifyProviderError(rawMessage);
+export function sanitizeForOperator(rawMessage, nowMs = Date.now()) {
+  const cls = classifyProviderError(rawMessage, nowMs);
   if (cls.kind === 'weekly_limit_exhausted') {
     return cls.resetInstantMs != null
       ? `weekly model allowance exhausted; resets ${formatInZone(cls.resetInstantMs)}`
@@ -442,7 +445,7 @@ function main(argv) {
     };
     const before = loadLedger();
     const { ledger, created } = upsertDeferral(before, entry);
-    const summary = sanitizeForOperator(raw);
+    const summary = sanitizeForOperator(raw, nowMs);
     if (!apply) {
       logLine('INFO', `dry-run: would ${created ? 'record' : 'keep existing'} deferral lane=${lane} (${summary}); catch-up ${formatInZone(entry.catchUpPulseMs)}`, nowMs);
       process.exit(0);

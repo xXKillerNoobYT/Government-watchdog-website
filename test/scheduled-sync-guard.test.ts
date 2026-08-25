@@ -191,7 +191,10 @@ describe('sanitized operator output (AC6)', () => {
       "Internal error at /Users/someone/private/path token=ghp_ABCDEFGHIJKLMNOP1234567890 " +
       "for admin@example.gov https://api.internal/quota — You've hit your weekly limit " +
       "· resets Aug 24 at 10am (America/Denver)";
-    const clean = sanitizeForOperator(dirty);
+    // Drive with a fixed observation instant so the resolved reset year is
+    // deterministic and this assertion cannot rot into 2027 as wall-clock time
+    // passes (the sanitizer no longer reads Date.now() — see the case below).
+    const clean = sanitizeForOperator(dirty, OBSERVED_MS);
     expect(clean).toContain('weekly model allowance exhausted');
     expect(clean).toContain('resets 2026-08'); // reset wall-clock survives
     expect(hasSecretLikeContent(clean)).toBe(false);
@@ -199,6 +202,19 @@ describe('sanitized operator output (AC6)', () => {
     for (const secret of ['/Users/someone', 'ghp_', 'admin@example.gov', 'https://', 'api.internal']) {
       expect(clean).not.toContain(secret);
     }
+  });
+
+  it('resolves the reset year from the supplied nowMs, not the wall clock (no time-bomb)', () => {
+    // The same message observed a year later resolves to the year that tracks
+    // nowMs. This proves the sanitizer is clock-independent: its output is a
+    // pure function of (message, nowMs), so it can never turn CI red on its own
+    // as real time advances — the defect VSR flagged on 2026-08-25.
+    const nextYearObserved = zonedWallClockToInstantMs(
+      { year: 2027, month: 8, day: 20, hour: 8, minute: 23 },
+      RESET_TIME_ZONE,
+    );
+    expect(sanitizeForOperator(QUOTA_MSG, OBSERVED_MS)).toContain('resets 2026-08');
+    expect(sanitizeForOperator(QUOTA_MSG, nextYearObserved)).toContain('resets 2027-08');
   });
 
   it('withholds detail entirely for a non-quota failure', () => {
