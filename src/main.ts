@@ -54,6 +54,7 @@ import {
   renderGatedUpload,
   createHttpIntakeTransport,
   DEFAULT_INTAKE_CONSTRAINTS,
+  UPLOAD_COPY,
   type UploadPhase,
 } from './ui/gated-upload';
 import type { UploadReviewState } from './types/upload-intake';
@@ -862,7 +863,17 @@ function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
   const rstatus = query.get('rstatus');
   const forcedReceiptStatus: UploadReviewState | undefined =
     rstatus === 'received' || rstatus === 'review_pending' || rstatus === 'held' ? rstatus : undefined;
-  renderGatedUpload(mount, {
+  // GOV-2256 — restore the descriptive route-level `h1` and a purpose-specific,
+  // keyboard/touch-accessible contextual note (regression of closed #64/#53). The
+  // heading + note live in the route wrapper, OUTSIDE the surface's swappable body,
+  // so they persist across every upload phase (idle, validating, uploading,
+  // received, held, error) with exactly one `h1` and no duplicate accessible name —
+  // the surface no longer renders its own heading (see `renderGatedUpload`).
+  mount.replaceChildren();
+  mount.append(contextualRouteHeading(UPLOAD_COPY.heading, 'upload-overview', 'upload'));
+  const surface = el('div', { 'data-test': 'upload-route-body' });
+  mount.append(surface);
+  renderGatedUpload(surface, {
     transport: createHttpIntakeTransport(),
     constraints: DEFAULT_INTAKE_CONSTRAINTS,
     forcedPhase,
