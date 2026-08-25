@@ -798,7 +798,15 @@ export const STYLE = `${GW_TOKENS}
 .gw-thread{border:var(--gw-border-w) solid var(--gw-border);background:var(--gw-surface-subtle);border-radius:var(--gw-radius);padding:.7rem .9rem;margin:var(--gw-space-3) 0}
 .gw-thread h2{font-size:1rem;margin:.2rem 0 .35rem}
 .gw-completeness{margin:.2rem 0 var(--gw-space-3)}
-.gw-completeness-badge{font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:nowrap;border:var(--gw-border-w) solid}
+/* GOV-2260 — a long backend-supplied gap status (e.g. "gaps (unreviewed
+   instance, missing minutes/transcript)") stayed on one line at nowrap and grew
+   the pill to ~362px, pushing the document past a 320/390px viewport into
+   horizontal scroll. The badge is now a bounded inline-block that wraps within
+   its container: max-width:100% keeps it inside the card, white-space:normal
+   lets the label flow onto multiple lines, and overflow-wrap:break-word breaks
+   an over-long token rather than overflowing. The supplied text renders verbatim
+   — nothing is truncated, suppressed, or recomputed. */
+.gw-completeness-badge{display:inline-block;max-width:100%;font-size:var(--gw-text-badge);line-height:1.3;font-weight:700;border-radius:var(--gw-radius-pill);padding:.15rem .55rem;white-space:normal;overflow-wrap:break-word;border:var(--gw-border-w) solid}
 .gw-completeness-complete{background:var(--gw-ok-bg);color:var(--gw-ok-text);border-color:var(--gw-ok-text)}
 .gw-completeness-gaps{background:var(--gw-stop-bg);color:var(--gw-stop-text);border-color:var(--gw-stop-border)}
 .gw-completeness-unknown{background:var(--gw-surface-accent-tint);color:var(--gw-text-secondary);border-color:var(--gw-border-strong)}
