@@ -1,6 +1,4 @@
 import { afterEach, describe, expect, it } from 'vitest';
-// @ts-expect-error The repo deliberately carries no global Node typings; this
-// test needs only the executable subprocess seam for denial-before-mutation.
 import { execFileSync } from 'node:child_process';
 import {
   existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,

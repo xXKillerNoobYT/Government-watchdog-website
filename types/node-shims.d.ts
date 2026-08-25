@@ -10,6 +10,17 @@
  *
  * So: declare exactly the members used, and nothing else. Adding a member here
  * should feel like a small deliberate decision, which is the point.
+ *
+ * WHY `node:child_process` IS declared (GOV-2275 / WEB#254): the two subprocess
+ * tests used `@ts-expect-error` on their `node:child_process` imports because the
+ * repo carries no Node typings. But `vite/client` transitively references
+ * `@types/node`, so in a nested automation worktree TypeScript would resolve an
+ * *ancestor* `@types/node`, type `node:child_process`, make those suppressions
+ * unused, and fail the required typecheck with TS2578 — while an isolated
+ * checkout passed. `typeRoots` can't fix this without breaking `vite/client`.
+ * Declaring the exact two subprocess members here makes resolution deterministic:
+ * typecheck now behaves identically with or without ancestor Node typings, and no
+ * environment-dependent suppression is needed.
  */
 
 declare module 'node:fs' {
@@ -36,4 +47,19 @@ declare module 'node:fs/promises' {
 
 declare module 'node:url' {
   export function fileURLToPath(url: string | URL): string;
+}
+
+declare module 'node:child_process' {
+  interface NarrowSubprocessOptions {
+    cwd?: string;
+    encoding?: 'utf8';
+    env?: Record<string, string | undefined>;
+    stdio?: 'pipe' | 'inherit' | 'ignore';
+  }
+  export function spawnSync(command: string, args?: string[], options?: NarrowSubprocessOptions): {
+    status: number | null;
+    stdout: string;
+    stderr: string;
+  };
+  export function execFileSync(command: string, args?: string[], options?: NarrowSubprocessOptions): string;
 }

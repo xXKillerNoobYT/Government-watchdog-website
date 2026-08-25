@@ -2,8 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-// @ts-expect-error The repository intentionally carries no global Node typings;
-// this test needs only the executable subprocess seam for output-boundary proof.
 import { spawnSync } from 'node:child_process';
 
 declare const process: {
