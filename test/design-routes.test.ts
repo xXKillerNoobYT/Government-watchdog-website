@@ -315,6 +315,21 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     });
 
+    // GOV-2272: /sources is the canonical ALIAS of /vault — same handler, same renderer, same
+    // `designPreviewActive(query)`. Navigating to a BARE `#/sources` (no query) exercises the
+    // tab-sticky carry from the report: the design preview set on an earlier route must make the
+    // shell declare fixture origin here too, alongside the page's synthetic version-compare diff.
+    // Before the fix the shell announced `live_server` on /sources while /vault reported fixture.
+    window.location.hash = '#/sources';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+      // The synthetic version-compare diff renders after the reviewer read resolves; assert it
+      // and the shell origin together so a future regression cannot split shell from content.
+      expect(app.querySelector('[data-test="source-version-compare-fixture"]')).not.toBeNull();
+    });
+
     // GOV-163 closed the last gap, so this group is no longer a list of routes awaiting a
     // fixture — it is a COMPLETENESS guard. An enumerated "not yet" list shrinks to nothing
     // and silently stops testing anything (it was down to one entry before this change).
@@ -336,6 +351,26 @@ describe('MOTY design-handoff route integration', () => {
         `${route} is canonical but is not in SHELL_DESIGN_FIXTURE_ROUTES, so the shell would `
         + `announce live_server over a design fixture`,
       ).toContain(`'${route}'`);
+    }
+
+    // GOV-2272: /sources is a canonical ALIAS of /vault — both register the identical Source
+    // Vault handler. The loop above iterates the ten baseline pages and so does NOT cover the
+    // alias; that gap let the shell announce live_server over the /sources design fixture while
+    // /vault correctly reported fixture. Guard the alias against its primary in EVERY fixture
+    // route set so renderer and shell can never diverge for /vault versus /sources again.
+    const sampleDeclared = mainSource.slice(
+      mainSource.indexOf('const SHELL_SAMPLE_FIXTURE_ROUTES'),
+      mainSource.indexOf(']);', mainSource.indexOf('const SHELL_SAMPLE_FIXTURE_ROUTES')),
+    );
+    expect(sampleDeclared).toContain('SHELL_SAMPLE_FIXTURE_ROUTES');
+    for (const [setName, setSource] of [
+      ['SHELL_DESIGN_FIXTURE_ROUTES', declared],
+      ['SHELL_SAMPLE_FIXTURE_ROUTES', sampleDeclared],
+    ] as const) {
+      expect(
+        setSource.includes("'/sources'"),
+        `${setName}: /sources must be classified identically to its /vault alias`,
+      ).toBe(setSource.includes("'/vault'"));
     }
   });
 
@@ -406,6 +441,9 @@ describe('MOTY design-handoff route integration', () => {
     const fixtureRoutes = [
       ['/app', 'sample'],
       ['/vault', 'sample'],
+      // GOV-2272: /sources is the /vault alias and shares SHELL_SAMPLE_FIXTURE_ROUTES, so its
+      // explicit sample lane must report fixture identically to /vault above.
+      ['/sources', 'sample'],
       ['/timeline-legacy', 'complete'],
       ['/timeline-legacy', 'matrix'],
       ['/timeline-legacy', 'provenance'],
@@ -424,6 +462,9 @@ describe('MOTY design-handoff route integration', () => {
       ['/newsletter', 'sample'],
       ['/cards', 'sample'],
       ['/power', 'live'],
+      // GOV-2272: a reviewed Sources route without a fixture flag must still declare
+      // live-server context — the alias fix must not over-classify the normal reviewed lane.
+      ['/sources', 'live'],
     ] as const;
     for (const [route, demo] of liveRoutes) {
       window.location.hash = `#${route}?reviewer=1&demo=${demo}`;
