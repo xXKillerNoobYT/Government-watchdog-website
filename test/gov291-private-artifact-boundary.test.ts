@@ -224,4 +224,16 @@ describe('issue #291 private-runtime artifact boundary', () => {
     expect(source).toContain("mkdtempSync(join(REPO_ROOT, '.artifact-stage-'))");
     expect(source).toContain('installVerifiedArtifact(candidateDir)');
   });
+
+  it('documents only supported local private-runtime integration inputs', () => {
+    const template = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+    expect(template).not.toContain('GW_BACKEND_DEPLOY_TOKEN');
+    expect(template).not.toContain('LANDING_ONLY');
+    expect(template).toContain('BACKEND_REF=local:/absolute/path/to/Government-Watchdog');
+    expect(template).toContain('GW_DEMO_DB=/absolute/path/to/registry.db');
+    expect(template).toContain('GW_BACKEND_CHECKOUT=/absolute/path/to/Government-Watchdog');
+    expect(template).toContain('GW_SERVICE_PORT=8791');
+    expect(template).toContain('npm run build');
+    expect(template).toContain('npm run e2e:local');
+  });
 });
