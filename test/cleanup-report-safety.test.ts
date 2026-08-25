@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-// @ts-expect-error The repository intentionally carries no global Node typings;
-// this test needs only the executable subprocess seam for output-boundary proof.
+// The subprocess seam is declared in types/node-shims.d.ts (GOV-2275) so this
+// import resolves locally rather than against any ancestor @types/node.
 import { spawnSync } from 'node:child_process';
 
 declare const process: {
