@@ -1122,6 +1122,15 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // `live_server` while the page rendered a synthetic diff — the exact shell/content
   // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
   '/vault',
+  // GOV-2272: `/sources` is the registered nav alias of `/vault` (shell.ts NAV_TABS
+  // `also: ['/sources']`) and calls the SAME Source Vault renderer, so it can show the
+  // same synthetic version-compare fixture. It was present in SHELL_SAMPLE_FIXTURE_ROUTES
+  // but omitted here, so a tab-sticky design preview carried to `#/sources` rendered the
+  // synthetic diff under a shell still announcing `live_server` — the identical
+  // shell/content honesty regression as the GOV-82 case above, on the alias twin. The
+  // completeness sweep below iterates canonical routes only, which is why an alias drifted
+  // silently; the alias-parity test added in this change closes that gap.
+  '/sources',
   '/agenda',
   '/timeline',
   // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84

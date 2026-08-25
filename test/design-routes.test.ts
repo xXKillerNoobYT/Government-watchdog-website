@@ -315,6 +315,19 @@ describe('MOTY design-handoff route integration', () => {
         .toBe('fixture');
     });
 
+    // GOV-2272: `/sources` is the nav alias of `/vault` (NAV_TABS `also: ['/sources']`) and
+    // shares the Source Vault renderer, so under the same design flag it renders the same
+    // synthetic diff. The shell MUST declare fixture origin on the alias too — it previously
+    // announced `live_server` over the synthetic content because `/sources` was omitted from
+    // SHELL_DESIGN_FIXTURE_ROUTES while its `/vault` twin was present. Aliases escape the
+    // canonical-route completeness sweep below, so this asserts alias parity directly.
+    window.location.hash = '#/sources?demo=design';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await vi.waitFor(() => {
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+    });
+
     // GOV-163 closed the last gap, so this group is no longer a list of routes awaiting a
     // fixture — it is a COMPLETENESS guard. An enumerated "not yet" list shrinks to nothing
     // and silently stops testing anything (it was down to one entry before this change).
