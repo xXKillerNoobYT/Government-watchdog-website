@@ -37,3 +37,33 @@ declare module 'node:fs/promises' {
 declare module 'node:url' {
   export function fileURLToPath(url: string | URL): string;
 }
+
+/**
+ * Declaring the two synchronous subprocess seams here is what keeps this repo's
+ * typecheck deterministic. Because a matching ambient module is already in the
+ * program, TypeScript resolves `node:child_process` against THIS declaration and
+ * never walks up `node_modules` to an unrelated ancestor `@types/node`. Without
+ * it, a nested worktree whose parent tree happens to carry `@types/node` would
+ * resolve these imports there instead — pulling that package's global
+ * augmentations into scope and making typecheck depend on the surrounding
+ * filesystem (GOV-2275 / website #254). Keep the surface as narrow as every other
+ * shim above: only the members the build-time subprocess tests actually call.
+ */
+declare module 'node:child_process' {
+  interface SyncSubprocessOptions {
+    cwd?: string;
+    env?: Record<string, string | undefined>;
+    encoding?: 'utf8';
+    stdio?: 'pipe' | 'inherit' | 'ignore';
+  }
+  export function spawnSync(
+    command: string,
+    args?: string[],
+    options?: SyncSubprocessOptions,
+  ): { status: number | null; stdout: string; stderr: string };
+  export function execFileSync(
+    command: string,
+    args?: string[],
+    options?: SyncSubprocessOptions,
+  ): string;
+}
