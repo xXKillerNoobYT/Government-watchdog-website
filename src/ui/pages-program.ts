@@ -955,17 +955,17 @@ function flattenTopics(node: TopicTreeNode): TopicTreeNode[] {
   return [node, ...node.children.flatMap(flattenTopics)];
 }
 
-const BOARDS_VAULT_FIDELITY_STYLE = `
+export const BOARDS_VAULT_FIDELITY_STYLE = `
 .gw-boards-contract-directory,.gw-boards-contract-detail,.gw-vault-contract-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-4);background:var(--gw-board-bg);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-4)}
 .gw-boards-contract-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-2);padding:var(--gw-space-2);background:var(--gw-surface);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius)}
 .gw-supplied-files-group{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-3)}
 .gw-supplied-files-group>.gw-card{min-width:0}
-.gw-supplied-files-group>.gw-card a{display:inline-block;margin-right:var(--gw-space-4)}
+.gw-supplied-files-group>.gw-card a{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);margin-right:var(--gw-space-4)}
 .gw-supersede-card{display:grid;gap:var(--gw-space-3);min-width:0}
 .gw-supersede-card[data-flagged="true"]{border-color:var(--gw-caution-text-strong)}
 .gw-supersede-flag{margin:0;font:700 var(--gw-text-badge)/1.3 var(--gw-font);color:var(--gw-caution-text-strong);background:var(--gw-caution-bg-soft);border:var(--gw-border-w) solid var(--gw-caution-text-strong);border-radius:var(--gw-radius);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-supersede-card .gw-vault-contract-diff-pane[data-state="pending"]{background:var(--gw-caution-bg-soft)}
-.gw-supersede-card .gw-vault-contract-diff-pane a{display:inline-block;margin-top:var(--gw-space-2)}
+.gw-supersede-card .gw-vault-contract-diff-pane a{display:inline-flex;align-items:center;min-height:var(--gw-tap-min);margin-top:var(--gw-space-2)}
 .gw-boards-contract-tab,.gw-boards-contract-tool,.gw-vault-contract-tool{min-height:var(--gw-tap-min);font:700 var(--gw-text-badge)/1.2 var(--gw-font);border:var(--gw-border-w) solid var(--gw-border);border-radius:var(--gw-radius);background:var(--gw-card-bg);color:var(--gw-text-secondary);padding:var(--gw-space-2) var(--gw-space-3)}
 .gw-boards-contract-tab:disabled,.gw-boards-contract-tool:disabled,.gw-vault-contract-tool:disabled{cursor:not-allowed;opacity:.78}
 .gw-boards-contract-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gw-space-3)}
