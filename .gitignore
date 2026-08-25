@@ -39,3 +39,7 @@ gw-web-artifact-*.tar.gz
 # GOV-2208 — python bytecode from the gpt_review lane + its tests
 __pycache__/
 *.pyc
+
+# graphify code-graph output is per-working-copy scratch (AST cache + generated
+# report/graph), rebuilt by `graphify update .` — never source, never committed.
+/graphify-out/
