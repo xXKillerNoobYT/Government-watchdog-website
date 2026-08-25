@@ -1121,7 +1121,15 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // version-compare fixture shipped WITHOUT adding the route here, so the shell declared
   // `live_server` while the page rendered a synthetic diff — the exact shell/content
   // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
+  //
+  // GOV-2272: `/sources` is the canonical ALIAS of `/vault` — both register the identical
+  // Source Vault handler and pass `designPreviewActive(query)` to the same renderer. `/vault`
+  // was listed here; `/sources` was not, so a tab-sticky design preview carried to `#/sources`
+  // rendered the synthetic version-compare fixture while the shell still announced
+  // `live_server`. The alias must be classified identically to its primary — the parity is
+  // guarded by test/design-routes.test.ts so the two can never diverge again.
   '/vault',
+  '/sources',
   '/agenda',
   '/timeline',
   // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84
