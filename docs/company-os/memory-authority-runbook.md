@@ -135,10 +135,31 @@ thread, not here — this repo is public):
 1. The daily 24/7 backend routine's per-beat sweep step now runs the conflict scan in its
    **default dry-run** mode, explicitly forbids `--apply`, emits the report to the run
    log / Notion, and **stops and escalates** rather than mutating the frozen vault.
-2. The AutomationOps backup workflow (and the agent's domain sheet) now name a **non-vault**
-   backup destination; the frozen vault is retired as a backup write target.
+2. **All three** AutomationOps instruction surfaces that named a backup destination now name
+   the **non-vault** location; the frozen vault is retired as a backup write target. The
+   re-point covers the backup-workflow playbook (`AUTOMATION_OPS_WORKFLOWS.md`), the agent
+   domain sheet (`AGENTS.md`), **and** the company source-of-truth sheet (`COMPANY.md`). The
+   last was missed in the first pass and re-pointed on VSR re-review — see the coverage note
+   below for why the automated audit did not catch it.
 
-**Verified after applying:** `node scripts/check-no-frozen-memory-writes.mjs --audit-local
---strict-local` exits `0` — *no* machine-local scheduled routine carries a frozen-store
-write step. The audit is a pure read; applying the fix published nothing, deployed nothing,
-changed no visibility, and exposed no private memory.
+**Verified after applying — two distinct checks, because two distinct surfaces changed:**
+
+- *Scheduled-routine store (executable sweep step):*
+  `node scripts/check-no-frozen-memory-writes.mjs --audit-local --strict-local` exits `0` —
+  *no* machine-local scheduled routine carries a frozen-store write step.
+- *Static instruction sheets (backup-destination declarations):* a direct sweep —
+  `grep -rn "Paperclip-Backups" <instruction dir> | grep "Obsidian Vault" | grep -v retired`
+  — returns **no match**: every remaining vault mention is an explicitly-retired annotation,
+  not an active write target.
+
+Both checks are pure reads; applying the fix published nothing, deployed nothing, changed no
+visibility, and exposed no private memory.
+
+> **Coverage note (why the first pass missed `COMPANY.md`).** `--audit-local` scans only the
+> scheduled-routine `SKILL.md` store and fires only on a frozen-store reference paired with an
+> explicit **mutation verb**. A *verb-less* destination line — `backups: <vault path>` in a
+> static instruction sheet — is neither a `SKILL.md` file nor verb-bearing, so it escapes the
+> audit by design. The audit's exit-0 therefore proves the executable routines are clean; it
+> is **not** proof that the instruction sheets are clean. That second surface is covered by the
+> `grep` sweep above, which is the check that must accompany any future backup-destination
+> re-point.
