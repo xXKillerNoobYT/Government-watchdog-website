@@ -123,3 +123,22 @@ frozen store. No live routine was mutated, so there is nothing to restore.
 `node scripts/check-no-frozen-memory-writes.mjs --audit-local`. Before the owner applies the
 fix it lists the live drift; after the owner applies the §3 replacement it reports the
 machine-local store clean. Neither run writes anything.
+
+### 5.1 Resolution — owner-authorized and applied (2026-08-25)
+
+The owner accepted the direction request (Paperclip GOV-2258 confirmation
+`confirmation:GOV-2258:memory-authority-live-apply`): **adopt the §3 read-only/report-only
+replacement and re-point AutomationOps backups off the vault.** With that "yes", the three
+machine-local instruction surfaces were updated (locators live on the private Paperclip
+thread, not here — this repo is public):
+
+1. The daily 24/7 backend routine's per-beat sweep step now runs the conflict scan in its
+   **default dry-run** mode, explicitly forbids `--apply`, emits the report to the run
+   log / Notion, and **stops and escalates** rather than mutating the frozen vault.
+2. The AutomationOps backup workflow (and the agent's domain sheet) now name a **non-vault**
+   backup destination; the frozen vault is retired as a backup write target.
+
+**Verified after applying:** `node scripts/check-no-frozen-memory-writes.mjs --audit-local
+--strict-local` exits `0` — *no* machine-local scheduled routine carries a frozen-store
+write step. The audit is a pure read; applying the fix published nothing, deployed nothing,
+changed no visibility, and exposed no private memory.
