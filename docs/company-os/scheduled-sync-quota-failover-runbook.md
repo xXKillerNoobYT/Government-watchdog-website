@@ -107,17 +107,38 @@ reaches the ledger or the log. Verified by the leak assertions in the test.
 
 ---
 
-## 4. Where the preflight is invoked — owner-delegated, escalated separately
+## 4. Where the preflight is invoked — wired (Option A), one residual escalated
 
 The deterministic core lives in this (public) repo and is fully tested. **Wiring
-it into the machine-local control-plane** — having the ACPX/Codex scheduler call
-the preflight before it spawns a GOV scheduled run, and call catch-up on the
-reset pulse — is owner-delegated machine-local configuration
-(`~/.claude/scheduled-tasks/…`), which an agent inside one of those runs must not
-silently rewrite (same boundary as GOV-2258). That wiring is tracked as a
-delegated follow-up to **CEO/owner**, with this runbook and the guard as the
-ready-made building block. Until it is wired, a scheduled run can still call the
-guard by hand per §3, and the behavior is identical.
+it into the machine-local control-plane** — having the scheduled GOV run call the
+preflight before it works, and call catch-up on the reset pulse — is owner-delegated
+machine-local configuration (`~/.claude/scheduled-tasks/…`), which an agent inside
+one of those runs must not silently rewrite (same boundary as GOV-2258).
+
+**Status (2026-08-27, GOV-2298):** wired under owner-accepted **Option A** (defer,
+fallback OFF). An additive `STEP 0 — Scheduled-sync quota preflight` block was
+prepended to both GOV scheduled entries —
+`~/.claude/scheduled-tasks/auto-go-gov-website/SKILL.md` (lane `gov-website`) and
+`…/auto-go-gov-backend/SKILL.md` (lane `gov-backend`). Each runs
+`--preflight --lane <lane>` first and obeys the printed `action` verbatim
+(`proceed`/`wait_deferred`/`defer`/`catch_up`), records one durable deferral on a
+weekly-limit hit (`--record-deferral … --apply`, idempotent), and reconciles due
+lanes on the reset pulse. **`--fallback-available` is never passed**, so no
+model-switch/extra-spend path exists (the Option A guarantee). The wiring is
+additive (the original iteration body is unchanged beneath STEP 0), fail-open (if
+the guard file is absent it emits `{"action":"proceed"}` and runs normally), and
+reversible (timestamped `SKILL.md.bak-GOV-2298-*` backups beside each entry). It
+does **not** change any task's enabled/disabled state. Full what/where/revert:
+the machine-local note `~/.claude/scheduled-tasks/GOV-2298-quota-preflight-wiring.md`.
+
+**One residual, owner/CEO-delegated:** the SKILL.md-layer hook fires only after the
+run's agent has spawned and can run one `node` command. The original failure mode
+(`acpx_turn_failed`, turn dies < 4 s when the ACPX/Codex adapter selects an
+already-exhausted model) can pre-empt STEP 0. A true **pre-spawn** hook inside the
+ACPX/Codex scheduler — running the preflight before adapter selection — remains a
+delegated follow-up; the lane ids and ledger above are its ready-made building
+block. A scheduled run can also always call the guard by hand per §3; the behavior
+is identical.
 
 ---
 
