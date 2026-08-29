@@ -39,3 +39,9 @@ gw-web-artifact-*.tar.gz
 # GOV-2208 — python bytecode from the gpt_review lane + its tests
 __pycache__/
 *.pyc
+
+# GOV-2274 — sanitized backend-evidence bundle read from the PRIVATE backend by
+# scripts/backend-evidence-sync.mjs. Carries private-repo issue/PR titles for
+# triage; it is NEVER committed to this PUBLIC repo. Default write target when no
+# scratch dir / --out is given.
+/.backend-evidence/
