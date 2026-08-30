@@ -163,7 +163,13 @@ export interface UploadIntakeTransport {
    * Attempt an authenticated intake. Always resolves to an {@link IntakeOutcome}
    * (never rejects — a thrown/unknown failure is caught as fail-closed). `source`
    * carries the raw bytes to stream; it is absent only for the scaffold path,
-   * which ignores it and always fails closed.
+   * which ignores it and always fails closed. `signal` lets an interactive
+   * caller retire an in-flight transfer. Transport abortion is best-effort;
+   * callers must still reject completion from a retired operation.
    */
-  submit(staged: StagedUpload, source?: IntakeBytesSource): Promise<IntakeOutcome>;
+  submit(
+    staged: StagedUpload,
+    source?: IntakeBytesSource,
+    signal?: AbortSignal,
+  ): Promise<IntakeOutcome>;
 }
