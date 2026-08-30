@@ -56,6 +56,35 @@ function fakeTransport(outcome: Awaited<ReturnType<UploadIntakeTransport['submit
   return { wired: true, async submit() { return outcome; } };
 }
 
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve(value: T): void;
+} {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => { resolve = next; });
+  return { promise, resolve };
+}
+
+function stageValidUpload(root: HTMLElement, name = 'minutes.pdf'): void {
+  const fileInput = root.querySelector('[data-test="upload-file-input"]') as HTMLInputElement;
+  const file = new File(['source bytes'], name, { type: 'application/pdf' });
+  Object.defineProperty(fileInput, 'files', { configurable: true, value: [file] });
+  fileInput.dispatchEvent(new Event('change'));
+
+  const origin = root.querySelector('[data-test="upload-provenance-origin"]') as HTMLInputElement;
+  origin.value = 'Town clerk email';
+  origin.dispatchEvent(new Event('input'));
+
+  const kind = root.querySelector('[data-test="upload-provenance-description"]') as HTMLSelectElement;
+  kind.value = 'Meeting minutes';
+  kind.dispatchEvent(new Event('change'));
+}
+
+function submitUpload(root: HTMLElement): void {
+  (root.querySelector('[data-test="upload-form"]') as HTMLFormElement)
+    .dispatchEvent(new Event('submit'));
+}
+
 async function flush(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -239,14 +268,16 @@ describe('GOV-1569 http transport — wired POST to B3, fail-closed', () => {
   it('POSTs the required B3 body with the session cookie, projecting the receipt', async () => {
     const { fetchImpl, calls } = recordingFetch({ status: 201, body: { file_id: 'file-abc', sha256: 'a'.repeat(64), review_state: 'pending', deduped: false } });
     const t = createHttpIntakeTransport({ fetchImpl });
+    const controller = new AbortController();
     expect(t.wired).toBe(true);
-    const outcome = await t.submit(staged(), bytesSource('hello pdf bytes'));
+    const outcome = await t.submit(staged(), bytesSource('hello pdf bytes'), controller.signal);
 
     // One call, to the same-origin B3 route, cookie-bearing, JSON.
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe(INTAKE_UPLOAD_ROUTE);
     expect(calls[0].init.method).toBe('POST');
     expect(calls[0].init.credentials).toBe('include');
+    expect(calls[0].init.signal).toBe(controller.signal);
     expect((calls[0].init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
 
     const sent = JSON.parse(calls[0].init.body as string);
@@ -372,6 +403,86 @@ describe('GOV-1569 render — one honest state at a time', () => {
     expect(root.querySelector('[data-test="upload-error-file"]')).not.toBeNull();
     // The file was never sent (still on the form, not a receipt).
     expect(root.querySelector('[data-test="upload-success-pending"]')).toBeNull();
+  });
+
+  it('cancel aborts the active transport and ignores its late success', async () => {
+    const request = deferred<Awaited<ReturnType<UploadIntakeTransport['submit']>>>();
+    let signal: AbortSignal | undefined;
+    const transport: UploadIntakeTransport = {
+      wired: true,
+      submit: async (_staged, _source, nextSignal) => {
+        signal = nextSignal;
+        return request.promise;
+      },
+    };
+    const root = document.createElement('div');
+    document.body.append(root);
+    renderGatedUpload(root, { transport });
+    stageValidUpload(root);
+    submitUpload(root);
+    await flush();
+
+    (root.querySelector('[data-test="upload-cancel"]') as HTMLButtonElement).click();
+    expect(signal?.aborted).toBe(true);
+    expect(root.querySelector('[data-test="upload-error"]')?.textContent).toMatch(/canceled.*nothing was saved/i);
+    expect(document.activeElement).toBe(root.querySelector('[data-test="upload-retry"]'));
+
+    request.resolve({ ok: true, receipt: { status: 'received' } });
+    await flush();
+    expect(root.querySelector('[data-test="upload-error"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="upload-success-pending"]')).toBeNull();
+    root.remove();
+  });
+
+  it('cancel ignores a late failure from the retired operation', async () => {
+    const request = deferred<Awaited<ReturnType<UploadIntakeTransport['submit']>>>();
+    const transport: UploadIntakeTransport = {
+      wired: true,
+      submit: async () => request.promise,
+    };
+    const root = document.createElement('div');
+    renderGatedUpload(root, { transport });
+    stageValidUpload(root);
+    submitUpload(root);
+    await flush();
+
+    (root.querySelector('[data-test="upload-cancel"]') as HTMLButtonElement).click();
+    request.resolve({ ok: false, rejection: { reason: 'backend_unavailable' } });
+    await flush();
+
+    expect(root.querySelector('[data-test="upload-error"]')?.textContent).toContain(UPLOAD_COPY.cancelError);
+    expect(root.querySelector('[data-test="upload-form"]')).toBeNull();
+  });
+
+  it('a retired response cannot interfere with a newer submission', async () => {
+    const first = deferred<Awaited<ReturnType<UploadIntakeTransport['submit']>>>();
+    const second = deferred<Awaited<ReturnType<UploadIntakeTransport['submit']>>>();
+    let callCount = 0;
+    const transport: UploadIntakeTransport = {
+      wired: true,
+      submit: async () => (++callCount === 1 ? first.promise : second.promise),
+    };
+    const root = document.createElement('div');
+    renderGatedUpload(root, { transport });
+    stageValidUpload(root, 'first.pdf');
+    submitUpload(root);
+    await flush();
+    (root.querySelector('[data-test="upload-cancel"]') as HTMLButtonElement).click();
+    (root.querySelector('[data-test="upload-retry"]') as HTMLButtonElement).click();
+
+    stageValidUpload(root, 'second.pdf');
+    submitUpload(root);
+    await flush();
+    expect(root.querySelector('[data-test="upload-inprogress"]')).not.toBeNull();
+
+    first.resolve({ ok: true, receipt: { status: 'received' } });
+    await flush();
+    expect(root.querySelector('[data-test="upload-inprogress"]')).not.toBeNull();
+    expect(root.querySelector('[data-test="upload-success-pending"]')).toBeNull();
+
+    second.resolve({ ok: true, receipt: { status: 'received' } });
+    await flush();
+    expect(root.querySelector('[data-test="upload-success-pending"]')).not.toBeNull();
   });
 
   it('formatBytes is human + safe on bad input', () => {

@@ -165,5 +165,9 @@ export interface UploadIntakeTransport {
    * carries the raw bytes to stream; it is absent only for the scaffold path,
    * which ignores it and always fails closed.
    */
-  submit(staged: StagedUpload, source?: IntakeBytesSource): Promise<IntakeOutcome>;
+  submit(
+    staged: StagedUpload,
+    source?: IntakeBytesSource,
+    signal?: AbortSignal,
+  ): Promise<IntakeOutcome>;
 }
