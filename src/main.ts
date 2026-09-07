@@ -1150,10 +1150,6 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
   // origin prevents LIVE SERVER CONTEXT from appearing above hypothetical
   // figures and keeps fixture Alerts counts out of this non-alerting surface.
   if (path === '/explainer') return 'product_demo';
-  // An explicit Newsletter snapshot selection is more specific than a sticky design
-  // preview from an earlier route. It remains reviewed-snapshot provenance and never
-  // inherits fixture classification from session presentation state.
-  if (path === '/newsletter' && demo === 'snapshot') return 'reviewed_snapshot';
   const explicitFixture =
     (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
     || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
@@ -1162,7 +1158,14 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
       SHELL_FORCED_STATE_FIXTURE_ROUTES.has(path)
       && ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
     );
-  if ((designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) || explicitFixture) return 'fixture';
+  // A recognized forced state describes the synthetic content actually rendered, so it
+  // remains a fixture even when the broader Newsletter lane is a reviewed snapshot.
+  if (explicitFixture) return 'fixture';
+  // An explicit Newsletter snapshot selection is more specific than a sticky design
+  // preview from an earlier route. It remains reviewed-snapshot provenance and never
+  // inherits fixture classification from session presentation state.
+  if (path === '/newsletter' && demo === 'snapshot') return 'reviewed_snapshot';
+  if (designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) return 'fixture';
   const reviewedSnapshot =
     ((path === '/timeline' || path === '/topics') && demo === 'graph')
     || (path === '/newsletter' && demo === 'snapshot');

@@ -463,6 +463,31 @@ describe('MOTY design-handoff route integration', () => {
       .toContain('demo=snapshot');
   });
 
+  it.each(['loading', 'empty', 'error'] as const)(
+    'keeps the forced newsletter %s state classified as a fixture over snapshot provenance',
+    async (state) => {
+      window.location.hash = `#/newsletter?reviewer=1&demo=snapshot&state=${state}`;
+      await import('../src/main');
+
+      const app = document.querySelector('#app')!;
+      expect(app.querySelector('[data-test="newsletter-state"]')?.getAttribute('data-state'))
+        .toBe(state);
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('fixture');
+    },
+  );
+
+  it('does not classify an unrecognized forced newsletter state as a fixture', async () => {
+    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot&state=not-a-forced-state';
+    await import('../src/main');
+
+    const app = document.querySelector('#app')!;
+    expect(app.querySelector('[data-test="newsletter-state"]')).toBeNull();
+    expect(app.querySelector('[data-test="newsletter-archive"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+      .toBe('reviewed_snapshot');
+  });
+
   it('classifies explicit demos only on routes that actually render those fixtures', async () => {
     window.location.hash = '#/power?reviewer=1';
     await import('../src/main');
