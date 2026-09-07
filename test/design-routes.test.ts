@@ -381,21 +381,86 @@ describe('MOTY design-handoff route integration', () => {
     }
   });
 
-  it('opens the reviewed newsletter archive without guessing a current edition and keeps explicit detail links', async () => {
+  it.each([
+    ['simple', 'snapshot', 'reviewed_snapshot'],
+    ['advanced', 'snapshot', 'reviewed_snapshot'],
+    ['simple', 'design', 'fixture'],
+    ['advanced', 'design', 'fixture'],
+  ] as const)(
+    'follows rendered newsletter links in %s mode without losing the %s lane',
+    async (mode, demo, expectedOrigin) => {
+      localStorage.setItem('gw_home_mode', mode);
+      window.location.hash = `#/newsletter?reviewer=1&demo=${demo}`;
+      await import('../src/main');
+
+      const app = document.querySelector('#app')!;
+      expect(app.getAttribute('data-mode')).toBe(mode);
+      expect(app.querySelector('[data-test="newsletter-archive"]')).not.toBeNull();
+      expect(app.querySelector('[data-test="newsletter-current-edition-unavailable"]')).not.toBeNull();
+      expect(app.querySelector('[data-test="newsletter-baseline-structure"]')).not.toBeNull();
+      expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
+
+      const editionLink = app.querySelector<HTMLAnchorElement>('[data-test="archive-row"]')!;
+      const editionHref = editionLink.getAttribute('href')!;
+      expect(editionHref).toContain(`demo=${demo}`);
+      expect(editionHref).toContain('id=alpine-historical-2026-18');
+      editionLink.click();
+
+      await vi.waitFor(() => {
+        expect(app.querySelector('[data-test="newsletter-detail"]')).not.toBeNull();
+      });
+      expect(app.querySelector('[data-test="newsletter-detail-archive"]')).not.toBeNull();
+      expect(app.querySelector('[data-test="newsletter-archive"]')).toBeNull();
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe(expectedOrigin);
+
+      const archiveLink = app.querySelector<HTMLAnchorElement>('[data-test="back-to-archive"]')!;
+      expect(archiveLink.getAttribute('href')).toContain(`demo=${demo}`);
+      archiveLink.click();
+
+      await vi.waitFor(() => {
+        expect(app.querySelector('[data-test="newsletter-archive"]')).not.toBeNull();
+      });
+      expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
+      expect(app.getAttribute('data-mode')).toBe(mode);
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe(expectedOrigin);
+    },
+  );
+
+  it.each(['missing', 'invalid'] as const)(
+    'keeps the newsletter live contract gap fail-closed when preview selection is %s',
+    async (selection) => {
+      const demo = selection === 'invalid' ? '&demo=not-a-newsletter-lane' : '';
+      window.location.hash = `#/newsletter?reviewer=1${demo}`;
+      await import('../src/main');
+
+      const app = document.querySelector('#app')!;
+      await vi.waitFor(() => {
+        expect(app.querySelector('[data-test="reviewer-projection-gap"]')?.getAttribute('data-projection'))
+          .toBe('newsletter-digest');
+      });
+      expect(app.querySelector('[data-test="newsletter-archive"]')).toBeNull();
+      expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
+      expect(app.querySelector('[data-test="newsletter-design-banner"]')).toBeNull();
+      expect(app.querySelector('[data-fixture]')).toBeNull();
+      expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+        .toBe('live_server');
+    },
+  );
+
+  it('lets an explicit newsletter snapshot override a sticky design-preview session', async () => {
+    sessionStorage.setItem('gw-design-preview', '1');
     window.location.hash = '#/newsletter?reviewer=1&demo=snapshot';
     await import('../src/main');
 
     const app = document.querySelector('#app')!;
     expect(app.querySelector('[data-test="newsletter-archive"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="newsletter-current-edition-unavailable"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="newsletter-baseline-structure"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="newsletter-detail"]')).toBeNull();
-
-    window.location.hash = '#/newsletter?reviewer=1&demo=snapshot&id=alpine-historical-2026-18';
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(app.querySelector('[data-test="newsletter-detail"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="newsletter-detail-archive"]')).not.toBeNull();
-    expect(app.querySelector('[data-test="newsletter-archive"]')).toBeNull();
+    expect(app.querySelector('[data-test="newsletter-design-banner"]')).toBeNull();
+    expect(app.querySelector('[data-test="shell-origin-banner"]')?.getAttribute('data-origin'))
+      .toBe('reviewed_snapshot');
+    expect(app.querySelector('[data-test="archive-row"]')?.getAttribute('href'))
+      .toContain('demo=snapshot');
   });
 
   it('classifies explicit demos only on routes that actually render those fixtures', async () => {

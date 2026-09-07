@@ -887,7 +887,10 @@ function renderNewsletterRoute(
   // GOV-84: the gated fixture lane. `designPreviewActive` is the same session-sticky
   // reviewer flag the other design routes use; the reviewer half is enforced inside
   // the renderers, which admit only the reviewer lane before rendering anything.
-  const designFixture = designPreviewActive(query);
+  const previewLane = query.get('demo') === 'snapshot'
+    ? 'snapshot'
+    : designPreviewActive(query) ? 'design' : undefined;
+  const designFixture = previewLane === 'design';
   const requestedPublic = query.get('access') === 'public';
   const newsletter = requestedPublic
     ? { ...NEWSLETTER_DIGEST, access: 'public' }
@@ -924,10 +927,10 @@ function renderNewsletterRoute(
   }
   const id = query.get('id');
   if (id) {
-    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE, designFixture);
+    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE, designFixture, previewLane);
     return;
   }
-  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE, designFixture);
+  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE, designFixture, previewLane);
 }
 
 /**
@@ -1147,6 +1150,10 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
   // origin prevents LIVE SERVER CONTEXT from appearing above hypothetical
   // figures and keeps fixture Alerts counts out of this non-alerting surface.
   if (path === '/explainer') return 'product_demo';
+  // An explicit Newsletter snapshot selection is more specific than a sticky design
+  // preview from an earlier route. It remains reviewed-snapshot provenance and never
+  // inherits fixture classification from session presentation state.
+  if (path === '/newsletter' && demo === 'snapshot') return 'reviewed_snapshot';
   const explicitFixture =
     (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
     || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
