@@ -31,6 +31,7 @@ import { hostedReviewerAccessActive } from './gate/hosted-access';
 import { isEmptyResponse } from './data/client';
 import { assertWebSafe } from './data/web-safe';
 import { ensureStyle as ensureRecordStyle, recordCard, render } from './ui/render';
+import { BODY_SURFACE, MEETING_SURFACE } from './ui/state-view';
 import { renderBoards } from './ui/board';
 import { renderHome, renderHomeReadModel } from './ui/home';
 import {
@@ -615,6 +616,7 @@ function renderContextPage(
     render(mount, forced, undefined, {
       infoNoteId: kind === 'body' ? 'body-overview' : 'meeting-overview',
       access: forced.status === 'empty' ? 'reviewer_internal' : undefined,
+      surface: kind === 'body' ? BODY_SURFACE : MEETING_SURFACE,
     });
     return;
   }

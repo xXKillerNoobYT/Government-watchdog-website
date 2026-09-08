@@ -655,3 +655,83 @@ describe('shared reviewer-context route failures', () => {
     expect(reviewerCalls[0]?.[1]?.credentials).toBe('same-origin');
   });
 });
+
+// GOV-2261 (GH WEB#247): the `/body` and `/meeting` context projections reuse the
+// shared timeline state machine, so a forced loading/empty/error state used to
+// read "Fetching the reviewer-internal Alpine timeline." / "Could not load the
+// timeline" — truthful about failure, wrong about the requested surface. These
+// pin route-specific copy in both presentations and prove no record is invented.
+describe('GOV-2261 — context-projection forced states name their own route, not Timeline', () => {
+  const CASES = [
+    {
+      route: '/body',
+      loadingSubject: 'government-body relationship projection',
+      errorHeading: 'Could not load the government body',
+      emptyHeading: 'No government-body records yet',
+      emptyNames: 'government body',
+    },
+    {
+      route: '/meeting',
+      loadingSubject: 'meeting relationship projection',
+      errorHeading: 'Could not load the meeting',
+      emptyHeading: 'No meeting records yet',
+      emptyNames: 'meeting',
+    },
+  ] as const;
+
+  function stateCopy(kind: 'loading' | 'empty' | 'error'): { heading: string; message: string } {
+    const section = document.querySelector<HTMLElement>(`[data-test="state-${kind}"]`);
+    const message = [...(section?.children ?? [])].find((n) => n.tagName === 'P');
+    return {
+      heading: section?.querySelector('.gw-h1')?.textContent ?? '',
+      message: message?.textContent ?? '',
+    };
+  }
+
+  it.each(CASES)(
+    '$route loading/empty/error copy is route-specific and identical in Simple and Advanced',
+    async (c) => {
+      const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        responseLike(200, SUCCESS_ENVELOPE));
+      vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
+
+      replaceHash(`${c.route}?reviewer=1&state=loading`);
+      await import('../src/main');
+      await vi.waitFor(() => {
+        expect(document.querySelector('[data-test="state-loading"]')).not.toBeNull();
+      });
+
+      // Simple and Advanced must yield identical authorization + wording: the
+      // forced state is a pure function of the route, never the presentation.
+      for (const mode of ['advanced', 'simple', 'advanced'] as const) {
+        document
+          .querySelector<HTMLButtonElement>(`[data-test="mode-${mode}"]`)
+          ?.click();
+
+        await navigate(`${c.route}?reviewer=1&state=loading`, '[data-test="state-loading"]');
+        const loading = stateCopy('loading');
+        expect(loading.message, `${c.route} ${mode} loading`).toContain(c.loadingSubject);
+        expect(loading.message.toLowerCase(), `${c.route} ${mode} loading`).not.toContain('timeline');
+
+        await navigate(`${c.route}?reviewer=1&state=error`, '[data-test="state-error"]');
+        const error = stateCopy('error');
+        expect(error.heading, `${c.route} ${mode} error`).toBe(c.errorHeading);
+        expect(error.heading.toLowerCase(), `${c.route} ${mode} error`).not.toContain('timeline');
+
+        await navigate(`${c.route}?reviewer=1&state=empty`, '[data-test="state-empty"]');
+        const empty = stateCopy('empty');
+        expect(empty.heading, `${c.route} ${mode} empty`).toBe(c.emptyHeading);
+        expect(empty.heading.toLowerCase(), `${c.route} ${mode} empty`).not.toContain('timeline');
+        expect(empty.message.toLowerCase(), `${c.route} ${mode} empty`).toContain(c.emptyNames);
+        expect(empty.message.toLowerCase(), `${c.route} ${mode} empty`).not.toContain('timeline');
+
+        // No synthetic fallback or invented civic record in any forced state.
+        expectNoRejectedCivicRows();
+      }
+
+      // Forced states never reach the network — the copy is authored, not fetched.
+      expect(fetchMock.mock.calls.filter(([input]) => input === '/api/reviewer-internal'))
+        .toHaveLength(0);
+    },
+  );
+});
