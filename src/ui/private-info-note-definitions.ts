@@ -100,6 +100,20 @@ export const PRIVATE_INFO_NOTES = {
     limits: 'A URL, local storage value, visual mode, email form, or waitlist submission cannot grant reviewer access.',
     expectedResult: 'A secure sign-in and status flow that reveals no civic data until the server admits the session.',
   },
+  'upload-overview': {
+    // GOV-2256 — the Upload route's contextual guidance. Restores the closed #53
+    // requirement (a purpose-specific note on every route/tool) for the intake
+    // surface, and obeys the upload honesty contract: transfer ≠ processing,
+    // receipt ≠ verification, no content before human review, fail-closed.
+    label: 'About uploading a source file',
+    what: 'This form sends a document you already have to a private review queue. Uploading a file here does not publish it, verify it, or add it as a civic source—it queues it for a reviewer to check.',
+    source: 'The file, plus the two things you enter about it—where it came from and what kind of document it is—are sent over your admitted beta session to a same-origin intake endpoint. Your words are stored verbatim and describe the file, never a civic fact.',
+    filedUnder: 'Account workflow · Private source intake',
+    review: 'A person reviews every uploaded file before anything from it is shown or used. The browser never decides a file is trustworthy, and no content, quote, date, or name from it appears anywhere until that human review happens.',
+    lifecycle: 'Current state: live intake for admitted reviewers. A confirmed upload reaches “received” or “held for additional review”; there is no verified, published, or trusted state you can reach from this form.',
+    limits: 'The form shows which file types and size limit are accepted, and the server—not the browser—enforces them. A receipt confirms only that the file transferred for review; it is never a statement that the document is accurate, complete, official, or approved. If an upload cannot be confirmed, nothing is saved.',
+    expectedResult: 'A queue receipt that the file was received for review, with the origin and kind you entered echoed back—or an honest error explaining that nothing was saved.',
+  },
   'reviewer-context': {
     label: 'About the authorized reviewer record set',
     what: 'Every live private route reads the same memoized, server-authorized Alpine response for this app session.',

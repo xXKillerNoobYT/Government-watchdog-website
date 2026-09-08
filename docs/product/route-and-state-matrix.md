@@ -19,6 +19,7 @@ The current website is an Alpine-only, reviewer-internal/local pilot. `ReadApiRe
 | `#/boards` | `renderBoardsDirectory` | body directory only if public-safe | boards/body detail, source aliases | reviewer gate, no tree, missing selected body, no members |
 | `#/issue?id=` | `renderIssueDetail` | article-style issue story | dossier + event spine + proof rail | reviewer gate, missing id, no source trail, pending/gap/revision |
 | `#/vault` / `#/sources` | `renderSourceVault` | public receipts/source reader | source ledger, validation, revisions, diff, alerts | reviewer gate, no sources, no ledger, no alerts, safe link absent |
+| `#/upload` | `renderUploadRoute` → `renderGatedUpload` | reviewer-only source intake action (not a public reading surface) | same intake form + provenance echo | reviewer gate, idle, validating/error, uploading, received, held |
 | `#/power` | `renderPowerTracker` | methodology-first scorecard only when approved | official/profile ledger only when approved | reviewer gate, no roster, no records, methodology unavailable |
 | `#/watchlist` | `renderWatchlist` | local saved-reading list | alert/history/settings after account design | reviewer gate, empty, local-only, account unavailable |
 | `#/location` | `renderLocation` | coverage choice/readiness | same with saved preferences after approval | reviewer gate, covered, not covered, no persistence |
@@ -66,6 +67,7 @@ Modes may differ in density, hierarchy, card size, number of available filters, 
 ## Existing technical constraints to retain
 
 - `src/ui/shell.ts` already prohibits fake search/alerts and dead navigation.
+- **`#/upload` is intentionally NOT a primary nav tab (GOV-2256).** The owner-approved IA (`NAV_TABS`) is the eight reading surfaces; `#/upload` is a reviewer-only *action* surface, reached contextually rather than by a persistent tab — the same deliberate treatment as Alerts and Location, which are header controls, not tabs. It therefore has no active-tab state, and adding one would create the dead/false-active affordance the shell forbids. Its route identity comes from its own descriptive `h1` and contextual note instead. Whether Upload earns a dedicated discoverability affordance is a UXD IA decision, not a rendering fix.
 - `src/ui/pages-program.ts` explicitly uses reviewer-internal gates and honest empty messages; preserve those invariants during redesign.
 - `src/data/web-safe.ts` / types must remain the no-leak boundary.
 - Current per-page mode state (`gw-mode`) and shell state (`gw_home_mode`) must be reconciled before broad page work; the target is **one** mode setting.
