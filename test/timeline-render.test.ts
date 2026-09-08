@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render } from '../src/ui/render';
+import { render, STYLE } from '../src/ui/render';
 import { resolved } from '../src/state/async-state';
 import { isEmptyResponse } from '../src/data/client';
 import type { ReadApiResponse, StatementRecord } from '../src/types/read-api';
@@ -109,5 +109,56 @@ describe('timeline render — chronology, thread surface, completeness', () => {
     expect(cards.some((t) => t.includes('Other jurisdiction row'))).toBe(false);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('dropped non-Alpine record leak'));
     warn.mockRestore();
+  });
+});
+
+/**
+ * GOV-2260 — the completeness-gap badge must wrap at mobile widths.
+ *
+ * A long backend-supplied status ("gaps (unreviewed instance, missing
+ * minutes/transcript)") rendered at `white-space:nowrap` grew the pill to
+ * ~362px and pushed the document past a 320/390px viewport into horizontal
+ * scroll (GH WEB#248). The badge must now stay inside its container and wrap,
+ * without truncating or recomputing the supplied text.
+ *
+ * The vitest environment has no layout engine, so — as with GOV-1645 — this
+ * pins the source-of-truth CSS invariant that keeps the badge bounded; the
+ * measured 320/390px browser proof lives in docs/evidence/GOV-2260/.
+ */
+describe('GOV-2260 — completeness-gap badge wraps and stays inside the viewport', () => {
+  /** The declaration body of the `.gw-completeness-badge` rule in STYLE. */
+  const badgeRule = (): string => {
+    const at = STYLE.indexOf('.gw-completeness-badge{');
+    expect(at, '.gw-completeness-badge rule present in STYLE').toBeGreaterThanOrEqual(0);
+    const open = STYLE.indexOf('{', at);
+    return STYLE.slice(open + 1, STYLE.indexOf('}', open));
+  };
+
+  it('does not pin the badge to a single line', () => {
+    const rule = badgeRule();
+    // nowrap on a wide supplied label is exactly what forced page-level scroll.
+    expect(rule).not.toContain('white-space:nowrap');
+    expect(rule).toContain('white-space:normal');
+  });
+
+  it('bounds the badge to its container and breaks over-long tokens', () => {
+    const rule = badgeRule();
+    // inline-block + max-width:100% keeps the pill a single box that cannot
+    // exceed the card width; overflow-wrap:break-word handles a token like
+    // "minutes/transcript" that has no natural break opportunity.
+    expect(rule).toContain('max-width:100%');
+    expect(rule).toContain('overflow-wrap:break-word');
+    expect(rule).toContain('inline-block');
+  });
+
+  it('renders the worst-case supplied gap status verbatim — nothing truncated', () => {
+    ready(FIXTURE);
+    const badge = root.querySelector('[data-test="completeness-badge"]');
+    // The full supplied label survives, so wrapping never became suppression.
+    expect(badge?.textContent).toContain('unreviewed instance');
+    expect(badge?.textContent).toContain('missing minutes/transcript');
+    // No CSS/JS truncation affordance snuck in with the wrap fix.
+    expect(badgeRule()).not.toContain('text-overflow');
+    expect(badgeRule()).not.toContain('overflow:hidden');
   });
 });
