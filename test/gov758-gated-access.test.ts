@@ -150,6 +150,28 @@ describe('GOV-758 — six gated-beta access states', () => {
     }
   });
 
+  // GOV-2262 — every routed gated state must expose exactly one primary `main`
+  // landmark holding its single `h1`, so keyboard/screen-reader users can jump
+  // straight to the gate content. The landmark carries zero civic data.
+  it('exposes exactly one main landmark and one h1 for every routed gate state', () => {
+    for (const s of ['anonymous', 'waitlisted', 'pending', 'denied', 'revoked'] as AccessState[]) {
+      renderGatedApp(root, s, () => {
+        throw new Error(`full app must NOT render for ${s}`);
+      });
+
+      const mains = root.querySelectorAll('main');
+      expect(mains.length, `${s} must render exactly one main landmark`).toBe(1);
+
+      const h1s = root.querySelectorAll('h1');
+      expect(h1s.length, `${s} must render exactly one h1`).toBe(1);
+      // The single heading lives INSIDE the main landmark (AC: "one main landmark
+      // containing its single page heading").
+      expect(mains[0].contains(h1s[0]), `${s} h1 must sit inside the main landmark`).toBe(true);
+      expect(mains[0].querySelector('[data-test="gate-panel"]')?.getAttribute('data-state')).toBe(s);
+      assertNoCivicData(root);
+    }
+  });
+
   it('denial AND revocation copy never imply anything about civic standing', () => {
     for (const s of ['denied', 'revoked'] as AccessState[]) {
       const msg = gatePanelContent(s).message.toLowerCase();
