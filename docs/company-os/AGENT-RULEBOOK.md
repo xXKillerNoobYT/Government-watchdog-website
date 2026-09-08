@@ -283,6 +283,12 @@ The six release-state duties, mapped to this company:
 6. **Notion live-state stays current, same cycle.** Any release/process change is written to
    the live-state page **append-only, with provenance** (`Source · Date · Confidence ·
    Owner`) in the same cycle it happens — corrections appended, never overwritten.
+7. **Memory authority: Notion is the sole current memory destination.** The Obsidian vault is
+   frozen read-only and Omi is never written by automation; no active routine may write,
+   move, rename, or quarantine anything in either. Enforced by
+   `scripts/check-no-frozen-memory-writes.mjs`; the rule, the fail-closed replacement, and the
+   owner gate on live-routine changes live in
+   [`docs/company-os/memory-authority-runbook.md`](memory-authority-runbook.md).
 
 **Owner:** AutomationOpsEngineer maintains this section (CI/CD, runners, release wiring).
 Duties 2–3 bind every producer; 4 is AOE's sweep; 6 binds whoever makes the change.
