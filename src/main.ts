@@ -41,6 +41,7 @@ import {
   renderTimelineLevels,
 } from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
+import { renderAlpineAgendaKanbanFixture } from './ui/alpine-agenda-kanban-fixture';
 import {
   renderAlerts as renderDesignAlerts,
   renderBoardsDesign,
@@ -1126,6 +1127,7 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
   '/vault',
   '/agenda',
+  '/alpine-agenda',
   '/timeline',
   // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84
   // and the GOV-82 follow-up both shipped a fixture without this line, and each time the
@@ -1272,6 +1274,13 @@ router.register('/agenda', gated(({ mount, query }) => {
     return;
   }
   void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
+}));
+router.register('/alpine-agenda', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
+    return;
+  }
+  renderReviewerContextState(mount, 'unavailable');
 }));
 router.register('/boards', gated(({ mount, query }) => {
   // GOV-163: the matrix §4 GS row ("populated handoff board cards") declared a fixture lane
