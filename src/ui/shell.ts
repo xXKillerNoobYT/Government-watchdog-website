@@ -53,7 +53,7 @@ interface NavTab {
  */
 export const NAV_TABS: readonly NavTab[] = [
   { route: '/home', label: 'Home' },
-  { route: '/agenda', label: 'Fast Agenda', also: ['/app', '/agenda-boards', '/meeting'] },
+  { route: '/agenda', label: 'Fast Agenda', also: ['/app', '/agenda-boards', '/alpine-agenda', '/meeting'] },
   { route: '/timeline', label: 'Timeline', also: ['/timeline-legacy', '/cards', '/topics', '/issue'] },
   { route: '/boards', label: 'Boards', also: ['/body'] },
   { route: '/power', label: 'Power Tracker' },
