@@ -1,4 +1,5 @@
 /** Gated synthetic four-stage Alpine agenda lifecycle fixture. */
+import { safeExternalHref } from '../data/web-safe';
 import { kanbanBoard, type KanbanLaneSpec } from './kanban';
 import { GW_TOKENS } from './tokens';
 
@@ -133,7 +134,13 @@ function el<K extends keyof HTMLElementTagNameMap>(
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
-  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+  Object.entries(attrs).forEach(([key, value]) => {
+    if (key === 'href' && safeExternalHref(value) === null) {
+      node.setAttribute('data-href-refused', 'unsafe-scheme');
+      return;
+    }
+    node.setAttribute(key, value);
+  });
   children.forEach((child) => node.append(typeof child === 'string' ? document.createTextNode(child) : child));
   return node;
 }
