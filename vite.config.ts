@@ -65,6 +65,7 @@ export const APP_BOOT_SUITES = [
   'test/reviewer-context-routes.test.ts',
   'test/sites-auth-entry.test.ts',
   'test/timeline-route-loading.test.ts',
+  'test/upload-receipt-origin.test.ts',
 ] as const;
 
 /**
