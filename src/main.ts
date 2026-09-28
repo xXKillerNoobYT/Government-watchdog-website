@@ -42,6 +42,7 @@ import {
 } from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
 import { renderAlpineAgendaKanbanFixture } from './ui/alpine-agenda-kanban-fixture';
+import { renderAlpineAgendaMunicode } from './ui/alpine-agenda-municode';
 import {
   renderAlerts as renderDesignAlerts,
   renderBoardsDesign,
@@ -1211,7 +1212,13 @@ function gated(handler: ShellHandler): RouteHandler {
       // One origin decision feeds both the banner and the Alerts badge, so the
       // chip can never claim a count on a route the banner calls reviewed.
       const origin = shellOriginFor(path, query);
-      const mount = renderShell(root!, { active: path, origin, fixture: origin === 'fixture' });
+      const municodeSnapshot = path === '/alpine-agenda' && query.get('source') === 'municode';
+      const shellOrigin = municodeSnapshot ? undefined : origin;
+      const mount = renderShell(root!, {
+        active: path,
+        origin: shellOrigin,
+        fixture: origin === 'fixture',
+      });
       handler({ mount, path, query });
     });
 }
@@ -1278,6 +1285,13 @@ router.register('/agenda', gated(({ mount, query }) => {
 router.register('/alpine-agenda', gated(({ mount, query }) => {
   if (designPreviewActive(query)) {
     renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
+    return;
+  }
+  if (query.get('source') === 'municode') {
+    renderAlpineAgendaMunicode(mount, {
+      access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+      source: 'municode',
+    });
     return;
   }
   renderReviewerContextState(mount, 'unavailable');

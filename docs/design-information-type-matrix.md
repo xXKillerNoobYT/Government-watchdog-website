@@ -345,6 +345,13 @@ of a feature **this row authorises**, so it was re-scoped to the actual invarian
 | Read state in fixture mode | **DL** | Browser-only interaction preview; it sends nothing and registers no recipient. `gw_alerts_read` only. | Mark-read API before any persistence claim. |
 | Delivery-channel controls in fixture mode | **CS** | No channel, recipient verification, or delivery service exists in any lane, so the fixture lane shows the `COMING SOON` marker naming all five channels and stores nothing. It previously rendered persisted `role="switch"` toggles defaulting ON — a switch that survives a reload reads as a configured setting whatever the surrounding notice says (#86). | None — this is an unbuilt feature, not an awaited contract. The reviewed lane's row above keeps `GET/PUT /v1/me/alert-preferences` as the contract it awaits. |
 
+## Alpine agenda Kanban — `#/alpine-agenda`
+
+| Major information group | Class | Current binding | Backend contract needed |
+| --- | --- | --- | --- |
+| Synthetic four-stage lifecycle board (`?demo=design`) | **GS** | `renderAlpineAgendaKanbanFixture` with reviewer admission, explicit design preview, and the `SYNTHETIC DESIGN FIXTURE — not a live read` banner. Cards are synthetic samples only. | No civic API; the lane demonstrates layout until a reviewed agenda-board projection ships. |
+| Municode HTML snapshot board (`?source=municode`) | **DG** | With reviewer admission and the explicit `source=municode` flag, cards are parsed from a committed Town-published Municode HTML capture (`data-origin="municode-snapshot"`). Values are extracted from that capture, not from a reviewed `AgendaBoard` response; `hearing` and `voted` lanes stay empty because outcomes are not in the agenda HTML. The page carries its own snapshot notice and does not use the synthetic fixture banner. | `GET /v1/meetings/:id/agenda-board` with trust bundle, receipts, and backend-owned lifecycle placement. |
+
 ## Hard prohibitions
 
 - **No TopicTree-as-Boards.** A reviewed topic label is navigation context, not a
