@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseMunicodeAgenda } from '../src/data/parse-municode-agenda';
 import { mapMunicodeAgendaToKanbanLanes } from '../src/ui/map-municode-agenda-kanban';
+import { SOURCE_SNAPSHOT_CARD_LABEL } from '../src/ui/source-snapshot';
 import {
   ALPINE_APR21_2026_MUNICODE_SHA256,
   ALPINE_APR21_2026_MUNICODE_URL,
@@ -86,10 +87,15 @@ describe('Municode agenda parser and Kanban mapper', () => {
     expect(new Set(ids).size).toBe(ids.length);
 
     for (const card of [...posted, ...packet]) {
-      expect(card.actions?.length).toBe(1);
+      expect(card.flags?.[0]).toBe(SOURCE_SNAPSHOT_CARD_LABEL);
+      expect(card.last).toBeUndefined();
+      expect(card.next).toBeUndefined();
+      expect(card.actions?.length).toBeGreaterThanOrEqual(1);
       const link = card.actions?.[0];
       expect(link?.getAttribute('href')).toBe(ALPINE_APR21_2026_MUNICODE_URL);
-      expect(card.next).toBeUndefined();
+      const whenLine = card.actions?.find((node) =>
+        node.getAttribute('data-test') === 'kanban-card-snapshot-when');
+      expect(whenLine?.textContent).toMatch(/Snapshot:.*2026.*06:00 PM/);
     }
   });
 

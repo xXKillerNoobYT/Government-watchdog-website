@@ -1,6 +1,10 @@
 import { safeExternalHref } from '../data/web-safe';
 import type { MunicodeAgenda } from '../types/municode-agenda';
 import type { KanbanCardSpec, KanbanLaneSpec } from './kanban';
+import {
+  SOURCE_SNAPSHOT_CARD_LABEL,
+  formatSourceSnapshotWhen,
+} from './source-snapshot';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -21,27 +25,21 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function formatWhen(isoDate: string | null): string | undefined {
-  if (!isoDate) return undefined;
-  const [year, month, day] = isoDate.split('-').map(Number);
-  if (!year || !month || !day) return undefined;
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
 function sourceAction(sourceUrl: string): HTMLElement {
   const href = safeExternalHref(sourceUrl);
   return el('a', {
     class: 'gw-kanban-open',
     'data-test': 'kanban-card-source',
     ...(href ? { href, target: '_blank', rel: 'noopener noreferrer' } : {}),
-  }, ['Municode agenda source']);
+  }, ['Official agenda source']);
+}
+
+function snapshotWhenAction(snapshotWhen: string | undefined): HTMLElement | null {
+  if (!snapshotWhen) return null;
+  return el('span', {
+    class: 'gw-kanban-snapshot-when',
+    'data-test': 'kanban-card-snapshot-when',
+  }, [`Snapshot: ${snapshotWhen}`]);
 }
 
 const LANE_DEFS: Array<{ id: string; label: string; note?: string }> = [
@@ -53,7 +51,7 @@ const LANE_DEFS: Array<{ id: string; label: string; note?: string }> = [
 
 /** Map a parsed Municode agenda onto the four Alpine lifecycle Kanban lanes. */
 export function mapMunicodeAgendaToKanbanLanes(agenda: MunicodeAgenda): KanbanLaneSpec[] {
-  const when = formatWhen(agenda.meetingDate);
+  const snapshotWhen = formatSourceSnapshotWhen(agenda.meetingDate, agenda.meetingTime);
   const board = agenda.meetingTitle || 'Alpine Town Council';
   const cardsByLane: Record<string, KanbanCardSpec[]> = {
     posted: [],
@@ -66,18 +64,24 @@ export function mapMunicodeAgendaToKanbanLanes(agenda: MunicodeAgenda): KanbanLa
     for (const item of section.items) {
       const laneId = item.attachments.length > 0 ? 'packet' : 'posted';
       const datePart = agenda.meetingDate ?? 'undated';
+      const whenAction = snapshotWhenAction(snapshotWhen);
       const card: KanbanCardSpec = {
         id: `alpine-${datePart}-s${section.number}-${item.letter}`,
         title: item.title,
         level: 'town',
         board,
         area: `${section.number}. ${section.title}`,
-        when,
-        flags: item.attachments.length
-          ? [`${item.attachments.length} attachment${item.attachments.length === 1 ? '' : 's'}`]
-          : undefined,
-        last: 'Listed on the published agenda.',
-        actions: [sourceAction(agenda.sourceUrl)],
+        when: snapshotWhen,
+        flags: [
+          SOURCE_SNAPSHOT_CARD_LABEL,
+          ...(item.attachments.length
+            ? [`${item.attachments.length} attachment${item.attachments.length === 1 ? '' : 's'}`]
+            : []),
+        ],
+        actions: [
+          sourceAction(agenda.sourceUrl),
+          ...(whenAction ? [whenAction] : []),
+        ],
       };
       cardsByLane[laneId].push(card);
     }

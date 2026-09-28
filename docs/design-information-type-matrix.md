@@ -26,6 +26,7 @@ layout.
 | **DG** | Designed gap | Keep the owner-approved information slot visible and state which projection, receipt, or capability is unavailable. Unsupported controls remain disabled. |
 | **DL** | Device-local | Browser-only reading preference or interaction state. It must say that it creates no account, identity, coverage, monitoring, subscription, reminder, or delivery. |
 | **GS** | Gated synthetic | Populate only after reviewer admission plus an explicit fixture flag and the `SYNTHETIC DESIGN FIXTURE — not a live read` notice. Never mix it into reviewed counts or lists. |
+| **SS** | Source snapshot | Populate only after reviewer admission plus an explicit source-snapshot flag. Values are parser-extracted from a committed official-source capture (`src/ui/source-snapshot.ts`). Every card must show the source URL through `safeExternalHref`, the snapshot meeting date and time from the capture, and the fixed label `Auto-extracted from the official agenda — not yet reviewed`. Cards carry **only** parser fields — no AI summaries or editorial copy. **SS never self-promotes to RV**; only backend review may reclassify a record. |
 | **CS** | Coming soon | Functionality that **does not exist in any lane** — no reviewed contract, no fixture, no device-local behaviour, and no backend product behind it. Keep the owner-approved slot visible and mark it with the `COMING SOON` marker (`src/ui/coming-soon.ts`). **Never name a backend contract**, because there is none to name. Any control stays disabled. |
 
 ### Shipping a GS lane — the shell must be told in the same change
@@ -350,7 +351,7 @@ of a feature **this row authorises**, so it was re-scoped to the actual invarian
 | Major information group | Class | Current binding | Backend contract needed |
 | --- | --- | --- | --- |
 | Synthetic four-stage lifecycle board (`?demo=design`) | **GS** | `renderAlpineAgendaKanbanFixture` with reviewer admission, explicit design preview, and the `SYNTHETIC DESIGN FIXTURE — not a live read` banner. Cards are synthetic samples only. | No civic API; the lane demonstrates layout until a reviewed agenda-board projection ships. |
-| Municode HTML snapshot board (`?source=municode`) | **DG** | With reviewer admission and the explicit `source=municode` flag, cards are parsed from a committed Town-published Municode HTML capture (`data-origin="municode-snapshot"`). Values are extracted from that capture, not from a reviewed `AgendaBoard` response; `hearing` and `voted` lanes stay empty because outcomes are not in the agenda HTML. The page carries its own snapshot notice and does not use the synthetic fixture banner. | `GET /v1/meetings/:id/agenda-board` with trust bundle, receipts, and backend-owned lifecycle placement. |
+| Municode HTML snapshot board (`?source=municode`) | **SS** | With reviewer admission and the explicit `source=municode` flag, cards are **source snapshots** (`data-binding="source-snapshot"`, `data-information-class="SS"`). Each card shows the official agenda URL, snapshot date/time from the capture header, and `Auto-extracted from the official agenda — not yet reviewed` (`src/ui/source-snapshot.ts`). Content is parser-extracted only; `hearing` and `voted` lanes stay empty. Nothing in this lane claims RV or backend review. | Backend review plus `GET /v1/meetings/:id/agenda-board` (or successor) before any card may render as **RV**. |
 
 ## Hard prohibitions
 
@@ -378,7 +379,7 @@ Update this file in the same change whenever a baseline information group is
 added, removed, enabled, disabled, or rebound.
 
 - [ ] Name the exact baseline page, major information group, and reviewed route.
-- [ ] Assign **RV**, **DG**, **DL**, **GS**, or **CS**; do not use an ambiguous
+- [ ] Assign **RV**, **DG**, **DL**, **GS**, **SS**, or **CS**; do not use an ambiguous
       “temporary” or “mostly real” state.
 - [ ] For **RV**, name the exact response type/field or endpoint, access scope,
       origin/freshness value, trust label, and receipt path.
@@ -388,6 +389,10 @@ added, removed, enabled, disabled, or rebound.
       identity, coverage, monitoring, subscription, reminder, or delivery claim.
 - [ ] For **GS**, require reviewer admission, an explicit fixture flag, and the
       fixture banner before any synthetic leaf reaches the DOM.
+- [ ] For **SS**, require reviewer admission, an explicit source-snapshot flag, the
+      `SOURCE_SNAPSHOT_CARD_LABEL` on every card, source URL + snapshot date/time on
+      every card, parser-only fields (no AI or editorial copy), and **no** client-side
+      promotion to RV.
 - [ ] For **CS**, require the `COMING SOON` marker from `src/ui/coming-soon.ts`, add
       the slot to the CS registry above with its owning page and route, and **forbid
       any backend-contract sentence** — there is no contract to await, so naming one

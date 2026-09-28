@@ -4,10 +4,14 @@ import type { MunicodeAgenda } from '../types/municode-agenda';
 import { safeExternalHref } from '../data/web-safe';
 import { kanbanBoard } from './kanban';
 import { mapMunicodeAgendaToKanbanLanes } from './map-municode-agenda-kanban';
+import {
+  SOURCE_SNAPSHOT_BINDING,
+  SOURCE_SNAPSHOT_INFORMATION_CLASS,
+} from './source-snapshot';
 import { GW_TOKENS } from './tokens';
 
-export const MUNICODE_SNAPSHOT_LABEL =
-  'MUNICODE HTML SNAPSHOT — committed Town agenda capture, not a reviewed read';
+export const MUNICODE_SNAPSHOT_PAGE_NOTICE =
+  'SOURCE SNAPSHOT — parser-extracted official agenda items; not reviewed (class SS)';
 
 export interface AlpineAgendaMunicodeOptions {
   access?: string;
@@ -72,7 +76,8 @@ export function renderAlpineAgendaMunicode(
   const page = el('section', {
     'data-test': 'alpine-agenda-kanban-page',
     'data-origin': 'municode-snapshot',
-    'data-binding': 'designed-gap',
+    'data-binding': SOURCE_SNAPSHOT_BINDING,
+    'data-information-class': SOURCE_SNAPSHOT_INFORMATION_CLASS,
   });
 
   const metaParts = [
@@ -86,7 +91,7 @@ export function renderAlpineAgendaMunicode(
       class: 'gw-alpine-agenda-banner',
       role: 'status',
       'data-test': 'alpine-agenda-municode-banner',
-    }, [MUNICODE_SNAPSHOT_LABEL]),
+    }, [MUNICODE_SNAPSHOT_PAGE_NOTICE]),
     el('header', { class: 'gw-alpine-agenda-head' }, [
       el('h1', {}, ['Alpine agenda lifecycle']),
       el('p', {}, [
@@ -105,7 +110,11 @@ export function renderAlpineAgendaMunicode(
 
   const board = kanbanBoard(lanes, 'Alpine agenda lifecycle');
   board.querySelectorAll('[data-test="kanban-card"]')
-    .forEach((card) => card.setAttribute('data-origin', 'municode-snapshot'));
+    .forEach((card) => {
+      card.setAttribute('data-origin', 'municode-snapshot');
+      card.setAttribute('data-binding', SOURCE_SNAPSHOT_BINDING);
+      card.setAttribute('data-information-class', SOURCE_SNAPSHOT_INFORMATION_CLASS);
+    });
   page.append(board);
   root.append(page);
 }
