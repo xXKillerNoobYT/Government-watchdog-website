@@ -5,7 +5,9 @@ name: Website CI
 # (self-hosted, macOS, ARM64, government-watchdog, gov-website) is offline and
 # left every PR queued. None of these steps need macOS — checkout, npm ci,
 # tsc, vitest, and the lane builds are Node-only — so there is no companion
-# self-hosted job (it would sit queued on the same offline runner).
+# self-hosted job (it would sit queued on the same offline runner). The one
+# Mac filesystem assumption is /private/tmp (mkdtemp in the #291 denial
+# test); the job creates that directory before the suite.
 #
 # push+pull_request on ["**"] ran every PR push TWICE, concurrently, on one
 # physical machine — doubling runner load and producing the #59 timeout-flake
@@ -43,6 +45,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      # macOS has /private/tmp (/tmp is a symlink to it). The #291 denial
+      # test mkdtemp's there, outside os.tmpdir(), and does not create the
+      # parent. Ubuntu has /tmp only.
+      - name: Provide macOS /private/tmp
+        run: sudo mkdir -p /private/tmp && sudo chmod 1777 /private/tmp
 
       - name: Install dependencies (clean, from lockfile)
         run: npm ci --no-audit --no-fund
