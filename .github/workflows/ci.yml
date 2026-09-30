@@ -1,6 +1,12 @@
 name: Website CI
 
-# Reviewer-internal/local frontend. Runs on the self-hosted GOV website runner.
+# Reviewer-internal/local frontend. Public repo, so GitHub-hosted minutes are
+# free. typecheck · test · build runs on ubuntu-latest: the self-hosted Mac
+# (self-hosted, macOS, ARM64, government-watchdog, gov-website) is offline and
+# left every PR queued. None of these steps need macOS — checkout, npm ci,
+# tsc, vitest, and the lane builds are Node-only — so there is no companion
+# self-hosted job (it would sit queued on the same offline runner).
+#
 # push+pull_request on ["**"] ran every PR push TWICE, concurrently, on one
 # physical machine — doubling runner load and producing the #59 timeout-flake
 # family (one twin green, one red on the same sha). PR branches now run once.
@@ -11,26 +17,32 @@ on:
     branches: ["**"]
   workflow_dispatch:
 
-# #110 (owner-approved 2026-07-30): one global group serializes EVERY run of this
-# workflow, because the remaining #59-family race is cross-ref — main's post-merge
-# run overlapping a different PR's run on the one physical runner (measured:
-# 20560ms vs the 20000ms ceiling, same sha passing once the queue drained).
-# cancel-in-progress stays false so a running suite always finishes; the known
-# trade is that GitHub keeps at most ONE pending run per group, so a queued PR
-# run can be replaced while waiting. That failure is visible-and-restartable
-# (a cancelled check), unlike the load flake it replaces (a red that looks like
-# a code failure). Explicitly NOT a third testTimeout raise — see #110.
+# #110 serialized every run in one global group because two jobs on the one
+# physical Mac raced. Hosted runners do not share that machine, and a run
+# stuck in the self-hosted queue must not keep the group (GitHub retains one
+# pending run per group). Each ref has its own group now. cancel-in-progress
+# stays false so a running suite always finishes.
 concurrency:
-  group: website-ci-runner
+  group: website-ci-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build-test:
     name: typecheck · test · build
-    runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      # The Mac runner had Node on PATH already. This repo has no engines
+      # field, .nvmrc, or packageManager pin; dependencies accept
+      # ^18 || ^20 || >=22, and ubuntu-latest ships Node 22. Pin that major
+      # and cache the npm download directory from package-lock.json.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies (clean, from lockfile)
         run: npm ci --no-audit --no-fund
