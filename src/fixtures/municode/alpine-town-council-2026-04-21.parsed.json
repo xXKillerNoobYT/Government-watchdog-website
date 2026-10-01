@@ -1,0 +1,629 @@
+{
+  "meetingTitle": "Town Council Meeting – Executive Session at 6:00 PM | Regular Session at 7:00 PM",
+  "meetingDate": "2026-04-21",
+  "meetingTime": "06:00 PM",
+  "location": "250 River Circle - Alpine, WY 83128",
+  "sourceUrl": "https://meetings.municode.com/adaHtmlDocument/index?cc=ALPINEWY&ip=True&me=dabad893915d4ce4b850f2fc050631e9",
+  "sections": [
+    {
+      "number": 1,
+      "title": "CALL TO ORDER",
+      "presenter": "Mayor Green",
+      "items": []
+    },
+    {
+      "number": 2,
+      "title": "ADOPT THE AGENDA",
+      "items": []
+    },
+    {
+      "number": 3,
+      "title": "EXECUTIVE SESSION",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Seeking a motion to enter into Executive Session pursuant to Wyoming Statute § 16-4-405(a)(ii) to consider the appointment, employment, or dismissal of a public employee.",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "title": "RECONVENE INTO REGULAR SESSION",
+      "items": []
+    },
+    {
+      "number": 5,
+      "title": "PLEDGE OF ALLEGIANCE",
+      "presenter": "Mayor Green",
+      "items": []
+    },
+    {
+      "number": 6,
+      "title": "ROLL CALL",
+      "presenter": "Monica Chenault",
+      "items": []
+    },
+    {
+      "number": 7,
+      "title": "CONSENT AGENDA",
+      "presenter": "Mayor Green",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Town Council Minutes: March 17, 2026 Town Council Meeting Minutes.",
+          "attachments": [
+            {
+              "name": "2026.03.17.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-a2ac1dcd0f0145528ba1411f99eda7dc.pdf",
+              "sizeMb": "0.09"
+            }
+          ]
+        },
+        {
+          "letter": "b",
+          "title": "Bills to Pay Report: March 18, 2026 through April 16, 2026",
+          "attachments": [
+            {
+              "name": "2026.04.16 Bills Report.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-225b118154e840b2818dafe3958814e1.pdf",
+              "sizeMb": "0.03"
+            }
+          ]
+        },
+        {
+          "letter": "c",
+          "title": "Draft Financial Report: February 28, 2026",
+          "attachments": [
+            {
+              "name": "2026.02.28 Financial Report DRAFT.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-ec6ad961859e489691e457743a8a8c3d.pdf",
+              "sizeMb": "0.09"
+            }
+          ]
+        },
+        {
+          "letter": "d",
+          "title": "Special Event Permit Applications and Fee Waivers for Town Events",
+          "attachments": [
+            {
+              "name": "Special Event Permit Application – Town Events Cover Letter.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-4a540d23269c446daa34e5d09c0704c2.pdf",
+              "sizeMb": "0.09"
+            },
+            {
+              "name": "Special Events Permit - Alpine Mountain Days.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-19f523d33bd34462b947e000324fb45d.pdf",
+              "sizeMb": "0.74"
+            },
+            {
+              "name": "Special Event Application - Music in the Mountains_Farmers Marke.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-47547beb4a7b4636b517e223e1680ed3.pdf",
+              "sizeMb": "1.08"
+            },
+            {
+              "name": "Special Event Application - Alpine Car Show_Alpine Art Festival.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-718a1c5355d542a6a89c6e4d1f992368.pdf",
+              "sizeMb": "1.49"
+            },
+            {
+              "name": "Special Events Application - 4th of July .pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-284f8524f3b14d5a9320de660cce9cc9.pdf",
+              "sizeMb": "2.65"
+            }
+          ]
+        },
+        {
+          "letter": "e",
+          "title": "Special Event Permit Application – Star Valley Events, LLC (Mother’s Day Craft Fair)",
+          "attachments": [
+            {
+              "name": "Special Event Permit Application – Mother’s Day Craft Fair (May 8–9).pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-51a7c1d0c21a4a2c97beab2244ed4a8f.pdf",
+              "sizeMb": "1.11"
+            },
+            {
+              "name": "Special Event Permit Application – Mother’s Day Craft Fair (May 8–9) Cover Letter.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-e018a16e5628478a902e08bb5a0dd570.pdf",
+              "sizeMb": "0.06"
+            }
+          ]
+        },
+        {
+          "letter": "f",
+          "title": "Special Event Permit Application – Artisan Farmers Market & Summer Events",
+          "attachments": [
+            {
+              "name": "Special Event Permit Application – Artisan Farmers Market.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-bba2ee43c27340548eda4d384744fd6f.pdf",
+              "sizeMb": "10.85"
+            }
+          ]
+        },
+        {
+          "letter": "g",
+          "title": "Special Event Permit Application – Salomon Marquina 'Carnaval' (April 26th, 2026)",
+          "attachments": [
+            {
+              "name": "Special Event Permit Application – Salomon Marquina 04.26.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-f638ce34685343a98be803788e157970.pdf",
+              "sizeMb": "3.04"
+            },
+            {
+              "name": "Special Event Permit Application – Salomon Marquina (April 26th, 2026) Cover Letter.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-b0b76cc8a7434aee93eb67e88e2ea72f.pdf",
+              "sizeMb": "0.07"
+            }
+          ]
+        },
+        {
+          "letter": "h",
+          "title": "Resolution No. 2026-020 - Nurses Day Proclamation",
+          "attachments": [
+            {
+              "name": "Resolution No. 2026-020 Nurses Day Proclamation.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-39fa2ec7518640a0825f412730346156.pdf",
+              "sizeMb": "0.04"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "title": "REPORTS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Mayor’s Report – Eric Green",
+          "attachments": []
+        },
+        {
+          "letter": "b",
+          "title": "Engineering Report – Jorgensen Engineering",
+          "attachments": []
+        },
+        {
+          "letter": "c",
+          "title": "Planning & Zoning Report – Melisa Wilson",
+          "attachments": []
+        },
+        {
+          "letter": "d",
+          "title": "Events Committee Report - Andrea Burchard",
+          "attachments": []
+        },
+        {
+          "letter": "e",
+          "title": "Economic Development Report – Jeremiah Larsen",
+          "attachments": []
+        },
+        {
+          "letter": "f",
+          "title": "Alpine Travel & Tourism Board Report – Jeremiah Larsen",
+          "attachments": []
+        },
+        {
+          "letter": "g",
+          "title": "Lincoln County Travel & Tourism Board Report – Jeremiah Larsen",
+          "attachments": []
+        },
+        {
+          "letter": "h",
+          "title": "Lincoln County Chief of Staff Update - Stephen Allen",
+          "attachments": []
+        },
+        {
+          "letter": "i",
+          "title": "Written Reports (Submitted for April 21, 2026 Meeting)",
+          "attachments": [
+            {
+              "name": "2026.04.21 Clerk_Treasurer Report.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-0cb35bb688a244aa9bae6700aac34c64.pdf",
+              "sizeMb": "0.03"
+            },
+            {
+              "name": "Planning & Zoning Administrator Report for Town Council March 2026.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-a7200388567a4c7a8cf227fb60fa74a1.pdf",
+              "sizeMb": "0.02"
+            },
+            {
+              "name": "Codes Enforcement Report 2026.04.21.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-177c8a82e16643d8adff9038ee302cf1.pdf",
+              "sizeMb": "0.16"
+            },
+            {
+              "name": "2026.03 Lincoln County Sheriffs Report.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-145b3bfd8779473381b783049e98d3eb.pdf",
+              "sizeMb": "0.15"
+            },
+            {
+              "name": "2026.04.21 Public Works Director Report.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-0ac5478b81a740cbab21cce674a6254d.pdf",
+              "sizeMb": "0.01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "title": "PUBLIC HEARINGS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Public Hearing: Retail Liquor License Application",
+          "attachments": [
+            {
+              "name": "STAFF REPORT - Retail Liquor License Application – Triple JL Companies (dba Alpine Standard).pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-7429190732cb4ccc98c508ec98075bcd.pdf",
+              "sizeMb": "0.03"
+            }
+          ]
+        },
+        {
+          "letter": "b",
+          "title": "Public Hearing: Planned Unit Development (PUD) Application",
+          "attachments": [
+            {
+              "name": "P&Z Commision Report for Town Council- Dead Horse Development, LLC- DRAFT.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-3a8859b1b5b7468da2192c59f0fba14c.pdf",
+              "sizeMb": "0.14"
+            },
+            {
+              "name": "Planned Unit Development Statement.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-e2ff6763794045dd85bb18e63fc72a15.pdf",
+              "sizeMb": "0.01"
+            },
+            {
+              "name": "2026-02-03 - Ltr to Town with Application .pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-571c5f3efb4649359405a1d11b812616.pdf",
+              "sizeMb": "0.17"
+            },
+            {
+              "name": "Master Plan Report - Dead Horse Meadows Addition.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-6a59b97c4cbe414dab3f50795356841c.pdf",
+              "sizeMb": "1.15"
+            },
+            {
+              "name": "2026-2-3 Alpine Business Park PP.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-5f645f62c9bc4b13804349654700dafb.pdf",
+              "sizeMb": "1.80"
+            },
+            {
+              "name": "Staff Report- Dead Horse, LLC PUD to P&Z .pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-8d220fc3cd914e83b579931a589df7a2.pdf",
+              "sizeMb": "0.14"
+            },
+            {
+              "name": "Alpine Business Park CC&R's.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-9b118a6124904599a7f16c30d7181d70.pdf",
+              "sizeMb": "0.09"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "title": "ACTION ITEMS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Resolution No. 2026-016 - A Resolution Repudiating Unauthorized Communication and Clarifying the Official Position of the Town of Alpine:",
+          "attachments": [
+            {
+              "name": "Resolution No. 2026-016 Repudiating the Communication with Councilmember Scaffide and BOSV.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-8a4aa4dbf8f343d1b90005deaa050a4b.pdf",
+              "sizeMb": "0.04"
+            }
+          ]
+        },
+        {
+          "letter": "b",
+          "title": "Resolution No. 2026-017 - A Resolution Appointing the Water Commissioner for the Town of Alpine:",
+          "attachments": [
+            {
+              "name": "Resolution No. 2026-017 Appointing Water Commissioner for the Town of Alpine.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-8aba0491cdec4400903d8bcdc856e742.pdf",
+              "sizeMb": "0.04"
+            }
+          ]
+        },
+        {
+          "letter": "c",
+          "title": "Resolution No. 2026-018 - A Resolution Approving the Town of Alpine’s Submission to Voters of The Town of Alpine a Lodging Tax Question on the 2026 Election Ballot:",
+          "attachments": [
+            {
+              "name": "Resolution No 2026-018 - Lodging Tax on 2026 Election Ballot.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-ce022d5bce08454abebf8057fb8281f4.pdf",
+              "sizeMb": "0.04"
+            }
+          ]
+        },
+        {
+          "letter": "d",
+          "title": "Resolution No. 2026-021 - Authorizing certain improvements by the Alpine Education Foundation, Inc. at the leased premises located at 200 Buffalo Drive:",
+          "attachments": [
+            {
+              "name": "Alpine Education Foundation Fence and Sign Applications 2026.04..pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-2cb35f93eb314adcba8272f69a118f1d.pdf",
+              "sizeMb": "1.03"
+            },
+            {
+              "name": "Resolution No. 2026-021 - AUTHORIZING CERTAIN IMPROVEMENTS BY AEF.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-cf489e50b7c94dbdbe78fa679ab2d11c.pdf",
+              "sizeMb": "0.04"
+            }
+          ]
+        },
+        {
+          "letter": "e",
+          "title": "1st Reading of Ordinance No. 2026-008 – Interim Permitting Update:",
+          "attachments": [
+            {
+              "name": "Staff Report- Emergency Permit Types V2.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-3a871f8bbcf64fb4a803cf08e5f35424.pdf",
+              "sizeMb": "0.14"
+            },
+            {
+              "name": "1st Reading of Ordinance 2026-008 Interim Permitting Update.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-76520a7bd07941c1a33fdf0b722a86a7.pdf",
+              "sizeMb": "0.06"
+            }
+          ]
+        },
+        {
+          "letter": "f",
+          "title": "2nd Reading of Ordinance No. 2026-002 - Establishing Uniform Public Notice Requirement:",
+          "attachments": [
+            {
+              "name": "2nd Reading Ordinance 2026-002 Public Notices.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-b954153bd7e14861b800148f2f721bdf.pdf",
+              "sizeMb": "0.05"
+            }
+          ]
+        },
+        {
+          "letter": "g",
+          "title": "Consideration of Retail Liquor License Application – Triple JL Companies, d/b/a Alpine Standard:",
+          "attachments": []
+        },
+        {
+          "letter": "h",
+          "title": "Consideration of Dead Horse Permit Extension Fee Modification Request:",
+          "attachments": [
+            {
+              "name": "Request - Dead Horse Permit Extension.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-2b35c661aec04777ba5699c9a07e31a6.pdf",
+              "sizeMb": "0.03"
+            },
+            {
+              "name": "Staff Report- Building Permit Extention Request- Dead Horse Development.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-d68c02c633594dbb9733265121bb081c.pdf",
+              "sizeMb": "0.13"
+            }
+          ]
+        },
+        {
+          "letter": "i",
+          "title": "Consideration of Reimbursement Request for Sewer Diagnostic Services – 399 Columbine St:",
+          "attachments": [
+            {
+              "name": "Alpine Meadows Sewer Issue - 399 Columbine.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-5918e5412599468c8f7970051503e17f.pdf",
+              "sizeMb": "0.01"
+            },
+            {
+              "name": "ElementPlumbing-11.2025.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-476e51a890d843a7bffe6cb2149b732f.pdf",
+              "sizeMb": "0.06"
+            },
+            {
+              "name": "Claim&Denial-2026.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-e1fe0ab684c6473c9a77647e5434fb6e.pdf",
+              "sizeMb": "1.25"
+            }
+          ]
+        },
+        {
+          "letter": "j",
+          "title": "Consideration of Planned Unit Development (PUD) Application - Dead Horse Development, LLC:",
+          "attachments": [
+            {
+              "name": "P&Z Commision Report for Town Council- Dead Horse Development, LLC- SIGNED.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-eb84b83e71eb4726951eaf2c4729a686.pdf",
+              "sizeMb": "0.86"
+            }
+          ]
+        },
+        {
+          "letter": "k",
+          "title": "1st Reading of Ordinance No. 2026-003 - Establishing Regulations Prohibiting the Sale, Use, and Discharge of Fireworks:",
+          "attachments": [
+            {
+              "name": "STAFF REPORT - Ordinance No. 2026-003 – Fireworks Prohibition.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-574a5dcfb90e4b93a302f8f39f0f739a.pdf",
+              "sizeMb": "0.03"
+            },
+            {
+              "name": "1st Reading Ordinance No. 2026-003 - Establishing Regulations Prohibiting The Sale, Use, And Discharge Of Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-4bf7cb27f5e74be1842045d1a38669e5.pdf",
+              "sizeMb": "0.04"
+            },
+            {
+              "name": "2026.04.21 Chief Vogt Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-1c6cc7a1c6e4488ebd4a75ad7066539c.pdf",
+              "sizeMb": "2.01"
+            },
+            {
+              "name": "2026.04.21 Thomas Long Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-ac6fbb7274bd4b67ba5c81f7efd04ee0.pdf",
+              "sizeMb": "0.10"
+            },
+            {
+              "name": "2026.04.21 Weston Aagard Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-de762bf14fe248aab42975647c450c9f.pdf",
+              "sizeMb": "0.09"
+            },
+            {
+              "name": "2026.04.21 Jordan Long Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-1bb56c8227ea493f8f37fb29f8432159.pdf",
+              "sizeMb": "0.09"
+            },
+            {
+              "name": "2026.04.21 Jaxon Hansen Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-dfe335c32baa44b9aa6954ac345966c8.pdf",
+              "sizeMb": "0.07"
+            },
+            {
+              "name": "2026.04.21 Jamie Hansen Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-2c4d11f8a80e4612bc3137c0ec72e377.pdf",
+              "sizeMb": "0.10"
+            },
+            {
+              "name": "2026.04.21 Tyler Belnap Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-2893efded1e64ef9b8090153b2b1967e.pdf",
+              "sizeMb": "0.12"
+            },
+            {
+              "name": "2026.04.21 Tanner Austin Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-a68422a0a7a841dea705c7a7fc063df6.pdf",
+              "sizeMb": "0.07"
+            },
+            {
+              "name": "2026.04.21 Cianna Aagard Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-981d37cce02a4841b41bb6ae802f929f.pdf",
+              "sizeMb": "0.16"
+            },
+            {
+              "name": "2026.04.21 Matt Hansen Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-7934362fde2e4e2495938f1a393d39ae.pdf",
+              "sizeMb": "1.18"
+            },
+            {
+              "name": "2026.04.21 Shemai Christensen Public Comment - Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-ef3645e0c4cf47d7a5af3cdfe6c85e69.pdf",
+              "sizeMb": "0.08"
+            }
+          ]
+        },
+        {
+          "letter": "l",
+          "title": "1st Reading of Ordinance No. 2026-004 - Regulations Governing Open Burning, Recreational Fires, and Outdoor Fire:",
+          "attachments": [
+            {
+              "name": "1st Reading Ordinance No. 2026-004 - Regulations Governing Open Burning, Recreational Fires, And Outdoor Fire.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-a25294343d2b49dfacdca6c94a875c2c.pdf",
+              "sizeMb": "0.05"
+            },
+            {
+              "name": "STAFF REPORT - Ordinance No. 2026-004 – Regulations Governing Open Burning, Recreational Fires, And Outdoor Fire.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-52eecd315bcb441986746e5b4834df15.pdf",
+              "sizeMb": "0.03"
+            }
+          ]
+        },
+        {
+          "letter": "m",
+          "title": "1st Reading of Ordinance No. 2026-005 - Establishing Fees For Administrative Services, Returned Payments, And Staff Reimbursements:",
+          "attachments": [
+            {
+              "name": "1st Reading Ordinance No. 2026-005 - Establishing Fees For Administrative Services, Returned Payments, And Staff Reimbursements.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-4cc2bcf329394476aa437632ca744a2c.pdf",
+              "sizeMb": "0.06"
+            }
+          ]
+        },
+        {
+          "letter": "n",
+          "title": "1st Reading of Ordinance 2026-006 - Amended Budget FY 2026:",
+          "attachments": [
+            {
+              "name": "1st Reading Ordinance No. 2026-006 - Amended Budget FY 2026.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-6d589d92108349e891372ec40d1fa8c0.pdf",
+              "sizeMb": "0.05"
+            }
+          ]
+        },
+        {
+          "letter": "o",
+          "title": "1st Reading of Ordinance No. 2026-007 - Budget FY 2027:",
+          "attachments": [
+            {
+              "name": "1st Reading Ordinance No. 2026-007 - Budget FY 2027.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-ebf343f026824899ba5124690e15d229.pdf",
+              "sizeMb": "0.05"
+            }
+          ]
+        },
+        {
+          "letter": "p",
+          "title": "Consideration of Amendment No. 1 to Lease Agreement between the Town of Alpine and Alpine Education Foundation, Inc:",
+          "attachments": [
+            {
+              "name": "AMENDMENT NO. 1 TO LEASE AGREEMENT.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-810548b4b2dd426a86f4438339f3ad09.pdf",
+              "sizeMb": "0.02"
+            }
+          ]
+        },
+        {
+          "letter": "q",
+          "title": "Alpine Well #4 Transmission Pipeline 2026 Project Agreement:",
+          "attachments": [
+            {
+              "name": "WWDC_Contract_Alpine_Well_4_Transmission_Pi.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-dc92701a56334a559618e5118f048fcd.pdf",
+              "sizeMb": "0.17"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "title": "TABLED ITEMS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Discussion: Town of Alpine Safety Manual",
+          "attachments": [
+            {
+              "name": "Accident Prevention & Safety Manual Final Update .pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-5bd2eff864b441a79b1c6ef9d982b6d1.pdf",
+              "sizeMb": "4.89"
+            },
+            {
+              "name": "STAFF REPORT - Accident Prevention & Safety Manual Updated.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-dabad893915d4ce4b850f2fc050631e9/ITEM-Attachment-001-824c4a1ad4a1499f94fa37bff6b55d85.pdf",
+              "sizeMb": "0.17"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "title": "PUBLIC COMMENT",
+      "items": []
+    },
+    {
+      "number": 13,
+      "title": "EXECUTIVE SESSION",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Seeking a motion to enter into Executive Session pursuant to Wyoming Statute § 16-4-405(a)(iii) to consider matters involving legal advice from counsel.",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "title": "ADJOURNMENT",
+      "items": []
+    }
+  ],
+  "gaps": []
+}

@@ -40,6 +40,7 @@ Every information slot on a reviewed page renders **exactly one** declared class
 | **DG** | Designed gap | The slot stays visible and states which capability is unavailable |
 | **DL** | Device-local | A browser-only preference; creates no account, coverage, or delivery |
 | **GS** | Gated synthetic | Fixture data, only behind reviewer admission **and** an explicit fixture flag, under the `SYNTHETIC DESIGN FIXTURE — not a live read` notice |
+| **SS** | Source snapshot | Parser-extracted values from a committed official-source capture, behind reviewer admission and an explicit source flag. Every card shows the source URL, snapshot date/time from the capture, and the label `Auto-extracted from the official agenda — not yet reviewed`. No AI or editorial text on cards. **SS never becomes RV in the browser** — only backend review may promote a record. |
 | **CS** | Coming soon | The **feature** does not exist in any lane. `COMING SOON` marker, and **never a backend-contract sentence** — there is none to name |
 
 > **Real value, designed slot, explicit gap.**
