@@ -1,5 +1,5 @@
 /** Alpine agenda board from a committed Municode HTML snapshot (issue #295). */
-import parsedAgenda from '../fixtures/municode/alpine-town-council-2026-04-21.parsed.json';
+import parsedAgenda from '../fixtures/municode/alpine-town-council-2026-10-06.parsed.json';
 import type { MunicodeAgenda } from '../types/municode-agenda';
 import { safeExternalHref } from '../data/web-safe';
 import { kanbanBoard } from './kanban';

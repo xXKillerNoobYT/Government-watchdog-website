@@ -24,7 +24,13 @@ export interface MunicodeAgenda {
   meetingTitle: string;
   /** Full `YYYY-MM-DD` when the header supplies it; otherwise `null` (explicit gap). */
   meetingDate: string | null;
+  /**
+   * Regular-meeting clock from the header when line one names one;
+   * otherwise the first clock time on line two. `null` when neither is present.
+   */
   meetingTime: string | null;
+  /** Executive-session clock named in the header, when line one states one. */
+  executiveSessionTime: string | null;
   location: string | null;
   sourceUrl: string;
   sections: MunicodeAgendaSection[];
