@@ -49,9 +49,15 @@ const LANE_DEFS: Array<{ id: string; label: string; note?: string }> = [
   { id: 'voted', label: 'Voted / Done' },
 ];
 
+function cardClock(agenda: MunicodeAgenda, sectionTitle: string): string | null {
+  if (sectionTitle.trim().toUpperCase() === 'EXECUTIVE SESSION' && agenda.executiveSessionTime) {
+    return agenda.executiveSessionTime;
+  }
+  return agenda.meetingTime;
+}
+
 /** Map a parsed Municode agenda onto the four Alpine lifecycle Kanban lanes. */
 export function mapMunicodeAgendaToKanbanLanes(agenda: MunicodeAgenda): KanbanLaneSpec[] {
-  const snapshotWhen = formatSourceSnapshotWhen(agenda.meetingDate, agenda.meetingTime);
   const board = agenda.meetingTitle || 'Alpine Town Council';
   const cardsByLane: Record<string, KanbanCardSpec[]> = {
     posted: [],
@@ -64,10 +70,12 @@ export function mapMunicodeAgendaToKanbanLanes(agenda: MunicodeAgenda): KanbanLa
     for (const item of section.items) {
       const laneId = item.attachments.length > 0 ? 'packet' : 'posted';
       const datePart = agenda.meetingDate ?? 'undated';
+      const snapshotWhen = formatSourceSnapshotWhen(agenda.meetingDate, cardClock(agenda, section.title));
       const whenAction = snapshotWhenAction(snapshotWhen);
       const card: KanbanCardSpec = {
         id: `alpine-${datePart}-s${section.number}-${item.letter}`,
         title: item.title,
+        ...(item.description ? { detail: item.description } : {}),
         level: 'town',
         board,
         area: `${section.number}. ${section.title}`,

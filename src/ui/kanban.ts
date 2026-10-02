@@ -50,6 +50,8 @@ export interface KanbanCardSpec {
   area?: string;
   /** Timing line, e.g. "Tue Jul 21". */
   when?: string;
+  /** Parser-extracted item text beyond the title, such as a suggested motion. */
+  detail?: string;
   /** Short flag chips (e.g. "▲ late change"). */
   flags?: string[];
   /** "What last happened" line. */
@@ -83,6 +85,7 @@ export const KANBAN_STYLE = `${GW_TOKENS}
 .gw-kanban-card[data-level="county"]::before{background:var(--gw-level-county)}
 .gw-kanban-card[data-level="state"]::before{background:var(--gw-level-state)}
 .gw-kanban-card h4{margin:0;font-size:var(--gw-text-md);line-height:var(--gw-leading-tight);color:var(--gw-text)}
+.gw-kanban-detail{margin:0;font-size:var(--gw-text-sm);line-height:1.45;color:var(--gw-text-secondary)}
 .gw-kanban-meta{display:flex;flex-wrap:wrap;gap:var(--gw-space-2);font-size:var(--gw-text-badge);color:var(--gw-text-muted)}
 .gw-kanban-meta span{display:inline-flex;align-items:center}
 .gw-kanban-flags{display:flex;flex-wrap:wrap;gap:var(--gw-space-1);list-style:none;margin:0;padding:0}
@@ -115,6 +118,10 @@ export function kanbanCard(spec: KanbanCardSpec): HTMLElement {
   if (meta.length) {
     children.push(el('div', { class: 'gw-kanban-meta', 'data-test': 'kanban-card-meta' },
       meta.map((value) => el('span', {}, [value]))));
+  }
+
+  if (spec.detail) {
+    children.push(el('p', { class: 'gw-kanban-detail', 'data-test': 'kanban-card-detail' }, [spec.detail]));
   }
 
   if (spec.flags?.length) {

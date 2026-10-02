@@ -6,8 +6,12 @@ import { SOURCE_SNAPSHOT_CARD_LABEL } from '../src/ui/source-snapshot';
 import {
   ALPINE_APR21_2026_MUNICODE_SHA256,
   ALPINE_APR21_2026_MUNICODE_URL,
+  ALPINE_OCT6_2026_MUNICODE_SHA256,
+  ALPINE_OCT6_2026_MUNICODE_URL,
 } from '../src/data/municode-alpine-fixture';
 import alpineAgendaHtml from '../test/fixtures/municode/alpine-town-council-2026-04-21.html?raw';
+import alpineOct6Html from '../test/fixtures/municode/alpine-town-council-2026-10-06.html?raw';
+import alpineOct6Parsed from '../src/fixtures/municode/alpine-town-council-2026-10-06.parsed.json';
 import { safeExternalHref } from '../src/data/web-safe';
 
 const EXPECTED_SECTIONS = [
@@ -44,6 +48,8 @@ describe('Municode agenda parser and Kanban mapper', () => {
       'Town Council Meeting – Executive Session at 6:00 PM | Regular Session at 7:00 PM',
     );
     expect(agenda.meetingDate).toBe('2026-04-21');
+    expect(agenda.meetingTime).toBe('06:00 PM');
+    expect(agenda.executiveSessionTime).toBe('6:00 PM');
     expect(agenda.location).toBe('250 River Circle - Alpine, WY 83128');
     expect(agenda.sections).toHaveLength(14);
     expect(agenda.sections.map((section) => section.number)).toEqual([
@@ -95,7 +101,77 @@ describe('Municode agenda parser and Kanban mapper', () => {
       expect(link?.getAttribute('href')).toBe(ALPINE_APR21_2026_MUNICODE_URL);
       const whenLine = card.actions?.find((node) =>
         node.getAttribute('data-test') === 'kanban-card-snapshot-when');
-      expect(whenLine?.textContent).toMatch(/Snapshot:.*2026.*06:00 PM/);
+      const executive = card.area?.endsWith('EXECUTIVE SESSION') ?? false;
+      expect(whenLine?.textContent).toMatch(
+        executive ? /Snapshot:.* · 6:00 PM$/ : /Snapshot:.* · 06:00 PM$/,
+      );
+    }
+  });
+
+  it('uses the Oct 6, 2026 regular-meeting clock and keeps the executive session separate', () => {
+    const html = `<!DOCTYPE html><html><body>
+      <div class="header-content">
+        <span class="header-content__h1 h1-line-one">Town Council Meeting – Executive Session at 6:00 PM; Regular Meeting at 7:00 PM</span>
+        <span class="header-content__h1 h1-line-two">Tuesday, October 06, 2026 06:00 PM</span>
+        <span class="header-content__h1 h1-line-three">250 River Circle - Alpine, WY 83128</span>
+      </div>
+    </body></html>`;
+    const agenda = parseMunicodeAgenda(html, ALPINE_OCT6_2026_MUNICODE_URL);
+    expect(agenda.meetingDate).toBe('2026-10-06');
+    expect(agenda.meetingTime).toBe('7:00 PM');
+    expect(agenda.executiveSessionTime).toBe('6:00 PM');
+    expect(agenda.gaps).toEqual([]);
+  });
+
+  it('falls back to line two when line one has no regular-meeting time', () => {
+    const html = `<!DOCTYPE html><html><body>
+      <div class="header-content">
+        <span class="header-content__h1 h1-line-one">Town Council Meeting – Executive Session at 6:00 PM | Regular Session at 7:00 PM</span>
+        <span class="header-content__h1 h1-line-two">Tuesday, April 21, 2026 06:00 PM</span>
+        <span class="header-content__h1 h1-line-three">250 River Circle - Alpine, WY 83128</span>
+      </div>
+    </body></html>`;
+    const agenda = parseMunicodeAgenda(html, ALPINE_APR21_2026_MUNICODE_URL);
+    expect(agenda.meetingTime).toBe('06:00 PM');
+    expect(agenda.executiveSessionTime).toBe('6:00 PM');
+  });
+
+  it('parses the Oct 6 packet into 14 cards with suggested motions and split clocks', async () => {
+    expect(await sha256(alpineOct6Html)).toBe(ALPINE_OCT6_2026_MUNICODE_SHA256);
+    const agenda = parseMunicodeAgenda(alpineOct6Html, ALPINE_OCT6_2026_MUNICODE_URL);
+    expect(JSON.parse(JSON.stringify(agenda))).toEqual(alpineOct6Parsed);
+    expect(agenda.meetingTime).toBe('7:00 PM');
+    expect(agenda.executiveSessionTime).toBe('6:00 PM');
+
+    const motions: Record<string, string> = {
+      '10a': 'Motion to approve Resolution No. 2026-036',
+      '10b': 'Motion to authorize staff to submit an out-of-cycle application',
+      '10c': 'increasing the total authorized amount from $20,000 to $23,500',
+      '11a': 'amend the water fund capital outlays budget by $30,000',
+    };
+    for (const [key, phrase] of Object.entries(motions)) {
+      const sectionNumber = Number(key.slice(0, -1));
+      const letter = key.slice(-1);
+      const item = agenda.sections.find((section) => section.number === sectionNumber)
+        ?.items.find((entry) => entry.letter === letter);
+      expect(item?.description?.startsWith('Suggested Motion:')).toBe(true);
+      expect(item?.description).toContain(phrase);
+    }
+
+    const lanes = mapMunicodeAgendaToKanbanLanes(agenda);
+    const cards = lanes.flatMap((lane) => lane.cards);
+    expect(cards).toHaveLength(14);
+    expect(lanes.find((lane) => lane.id === 'hearing')?.cards).toEqual([]);
+    expect(lanes.find((lane) => lane.id === 'voted')?.cards).toEqual([]);
+
+    const executive = cards.find((card) => card.id === 'alpine-2026-10-06-s2-a');
+    expect(executive?.when).toBe('Tue, Oct 6, 2026 · 6:00 PM');
+    for (const card of cards) {
+      expect(card.flags?.[0]).toBe(SOURCE_SNAPSHOT_CARD_LABEL);
+      expect(card.actions?.[0]?.getAttribute('href')).toBe(ALPINE_OCT6_2026_MUNICODE_URL);
+      expect(card.actions?.[0]?.getAttribute('href')).not.toContain('#');
+      if (card.id === 'alpine-2026-10-06-s2-a') continue;
+      expect(card.when).toBe('Tue, Oct 6, 2026 · 7:00 PM');
     }
   });
 

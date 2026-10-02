@@ -35,9 +35,30 @@ function parseMeetingDate(lineTwo: string): string | null {
   return `${match[3]}-${month}-${day}`;
 }
 
-function parseMeetingTime(lineTwo: string): string | null {
-  const match = lineTwo.match(/(\d{1,2}:\d{2}\s*[AP]M)/i);
+function clockTime(value: string): string | null {
+  const match = value.match(/(\d{1,2}:\d{2}\s*[AP]M)/i);
   return match ? normalizeText(match[1]) : null;
+}
+
+function labeledClock(line: string, label: string): string | null {
+  const match = line.match(new RegExp(`${label}\\s+at\\s+(\\d{1,2}:\\d{2}\\s*[AP]M)`, 'i'));
+  return match ? normalizeText(match[1]) : null;
+}
+
+/**
+ * Meeting clock from the header.
+ * A "Regular Meeting at <time>" on line one wins. Line two is only the fallback.
+ * An "Executive Session at <time>" on line one is stored separately and is not the meeting time.
+ */
+function parseMeetingTime(lineOne: string, lineTwo: string): {
+  meetingTime: string | null;
+  executiveSessionTime: string | null;
+} {
+  const regularMeetingTime = labeledClock(lineOne, 'Regular Meeting');
+  return {
+    meetingTime: regularMeetingTime ?? clockTime(lineTwo),
+    executiveSessionTime: labeledClock(lineOne, 'Executive Session'),
+  };
 }
 
 function sectionHeaderParagraph(section: Element): HTMLParagraphElement | null {
@@ -76,8 +97,9 @@ function parseSectionPresenter(paragraph: HTMLParagraphElement, title: string): 
   return undefined;
 }
 
-function parseItemTitle(itemLi: HTMLLIElement): { letter: string; title: string } | null {
-  const paragraph = itemLi.querySelector('p');
+function parseItemTitle(itemLi: HTMLLIElement): { letter: string; title: string; description?: string } | null {
+  const paragraphs = [...itemLi.querySelectorAll('p')];
+  const paragraph = paragraphs[0];
   if (!paragraph) return null;
   const num = paragraph.querySelector('num');
   const letterMatch = normalizeText(num?.textContent ?? '').match(/^([a-z])\.$/i);
@@ -86,7 +108,16 @@ function parseItemTitle(itemLi: HTMLLIElement): { letter: string; title: string 
   const titleSpan = spans.find((span) => normalizeText(span.textContent ?? '').length > 0);
   const title = normalizeText(titleSpan?.textContent ?? paragraph.textContent ?? '');
   if (!title) return null;
-  return { letter: letterMatch[1].toLowerCase(), title };
+  const description = paragraphs
+    .slice(1)
+    .map((extra) => normalizeText(extra.textContent ?? ''))
+    .filter((text) => text.length > 0)
+    .join(' ');
+  return {
+    letter: letterMatch[1].toLowerCase(),
+    title,
+    ...(description ? { description } : {}),
+  };
 }
 
 function parseAttachments(attachmentList: HTMLUListElement): MunicodeAttachment[] {
@@ -118,6 +149,7 @@ function parseSectionItems(section: Element): MunicodeAgendaItem[] {
       current = {
         letter: parsed.letter,
         title: parsed.title,
+        ...(parsed.description ? { description: parsed.description } : {}),
         attachments: [],
       };
       items.push(current);
@@ -157,13 +189,15 @@ export function parseMunicodeAgenda(html: string, sourceUrl: string): MunicodeAg
   const lineTwo = doc.querySelector('.header-content .h1-line-two');
   const lineThree = doc.querySelector('.header-content .h1-line-three');
 
-  const meetingTitle = normalizeText(lineOne?.textContent ?? '');
+  const lineOneText = normalizeText(lineOne?.textContent ?? '');
+  const lineTwoText = normalizeText(lineTwo?.textContent ?? '');
+  const meetingTitle = lineOneText;
   if (!meetingTitle) gaps.push('Meeting title missing from agenda header.');
 
-  const meetingDate = lineTwo ? parseMeetingDate(normalizeText(lineTwo.textContent ?? '')) : null;
+  const meetingDate = lineTwoText ? parseMeetingDate(lineTwoText) : null;
   if (!meetingDate) gaps.push('Meeting date missing or not parseable to YYYY-MM-DD.');
 
-  const meetingTime = lineTwo ? parseMeetingTime(normalizeText(lineTwo.textContent ?? '')) : null;
+  const { meetingTime, executiveSessionTime } = parseMeetingTime(lineOneText, lineTwoText);
   const location = lineThree ? normalizeText(lineThree.textContent ?? '') : null;
   if (!location) gaps.push('Meeting location missing from agenda header.');
 
@@ -171,6 +205,7 @@ export function parseMunicodeAgenda(html: string, sourceUrl: string): MunicodeAg
     meetingTitle,
     meetingDate,
     meetingTime,
+    executiveSessionTime,
     location,
     sourceUrl,
     sections: parseSections(doc),

@@ -6,7 +6,9 @@ import {
   SOURCE_SNAPSHOT_CARD_LABEL,
   SOURCE_SNAPSHOT_INFORMATION_CLASS,
 } from '../src/ui/source-snapshot';
-import { ALPINE_APR21_2026_MUNICODE_URL } from '../src/data/municode-alpine-fixture';
+import { ALPINE_OCT6_2026_MUNICODE_URL } from '../src/data/municode-alpine-fixture';
+import parsedAgenda from '../src/fixtures/municode/alpine-town-council-2026-10-06.parsed.json';
+import type { MunicodeAgenda } from '../src/types/municode-agenda';
 
 let root: HTMLElement;
 
@@ -40,7 +42,14 @@ describe('Alpine agenda Municode source snapshot (SS)', () => {
     renderAlpineAgendaMunicode(root, { access: 'reviewer_internal', source: 'municode' });
 
     const cards = [...root.querySelectorAll('[data-test="kanban-card"]')];
-    expect(cards.length).toBe(39);
+    expect(cards.length).toBe(14);
+    const agenda = parsedAgenda as MunicodeAgenda;
+    const described = new Map(
+      agenda.sections.flatMap((section) => section.items)
+        .filter((item) => item.description)
+        .map((item) => [item.title, item.description]),
+    );
+    expect(described.size).toBe(4);
 
     for (const card of cards) {
       expect(card.getAttribute('data-binding')).toBe(SOURCE_SNAPSHOT_BINDING);
@@ -48,11 +57,23 @@ describe('Alpine agenda Municode source snapshot (SS)', () => {
       expect(card.getAttribute('data-origin')).toBe('municode-snapshot');
       expect(card.textContent).toContain(SOURCE_SNAPSHOT_CARD_LABEL);
       expect(card.textContent).not.toContain('Listed on the published agenda');
-      expect(card.querySelector('[data-test="kanban-card-source"]')?.getAttribute('href'))
-        .toBe(ALPINE_APR21_2026_MUNICODE_URL);
-      expect(card.querySelector('[data-test="kanban-card-snapshot-when"]')?.textContent)
-        .toMatch(/Snapshot:.*2026.*06:00 PM/);
+      const href = card.querySelector('[data-test="kanban-card-source"]')?.getAttribute('href');
+      expect(href).toBe(ALPINE_OCT6_2026_MUNICODE_URL);
+      expect(href).not.toContain('#');
+      const when = card.querySelector('[data-test="kanban-card-snapshot-when"]')?.textContent;
+      if (card.getAttribute('data-card-id') === 'alpine-2026-10-06-s2-a') {
+        expect(when).toBe('Snapshot: Tue, Oct 6, 2026 · 6:00 PM');
+      } else {
+        expect(when).toBe('Snapshot: Tue, Oct 6, 2026 · 7:00 PM');
+      }
       expect(card.querySelector('.gw-kanban-track')).toBeNull();
+      const title = card.querySelector('h4')?.textContent ?? '';
+      const detail = card.querySelector('[data-test="kanban-card-detail"]')?.textContent;
+      if (described.has(title)) {
+        expect(detail).toBe(described.get(title));
+      } else {
+        expect(detail).toBeUndefined();
+      }
     }
   });
 });
