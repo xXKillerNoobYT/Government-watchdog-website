@@ -1,6 +1,6 @@
 /**
  * Minimal ambient shapes for the handful of Node built-ins the build config and
- * build-config tests touch.
+ * repository tests touch.
  *
  * WHY NOT `@types/node`: the repo omits it on purpose — see the note in
  * vite.config.ts. Several suites read source files *as text* and assert on their
@@ -13,12 +13,26 @@
  */
 
 declare module 'node:fs' {
+  interface NodeBuffer extends Uint8Array {
+    toString(encoding?: string): string;
+  }
+
   export function existsSync(path: string | URL): boolean;
   export function mkdtempSync(prefix: string): string;
   export function mkdirSync(path: string, options?: { recursive?: boolean }): string | undefined;
+  export function readFileSync(path: string | URL): NodeBuffer;
   export function readFileSync(path: string | URL, encoding: 'utf8'): string;
   export function rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
   export function writeFileSync(path: string, data: string): void;
+}
+
+declare module 'node:crypto' {
+  interface Hash {
+    update(data: string | Uint8Array): Hash;
+    digest(encoding: 'hex'): string;
+  }
+
+  export function createHash(algorithm: string): Hash;
 }
 
 declare module 'node:os' {
