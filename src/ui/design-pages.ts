@@ -2430,6 +2430,10 @@ export function renderAlerts(
       + 'so nothing here is a setting, and no preference is stored on this device.',
     ),
   ]);
+  const deliveryPanel = panel('Delivery controls', 'COMING SOON', [
+    deliveryMount,
+    el('p', { class: 'gw-dp-muted' }, ['No recipient is registered and no delivery timing is promised, in this lane or any other.']),
+  ], {}, 'alerts-delivery');
 
   const feedColumn = el('div', { class: 'gw-dp-stack' }, [
       panel(frame.mode === 'simple' ? 'New since you last read' : 'Unread fixture cards', 'UNREAD', [
@@ -2443,9 +2447,10 @@ export function renderAlerts(
   if (frame.mode === 'simple') {
     frame.content.append(el('section', { class: 'gw-dp-newspaper-section', 'data-test': 'alerts-simple-edition' }, [
       feedColumn,
+      deliveryPanel,
       el('aside', { class: 'gw-dp-newspaper-note', role: 'note' }, [
         el('strong', {}, ['A calm reading view.']),
-        el('span', {}, [' Switch to Advanced to configure device-only delivery previews, inspect trigger types, and review tracked-item diagnostics.']),
+        el('span', {}, [' Switch to Advanced for trigger examples and tracked-item diagnostics. Advanced adds detail only; it does not unlock delivery, change access, or create a subscription.']),
       ]),
     ]));
     return;
@@ -2454,10 +2459,7 @@ export function renderAlerts(
   frame.content.append(el('div', { class: 'gw-dp-alert-grid', 'data-test': 'alerts-advanced-workbench' }, [
     feedColumn,
     el('div', { class: 'gw-dp-stack' }, [
-      panel('Delivery controls', 'COMING SOON', [
-        deliveryMount,
-        el('p', { class: 'gw-dp-muted' }, ['No recipient is registered and no delivery timing is promised, in this lane or any other.']),
-      ], {}, 'alerts-delivery'),
+      deliveryPanel,
       panel('What a future alert could represent', 'TRIGGER EXAMPLES', [
         el('ul', { class: 'gw-dp-trigger-list' }, [
           el('li', {}, ['A fixture document-change event']),
