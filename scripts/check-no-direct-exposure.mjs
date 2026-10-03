@@ -382,11 +382,20 @@ export function decodeObfuscation(text) {
   return out;
 }
 
-/** A short, readable excerpt centered on a match, for the AC8 report. */
-function excerpt(text, at, length) {
-  const start = Math.max(0, at - 24);
-  const slice = text.slice(start, Math.min(text.length, at + length + 24)).replace(/\s+/g, ' ');
-  return `${start > 0 ? '...' : ''}${slice.trim()}`.slice(0, 160);
+/**
+ * Return only the origin of an unsafe destination for a diagnostic. Source
+ * excerpts are deliberately never used here: an adjacent header, cookie, or
+ * query value can be a credential even when URL userinfo has been redacted.
+ */
+function safeDestinationContext(match) {
+  const destination = match.match(/(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\/[^\s"'`)>]+/);
+  if (!destination) return 'destination=off-origin';
+  try {
+    const value = destination[0].startsWith('//') ? `https:${destination[0]}` : destination[0];
+    return `destination=${new URL(value).origin}`;
+  } catch {
+    return 'destination=off-origin';
+  }
 }
 
 /**
@@ -394,9 +403,8 @@ function excerpt(text, at, length) {
  *
  * Whole-text rather than line-by-line: a production bundle is a single line, so
  * the line-oriented {@link violationsIn} would report the entire chunk as one
- * value. Matches are deduplicated by rule and excerpt, because a minifier can
- * repeat the same destination in many chunks and one finding per destination is
- * what makes the report actionable.
+ * value. Findings carry a rule, reason, and origin-only destination context —
+ * never a source excerpt. Matches are deduplicated by rule and destination.
  *
  * @param onlyRules optional set of rule ids, used for the binary subset.
  */
@@ -414,14 +422,13 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
       pattern.lastIndex = 0;
       let match = pattern.exec(variant);
       while (match !== null) {
-        const value = redactCredentials(excerpt(variant, match.index, match[0].length));
+        const value = safeDestinationContext(match[0]);
         const credentialed = rule.dial === true
           && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
         const id = credentialed ? `${rule.id}-credentialed` : rule.id;
-        // Key on the matched destination, not the report excerpt: the excerpt
-        // carries surrounding context, so one destination repeated across
-        // minified chunks would yield one finding per copy.
-        const key = `${id} ${redactCredentials(match[0])}`;
+        // Key on the safe context, not raw source: a report must never retain
+        // literal credential-bearing text merely to deduplicate findings.
+        const key = `${id} ${value}`;
         if (!seen.has(key)) {
           seen.add(key);
           hits.push({ rule: id, why: credentialed ? CREDENTIALED_WHY : rule.why, value });

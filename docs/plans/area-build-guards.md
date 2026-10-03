@@ -43,7 +43,7 @@ across PRs #96 → #100 → #103 (a bottom-up stack, each genuinely dependent on
 | AC5 | Tests cover normal + dynamic imports, `new URL(..., import.meta.url)`, CSS URLs, binary/image assets, obfuscated encodings | **done** | `decodeObfuscation` (`:326`) + `test/emitted-artifact-exposure.test.ts` |
 | AC6 | A public deployment package fails if it contains a sibling private client artifact | **done** | `privateSiblingLanes` / `assertPublicPackage` (`check-public-bundle.mjs:142-194`) |
 | AC7 | Hosted anonymous probes confirm no direct backend hostname/port and no source-map or asset escape | **BLOCKED — owner-gated** | needs a hosted deploy; deploy is HOLD per GOV-420. Not reachable from this loop at all. |
-| AC8 | Report names the exact file, matched value, and rule **without printing credentials** | **done** | `redactCredentials` applied at every hit site (`:387`, `:394`, `:421`, `:445`) |
+| AC8 | Report names the exact file, safe destination context, and rule **without printing credentials** | **in remediation — GOV-2521** | The prior excerpt-based report field could retain adjacent header/cookie literals. GOV-2521 replaces it with origin-only structured context and adds helper + captured-CLI synthetic-sentinel coverage; independent review remains required. |
 
 **Verification for this area** — all three, plus the dual-lane build:
 `npm test` · `npx tsc --noEmit` · `npm run build` · `npm run build:all`.
