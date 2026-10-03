@@ -1,0 +1,13 @@
+export const SANDY_SEP29_2026_LEGISTAR_EVENT_URL =
+  'https://sandyutah.legistar.com/MeetingDetail.aspx?LEGID=2090&GID=636&G=0286BBAA-EFC8-4C8F-9E14-852CCA035C09';
+
+export const SANDY_SEP29_2026_LEGISTAR_AGENDA_PDF_URL =
+  'https://sandyutah.legistar1.com/sandyutah/meetings/2026/9/2090_A_City_Council_26-09-29_Meeting_Agenda.pdf';
+
+export const SANDY_SEP29_2026_LEGISTAR_CAPTURED_AT_UTC = '2026-10-01T14:21:00Z';
+
+export const SANDY_SEP29_2026_LEGISTAR_EVENT_SHA256 =
+  '83119cbe20f74f5483302b2e419cfcec4468f6958fc89e58169969dee6fb5831';
+
+export const SANDY_SEP29_2026_LEGISTAR_EVENTITEMS_SHA256 =
+  'edcb8914c2d629d7369dabe530b58507ddbf63b7c967fc31483b1e3fe358178e';

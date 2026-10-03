@@ -1,3 +1,4 @@
 # Preserve the owner-supplied baseline reference byte-for-byte. Its upstream
 # whitespace is provenance, not production source style.
 design/baseline/moty-government-watchdog-2026-07/reference/** -whitespace
+test/fixtures/legistar/*.json -text

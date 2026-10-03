@@ -1,0 +1,130 @@
+{
+  "bodyName": "City Council",
+  "meetingDate": "2026-09-29",
+  "meetingTime": "5:15 PM",
+  "location": "Council Chambers",
+  "sourceUrl": "https://sandyutah.legistar.com/MeetingDetail.aspx?LEGID=2090&GID=636&G=0286BBAA-EFC8-4C8F-9E14-852CCA035C09",
+  "agendaPdfUrl": "https://sandyutah.legistar1.com/sandyutah/meetings/2026/9/2090_A_City_Council_26-09-29_Meeting_Agenda.pdf",
+  "minutesPdfUrl": null,
+  "capturedAtUtc": "2026-10-01T14:21:00Z",
+  "items": [
+    {
+      "eventItemId": 44384,
+      "agendaNumber": "1.",
+      "sequence": 11,
+      "section": "Informational Items",
+      "title": "City Council interviewing Jan Wangsgard to serve as a regular member of the Sandy City Community Development Block Grant Committee (CDBG)",
+      "matterFile": "26-445",
+      "matterType": "Informational Report",
+      "attachments": []
+    },
+    {
+      "eventItemId": 44392,
+      "agendaNumber": "2.",
+      "sequence": 12,
+      "section": "Informational Items",
+      "title": "Information on the Centennial Parkway Street Dedication",
+      "matterFile": "26-453",
+      "matterType": "Informational Report",
+      "attachments": [
+        {
+          "name": "Centennial Parkway Dedication Memo",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/11d0d0d8-d8c6-451e-a187-77623799c13a.docx"
+        },
+        {
+          "name": "Map",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/062faaf5-68ca-4a41-abd8-9d88ba125437.pdf"
+        }
+      ]
+    },
+    {
+      "eventItemId": 44386,
+      "agendaNumber": "3.",
+      "sequence": 14,
+      "section": "Consent Calendar",
+      "title": "Approval of the September 1, 2026 Draft Minutes",
+      "matterFile": "26-444",
+      "matterType": "Minutes",
+      "attachments": [
+        {
+          "name": "September 1, 2026 Draft Minutes",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/cb3b81d7-39f7-4807-842b-0ee042d31c05.pdf"
+        }
+      ]
+    },
+    {
+      "eventItemId": 44387,
+      "agendaNumber": "4.",
+      "sequence": 15,
+      "section": "Consent Calendar",
+      "title": "Approval of the September 15, 2026 Draft Minutes",
+      "matterFile": "26-447",
+      "matterType": "Minutes",
+      "attachments": [
+        {
+          "name": "September 15, 2026 Draft Minutes",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/c86f9049-e40a-4f06-8c82-fb320083cd75.pdf"
+        }
+      ]
+    },
+    {
+      "eventItemId": 44388,
+      "agendaNumber": "5.",
+      "sequence": 16,
+      "section": "Consent Calendar",
+      "title": "Presentation of an Interlocal Agreement with Salt Lake County for Special Bond Election",
+      "matterFile": "26-454",
+      "matterType": "Resolution",
+      "attachments": [
+        {
+          "name": "Res 26-88C - ILA Salt Lake County Elections_Bond",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/ce8a8425-3b72-4b62-8fb3-be65be4ab4bb.pdf"
+        }
+      ]
+    },
+    {
+      "eventItemId": 44390,
+      "agendaNumber": "6.",
+      "sequence": 18,
+      "section": "Council Voting Items",
+      "title": "Amendments to Title 21 of the Land Development Code related to Building Height",
+      "matterFile": "CA02132026-0007114 (CC)",
+      "matterType": "Planning Item",
+      "attachments": [
+        {
+          "name": "Staff Presentation from 7-7-2026",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/65b7ab47-4ec5-4049-9142-7df9e379a3c3.pdf"
+        },
+        {
+          "name": "Applicant Presentation from PC",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/5f153af6-eb64-40da-a47d-3bf3ffef8617.pdf"
+        },
+        {
+          "name": "Staff Report",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/3d98bd81-4bbb-4471-8b16-e410dbc6157f.pdf"
+        },
+        {
+          "name": "Exhibit A - Applicant Proposal",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/c502a54c-a5bb-4cf2-91b6-d9d0e2dce191.pdf"
+        },
+        {
+          "name": "PC Minutes 6-4-2026",
+          "url": "https://sandyutah.legistar1.com/sandyutah/attachments/19393719-30fa-4ca4-bff4-3c4231461dc8.pdf"
+        }
+      ]
+    },
+    {
+      "eventItemId": 44391,
+      "agendaNumber": "7.",
+      "sequence": 19,
+      "section": "Council Voting Items",
+      "title": "Possible Closed Session: character, professional competence, or physical or mental health of an individual.",
+      "matterFile": "26-446",
+      "matterType": "Resolution",
+      "attachments": []
+    }
+  ],
+  "gaps": [
+    "Minutes not yet published in the capture"
+  ]
+}
