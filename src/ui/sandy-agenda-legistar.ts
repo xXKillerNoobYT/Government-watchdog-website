@@ -19,6 +19,7 @@ export interface SandyAgendaLegistarOptions {
 
 const STYLE = `${GW_TOKENS}
 .gw-sandy-agenda{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gw-space-4);max-width:1200px;margin:0 auto;padding:var(--gw-space-5) var(--gw-space-4);color:var(--gw-text);font-family:var(--gw-font)}
+.gw-sandy-agenda a[href]{display:inline-flex;align-items:center;min-height:var(--gw-tap-min)}
 .gw-sandy-agenda-banner{margin:0;border:var(--gw-border-w) solid var(--gw-tone-caution-line);border-radius:var(--gw-radius-sm);background:var(--gw-tone-caution-well);color:var(--gw-caution-text);padding:var(--gw-space-2) var(--gw-space-3);font:700 var(--gw-text-badge)/1.4 var(--gw-font-mono)}
 .gw-sandy-agenda-head{display:grid;gap:var(--gw-space-2)}
 .gw-sandy-agenda-head h1,.gw-sandy-agenda-head p{margin:0}
