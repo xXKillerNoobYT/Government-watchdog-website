@@ -353,6 +353,12 @@ of a feature **this row authorises**, so it was re-scoped to the actual invarian
 | Synthetic four-stage lifecycle board (`?demo=design`) | **GS** | `renderAlpineAgendaKanbanFixture` with reviewer admission, explicit design preview, and the `SYNTHETIC DESIGN FIXTURE — not a live read` banner. Cards are synthetic samples only. | No civic API; the lane demonstrates layout until a reviewed agenda-board projection ships. |
 | Municode HTML snapshot board (`?source=municode`) | **SS** | With reviewer admission and the explicit `source=municode` flag, cards are **source snapshots** (`data-binding="source-snapshot"`, `data-information-class="SS"`). Each card shows the official agenda URL, snapshot date/time from the capture header, and `Auto-extracted from the official agenda — not yet reviewed` (`src/ui/source-snapshot.ts`). Content is parser-extracted only; `hearing` and `voted` lanes stay empty. Nothing in this lane claims RV or backend review. | Backend review plus `GET /v1/meetings/:id/agenda-board` (or successor) before any card may render as **RV**. |
 
+## Sandy agenda board - `#/sandy-agenda`
+
+| Major information group | Class | Current binding | Backend contract needed |
+| --- | --- | --- | --- |
+| Legistar event snapshot board (`?source=legistar`) | **SS** | With reviewer admission and the explicit `source=legistar` flag, cards are source snapshots with per-card official source links, snapshot meeting date and time, capture timestamps, `data-binding="source-snapshot"`, and `data-information-class="SS"`. Card content comes only from the committed parser output. Items with attachments appear in `packet`; other items appear in `posted`; `hearing` and `voted` stay empty. The browser never promotes SS records to RV. | Backend review plus `GET /v1/meetings/:id/agenda-board` (or successor) before any card may render as **RV**. |
+
 ## Hard prohibitions
 
 - **No TopicTree-as-Boards.** A reviewed topic label is navigation context, not a

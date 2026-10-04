@@ -43,6 +43,7 @@ import {
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
 import { renderAlpineAgendaKanbanFixture } from './ui/alpine-agenda-kanban-fixture';
 import { renderAlpineAgendaMunicode } from './ui/alpine-agenda-municode';
+import { renderSandyAgendaLegistar } from './ui/sandy-agenda-legistar';
 import {
   renderAlerts as renderDesignAlerts,
   renderBoardsDesign,
@@ -1212,8 +1213,10 @@ function gated(handler: ShellHandler): RouteHandler {
       // One origin decision feeds both the banner and the Alerts badge, so the
       // chip can never claim a count on a route the banner calls reviewed.
       const origin = shellOriginFor(path, query);
-      const municodeSnapshot = path === '/alpine-agenda' && query.get('source') === 'municode';
-      const shellOrigin = municodeSnapshot ? undefined : origin;
+      const sourceSnapshot =
+        (path === '/alpine-agenda' && query.get('source') === 'municode')
+        || (path === '/sandy-agenda' && query.get('source') === 'legistar');
+      const shellOrigin = sourceSnapshot ? undefined : origin;
       const mount = renderShell(root!, {
         active: path,
         origin: shellOrigin,
@@ -1291,6 +1294,16 @@ router.register('/alpine-agenda', gated(({ mount, query }) => {
     renderAlpineAgendaMunicode(mount, {
       access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
       source: 'municode',
+    });
+    return;
+  }
+  renderReviewerContextState(mount, 'unavailable');
+}));
+router.register('/sandy-agenda', gated(({ mount, query }) => {
+  if (query.get('source') === 'legistar') {
+    renderSandyAgendaLegistar(mount, {
+      access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+      source: 'legistar',
     });
     return;
   }
