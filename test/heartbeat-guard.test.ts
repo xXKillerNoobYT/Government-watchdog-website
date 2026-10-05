@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 // above the module specifier suppresses the "no declaration file" diagnostic.
 // prettier-ignore
 // @ts-expect-error No declaration file is needed for this build-time module.
-import { acquireLease, currentPid, DEFAULT_INTERVAL_MS, denverLabel, getFreePort, humanDuration, isLeaseExpired, killProcessGroup, makeTempStateDir, nodeExecPath, pgidAlive, readLease, readSessions, reconcileCadence, recoverStale, rmStateDir, runBounded, spawnDetachedGroup, waitForPort, writeLease } from '../scripts/heartbeat-guard.mjs';
+import { acquireLease, currentPid, DEFAULT_INTERVAL_MS, PROCESS_GROUPS_SUPPORTED, denverLabel, getFreePort, humanDuration, isLeaseExpired, killProcessGroup, makeTempStateDir, nodeExecPath, pgidAlive, readLease, readSessions, reconcileCadence, recoverStale, rmStateDir, runBounded, spawnDetachedGroup, waitForPort, writeLease } from '../scripts/heartbeat-guard.mjs';
 
 const freePort = (): Promise<number> => getFreePort();
 
@@ -28,7 +28,7 @@ afterEach(() => {
 // call that ignores cooperative timeout and spawns a child server.
 // ---------------------------------------------------------------------------
 
-describe('hard cancellation of an uncancellable browser-audit stand-in (website#229 AC1/AC2/AC7)', () => {
+describe.skipIf(!PROCESS_GROUPS_SUPPORTED)('hard cancellation of an uncancellable browser-audit stand-in (website#229 AC1/AC2/AC7)', () => {
   it('kills the whole process group even though SIGTERM is ignored, and frees the child-bound port', async () => {
     const port = await freePort();
     const pgid = spawnDetachedGroup(nodeExecPath(), [HANG, String(port)]);
@@ -114,7 +114,7 @@ describe('durable lease, expiry, and stale-run recovery (website#229 AC3/AC4/AC6
     expect(second.reason).toBe('live-lease-held');
   });
 
-  it('recovers an expired lease: marks stale, writes a Session, clears the lease', async () => {
+  it.skipIf(!PROCESS_GROUPS_SUPPORTED)('recovers an expired lease: marks stale, writes a Session, clears the lease', async () => {
     const dir = tmp();
     const start = 1_700_000_000_000;
     writeLease(dir, {
@@ -154,7 +154,7 @@ describe('durable lease, expiry, and stale-run recovery (website#229 AC3/AC4/AC6
     expect(again.action).toBe('none');
   }, 15000);
 
-  it('recovers a lease whose worker died even before its deadline', async () => {
+  it.skipIf(!PROCESS_GROUPS_SUPPORTED)('recovers a lease whose worker died even before its deadline', async () => {
     const dir = tmp();
     const start = 1_700_000_000_000;
     writeLease(dir, {

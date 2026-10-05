@@ -1,11 +1,31 @@
 # Heartbeat run guard — bound browser-audit calls and recover stale runs
 
 **Owner:** AutomationOpsEngineer (`b9611d2e-d5d0-438e-9081-99f94cd65f06`) ·
-**Status:** v1, landed for GOV-2135 / [website#229](https://github.com/xXKillerNoobYT/Government-watchdog-website/issues/229) ·
-**Reviewed by:** VerificationSafetyReviewer (`3f95c8ce-c929-4c30-a327-9871bcbc5643`)
+**Status:** proposed in PR #231 for GOV-2135 / [website#229](https://github.com/xXKillerNoobYT/Government-watchdog-website/issues/229). Integration and end-to-end receipt delivery remain unverified.
 
 This runbook owns the rule. Where CLAUDE.md or another doc summarizes it, this
 file wins.
+
+### Supported runtime and verification limits
+
+Process supervision requires POSIX process groups. Native Windows is unsupported.
+`run`, `recover` (including dry runs), and `selfcheck` exit with code 1 and
+`HEARTBEAT_GUARD_UNSUPPORTED_PLATFORM` before spawning work or changing leases.
+Direct process-control APIs also reject Windows. Cadence arithmetic, lease-file
+utilities, and read-only `reconcile` remain available; they do not prove cleanup.
+`status` rejects Windows when a lease needs a process-group liveness check.
+
+The two-hour interval below is the original incident contract and a conservative
+local deadline ceiling. The [September 8 issue comment](https://github.com/xXKillerNoobYT/Government-watchdog-website/issues/229#issuecomment-5582022424)
+reports a 480-minute owner-directed trigger and explicitly changes no implementation
+contract. This harness does not configure that trigger or prove current scheduler
+integration, Notion receipt delivery, or the current catch-up policy.
+
+The current synthetic workload binds a server in its own process. It does not
+prove descendant cleanup. Normal command exit reports cleanup success without
+checking remaining descendants or ports, and failed cleanup still clears a lease.
+These are unresolved acceptance gaps in PR #231. Passing local tests does not
+establish AC2/AC4 or release readiness.
 
 ---
 
@@ -130,15 +150,22 @@ cadence-starvation issue — which is exactly the boundary Directive 7 draws.
 ## 6. Verifying a change
 
 ```bash
-npm test && npx tsc --noEmit && npm run build        # CLAUDE.md §3 — all three
+npm test && npx tsc --noEmit && npm run build        # CLAUDE.md §3 - all three
 node scripts/heartbeat-guard.mjs selfcheck            # end-to-end kill/recover/catch-up
 ```
 
+`npm test` first runs `test/heartbeat-guard-platform.test.mjs`. It exercises API
+and CLI rejection in a Windows subprocess, checks exact lease preservation and
+absence of command execution, and verifies pure cadence utilities still work.
+On Windows, six POSIX supervision tests are explicitly skipped. Run those tests
+and `selfcheck` on POSIX before claiming process supervision works there.
+
 The synthetic workload `scripts/heartbeat-guard-hang.mjs` reproduces website#229
 with **no browser, credential, provider payload, local path, or civic record**: it
-ignores cooperative `SIGTERM` and spawns a child server that binds a loopback
-port. `test/heartbeat-guard.test.ts` drives it to prove hard cancellation,
-recursive cleanup, lease expiry, recovery, and deduped catch-up. Because that test
+ignores cooperative `SIGTERM` and binds a loopback server in its own process.
+`test/heartbeat-guard.test.ts` exercises single-process hard cancellation,
+port release, lease expiry, recovery, and deduped catch-up. Descendant cleanup
+requires a separate fixture and remains unverified. Because that test
 runs under `npm test` — a required CI check — a regression in any of those is a
 red required check (AC8).
 

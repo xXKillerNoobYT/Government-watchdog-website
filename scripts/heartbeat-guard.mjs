@@ -55,6 +55,15 @@ import process from 'node:process';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+export const PROCESS_GROUPS_SUPPORTED = process.platform !== 'win32';
+
+function requireProcessGroups() {
+  if (PROCESS_GROUPS_SUPPORTED) return;
+  const error = new Error('Heartbeat process supervision requires POSIX process groups; Windows is unsupported. No work was started or lease changed.');
+  error.code = 'HEARTBEAT_GUARD_UNSUPPORTED_PLATFORM';
+  throw error;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -154,6 +163,7 @@ export function humanDuration(ms) {
 
 /** True while the process group `pgid` still has any member. */
 export function pgidAlive(pgid) {
+  requireProcessGroups();
   if (!Number.isFinite(pgid) || pgid <= 1) return false;
   try {
     process.kill(-pgid, 0);
@@ -205,6 +215,7 @@ export async function verifyPortsFree(ports = [], host = '127.0.0.1') {
  * happened so the caller can surface a cleanup failure as a required-check fail.
  */
 export async function killProcessGroup(pgid, { graceMs = DEFAULT_GRACE_MS } = {}) {
+  requireProcessGroups();
   if (!pgidAlive(pgid)) return { killed: false, sigterm: false, sigkill: false, groupGone: true };
   try {
     process.kill(-pgid, 'SIGTERM');
@@ -233,6 +244,7 @@ export async function killProcessGroup(pgid, { graceMs = DEFAULT_GRACE_MS } = {}
 
 /** Spawn `command args` as the leader of a fresh process group; return its pgid. */
 export function spawnDetachedGroup(command, args = [], { env, cwd } = {}) {
+  requireProcessGroups();
   const child = spawn(command, args, {
     detached: true, // new session -> child.pid is the new group's id
     stdio: 'ignore',
@@ -266,6 +278,7 @@ export async function runBounded({
   cwd,
   onSpawn,
 } = {}) {
+  requireProcessGroups();
   if (!command) throw new Error('runBounded: command is required');
   if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw new Error('runBounded: deadlineMs must be a positive number');
 
@@ -452,6 +465,7 @@ export function logLine(logPath, level, msg, nowEpochMs = Date.now()) {
  * ports, writes an append-only Session record, and clears the lease.
  */
 export async function recoverStale({ dir, nowEpochMs = Date.now(), apply = false, logPath } = {}) {
+  requireProcessGroups();
   const lease = readLease(dir);
   if (!lease) return { stale: false, action: 'none', reason: 'no-lease' };
 
@@ -666,6 +680,7 @@ function printJson(obj) {
 }
 
 async function cliRun(a) {
+  requireProcessGroups();
   const stateDir = a['state-dir'] || defaultStateDir();
   const logPath = path.join(stateDir, 'guard.log');
   const lane = a.lane || 'unspecified';
@@ -814,6 +829,7 @@ async function cliRun(a) {
 }
 
 async function cliRecover(a) {
+  requireProcessGroups();
   const stateDir = a['state-dir'] || defaultStateDir();
   const logPath = path.join(stateDir, 'guard.log');
   const apply = a.apply === true;
@@ -864,6 +880,7 @@ function cliStatus(a) {
  * required-check version of this; `selfcheck` is for manual verification.
  */
 async function cliSelfcheck() {
+  requireProcessGroups();
   const dir = makeTempStateDir('heartbeat-guard-selfcheck');
   const checks = [];
   const ok = (name, cond, detail) => {
@@ -970,6 +987,11 @@ async function main() {
 // Only run the CLI when invoked directly, never when imported by the test.
 if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])) {
   main().catch((err) => {
+    if (err?.code === 'HEARTBEAT_GUARD_UNSUPPORTED_PLATFORM') {
+      printJson({ error: err.code, diagnostic: err.message });
+      process.exitCode = 1;
+      return;
+    }
     process.stderr.write(`heartbeat-guard: fatal: ${(err && err.stack) || err}\n`);
     process.exitCode = 1;
   });
