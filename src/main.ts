@@ -41,6 +41,8 @@ import {
   renderTimelineLevels,
 } from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
+import { renderAlpineAgendaKanbanFixture } from './ui/alpine-agenda-kanban-fixture';
+import { renderAlpineAgendaMunicode } from './ui/alpine-agenda-municode';
 import {
   renderAlerts as renderDesignAlerts,
   renderBoardsDesign,
@@ -887,7 +889,10 @@ function renderNewsletterRoute(
   // GOV-84: the gated fixture lane. `designPreviewActive` is the same session-sticky
   // reviewer flag the other design routes use; the reviewer half is enforced inside
   // the renderers, which admit only the reviewer lane before rendering anything.
-  const designFixture = designPreviewActive(query);
+  const previewLane = query.get('demo') === 'snapshot'
+    ? 'snapshot'
+    : designPreviewActive(query) ? 'design' : undefined;
+  const designFixture = previewLane === 'design';
   const requestedPublic = query.get('access') === 'public';
   const newsletter = requestedPublic
     ? { ...NEWSLETTER_DIGEST, access: 'public' }
@@ -924,10 +929,10 @@ function renderNewsletterRoute(
   }
   const id = query.get('id');
   if (id) {
-    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE, designFixture);
+    renderNewsletterDetail(mount, newsletter, id, NEWSLETTER_NOTICE, designFixture, previewLane);
     return;
   }
-  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE, designFixture);
+  renderNewsletterArchive(mount, newsletter, NEWSLETTER_NOTICE, designFixture, previewLane);
 }
 
 /**
@@ -1123,6 +1128,7 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
   '/vault',
   '/agenda',
+  '/alpine-agenda',
   '/timeline',
   // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84
   // and the GOV-82 follow-up both shipped a fixture without this line, and each time the
@@ -1155,7 +1161,14 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
       SHELL_FORCED_STATE_FIXTURE_ROUTES.has(path)
       && ['loading', 'empty', 'error'].includes(query.get('state') ?? '')
     );
-  if ((designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) || explicitFixture) return 'fixture';
+  // A recognized forced state describes the synthetic content actually rendered, so it
+  // remains a fixture even when the broader Newsletter lane is a reviewed snapshot.
+  if (explicitFixture) return 'fixture';
+  // An explicit Newsletter snapshot selection is more specific than a sticky design
+  // preview from an earlier route. It remains reviewed-snapshot provenance and never
+  // inherits fixture classification from session presentation state.
+  if (path === '/newsletter' && demo === 'snapshot') return 'reviewed_snapshot';
+  if (designFixture && SHELL_DESIGN_FIXTURE_ROUTES.has(path)) return 'fixture';
   const reviewedSnapshot =
     ((path === '/timeline' || path === '/topics') && demo === 'graph')
     || (path === '/newsletter' && demo === 'snapshot');
@@ -1199,7 +1212,13 @@ function gated(handler: ShellHandler): RouteHandler {
       // One origin decision feeds both the banner and the Alerts badge, so the
       // chip can never claim a count on a route the banner calls reviewed.
       const origin = shellOriginFor(path, query);
-      const mount = renderShell(root!, { active: path, origin, fixture: origin === 'fixture' });
+      const municodeSnapshot = path === '/alpine-agenda' && query.get('source') === 'municode';
+      const shellOrigin = municodeSnapshot ? undefined : origin;
+      const mount = renderShell(root!, {
+        active: path,
+        origin: shellOrigin,
+        fixture: origin === 'fixture',
+      });
       handler({ mount, path, query });
     });
 }
@@ -1262,6 +1281,20 @@ router.register('/agenda', gated(({ mount, query }) => {
     return;
   }
   void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
+}));
+router.register('/alpine-agenda', gated(({ mount, query }) => {
+  if (designPreviewActive(query)) {
+    renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
+    return;
+  }
+  if (query.get('source') === 'municode') {
+    renderAlpineAgendaMunicode(mount, {
+      access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+      source: 'municode',
+    });
+    return;
+  }
+  renderReviewerContextState(mount, 'unavailable');
 }));
 router.register('/boards', gated(({ mount, query }) => {
   // GOV-163: the matrix §4 GS row ("populated handoff board cards") declared a fixture lane

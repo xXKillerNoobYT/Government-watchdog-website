@@ -26,6 +26,7 @@ layout.
 | **DG** | Designed gap | Keep the owner-approved information slot visible and state which projection, receipt, or capability is unavailable. Unsupported controls remain disabled. |
 | **DL** | Device-local | Browser-only reading preference or interaction state. It must say that it creates no account, identity, coverage, monitoring, subscription, reminder, or delivery. |
 | **GS** | Gated synthetic | Populate only after reviewer admission plus an explicit fixture flag and the `SYNTHETIC DESIGN FIXTURE — not a live read` notice. Never mix it into reviewed counts or lists. |
+| **SS** | Source snapshot | Populate only after reviewer admission plus an explicit source-snapshot flag. Values are parser-extracted from a committed official-source capture (`src/ui/source-snapshot.ts`). Every card must show the source URL through `safeExternalHref`, the snapshot meeting date and time from the capture, and the fixed label `Auto-extracted from the official agenda — not yet reviewed`. Cards carry **only** parser fields — no AI summaries or editorial copy. **SS never self-promotes to RV**; only backend review may reclassify a record. |
 | **CS** | Coming soon | Functionality that **does not exist in any lane** — no reviewed contract, no fixture, no device-local behaviour, and no backend product behind it. Keep the owner-approved slot visible and mark it with the `COMING SOON` marker (`src/ui/coming-soon.ts`). **Never name a backend contract**, because there is none to name. Any control stays disabled. |
 
 ### Shipping a GS lane — the shell must be told in the same change
@@ -142,6 +143,35 @@ code, not copied from an issue's prose.**
 Every future network response remains subject to the reviewer access gate,
 `assertWebSafe`, the raw/private-field denylist, exact origin/freshness labels,
 and the backend-supplied trust vocabulary.
+
+### Served `/v1` projection source (GOV-2180 → backend GOV-1816 / GOV-1817)
+
+`AgendaBoard`, `CardFeed`, and `NewsletterDigestResponse` are the three RV
+projections the backend now serves VERBATIM over `/v1` (`/v1/agenda-board`,
+`/v1/card-feed`, `/v1/newsletter-digest`), each nested under `data` inside the
+mandatory GOV-1817 envelope (`scope` / `access` / `origin` / `generatedAt` /
+`sourceFreshness`), computed live from the reviewed registry (`origin = live`)
+behind the civic gate. `src/data/v1-projections.ts` is the same-origin consumer:
+it validates the envelope, re-sweeps for raw paths, unwraps `data` through the
+same web-safe walk the fixtures use, and fails closed to the existing gated / gap
+states. It NEVER recomputes trust or synthesizes freshness.
+
+- **The binding class does not move — these slots stay RV.** RV already covers a
+  captured snapshot *and* a live reviewed read; what changes is the *provenance*
+  of the RV value, from a checked-in captured snapshot toward an `origin = live`
+  served read. The served response is still labelled by its own `origin`, never
+  relabelled as live when it is a snapshot.
+- **`sourceFreshness` is an honest empty map this slice.** Its absence renders as
+  a Designed Gap (`hasSourceFreshness()` is `false`); no `as-of` is invented.
+- **Migration status (this slice):** the consumer client and the reversible flip
+  (`VITE_SERVED_PROJECTIONS`, default OFF → the checked-in
+  `src/fixtures/*.json`) have landed. The MOTY RV render routes still read the
+  fixtures by default. The cutover — wiring those routes to the served path,
+  flipping the default to served, and retiring the checked-in projection
+  fixtures — awaits a reachable same-origin `/v1` bridge to an authorized
+  reviewer session so live equivalence can be evidenced without regressing the
+  MOTY screens to gap states. Until then the fixtures remain the captured-snapshot
+  fallback and are NOT deleted.
 
 ## Global shell
 
@@ -316,6 +346,13 @@ of a feature **this row authorises**, so it was re-scoped to the actual invarian
 | Read state in fixture mode | **DL** | Browser-only interaction preview; it sends nothing and registers no recipient. `gw_alerts_read` only. | Mark-read API before any persistence claim. |
 | Delivery-channel controls in fixture mode | **CS** | No channel, recipient verification, or delivery service exists in any lane, so the fixture lane shows the `COMING SOON` marker naming all five channels and stores nothing. It previously rendered persisted `role="switch"` toggles defaulting ON — a switch that survives a reload reads as a configured setting whatever the surrounding notice says (#86). | None — this is an unbuilt feature, not an awaited contract. The reviewed lane's row above keeps `GET/PUT /v1/me/alert-preferences` as the contract it awaits. |
 
+## Alpine agenda Kanban — `#/alpine-agenda`
+
+| Major information group | Class | Current binding | Backend contract needed |
+| --- | --- | --- | --- |
+| Synthetic four-stage lifecycle board (`?demo=design`) | **GS** | `renderAlpineAgendaKanbanFixture` with reviewer admission, explicit design preview, and the `SYNTHETIC DESIGN FIXTURE — not a live read` banner. Cards are synthetic samples only. | No civic API; the lane demonstrates layout until a reviewed agenda-board projection ships. |
+| Municode HTML snapshot board (`?source=municode`) | **SS** | With reviewer admission and the explicit `source=municode` flag, cards are **source snapshots** (`data-binding="source-snapshot"`, `data-information-class="SS"`). Each card shows the official agenda URL, snapshot date/time from the capture header, and `Auto-extracted from the official agenda — not yet reviewed` (`src/ui/source-snapshot.ts`). Content is parser-extracted only; `hearing` and `voted` lanes stay empty. Nothing in this lane claims RV or backend review. | Backend review plus `GET /v1/meetings/:id/agenda-board` (or successor) before any card may render as **RV**. |
+
 ## Hard prohibitions
 
 - **No TopicTree-as-Boards.** A reviewed topic label is navigation context, not a
@@ -342,7 +379,7 @@ Update this file in the same change whenever a baseline information group is
 added, removed, enabled, disabled, or rebound.
 
 - [ ] Name the exact baseline page, major information group, and reviewed route.
-- [ ] Assign **RV**, **DG**, **DL**, **GS**, or **CS**; do not use an ambiguous
+- [ ] Assign **RV**, **DG**, **DL**, **GS**, **SS**, or **CS**; do not use an ambiguous
       “temporary” or “mostly real” state.
 - [ ] For **RV**, name the exact response type/field or endpoint, access scope,
       origin/freshness value, trust label, and receipt path.
@@ -352,6 +389,10 @@ added, removed, enabled, disabled, or rebound.
       identity, coverage, monitoring, subscription, reminder, or delivery claim.
 - [ ] For **GS**, require reviewer admission, an explicit fixture flag, and the
       fixture banner before any synthetic leaf reaches the DOM.
+- [ ] For **SS**, require reviewer admission, an explicit source-snapshot flag, the
+      `SOURCE_SNAPSHOT_CARD_LABEL` on every card, source URL + snapshot date/time on
+      every card, parser-only fields (no AI or editorial copy), and **no** client-side
+      promotion to RV.
 - [ ] For **CS**, require the `COMING SOON` marker from `src/ui/coming-soon.ts`, add
       the slot to the CS registry above with its owning page and route, and **forbid
       any backend-contract sentence** — there is no contract to await, so naming one

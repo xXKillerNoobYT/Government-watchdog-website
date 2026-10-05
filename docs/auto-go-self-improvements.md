@@ -16,9 +16,9 @@ it silently.
 **S1 — Severity 1. C3 invokes a command that does not exist, so C3 is a no-op.**
 `/auto-go.md`'s C3 dispatch says "**Invoke `/hunt-fix-loop` focused on this area**".
 `/hunt-fix-loop` was searched for exhaustively and is **verified missing**:
-`find /Users/IA/.claude -iname "*hunt-fix-loop*"` matches only the unrelated
-`hunt-fix-loop-heartbeat` scheduled-task directory; `/Users/IA/.claude/skills` has no `hunt*`
-entry; `/Users/IA/.claude/commands/` contains `hunt-fix.md`, which is the separate HUNT FIX
+`find ~/.claude -iname "*hunt-fix-loop*"` matches only the unrelated
+`hunt-fix-loop-heartbeat` scheduled-task directory; `~/.claude/skills` has no `hunt*`
+entry; `~/.claude/commands/` contains `hunt-fix.md`, which is the separate HUNT FIX
 cron routine with its own heartbeat — not a callable body named `hunt-fix-loop`.
 
 This means one of the 17 area checks has been silently doing nothing every time the rotation

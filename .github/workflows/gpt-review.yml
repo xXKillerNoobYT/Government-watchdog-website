@@ -1,0 +1,120 @@
+# GOV-2208 (implements ADR company-os/adr-gpt-independent-review-lane.md,
+# GOV-2202) — GPT independent review lane, WEBSITE (PUBLIC) leg.
+#
+# On every PR: compute the raw diff, secret/PII-scan it (C1), send diff+title/body
+# to a GPT-class free model on OpenRouter (C5, diff-only), and post ONE upserted
+# ADVISORY comment. This runs ALONGSIDE the Claude/VSR review — additive, never a
+# replacement, and NEVER a merge gate (C2).
+#
+# Repo-visibility (measured 2026-08-22, ruled in GOV-2214): this repo
+# `xXKillerNoobYT/Government-watchdog-website` is PUBLIC. The public leg carries
+# C1/C2/C3/C5 and does NOT need C4 (the zero-retention pin) — C4 attaches to the
+# PRIVATE backend leg (`xXKillerNoobYT/Government-watchdog`, GOV-2216), not here.
+#
+# SPA-binding conditions realised in this file:
+#   C1 — scan-before-transmit: scripts/gpt_review/scan.py runs on the exact
+#        payload; a hit withholds the send and posts "review unavailable" without
+#        echoing the value. Enforced inside scripts/gpt_review/lane.py.
+#   C2 — advisory only: the review step is continue-on-error and the comment step
+#        runs if: always(); this job is never a required check. It cannot fail a PR.
+#   C3 — OPENROUTER_API_KEY is a per-repo Actions secret with NO billing attached.
+#        If the secret is absent the lane posts "review unavailable" and exits 0.
+#        NEVER add a payment method to make this work — that returns to CEO.
+#   C5 — diff-only input: only the git diff + PR title/body are passed; no Claude/
+#        VSR output, notes, or system prompt. Nothing else is read.
+#
+# Runner: ubuntu-latest (GitHub-hosted). This repo is PUBLIC, so hosted minutes are
+# free ($0) and a diff POST needs no self-hosted Mac — the lane stays up even when
+# the gov-website runner is down. Fork PRs get a read-only token with no secrets and
+# will simply post "review unavailable" — an intentional coverage gap, stated not
+# silent.
+name: GPT Independent Review (advisory)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # No path filter, on purpose: the lane reviews ALL updates (ADR §"CI surface").
+
+# Least privilege: read the code, write ONE PR comment. No other scope.
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: gpt-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gpt-review:
+    name: GPT independent review (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (history for base..head diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install runtime dep (requests only)
+        run: python -m pip install --quiet "requests>=2.31"
+
+      - name: Compute PR diff (diff-only input — C5)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin "$BASE_SHA" "$HEAD_SHA" || true
+          # Three-dot: changes on head since the merge-base with base.
+          git diff "$BASE_SHA...$HEAD_SHA" > pr.diff \
+            || git diff "$BASE_SHA" "$HEAD_SHA" > pr.diff
+          echo "diff lines: $(wc -l < pr.diff)"
+
+      - name: Scan (C1) → transmit (C5) → write comment body
+        id: review
+        # C2 belt-and-suspenders: a review failure must never fail the PR.
+        continue-on-error: true
+        env:
+          # C3: free-tier key, no billing attached. Absent => "review unavailable".
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          # scripts/ on the path so `-m gpt_review.lane` resolves (repo convention).
+          PYTHONPATH: ${{ github.workspace }}/scripts
+        run: |
+          python -m gpt_review.lane \
+            --diff-file pr.diff \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --transmit \
+            --out gpt-review-comment.md
+
+      - name: Upsert the single advisory comment
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          BODY_FILE=gpt-review-comment.md
+          if [ ! -f "$BODY_FILE" ]; then
+            echo "no comment body produced (setup failed before review) — nothing to post"
+            exit 0
+          fi
+          MARKER='<!-- gpt-independent-review-lane -->'
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq "map(select(.body | contains(\"$MARKER\"))) | .[0].id // empty")
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" \
+              -F body=@"$BODY_FILE" >/dev/null
+            echo "updated advisory comment $existing"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+              -F body=@"$BODY_FILE" >/dev/null
+            echo "created advisory comment"
+          fi

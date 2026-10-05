@@ -22,8 +22,8 @@ website repo. **Nothing in Paperclip was mutated by this document.** Sections 9'
 specification of issues to file, not a record of issues filed.
 
 Companion rules that bind here and are not restated in full:
-`/Users/IA/.claude/skills/paperclip/SKILL.md` (mechanics: checkout, statuses, blockers, comment
-style, rule #1), `/Users/IA/.claude/skills/paperclip-converting-plans-to-tasks/SKILL.md` (plan →
+`~/.claude/skills/paperclip/SKILL.md` (mechanics: checkout, statuses, blockers, comment
+style, rule #1), `~/.claude/skills/paperclip-converting-plans-to-tasks/SKILL.md` (plan →
 tasks: plan deeply, know the team, assign for specialty, order then parallelize, enough is enough),
 and [`AGENT-RULEBOOK.md`](./AGENT-RULEBOOK.md) (turn structure, evidence, forbidden spells).
 

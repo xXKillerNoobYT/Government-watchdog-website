@@ -1,7 +1,19 @@
-import pkg from '/Users/IA/work/gov808/shots/node_modules/playwright-core/index.js';
-const { chromium } = pkg;
-
-const EXEC = '/Users/IA/Library/Caches/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell';
+// #218: this repository is PUBLIC. Playwright is not a dependency of this repo, so
+// this dev-only screenshot helper borrows an installation from elsewhere on the
+// machine — but WHERE is a property of that machine, not of the source. Both
+// locations come from the environment and the script says exactly what to set.
+const CORE = process.env.GW_PLAYWRIGHT_CORE;
+const EXEC = process.env.GW_CHROME_HEADLESS_SHELL;
+if (!CORE || !EXEC) {
+  console.error(
+    'gov1569-shot: set GW_PLAYWRIGHT_CORE to a playwright-core entry point '
+    + '(…/node_modules/playwright-core/index.js) and GW_CHROME_HEADLESS_SHELL to a '
+    + 'chrome-headless-shell binary. Neither is tracked here — see issue #218.',
+  );
+  process.exit(2);
+}
+const pkg = await import(CORE);
+const { chromium } = pkg.default ?? pkg;
 const OUT = process.env.SHOT_DIR || '/tmp';
 const BASE = process.env.SHOT_BASE || 'http://127.0.0.1:4212';
 

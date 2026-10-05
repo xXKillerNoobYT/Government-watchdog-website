@@ -4,6 +4,42 @@ export const APPROVED_ACCESS_META = '<meta name="gw-sites-access" content="appro
 
 const ACCESS_DENIED_BODY = 'Reviewer access denied.';
 const ACCESS_NOT_CONFIGURED_BODY = 'Reviewer access is not configured.';
+const PROJECTION_NOT_CONFIGURED_BODY =
+  'The same-origin projection bridge is not configured at this origin.';
+
+/**
+ * The served-projection namespace (GOV-2180 / issue #233). `src/data/v1-projections.ts`
+ * calls `/v1/<projection>` on THIS origin and nowhere else — that root-relative path is
+ * the whole same-origin contract, and there is no second hostname and no CORS surface.
+ *
+ * Nothing forwards it yet: the view API is a loopback service and where it runs in
+ * production is an open hosting decision. Until that lands the origin still owes an
+ * honest answer, and the two answers it gave before this reservation were both wrong.
+ * Measured against this worker:
+ *
+ *   /v1/agenda-board, approved reviewer, accept: text/html  -> 200 + the SPA index.html
+ *   /v1/agenda-board, approved reviewer, accept: json       -> 404 text/plain asset miss
+ *
+ * The first is an API path serving the application shell, because `isSpaNavigation`
+ * treats any extension-less 404 as a client route. The second says "nothing here" when
+ * the truth is "the bridge is not configured." So the namespace is reserved and answers
+ * a stated 503 — the transport-layer form of a designed gap, naming the missing
+ * capability instead of inventing or impersonating a response. `fetchProjection` maps a
+ * non-401/403 to `unavailable`, so the UI renders its existing gap state.
+ *
+ * This is a RESERVATION, not a bridge. Wiring the forward is deliberately left to the
+ * change that also brings the upstream, so no binding shape is guessed here.
+ *
+ * Ordering matters and is asserted in the tests: the reservation sits AFTER the reviewer
+ * identity gate. Answering it earlier would give an anonymous caller a different response
+ * for `/v1/...` than for any other path, turning the origin into a route oracle — the
+ * exact leak #233 requires proving absent.
+ */
+export const PROJECTION_PREFIX = '/v1';
+
+function isProjectionPath(pathname) {
+  return pathname === PROJECTION_PREFIX || pathname.startsWith(`${PROJECTION_PREFIX}/`);
+}
 
 export function parseApprovedReviewerEmails(value) {
   if (typeof value !== 'string') return [];
@@ -105,6 +141,11 @@ const worker = {
     const reviewerEmail = (request.headers.get(IDENTITY_HEADER) || '').trim().toLowerCase();
     if (!reviewerEmail || !approvedEmails.includes(reviewerEmail)) {
       return privateTextResponse(ACCESS_DENIED_BODY, 403);
+    }
+
+    // After the identity gate, before assets: see PROJECTION_PREFIX above.
+    if (isProjectionPath(new URL(request.url).pathname)) {
+      return privateTextResponse(PROJECTION_NOT_CONFIGURED_BODY, 503);
     }
 
     if (!env?.ASSETS?.fetch) {

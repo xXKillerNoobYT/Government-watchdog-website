@@ -186,7 +186,7 @@ clause, not a styling preference:
 
 ## 6. Premium success-criteria block (paste-in for goal `eac4a8db`)
 
-Filled against `/Users/IA/Documents/Obsidian Vault/01_projects/Government-Watchdog v1 Plans/Docs/2026-06-06-Premium-Success-Criteria-Framework.md`.
+Filled against `~/Documents/Obsidian Vault/01_projects/Government-Watchdog v1 Plans/Docs/2026-06-06-Premium-Success-Criteria-Framework.md`.
 
 ```markdown
 ## GOV Premium Success Criteria

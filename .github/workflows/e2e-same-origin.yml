@@ -1,0 +1,141 @@
+name: Same-origin E2E
+
+# Issue #104. `scripts/local_e2e.sh` is the ONLY test that exercises the GOV-1527 §5
+# same-origin `/api` contract end to end — the loopback bind refusal, gated 403/404, an
+# approved session reading reviewer-internal rows through the proxy, and the
+# zero-reviewer-content-in-static-output assertion. Until now nothing called it, so it ran
+# only when a human remembered. A test that runs only when someone remembers is a document.
+#
+# ─── Why post-merge and not pull_request ───────────────────────────────────────────────
+# This repository has TWO self-hosted runner processes on ONE physical machine, with
+# identical labels, so GitHub will happily dispatch two jobs to it at once — that is the
+# mechanism behind the #110 flake family. Running this on every PR would add a second full
+# build plus live servers to that machine on top of `Website CI`. Post-merge gets the real
+# contract checked on every change to `main` without spending PR feedback time, which is
+# what #104's acceptance criteria allow ("on push/PR, or on an explicit schedule").
+#
+# Its own concurrency group rather than `website-ci-runner`: GitHub keeps at most ONE
+# pending run per group, so sharing that group would let this job displace a queued PR
+# check. Overlap is now tolerable — after #236 and #237 two full suites raced on one
+# machine and both came back 81/81, 1176/1176 — whereas a displaced PR check is a silent
+# gap.
+#
+# ─── Why nothing from the run is ever echoed ───────────────────────────────────────────
+# This repository is PUBLIC, so Actions logs and step summaries are publicly readable, and
+# this script exercises ~34k gated reviewer-internal rows. Script output therefore goes to
+# a file OUTSIDE the workspace and is never printed, `cat`-ed, or uploaded. The summary is
+# assembled from authored literals plus a leg token matched by a strict regex — even the
+# script's own leg headers interpolate an absolute checkout path (#218), so the token is
+# extracted and the description is written here.
+#
+# Non-blocking by design: it is not part of `Website CI`'s required checks.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: website-e2e-runner
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  same-origin:
+    name: same-origin /api contract (GOV-1527 §5)
+    runs-on: [self-hosted, macOS, ARM64, government-watchdog, gov-website]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install dependencies (clean, from lockfile)
+        run: npm ci --no-audit --no-fund
+
+      - name: Run same-origin end-to-end contract
+        id: e2e
+        run: |
+          set -uo pipefail
+          # Outside the workspace: nothing can sweep it into an uploaded artifact.
+          log="$(mktemp "${TMPDIR:-/tmp}/gov104-e2e.XXXXXX")"
+          echo "log=$log" >> "$GITHUB_OUTPUT"
+
+          npm run e2e:local > "$log" 2>&1
+          code=$?
+
+          if [ "$code" -eq 0 ]; then
+            echo "result=passed" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The script fails closed on two PRECONDITIONS that cannot exist on a runner
+          # without a co-located backend checkout. #104 asks for a clear skip rather than
+          # a red build in that case. Matched on the script's own fixed prefixes, so the
+          # discovery logic is not duplicated here and cannot drift out of step with it.
+          if grep -q 'no backend checkout with scripts/export_web_artifact.py' "$log" \
+            || grep -q 'registry DB not found at' "$log"; then
+            echo "result=skipped" >> "$GITHUB_OUTPUT"
+            echo "::notice::Same-origin E2E SKIPPED — this runner has no co-located backend checkout or registry DB. Set GW_BACKEND_CHECKOUT to enable it."
+            exit 0
+          fi
+
+          # A real failure. Report WHICH leg, and nothing else. Only the leg token is
+          # taken from the log; its description is authored below. The rest of the log
+          # may quote gated rows and must never reach a public surface.
+          leg="$(grep -oE '\[e2e\] [0-9]+[a-d]?/6' "$log" | tail -1 | grep -oE '[0-9]+[a-d]?/6' || true)"
+          echo "leg=${leg:-unknown}" >> "$GITHUB_OUTPUT"
+          echo "result=failed" >> "$GITHUB_OUTPUT"
+          exit 1
+
+      - name: Summarise
+        if: always()
+        env:
+          RESULT: ${{ steps.e2e.outputs.result }}
+          LEG: ${{ steps.e2e.outputs.leg }}
+        run: |
+          # Every line below is an authored literal or a validated leg token. No script
+          # output is interpolated — see the header of this file.
+          describe() {
+            case "$1" in
+              1/6)  echo "build the artifact from the pinned backend, verify and stage it" ;;
+              1b/6) echo "deny-list / service tests against the pinned backend" ;;
+              2/6)  echo "verify the private-runtime manifest (commit, digest, schema, lanes)" ;;
+              3/6)  echo "migrate a throwaway service DB and seed an approved reviewer session" ;;
+              3b/6) echo "assert the service refuses a non-loopback bind" ;;
+              3c/6) echo "start the loopback service" ;;
+              4/6)  echo "build the site and start vite preview with /api proxied" ;;
+              5/6)  echo "smoke assertions through the same-origin proxy" ;;
+              6/6)  echo "emit the artifact manifest / integration record" ;;
+              *)    echo "not identified — inspect the runner locally with npm run e2e:local" ;;
+            esac
+          }
+          {
+            echo "## Same-origin E2E — GOV-1527 §5"
+            echo ""
+            case "$RESULT" in
+              passed)
+                echo "**PASSED.** Loopback bind refusal, gated 403/404, an approved session reading"
+                echo "reviewer-internal rows through the same-origin proxy, and a clean static output."
+                ;;
+              skipped)
+                echo "**SKIPPED — not run.** This runner has no co-located backend checkout with"
+                echo "\`scripts/export_web_artifact.py\`, or no registry DB. Nothing was verified;"
+                echo "treat this as absence of evidence, not evidence of absence."
+                echo ""
+                echo "Set \`GW_BACKEND_CHECKOUT\` on the runner to enable it."
+                ;;
+              *)
+                echo "**FAILED at leg \`${LEG:-unknown}\`** — $(describe "${LEG:-unknown}")."
+                ;;
+            esac
+            echo ""
+            echo "_Output is withheld deliberately: this repository is public and the run"
+            echo "exercises gated reviewer-internal rows. Reproduce locally with"
+            echo "\`npm run e2e:local\`._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Discard the run log
+        if: always()
+        run: rm -f "${{ steps.e2e.outputs.log }}" || true
