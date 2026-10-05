@@ -463,6 +463,37 @@ describe('MOTY design-handoff route integration', () => {
       .toContain('demo=snapshot');
   });
 
+  it('lets an explicit municode source-snapshot override a sticky design-preview session', async () => {
+    sessionStorage.setItem('gw-design-preview', '1');
+    window.location.hash = '#/alpine-agenda?reviewer=1&source=municode';
+    await import('../src/main');
+
+    const app = document.querySelector('#app')!;
+    const page = app.querySelector('[data-test="alpine-agenda-kanban-page"]');
+    expect(page?.getAttribute('data-origin')).toBe('municode-snapshot');
+    expect(page?.getAttribute('data-information-class')).toBe('SS');
+    expect(app.querySelector('[data-test="alpine-agenda-municode-banner"]')).not.toBeNull();
+    expect(app.querySelector('[data-test="alpine-agenda-kanban-banner"]')).toBeNull();
+    expect(app.querySelector('[data-origin="synthetic-design-fixture"]')).toBeNull();
+    expect(app.querySelector('[data-card-id="alpine-fx-voted-1"]')).toBeNull();
+    expect(app.querySelector('[data-test="shell-origin-banner"]')).toBeNull();
+    expect(app.querySelector('[data-test="shell-alerts-badge"]')).toBeNull();
+  });
+
+  it('keeps the alpine-agenda design fixture when no municode source is requested', async () => {
+    sessionStorage.setItem('gw-design-preview', '1');
+    window.location.hash = '#/alpine-agenda?reviewer=1';
+    await import('../src/main');
+
+    const app = document.querySelector('#app')!;
+    expect(app.querySelector('[data-test="alpine-agenda-kanban-page"]')?.getAttribute('data-origin'))
+      .toBe('synthetic-design-fixture');
+    expect(app.querySelector('[data-test="alpine-agenda-kanban-banner"]')?.textContent)
+      .toContain('SYNTHETIC DESIGN FIXTURE');
+    expect(app.querySelector('[data-test="alpine-agenda-municode-banner"]')).toBeNull();
+    expect(app.querySelector('[data-card-id="alpine-fx-voted-1"]')).not.toBeNull();
+  });
+
   it.each(['loading', 'empty', 'error'] as const)(
     'keeps the forced newsletter %s state classified as a fixture over snapshot provenance',
     async (state) => {
