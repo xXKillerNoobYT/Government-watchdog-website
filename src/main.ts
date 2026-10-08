@@ -1212,12 +1212,16 @@ function gated(handler: ShellHandler): RouteHandler {
       // One origin decision feeds both the banner and the Alerts badge, so the
       // chip can never claim a count on a route the banner calls reviewed.
       const origin = shellOriginFor(path, query);
+      // An explicit Municode snapshot is more specific than a sticky design
+      // preview from an earlier route. The page owns its SS origin notice, so
+      // the shell banner stays off — and the Alerts chip must not inherit
+      // fixture counts from session presentation state.
       const municodeSnapshot = path === '/alpine-agenda' && query.get('source') === 'municode';
       const shellOrigin = municodeSnapshot ? undefined : origin;
       const mount = renderShell(root!, {
         active: path,
         origin: shellOrigin,
-        fixture: origin === 'fixture',
+        fixture: !municodeSnapshot && origin === 'fixture',
       });
       handler({ mount, path, query });
     });
@@ -1283,15 +1287,17 @@ router.register('/agenda', gated(({ mount, query }) => {
   void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
 }));
 router.register('/alpine-agenda', gated(({ mount, query }) => {
-  if (designPreviewActive(query)) {
-    renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
-    return;
-  }
+  // Same precedence as `/newsletter?demo=snapshot`: an explicit source lane
+  // wins over sticky `?demo=design` so invented GS votes cannot overlay SS.
   if (query.get('source') === 'municode') {
     renderAlpineAgendaMunicode(mount, {
       access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
       source: 'municode',
     });
+    return;
+  }
+  if (designPreviewActive(query)) {
+    renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
     return;
   }
   renderReviewerContextState(mount, 'unavailable');
