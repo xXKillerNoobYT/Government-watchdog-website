@@ -73,9 +73,9 @@ area_bindings:
     tests: [test/gov1645-shell-overflow.test.ts, test/gov440-dark-theme.test.ts, test/gov658-fonts.test.ts]
   ci-tooling:
     label: "area:ci-tooling"
-    paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs]
-    contracts: [docs/plans/, CLAUDE.md]
-    tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts]
+    paths: [.github/workflows/, scripts/local_e2e.sh, scripts/gov1569-shot.mjs, scripts/heartbeat-guard.mjs, scripts/heartbeat-guard-hang.mjs]
+    contracts: [docs/plans/, CLAUDE.md, docs/heartbeat-run-guard.md]
+    tests: [test/integration-smoke.test.ts, test/reviewer-context-routes.test.ts, test/heartbeat-guard.test.ts]
 current_area: none  # ROTATION EXHAUSTED 2026-07-31 — 6 graduated, 4 parked, 0 available. Every remaining area is blocked on an owner decision. Do NOT re-enter a graduated area or invent one to look busy; the honest state is that the loop is waiting on a person.
 graduated_areas:
   shell-nav:

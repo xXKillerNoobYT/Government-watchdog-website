@@ -36,6 +36,10 @@ gw-web-artifact-*.tar.gz
 # GOV-1544 — local pre-built artifact tarballs for offline Docker verification
 /.artifact-local/
 
-# GOV-2208 — python bytecode from the gpt_review lane + its tests
+# GOV-2208 - python bytecode from the gpt_review lane + its tests
 __pycache__/
 *.pyc
+# GOV-2135 / website#229 - heartbeat run-guard runtime state (durable lease,
+# append-only Session log, per-lane completions, guard.log). Machine-local run
+# evidence, not source; rebuilt/rotated on every heartbeat. See docs/heartbeat-run-guard.md.
+/.heartbeat-guard/
