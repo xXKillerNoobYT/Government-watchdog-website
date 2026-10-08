@@ -435,7 +435,11 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
       pattern.lastIndex = 0;
       let match = pattern.exec(variant);
       while (match !== null) {
-        const value = safeDestinationContext(variant.slice(match.index));
+        // Decoding can introduce a delimiter or alter authority boundaries.
+        // It proves a rule hit, never a trustworthy origin for public output.
+        const value = variant === text
+          ? safeDestinationContext(variant.slice(match.index))
+          : 'destination=off-origin';
         const credentialed = rule.dial === true
           && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
         const id = credentialed ? `${rule.id}-credentialed` : rule.id;

