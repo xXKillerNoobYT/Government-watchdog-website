@@ -395,11 +395,16 @@ function safeDestinationContext(text, at = 0, length = text.length) {
     candidate.index <= at + length && candidate.index + candidate[0].length > at);
   if (!destination) {
     const suffix = text.slice(at);
-    const token = /^[^\s"'`)>]+/.exec(suffix)?.[0] ?? '';
-    if (token.includes('@')) return 'destination=off-origin';
+    if (suffix.includes('@')) return 'destination=off-origin';
     const host = EMITTED_RULES.find((rule) => rule.id === 'emitted-loopback-host').pattern;
     const hostPort = new RegExp(`^(?:${host.source})`).exec(suffix);
     return hostPort ? `destination=http://${hostPort[0].replace(/\s/, ':')}` : 'destination=off-origin';
+  }
+  // A regex delimiter is not proof that the original authority ended there.
+  // Unconsumed @ may finish userinfo beyond whitespace/quotes/punctuation.
+  // Prefer opaque output even if a later, separate URL merely makes it unclear.
+  if (text.slice(destination.index + destination[0].length).includes('@')) {
+    return 'destination=off-origin';
   }
   try {
     const url = destination[0];
