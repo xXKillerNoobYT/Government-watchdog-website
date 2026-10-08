@@ -364,6 +364,44 @@ describe('diagnostic output boundary (#285)', () => {
 });
 
 describe('encoded and binary diagnostic output (#285)', () => {
+  it.each(['%2f', '%252f', '%5c', String.raw`\x2f`, String.raw`\u002f`])(
+    'never reinterprets userinfo containing %s as a hostname', (separator) => {
+      const marker = 'SYNTH_USER_285';
+      const url = `https://${marker}${separator}:password@evil.example/x`;
+      const source = `fetch("${url}")`;
+      const hits = scan(source);
+      expect(rules(hits)).toContain('emitted-off-origin-dial');
+      expect(JSON.stringify(hits).toLowerCase()).not.toContain(marker.toLowerCase());
+      const output = capturedCliOutput(source);
+      expect(output).toContain('[emitted-off-origin-dial]');
+      expect(output.toLowerCase()).not.toContain(marker.toLowerCase());
+      const config = apiConfigViolationsIn(`VITE_API_BASE=${url}`) as Violation[];
+      expect(rules(config).some((rule) => rule.startsWith('api-config-'))).toBe(true);
+      expect(JSON.stringify(config).toLowerCase()).not.toContain(marker.toLowerCase());
+      const sourceHits = violationsIn(source, 'src/example.ts') as Violation[];
+      if (separator.startsWith('%')) expect(rules(sourceHits)).toContain('url-userinfo');
+      expect(JSON.stringify(sourceHits).toLowerCase()).not.toContain(marker.toLowerCase());
+      const root = mkdtempSync(join(tmpdir(), 'gw-separator-redaction-'));
+      try {
+        mkdirSync(join(root, 'scripts'));
+        mkdirSync(join(root, 'src'));
+        writeFileSync(join(root, 'scripts/check-no-direct-exposure.mjs'), readFileSync(GUARD, 'utf8'));
+        writeFileSync(join(root, 'src/example.ts'), source);
+        writeFileSync(join(root, '.env.example'), `VITE_API_BASE=${url}`);
+        const result = spawnSync(process.execPath, [join(root, 'scripts/check-no-direct-exposure.mjs')], { encoding: 'utf8' });
+        expect(result.status).toBe(1);
+        const defaultOutput = `${result.stdout}${result.stderr}`;
+        if (separator.startsWith('%')) expect(defaultOutput).toContain('[url-userinfo]');
+        expect(defaultOutput).toMatch(/\[api-config-[a-z-]+\]/);
+        expect(defaultOutput.toLowerCase()).not.toContain(marker.toLowerCase());
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+      const binary = capturedCliOutput(url, 'metadata.png');
+      expect(binary).toContain('[emitted-url-userinfo]');
+      expect(binary.toLowerCase()).not.toContain(marker.toLowerCase());
+    },
+  );
   it('keeps long encoded userinfo out of helper and emitted CLI diagnostics', () => {
     const marker = 'SYNTH_ENCODED_285';
     const source = `fetch("https:%2f%2f${marker}${'x'.repeat(600)}:password@evil.example/x")`;

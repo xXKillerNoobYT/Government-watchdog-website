@@ -397,6 +397,13 @@ function safeDestinationContext(match) {
   }
   try {
     const url = destination[0];
+    // A decoded separator before @ can turn a username into the parsed host.
+    // Ambiguous authority boundaries carry no destination text in diagnostics.
+    const authorityAndPath = url.replace(/^(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\//, '');
+    const userinfoEnd = authorityAndPath.lastIndexOf('@');
+    if (userinfoEnd >= 0 && /[\/\\?#]/.test(authorityAndPath.slice(0, userinfoEnd))) {
+      return 'destination=off-origin';
+    }
     const value = url.startsWith('//') ? `https:${url}` : url;
     return `destination=${new URL(value).origin}`;
   } catch {
@@ -503,7 +510,7 @@ export function apiConfigViolationsIn(text) {
     if (!value) continue; // unset
     const rules = declaredEndpoint ? VALUE_RULES : [...DESTINATION_RULES, DESTINATION_VALUE_RULE];
     const rule = rules.find((r) => r.test(value));
-    if (rule) hits.push({ rule: rule.id, why: rule.why, value: `${/^[A-Z][A-Z0-9_]*$/.test(key) ? key : 'config'}=${safeDestinationContext(decodeObfuscation(value))}` });
+    if (rule) hits.push({ rule: rule.id, why: rule.why, value: `${/^[A-Z][A-Z0-9_]*$/.test(key) ? key : 'config'}=${safeDestinationContext(value)}` });
   }
   return hits;
 }
