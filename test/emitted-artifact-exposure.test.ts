@@ -330,7 +330,7 @@ describe('diagnostic output boundary (#285)', () => {
     const userinfo = scan(`https://user:${marker}@one.example/x https://user:${marker}@two.example/y`,
       new Set(['emitted-url-userinfo']));
     expect(userinfo.map((hit) => hit.value)).toEqual([
-      'destination=off-origin', 'destination=https://two.example',
+      'destination=off-origin; match=0 (original)', 'destination=https://two.example',
     ]);
     expect(JSON.stringify(userinfo)).not.toContain(marker);
   });
@@ -360,6 +360,42 @@ describe('diagnostic output boundary (#285)', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe('opaque findings retain their identities (#285)', () => {
+  it('retains both loopbacks before a later credentialed URL', () => {
+    const source = 'http://127.0.0.1:8791/a http://localhost:8100/b https://user:SYNTH_PASSWORD_285@evil.example/x';
+    const hits = scan(source, new Set(['emitted-loopback-host']));
+    expect(hits).toHaveLength(2);
+    expect(new Set(hits.map((hit) => hit.value)).size).toBe(2);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_password_285');
+    const output = capturedCliOutput(source, 'metadata.png');
+    expect(output.match(/\[emitted-loopback-host\]/g)).toHaveLength(2);
+  });
+  it('retains three complete credentialed URL findings', () => {
+    const source = ['one', 'two', 'three'].map((host) => `https://user:SYNTH_PASSWORD_285@${host}.example/x`).join(' ');
+    const hits = scan(source, new Set(['emitted-url-userinfo']));
+    expect(hits).toHaveLength(3);
+    expect(new Set(hits.map((hit) => hit.value)).size).toBe(3);
+    expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_password_285');
+    const output = capturedCliOutput(source, 'metadata.png');
+    expect(output.match(/\[emitted-url-userinfo\]/g)).toHaveLength(3);
+  });
+  it('retains separate ambiguous raw and decoded dials without printing userinfo', () => {
+    for (const delimiter of [')', '%22']) {
+      const source = ['one', 'two', 'three'].map((host) => `fetch("https://SYNTH_USER_285${delimiter}:password@${host}.example/x")`).join(';');
+      const hits = scan(source).filter((hit) => hit.rule.startsWith('emitted-off-origin-dial'));
+      expect(hits.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(hits.map((hit) => hit.value)).size).toBeGreaterThanOrEqual(3);
+      expect(JSON.stringify(hits).toLowerCase()).not.toContain('synth_user_285');
+    }
+  });
+  it('still deduplicates repeated proven noncredentialed origins', () => {
+    const hits = scan('fetch("https://one.example/a");fetch("https://one.example/b")')
+      .filter((hit) => hit.rule === 'emitted-off-origin-dial');
+    expect(hits).toHaveLength(1);
+    expect(hits[0].value).toBe('destination=https://one.example');
   });
 });
 
@@ -533,7 +569,7 @@ describe('encoded and binary diagnostic output (#285)', () => {
     const hits = scan(source);
     expect(rules(hits)).toContain('emitted-off-origin-dial');
     expect(hits.find((hit) => hit.rule === 'emitted-off-origin-dial')?.value)
-      .toBe('destination=off-origin');
+      .toBe('destination=off-origin; match=0 (decoded)');
     expect(JSON.stringify(hits)).not.toContain(marker);
     const output = capturedCliOutput(source);
     expect(output).toContain('[emitted-off-origin-dial]');

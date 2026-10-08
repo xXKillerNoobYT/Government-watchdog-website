@@ -428,7 +428,8 @@ function safeDestinationContext(text, at = 0, length = text.length) {
  * Whole-text rather than line-by-line: a production bundle is a single line, so
  * the line-oriented {@link violationsIn} would report the entire chunk as one
  * value. Findings carry a rule, reason, and origin-only destination context —
- * never a source excerpt. Matches are deduplicated by rule and destination.
+ * never a source excerpt. Proven destinations are deduplicated by rule and
+ * origin; opaque findings retain rule, variant, and match-position identity.
  *
  * @param onlyRules optional set of rule ids, used for the binary subset.
  */
@@ -448,9 +449,14 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
       while (match !== null) {
         // Decoding can introduce a delimiter or alter authority boundaries.
         // It proves a rule hit, never a trustworthy origin for public output.
-        const value = variant === text
+        const context = variant === text
           ? safeDestinationContext(variant, match.index, match[0].length)
           : 'destination=off-origin';
+        // Opaque context cannot prove two matches have the same destination.
+        // Keep their locations distinct without retaining any source literal.
+        const value = context === 'destination=off-origin'
+          ? `${context}; match=${match.index} (${variant === text ? 'original' : 'decoded'})`
+          : context;
         const credentialed = rule.dial === true
           && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
         const id = credentialed ? `${rule.id}-credentialed` : rule.id;
