@@ -57,8 +57,8 @@ function deniedFetchPreservesSentinels(
   envOrFactory: Record<string, string> | ((root: string, external: string) => Record<string, string>),
   setup?: (root: string, external: string) => void,
 ): void {
-  const root = mkdtempSync('/private/tmp/gw-fetch-denial-');
-  const external = mkdtempSync('/private/tmp/gw-fetch-external-');
+  const root = mkdtempSync(join(tmpdir(), 'gw-fetch-denial-'));
+  const external = mkdtempSync(join(tmpdir(), 'gw-fetch-external-'));
   roots.push(root, external);
   mkdirSync(join(root, 'scripts'), { recursive: true });
   mkdirSync(join(root, 'public/data'), { recursive: true });

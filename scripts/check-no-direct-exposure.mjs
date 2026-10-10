@@ -484,7 +484,8 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
  */
 export function violationsIn(text, relPath) {
   const hits = [];
-  const sanctioned = SANCTIONED.filter((s) => s.file.test(relPath));
+  const repositoryPath = relPath.replace(/\\/g, '/');
+  const sanctioned = SANCTIONED.filter((s) => s.file.test(repositoryPath));
   for (const line of text.split('\n')) {
     if (sanctioned.some((s) => s.line.test(line))) continue;
     for (const rule of LINE_RULES) {
@@ -555,7 +556,7 @@ export function scanDirectExposure(repoRoot = REPO_ROOT) {
       if (/\.(png|jpg|jpeg|gif|woff2?|ico|gz|zip|map)$/i.test(file)) continue;
       let text;
       try { text = readFileSync(file, 'utf8'); } catch { continue; }
-      const relPath = relative(repoRoot, file);
+      const relPath = relative(repoRoot, file).replace(/\\/g, '/');
       for (const hit of violationsIn(text, relPath)) violations.push({ file: relPath, ...hit });
     }
   }
