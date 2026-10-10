@@ -182,7 +182,14 @@ describe('#218 post-merge workflow publication contract', () => {
     expect(WORKFLOW).toContain('mask_path "$HOME"');
     expect(WORKFLOW).toContain('escaped="${value//\\//\\\\/}"');
     expect(WORKFLOW).toContain('persist-credentials: false');
-    expect(WORKFLOW).toContain('permissions:\n  contents: read');
+    const readOnlyPermissions = /^permissions:\r?\n  contents: read\r?$/m;
+    for (const workflow of [
+      WORKFLOW.replace(/\r\n/g, '\n'),
+      WORKFLOW.replace(/\r?\n/g, '\r\n'),
+    ]) {
+      expect(workflow).toMatch(readOnlyPermissions);
+      expect(workflow.replace('  contents: read', '  contents: write')).not.toMatch(readOnlyPermissions);
+    }
     expect(WORKFLOW).not.toContain('>> "$GITHUB_ENV"');
     expect(WORKFLOW).not.toContain('GW_CLEANUP_SCRIPT=');
   });
