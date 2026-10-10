@@ -41,6 +41,8 @@ import {
   renderTimelineLevels,
 } from './ui/pages-program';
 import { renderFastAgendaDesign } from './ui/fast-agenda-design';
+import { renderAlpineAgendaKanbanFixture } from './ui/alpine-agenda-kanban-fixture';
+import { renderAlpineAgendaMunicode } from './ui/alpine-agenda-municode';
 import {
   renderAlerts as renderDesignAlerts,
   renderBoardsDesign,
@@ -1126,6 +1128,7 @@ const SHELL_DESIGN_FIXTURE_ROUTES: ReadonlySet<string> = new Set([
   // disagreement GOV-76 and GOV-84 fixed on /home and /newsletter. Same defect, same fix.
   '/vault',
   '/agenda',
+  '/alpine-agenda',
   '/timeline',
   // GOV-163: the Boards GS fixture lane. Added in the SAME change as the renderer — GOV-84
   // and the GOV-82 follow-up both shipped a fixture without this line, and each time the
@@ -1209,7 +1212,17 @@ function gated(handler: ShellHandler): RouteHandler {
       // One origin decision feeds both the banner and the Alerts badge, so the
       // chip can never claim a count on a route the banner calls reviewed.
       const origin = shellOriginFor(path, query);
-      const mount = renderShell(root!, { active: path, origin, fixture: origin === 'fixture' });
+      // An explicit Municode snapshot is more specific than a sticky design
+      // preview from an earlier route. The page owns its SS origin notice, so
+      // the shell banner stays off — and the Alerts chip must not inherit
+      // fixture counts from session presentation state.
+      const municodeSnapshot = path === '/alpine-agenda' && query.get('source') === 'municode';
+      const shellOrigin = municodeSnapshot ? undefined : origin;
+      const mount = renderShell(root!, {
+        active: path,
+        origin: shellOrigin,
+        fixture: !municodeSnapshot && origin === 'fixture',
+      });
       handler({ mount, path, query });
     });
 }
@@ -1272,6 +1285,22 @@ router.register('/agenda', gated(({ mount, query }) => {
     return;
   }
   void withReviewerContext(mount, query, (data) => renderFastAgendaRoute(mount, query, data));
+}));
+router.register('/alpine-agenda', gated(({ mount, query }) => {
+  // Same precedence as `/newsletter?demo=snapshot`: an explicit source lane
+  // wins over sticky `?demo=design` so invented GS votes cannot overlay SS.
+  if (query.get('source') === 'municode') {
+    renderAlpineAgendaMunicode(mount, {
+      access: query.get('access') === 'public' ? 'public' : 'reviewer_internal',
+      source: 'municode',
+    });
+    return;
+  }
+  if (designPreviewActive(query)) {
+    renderAlpineAgendaKanbanFixture(mount, designPageOptions(query));
+    return;
+  }
+  renderReviewerContextState(mount, 'unavailable');
 }));
 router.register('/boards', gated(({ mount, query }) => {
   // GOV-163: the matrix §4 GS row ("populated handoff board cards") declared a fixture lane

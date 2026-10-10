@@ -239,7 +239,7 @@ const DESTINATION_VALUE_RULE = {
 
 /** A scheme-ful or protocol-relative reference. Both leave this origin; `data:`,
  * `blob:`, and root-relative paths have no `//` authority and are not matched. */
-const OFF_ORIGIN = String.raw`(?:[a-zA-Z][a-zA-Z0-9+.-]{1,31}:)?\/\/[^\s"'\`)>]{1,300}`;
+const OFF_ORIGIN = String.raw`(?:[a-zA-Z][a-zA-Z0-9+.-]{1,31}:)?\/\/[^\s"'\`)>]+`;
 const QUOTE = String.raw`["'\`]`;
 const HTTP_METHOD = String.raw`(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)`;
 
@@ -382,11 +382,44 @@ export function decodeObfuscation(text) {
   return out;
 }
 
-/** A short, readable excerpt centered on a match, for the AC8 report. */
-function excerpt(text, at, length) {
-  const start = Math.max(0, at - 24);
-  const slice = text.slice(start, Math.min(text.length, at + length + 24)).replace(/\s+/g, ' ');
-  return `${start > 0 ? '...' : ''}${slice.trim()}`.slice(0, 160);
+/**
+ * Return only the origin of an unsafe destination for a diagnostic. Source
+ * excerpts are deliberately never used here: an adjacent header, cookie, or
+ * query value can be a credential even when URL userinfo has been redacted.
+ */
+function safeDestinationContext(text, at = 0, length = text.length) {
+  // Locate the enclosing original URL before interpreting any rule-matched
+  // suffix. A host-shaped password is userinfo, not a separate destination.
+  const destinations = text.matchAll(/(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\/[^\s"'`)>]+/g);
+  const destination = Array.from(destinations).find((candidate) =>
+    candidate.index <= at + length && candidate.index + candidate[0].length > at);
+  if (!destination) {
+    const suffix = text.slice(at);
+    if (suffix.includes('@')) return 'destination=off-origin';
+    const host = EMITTED_RULES.find((rule) => rule.id === 'emitted-loopback-host').pattern;
+    const hostPort = new RegExp(`^(?:${host.source})`).exec(suffix);
+    return hostPort ? `destination=http://${hostPort[0].replace(/\s/, ':')}` : 'destination=off-origin';
+  }
+  // A regex delimiter is not proof that the original authority ended there.
+  // Unconsumed @ may finish userinfo beyond whitespace/quotes/punctuation.
+  // Prefer opaque output even if a later, separate URL merely makes it unclear.
+  if (text.slice(destination.index + destination[0].length).includes('@')) {
+    return 'destination=off-origin';
+  }
+  try {
+    const url = destination[0];
+    // A decoded separator before @ can turn a username into the parsed host.
+    // Ambiguous authority boundaries carry no destination text in diagnostics.
+    const authorityAndPath = url.replace(/^(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\//, '');
+    const userinfoEnd = authorityAndPath.lastIndexOf('@');
+    if (userinfoEnd >= 0 && /[\/\\?#]/.test(authorityAndPath.slice(0, userinfoEnd))) {
+      return 'destination=off-origin';
+    }
+    const value = url.startsWith('//') ? `https:${url}` : url;
+    return `destination=${new URL(value).origin}`;
+  } catch {
+    return 'destination=off-origin';
+  }
 }
 
 /**
@@ -394,9 +427,9 @@ function excerpt(text, at, length) {
  *
  * Whole-text rather than line-by-line: a production bundle is a single line, so
  * the line-oriented {@link violationsIn} would report the entire chunk as one
- * value. Matches are deduplicated by rule and excerpt, because a minifier can
- * repeat the same destination in many chunks and one finding per destination is
- * what makes the report actionable.
+ * value. Findings carry a rule, reason, and origin-only destination context —
+ * never a source excerpt. Proven destinations are deduplicated by rule and
+ * origin; opaque findings retain rule, variant, and match-position identity.
  *
  * @param onlyRules optional set of rule ids, used for the binary subset.
  */
@@ -414,14 +447,22 @@ export function emittedViolationsIn(text, relPath = '', onlyRules = null) {
       pattern.lastIndex = 0;
       let match = pattern.exec(variant);
       while (match !== null) {
-        const value = redactCredentials(excerpt(variant, match.index, match[0].length));
+        // Decoding can introduce a delimiter or alter authority boundaries.
+        // It proves a rule hit, never a trustworthy origin for public output.
+        const context = variant === text
+          ? safeDestinationContext(variant, match.index, match[0].length)
+          : 'destination=off-origin';
+        // Opaque context cannot prove two matches have the same destination.
+        // Keep their locations distinct without retaining any source literal.
+        const value = context === 'destination=off-origin'
+          ? `${context}; match=${match.index} (${variant === text ? 'original' : 'decoded'})`
+          : context;
         const credentialed = rule.dial === true
           && CREDENTIAL_MARKER.test(variant.slice(match.index, match.index + CREDENTIAL_WINDOW));
         const id = credentialed ? `${rule.id}-credentialed` : rule.id;
-        // Key on the matched destination, not the report excerpt: the excerpt
-        // carries surrounding context, so one destination repeated across
-        // minified chunks would yield one finding per copy.
-        const key = `${id} ${redactCredentials(match[0])}`;
+        // Key on the safe context, not raw source: a report must never retain
+        // literal credential-bearing text merely to deduplicate findings.
+        const key = `${id} ${value}`;
         if (!seen.has(key)) {
           seen.add(key);
           hits.push({ rule: id, why: credentialed ? CREDENTIALED_WHY : rule.why, value });
@@ -447,8 +488,9 @@ export function violationsIn(text, relPath) {
   for (const line of text.split('\n')) {
     if (sanctioned.some((s) => s.line.test(line))) continue;
     for (const rule of LINE_RULES) {
-      if (!rule.pattern.test(line)) continue;
-      hits.push({ rule: rule.id, why: rule.why, value: redactCredentials(line.trim().slice(0, 160)) });
+      const match = rule.pattern.exec(line);
+      if (!match) continue;
+      hits.push({ rule: rule.id, why: rule.why, value: `${rule.id === 'url-userinfo' ? 'userinfo=***:*** ' : ''}${safeDestinationContext(line, match.index, match[0].length)}` });
     }
   }
   return hits;
@@ -489,7 +531,7 @@ export function apiConfigViolationsIn(text) {
     if (!value) continue; // unset
     const rules = declaredEndpoint ? VALUE_RULES : [...DESTINATION_RULES, DESTINATION_VALUE_RULE];
     const rule = rules.find((r) => r.test(value));
-    if (rule) hits.push({ rule: rule.id, why: rule.why, value: `${key}=${redactCredentials(value)}` });
+    if (rule) hits.push({ rule: rule.id, why: rule.why, value: `${/^[A-Z][A-Z0-9_]*$/.test(key) ? key : 'config'}=${safeDestinationContext(value)}` });
   }
   return hits;
 }
