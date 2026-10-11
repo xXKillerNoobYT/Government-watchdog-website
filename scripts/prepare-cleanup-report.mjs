@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Privacy boundary for the public post-merge cleanup workflow (#218).
  *
