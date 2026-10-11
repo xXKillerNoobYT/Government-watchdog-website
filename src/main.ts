@@ -870,6 +870,15 @@ function renderUploadRoute(mount: HTMLElement, query: URLSearchParams): void {
     forcedPhase,
     forcedReceiptStatus,
   });
+  if (forcedPhase === 'received' || forcedPhase === 'held') {
+    mount.querySelector('[data-test="upload-another"]')?.addEventListener('click', () => {
+      // Leaving the screenshot receipt must restore the live shell before submission.
+      const liveQuery = new URLSearchParams(query);
+      liveQuery.delete('ustate');
+      liveQuery.delete('rstatus');
+      window.location.hash = `/upload?${liveQuery.toString()}`;
+    });
+  }
 }
 
 /**

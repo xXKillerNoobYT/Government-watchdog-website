@@ -39,6 +39,41 @@ beforeEach(() => {
 });
 
 describe('issue #293 simulated upload receipt origin', () => {
+  it.each([
+    ['simple', 'received'], ['simple', 'held'],
+    ['advanced', 'received'], ['advanced', 'held'],
+  ])('leaves the %s forced %s fixture before submitting another file', async (mode, phase) => {
+    localStorage.setItem('gw_home_mode', mode);
+    const submit = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => ({
+      ok: true, status: 201, json: async () => ({ review_state: 'pending' }),
+    }));
+    vi.stubGlobal('fetch', submit);
+    window.location.hash = `#/upload?reviewer=1&ustate=${phase}&rstatus=held`;
+    await import('../src/main');
+    expect(banner()?.getAttribute('data-origin')).toBe('fixture');
+    document.querySelector<HTMLButtonElement>('[data-test="upload-another"]')!.click();
+    await vi.waitFor(() => expect(banner()?.getAttribute('data-origin')).toBe('live_server'));
+    expect(window.location.hash).toContain('reviewer=1');
+    expect(window.location.hash).not.toMatch(/ustate=|rstatus=/);
+    expect(document.querySelector('#app')?.getAttribute('data-mode')).toBe(mode);
+    const file = new File(['synthetic repeated-flow regression'], 'synthetic.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'arrayBuffer', { value: async () => new TextEncoder().encode('synthetic repeated-flow regression').buffer });
+    const input = document.querySelector<HTMLInputElement>('[data-test="upload-file-input"]')!;
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    const origin = document.querySelector<HTMLInputElement>('[data-test="upload-provenance-origin"]')!;
+    origin.value = 'Synthetic regression fixture';
+    origin.dispatchEvent(new Event('input'));
+    const description = document.querySelector<HTMLSelectElement>('[data-test="upload-provenance-description"]')!;
+    description.value = description.options[1].value;
+    description.dispatchEvent(new Event('change'));
+    document.querySelector<HTMLButtonElement>('[data-test="upload-submit"]')!.click();
+    await vi.waitFor(() => expect(document.querySelector('[data-test="upload-success-pending"]')).not.toBeNull());
+    expect(submit.mock.calls.filter(([url]) => url === '/api/beta/intake/upload')).toHaveLength(1);
+    expect(banner()?.getAttribute('data-origin')).toBe('live_server');
+    expect(banner()?.textContent).not.toContain('SYNTHETIC DESIGN FIXTURE');
+  });
+
   it.each(['received', 'held'])('labels direct Simple-mode %s as a fixture', async (phase) => {
     localStorage.setItem('gw_home_mode', 'simple');
     window.location.hash = `#/upload?reviewer=1&ustate=${phase}`;
