@@ -1153,6 +1153,12 @@ function shellOriginFor(path: string, query: URLSearchParams): ShellOrigin {
   // origin prevents LIVE SERVER CONTEXT from appearing above hypothetical
   // figures and keeps fixture Alerts counts out of this non-alerting surface.
   if (path === '/explainer') return 'product_demo';
+  // `?ustate=received|held` paints a static queue receipt and returns before
+  // any transport submit. That screenshot is a visual-review sample, not
+  // evidence a live server received a file. Any other upload URL — including
+  // a receipt the real transport returns — stays on the live-server path below.
+  const uploadReceiptPhase = path === '/upload' ? query.get('ustate') : null;
+  if (uploadReceiptPhase === 'received' || uploadReceiptPhase === 'held') return 'fixture';
   const explicitFixture =
     (demo === 'sample' && SHELL_SAMPLE_FIXTURE_ROUTES.has(path))
     || (path === '/timeline-legacy' && ['complete', 'matrix', 'provenance'].includes(demo ?? ''))
