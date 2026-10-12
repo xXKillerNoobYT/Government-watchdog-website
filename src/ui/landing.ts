@@ -201,12 +201,17 @@ export function renderGatedApp(
       'The full Government Watchdog app is reachable only once your beta access is approved.',
     ]),
   ]);
-  root.append(
+  // GOV-2262 — the gated states must expose one primary `main` landmark holding
+  // the single page heading, so keyboard/screen-reader users can jump directly
+  // to the gate content. The `main` carries no civic data: it holds only the
+  // gate block, the state panel, and the reviewer/back scaffolding.
+  const main = el('main', { class: 'gw-gated-app-main', 'data-test': 'gated-app-main' }, [
     block,
     gatePanelEl(gatePanelContent(access)),
     el('p', { class: 'gw-reviewer-hint gw-muted', 'data-test': 'reviewer-hint' }, [REVIEWER_HINT]),
     el('p', {}, [el('a', { class: 'gw-gate-action gw-gate-action-ghost', href: '#/', 'data-test': 'back-to-preview' }, ['← Back to preview'])]),
-  );
+  ]);
+  root.append(main);
 }
 
 export const LANDING_STYLE = `${GW_TOKENS}
