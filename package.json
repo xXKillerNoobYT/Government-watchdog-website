@@ -22,7 +22,7 @@
     "check:public-package": "node scripts/check-public-bundle.mjs --package",
     "check:sites-public-package": "node scripts/check-public-bundle.mjs --package --sites-client",
     "e2e:local": "bash scripts/local_e2e.sh",
-    "test": "vitest run",
+    "test": "node --test test/heartbeat-guard-platform.test.mjs && vitest run",
     "test:smoke": "vitest run test/integration-smoke.test.ts"
   },
   "devDependencies": {
