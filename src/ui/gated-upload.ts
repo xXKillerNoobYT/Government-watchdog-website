@@ -580,8 +580,11 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
   });
   mount.append(surface);
 
+  // GOV-2256 — the descriptive route heading now lives in the route wrapper as the
+  // single `h1` (`renderUploadRoute` in main.ts), so the surface no longer renders
+  // its own title heading; a second heading here would duplicate that accessible
+  // name. `UPLOAD_COPY.heading` remains the one source of truth for that text.
   surface.append(
-    el('h2', { class: 'gw-up-heading' }, [UPLOAD_COPY.heading]),
     el('p', { class: 'gw-up-purpose', 'data-test': 'upload-purpose' }, [UPLOAD_COPY.purposeNote]),
   );
   if (!transport.wired) {
@@ -800,7 +803,6 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
 
 export const GATED_UPLOAD_STYLE = `${GW_TOKENS}
 .gw-up-surface{font-family:var(--gw-font);color:var(--gw-text);max-width:44rem;margin:0 auto}
-.gw-up-heading{font-size:var(--gw-text-xl);margin:0 0 var(--gw-space-2);line-height:var(--gw-leading-tight)}
 .gw-up-purpose{margin:0 0 var(--gw-space-4);color:var(--gw-text-secondary)}
 .gw-up-scaffold{font-size:.8rem;margin:0 0 var(--gw-space-4);border:var(--gw-border-w) dashed var(--gw-border);border-radius:var(--gw-radius);padding:var(--gw-space-3)}
 .gw-muted{color:var(--gw-text-muted)}
