@@ -69,6 +69,8 @@ export const UPLOAD_COPY = {
   /** C2 — transfer only; never "processing/analyzing/verifying". */
   uploadingStatus: 'Uploading… please don’t close this tab.',
   cancelLabel: 'Cancel',
+  cancelledMessage:
+    'Upload canceled. We couldn’t confirm it was received, so this page will not show a receipt. You can try again.',
   /** C3 — a queue receipt, not a verification. */
   successHeading: 'Received — queued for review.',
   /** C5 — held is a file state, never a judgement about the person. */
@@ -369,17 +371,27 @@ export function createHttpIntakeTransport(
 
   return {
     wired: true,
-    async submit(staged: StagedUpload, source?: IntakeBytesSource): Promise<IntakeOutcome> {
+    async submit(
+      staged: StagedUpload,
+      source?: IntakeBytesSource,
+      signal?: AbortSignal,
+    ): Promise<IntakeOutcome> {
       const file = staged.file;
       // Defensive: the renderer validates before calling, but never send a claim
       // we can't back with bytes.
       if (!file || !source) {
         return { ok: false, rejection: { reason: 'unknown' } };
       }
+      if (signal?.aborted) {
+        return { ok: false, rejection: { reason: 'unknown' } };
+      }
 
       let contentBase64: string;
       try {
         const buffer = await source.arrayBuffer();
+        if (signal?.aborted) {
+          return { ok: false, rejection: { reason: 'unknown' } };
+        }
         contentBase64 = bytesToBase64(new Uint8Array(buffer));
       } catch {
         return { ok: false, rejection: { reason: 'unknown' } };
@@ -406,6 +418,7 @@ export function createHttpIntakeTransport(
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
+          signal,
         });
       } catch {
         // Network failure / offline / DNS: the service isn't reachable.
@@ -414,6 +427,9 @@ export function createHttpIntakeTransport(
 
       if (!response.ok) {
         return { ok: false, rejection: { reason: statusToRejectionReason(response.status) } };
+      }
+      if (signal?.aborted) {
+        return { ok: false, rejection: { reason: 'unknown' } };
       }
 
       // Parse the receipt defensively; a malformed 2xx body is still a success
@@ -424,6 +440,9 @@ export function createHttpIntakeTransport(
         rawStatus = json?.review_state;
       } catch {
         rawStatus = undefined;
+      }
+      if (signal?.aborted) {
+        return { ok: false, rejection: { reason: 'unknown' } };
       }
       const receipt: IntakeReceipt = { status: projectBackendReviewState(rawStatus) };
       return { ok: true, receipt };
@@ -603,6 +622,8 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
   // its bytes. Persists across validation re-renders (the <input type=file> is
   // recreated empty by the browser, but the retained handle keeps the choice).
   let rawFile: File | null = null;
+  let operationGeneration = 0;
+  let activeOperation: { id: number; controller: AbortController } | null = null;
 
   const announce = (msg: string): void => {
     live.textContent = msg;
@@ -730,45 +751,79 @@ export function renderGatedUpload(mount: HTMLElement, options: GatedUploadOption
       announce('Please fix the highlighted fields before uploading.');
       return;
     }
+    const operation = {
+      id: ++operationGeneration,
+      controller: new AbortController(),
+    };
+    activeOperation = operation;
+    // The form model is mutable and reset on retry/cancel. Each operation owns
+    // an immutable snapshot so later UI activity cannot rewrite its request.
+    const submission: StagedUpload = {
+      file: staged.file ? { ...staged.file } : null,
+      provenance: { ...staged.provenance },
+    };
+    const bytesSource = rawFile ?? undefined;
+
     showUploading();
     announce(UPLOAD_COPY.uploadingStatus);
     let outcome: IntakeOutcome;
     try {
-      outcome = await transport.submit(staged, rawFile ?? undefined);
+      outcome = await transport.submit(submission, bytesSource, operation.controller.signal);
     } catch {
       // Any thrown/unknown failure is fail-closed: nothing was saved.
       outcome = { ok: false, rejection: { reason: 'unknown' } };
     }
+    // Abort is only best-effort. Operation identity is the rendering boundary:
+    // a retired completion cannot replace cancel/error/form/newer-operation UI.
+    if (activeOperation?.id !== operation.id) return;
+    activeOperation = null;
     if (outcome.ok) {
       const status = projectReviewState(outcome.receipt);
-      showReceipt(status);
+      showReceipt(status, submission.provenance);
     } else {
-      showError(rejectionMessage(outcome.rejection.reason, constraints));
+      showError(rejectionMessage(outcome.rejection.reason, constraints), true);
     }
   };
 
-  const resetToForm = (): void => {
+  const resetToForm = (focusFile = false): void => {
     staged.file = null;
     staged.provenance = { sourceOrigin: '', description: '' };
     rawFile = null;
     showForm();
     announce('');
+    if (focusFile) {
+      (body.querySelector('[data-test="upload-file-input"]') as HTMLInputElement | null)?.focus();
+    }
+  };
+
+  const cancelActiveUpload = (): void => {
+    const operation = activeOperation;
+    activeOperation = null;
+    operation?.controller.abort();
+    showError(UPLOAD_COPY.cancelledMessage, true);
   };
 
   const showUploading = (): void => {
     body.replaceChildren();
-    body.append(uploadingEl(resetToForm));
+    body.append(uploadingEl(cancelActiveUpload));
   };
-  const showReceipt = (status: UploadReviewState): void => {
+  const showReceipt = (
+    status: UploadReviewState,
+    provenance: StagedUpload['provenance'] = staged.provenance,
+  ): void => {
     body.replaceChildren();
-    body.append(receiptEl(status, staged.provenance, resetToForm));
+    body.append(receiptEl(status, provenance, () => resetToForm(true)));
     const chip = reviewStateChip(status);
     announce(`${chip.label}. ${UPLOAD_COPY.pendingPlaceholder}`);
   };
-  const showError = (message: string): void => {
+  const showError = (message: string, focusRetry = false): void => {
     body.replaceChildren();
-    body.append(errorEl(message, resetToForm));
+    const error = errorEl(message, () => resetToForm(true));
+    body.append(error);
     announce(message);
+    if (focusRetry) {
+      (error.querySelector('[data-test="upload-retry"]') as HTMLButtonElement | null)?.focus();
+    }
   };
 
   // Forced-phase (screenshot / review) path renders a static snapshot.
