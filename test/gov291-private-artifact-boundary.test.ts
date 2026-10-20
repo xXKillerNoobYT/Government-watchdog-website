@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-// @ts-expect-error The repo deliberately carries no global Node typings; this
-// test needs only the executable subprocess seam for denial-before-mutation.
+// The subprocess seam is declared in types/node-shims.d.ts (GOV-2275) so this
+// import resolves locally rather than against any ancestor @types/node.
 import { execFileSync } from 'node:child_process';
 import {
   existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,
