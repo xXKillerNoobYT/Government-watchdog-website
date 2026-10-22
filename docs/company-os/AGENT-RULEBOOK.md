@@ -415,6 +415,17 @@ Same turn: set `blocked`, attach `blockedByIssueIds` (create the blocking issue 
 doesn't exist), and name the exact unblock action and its owner. Then pick different
 work. Never end a heartbeat blocked-but-unmarked.
 
+### 7.3a Scheduled run hits an agent's weekly model limit
+
+A scheduled/cadence run whose turn fails with a weekly-allowance exhaustion
+(`acpx_turn_failed`, `exitCode=1`, provider "weekly limit") must **not** retry the
+same adapter or loop. Preflight, then fail over to an approved available fallback
+or record **one** durable, reset-aware deferral that owns the skipped work — never
+leave a missed run with no owner. Procedure and the deterministic guard
+(`scripts/scheduled-sync-guard.mjs`) are owned by
+[`scheduled-sync-quota-failover-runbook.md`](scheduled-sync-quota-failover-runbook.md).
+A missed run is not release evidence and authorizes nothing.
+
 ### 7.4 Out of budget
 
 - Above **80%**: critical tasks only. Say so in your comment.
@@ -539,6 +550,7 @@ DID NOT   → write the Did Not Do list
 | --- | --- | --- |
 | 2026-07-24 | Edition 1. Initial rulebook: Prime Directives, Table Rules, Aggression, Thoroughness, Forbidden Spells, Party Coordination, Saving Throw, XP/Leveling. | Owner request; aligned to `skills/paperclip/SKILL.md`. |
 | 2026-08-01 | Added §4.5 Release-state duties and a §4.1 DoD line referencing it — this company's instance of the WPR2 release-state pattern. No new release authority; GOV-420 / GOV-1552 unchanged. | Owner portfolio directive 2026-07-31 (GOV-1665); routed by CEO. |
+| 2026-08-25 | Added §7.3a — scheduled run hits an agent's weekly model limit: preflight, fail over or defer once, never retry the exhausted adapter. Points at `scheduled-sync-quota-failover-runbook.md` + `scripts/scheduled-sync-guard.mjs`. No new authority; a missed run authorizes nothing. | GOV-2259 (GH website#249); routed by CEO. |
 
 *Additions by the Loremaster append here with evidence links. Hard gates and Prime
 Directives change by owner decision only.*

@@ -22,6 +22,7 @@
     "check:public-package": "node scripts/check-public-bundle.mjs --package",
     "check:sites-public-package": "node scripts/check-public-bundle.mjs --package --sites-client",
     "e2e:local": "bash scripts/local_e2e.sh",
+    "scheduled-sync-guard": "node scripts/scheduled-sync-guard.mjs",
     "test": "vitest run",
     "test:smoke": "vitest run test/integration-smoke.test.ts"
   },

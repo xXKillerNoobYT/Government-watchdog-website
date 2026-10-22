@@ -39,3 +39,9 @@ gw-web-artifact-*.tar.gz
 # GOV-2208 — python bytecode from the gpt_review lane + its tests
 __pycache__/
 *.pyc
+
+# GOV-2259 — scheduled-sync quota deferral ledger + guard log are per-machine
+# runtime state (which lane is deferred, until which reset), NOT source. Rebuilt
+# by scripts/scheduled-sync-guard.mjs; override the location with
+# $GW_SCHED_SYNC_STATE_DIR. Sanitized by construction, but state, so never committed.
+/.scheduled-sync-state/
