@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit",
     "fetch:artifact": "node scripts/fetch-artifact.mjs",
     "check:exposure": "node scripts/check-no-direct-exposure.mjs",
+    "check:memory-authority": "node scripts/check-no-frozen-memory-writes.mjs",
     "check:emitted": "node scripts/check-no-direct-exposure.mjs --emitted dist/client",
     "check:emitted-public": "node scripts/check-no-direct-exposure.mjs --emitted dist/public",
     "check:public-bundle": "node scripts/check-public-bundle.mjs",
