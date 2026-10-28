@@ -6,7 +6,11 @@ const MAX_PATH_DECODE_PASSES = 4;
 const ASSETS_UNAVAILABLE_BODY = 'Sites assets binding is unavailable.';
 const PROJECTION_DENIED_BODY = 'Not found.';
 
-function isProjectionPath(pathname) {
+function isAmbiguousPath(pathname) {
+  return pathname.includes('//') || pathname.split('/').some((segment) => segment === '.' || segment === '..');
+}
+
+function isBlockedPublicPath(pathname) {
   if (pathname.length > MAX_PUBLIC_PATH_LENGTH) {
     return true;
   }
@@ -19,13 +23,14 @@ function isProjectionPath(pathname) {
         return true;
       }
       if (decodedPath === canonicalPath) {
-        return isProjectionNamespace(decodedPath);
+        return isAmbiguousPath(decodedPath) || isProjectionNamespace(decodedPath);
       }
       canonicalPath = decodedPath;
     }
 
-    // Any remaining escape could still hide a separator or namespace segment.
+    // Any remaining escape could still hide a dot segment, separator, or namespace.
     return decodeURIComponent(canonicalPath).replaceAll('\\', '/') !== canonicalPath ||
+      isAmbiguousPath(canonicalPath) ||
       isProjectionNamespace(canonicalPath);
   } catch {
     return true;
@@ -114,7 +119,7 @@ function withoutIdentityHeader(request, url = request.url) {
 
 const worker = {
   async fetch(request, env) {
-    if (isProjectionPath(new URL(request.url).pathname)) {
+    if (isBlockedPublicPath(new URL(request.url).pathname)) {
       return publicTextResponse(request, PROJECTION_DENIED_BODY, 404);
     }
 

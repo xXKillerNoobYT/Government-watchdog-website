@@ -191,7 +191,11 @@ describe('public Sites Worker profile', () => {
     '/v1%5Cagenda-board',
     '/V1/agenda-board',
     '/%76%31/agenda-board',
-  ])('denies the projection namespace %s before Assets', async (pathname) => {
+    '/%2e%2e%2fv1/agenda',
+    '/%252e%252e%252fv1/agenda',
+    '/%252fV1/agenda',
+    '/assets//runtime',
+  ])('denies projection or ambiguous path %s before Assets', async (pathname) => {
     const assetFetch = vi.fn();
     const response = await publicWorker.fetch(
       request(pathname, { accept: 'text/html' }),
@@ -242,6 +246,23 @@ describe('public Sites Worker profile', () => {
     expect(response.status).toBe(200);
     expect(forwardedRequest?.method).toBe(method);
     expect(assetFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { pathname: '/assets/watchdog.min.js', method: 'GET' },
+    { pathname: '/assets/watchdog%2Emin.js', method: 'GET' },
+    { pathname: '/assets/watchdog%2Emin.js', method: 'HEAD' },
+  ])('serves dotted static path $pathname with $method', async ({ pathname, method }) => {
+    const assetFetch = vi.fn(async (_assetRequest: Request) =>
+      new Response('static file', { headers: { 'content-type': 'text/javascript' } }),
+    );
+    const response = await publicWorker.fetch(request(pathname, {}, method), {
+      ASSETS: { fetch: assetFetch },
+    });
+
+    expect(response.status).toBe(200);
+    expect(assetFetch).toHaveBeenCalledTimes(1);
+    expect(assetFetch.mock.calls[0]?.[0].method).toBe(method);
   });
 
   it.each(['GET', 'HEAD', 'POST', 'OPTIONS'])(
