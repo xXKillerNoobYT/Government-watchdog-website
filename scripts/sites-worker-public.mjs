@@ -1,20 +1,45 @@
 const IDENTITY_HEADER = 'oai-authenticated-user-email';
 const PROJECTION_PREFIX = '/v1';
+const MAX_PUBLIC_PATH_LENGTH = 4096;
+const MAX_PATH_DECODE_PASSES = 4;
 
 const ASSETS_UNAVAILABLE_BODY = 'Sites assets binding is unavailable.';
 const PROJECTION_DENIED_BODY = 'Not found.';
 
 function isProjectionPath(pathname) {
-  try {
-    const decodedPath = decodeURIComponent(pathname);
-    return decodedPath === PROJECTION_PREFIX || decodedPath.startsWith(PROJECTION_PREFIX + '/');
-  } catch {
-    return pathname === PROJECTION_PREFIX || pathname.startsWith(PROJECTION_PREFIX + '/');
+  if (pathname.length > MAX_PUBLIC_PATH_LENGTH) {
+    return true;
   }
+
+  let canonicalPath = pathname.replaceAll('\\', '/');
+  try {
+    for (let pass = 0; pass < MAX_PATH_DECODE_PASSES; pass += 1) {
+      const decodedPath = decodeURIComponent(canonicalPath).replaceAll('\\', '/');
+      if (decodedPath.length > MAX_PUBLIC_PATH_LENGTH) {
+        return true;
+      }
+      if (decodedPath === canonicalPath) {
+        return isProjectionNamespace(decodedPath);
+      }
+      canonicalPath = decodedPath;
+    }
+
+    // Any remaining escape could still hide a separator or namespace segment.
+    return decodeURIComponent(canonicalPath).replaceAll('\\', '/') !== canonicalPath ||
+      isProjectionNamespace(canonicalPath);
+  } catch {
+    return true;
+  }
+}
+
+function isProjectionNamespace(pathname) {
+  const normalizedPath = pathname.toLowerCase();
+  return normalizedPath === PROJECTION_PREFIX || normalizedPath.startsWith(PROJECTION_PREFIX + '/');
 }
 
 function publicResponseHeaders(source) {
   const headers = new Headers(source);
+  headers.delete(IDENTITY_HEADER);
   const vary = (headers.get('vary') || '')
     .split(',')
     .map((value) => value.trim())
@@ -29,13 +54,14 @@ function publicResponseHeaders(source) {
   return headers;
 }
 
-function publicTextResponse(request, body, status) {
+function publicTextResponse(request, body, status, additionalHeaders = {}) {
   return new Response(request.method === 'HEAD' ? null : body, {
     status,
     headers: {
       'cache-control': 'no-store',
       'content-type': 'text/plain; charset=utf-8',
       'x-robots-tag': 'noindex, nofollow, noarchive',
+      ...additionalHeaders,
     },
   });
 }
@@ -90,6 +116,10 @@ const worker = {
   async fetch(request, env) {
     if (isProjectionPath(new URL(request.url).pathname)) {
       return publicTextResponse(request, PROJECTION_DENIED_BODY, 404);
+    }
+
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return publicTextResponse(request, 'Method not allowed.', 405, { allow: 'GET, HEAD' });
     }
 
     if (typeof env?.ASSETS?.fetch !== 'function') {

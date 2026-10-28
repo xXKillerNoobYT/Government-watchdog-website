@@ -117,6 +117,22 @@ describe('public Sites Worker profile', () => {
     expect(await response.text()).not.toContain(REVIEWER_EMAIL);
   });
 
+  it('removes platform identity response headers from public assets', async () => {
+    const assetFetch = vi.fn(async (_assetRequest: Request) =>
+      new Response('public asset', {
+        headers: {
+          'content-type': 'text/plain',
+          [IDENTITY_HEADER]: REVIEWER_EMAIL,
+        },
+      }),
+    );
+    const response = await publicWorker.fetch(request('/asset.txt'), { ASSETS: { fetch: assetFetch } });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(IDENTITY_HEADER)).toBeNull();
+    expect(await response.text()).toBe('public asset');
+  });
+
   it('serves extensionless static assets without treating them as SPA routes', async () => {
     const assetFetch = vi.fn(async (_assetRequest: Request) =>
       new Response('extensionless static body', {
@@ -170,6 +186,10 @@ describe('public Sites Worker profile', () => {
     '/v1/agenda-board',
     '/v1/agenda-board?source=browser',
     '/v1%2Fagenda-board',
+    '/v1%252Fagenda-board',
+    '/v1%25252Fagenda-board',
+    '/v1%5Cagenda-board',
+    '/V1/agenda-board',
     '/%76%31/agenda-board',
   ])('denies the projection namespace %s before Assets', async (pathname) => {
     const assetFetch = vi.fn();
@@ -182,6 +202,70 @@ describe('public Sites Worker profile', () => {
     expect(await response.text()).toBe('Not found.');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(assetFetch).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on malformed, over-limit, and still-encoded paths', async () => {
+    const paths = ['/v1%2', '/' + 'a'.repeat(4096), '/%25252525252525252Fv1'];
+
+    for (const pathname of paths) {
+      const assetFetch = vi.fn();
+      const response = await publicWorker.fetch(request(pathname), { ASSETS: { fetch: assetFetch } });
+
+      expect(response.status, pathname).toBe(404);
+      expect(response.headers.get('cache-control'), pathname).toBe('no-store');
+      expect(assetFetch, pathname).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])(
+    'rejects %s before Assets with a no-store method response',
+    async (method) => {
+      const assetFetch = vi.fn();
+      const response = await publicWorker.fetch(request('/asset.txt', {}, method), {
+        ASSETS: { fetch: assetFetch },
+      });
+
+      expect(response.status).toBe(405);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect(response.headers.get('allow')).toBe('GET, HEAD');
+      expect(assetFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['GET', 'HEAD'])('forwards supported static method %s to Assets', async (method) => {
+    const assetFetch = vi.fn(async (_assetRequest: Request) => new Response('static asset'));
+    const response = await publicWorker.fetch(request('/assets/runtime', {}, method), {
+      ASSETS: { fetch: assetFetch },
+    });
+    const forwardedRequest = assetFetch.mock.calls[0]?.[0];
+
+    expect(response.status).toBe(200);
+    expect(forwardedRequest?.method).toBe(method);
+    expect(assetFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['GET', 'HEAD', 'POST', 'OPTIONS'])(
+    'keeps the projection namespace denied before method checks for %s',
+    async (method) => {
+      const assetFetch = vi.fn();
+      const response = await publicWorker.fetch(request('/v1%252Fagenda-board', {}, method), {
+        ASSETS: { fetch: assetFetch },
+      });
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get('allow')).toBeNull();
+      expect(assetFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it('does not use SPA fallback for HEAD navigation', async () => {
+    const assetFetch = vi.fn(async (_assetRequest: Request) => new Response('missing', { status: 404 }));
+    const response = await publicWorker.fetch(request('/timeline', { accept: 'text/html' }, 'HEAD'), {
+      ASSETS: { fetch: assetFetch },
+    });
+
+    expect(response.status).toBe(404);
+    expect(assetFetch).toHaveBeenCalledTimes(1);
   });
 
   it.each(['/v1x/agenda-board', '/assets/v1/runtime'])(
