@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:sites-public",
-    "build:sites-public": "node scripts/prepare-sites-build.mjs --clean && node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode public --outDir ../dist/client && node scripts/check-no-direct-exposure.mjs --emitted dist/client && node scripts/check-public-bundle.mjs --package --sites-client && node scripts/prepare-sites-build.mjs",
+    "build:sites-public": "node scripts/prepare-sites-build.mjs --clean --profile public && node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode public --outDir ../dist/client && node scripts/check-no-direct-exposure.mjs --emitted dist/client && node scripts/check-public-bundle.mjs --package --sites-client && node scripts/prepare-sites-build.mjs --profile public",
     "build:all": "npm run build:public && npm run build:private-beta",
     "build:private-beta": "node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode private-beta && node scripts/check-no-direct-exposure.mjs --emitted dist/client && node scripts/prepare-sites-build.mjs",
     "build:public": "node scripts/prepare-sites-build.mjs --clean && node scripts/check-no-direct-exposure.mjs && tsc --noEmit && vite build --mode public && node scripts/check-no-direct-exposure.mjs --emitted dist/public && node scripts/check-public-bundle.mjs --package",
