@@ -30,31 +30,84 @@ export interface StateView {
  */
 export const FIXTURE_BANNER_TEXT = 'OFFLINE SAMPLE — not a live read';
 
-export function stateView(state: AsyncState<ReadApiResponse>, notice?: string): StateView {
+/**
+ * Route-specific wording for the loading / empty / error / ready states
+ * (GOV-2261). The context-projection routes (`/body`, `/meeting`) reuse this
+ * shared state machine but must describe *their own* surface: telling a reviewer
+ * "Could not load the timeline" on the Body route, or "Fetching the … timeline"
+ * on Meeting, is truthful about failure yet points at the wrong mental model
+ * during a load or error. Copy is authored here (not derived) so a screenshot
+ * state never invents a civic record — it only renames the surface being fetched.
+ *
+ * {@link TIMELINE_SURFACE} is the default and preserves the historical timeline
+ * wording verbatim, so any caller that does not pass a surface is unchanged.
+ */
+export interface StateSurface {
+  /** Fills the loading message as `Fetching ${loadingSubject}.` */
+  loadingSubject: string;
+  /** Empty-state heading. */
+  emptyHeading: string;
+  /** Empty-state message. */
+  emptyMessage: string;
+  /** Error-state heading (the message stays the verbatim backend/error text). */
+  errorHeading: string;
+  /** Ready-state heading. */
+  readyHeading: string;
+}
+
+export const TIMELINE_SURFACE: StateSurface = {
+  loadingSubject: 'the reviewer-internal Alpine timeline',
+  emptyHeading: 'Nothing to show yet',
+  emptyMessage: 'No reviewed, source-backed records are available for this view.',
+  errorHeading: 'Could not load the timeline',
+  readyHeading: 'Alpine timeline (reviewer-internal)',
+};
+
+export const BODY_SURFACE: StateSurface = {
+  loadingSubject: 'the reviewer-internal Alpine government-body relationship projection',
+  emptyHeading: 'No government-body records yet',
+  emptyMessage: 'No reviewed, source-backed records are assigned to this government body.',
+  errorHeading: 'Could not load the government body',
+  readyHeading: 'Alpine government body (reviewer-internal)',
+};
+
+export const MEETING_SURFACE: StateSurface = {
+  loadingSubject: 'the reviewer-internal Alpine meeting relationship projection',
+  emptyHeading: 'No meeting records yet',
+  emptyMessage: 'No reviewed, source-backed records are assigned to this meeting.',
+  errorHeading: 'Could not load the meeting',
+  readyHeading: 'Alpine meeting record (reviewer-internal)',
+};
+
+export function stateView(
+  state: AsyncState<ReadApiResponse>,
+  notice?: string,
+  surface: StateSurface = TIMELINE_SURFACE,
+): StateView {
   const showFixtureBanner = state.mode === 'fixture';
   const base = { showFixtureBanner, ...(notice ? { notice } : {}) };
   switch (state.status) {
     case 'idle':
     case 'loading':
-      return { kind: 'loading', heading: 'Loading…', message: 'Fetching the reviewer-internal Alpine timeline.', ...base };
+      return { kind: 'loading', heading: 'Loading…', message: `Fetching ${surface.loadingSubject}.`, ...base };
     case 'empty':
       return {
         kind: 'empty',
-        heading: 'Nothing to show yet',
-        message: 'No reviewed, source-backed records are available for this view.',
+        heading: surface.emptyHeading,
+        message: surface.emptyMessage,
         ...base,
       };
     case 'error':
       return {
         kind: 'error',
-        heading: 'Could not load the timeline',
+        heading: surface.errorHeading,
         message: state.error ?? 'An unexpected error occurred.',
         ...base,
       };
     case 'ready': {
       return {
         kind: 'ready',
-        heading: 'Alpine timeline (reviewer-internal)',
+        heading: surface.readyHeading,
         message: readyHeaderMessage(state.data?.records ?? []),
         ...base,
       };
