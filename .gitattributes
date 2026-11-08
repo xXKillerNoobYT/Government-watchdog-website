@@ -1,3 +1,8 @@
 # Preserve the owner-supplied baseline reference byte-for-byte. Its upstream
 # whitespace is provenance, not production source style.
 design/baseline/moty-government-watchdog-2026-07/reference/** -whitespace
+
+# These fixture fingerprints bind to the committed LF bytes on every host.
+src/fixtures/gov1987-supplied-file-dto-v1.sample.json text eol=lf
+test/fixtures/municode/alpine-town-council-2026-04-21.html text eol=lf
+test/fixtures/municode/alpine-town-council-2026-10-06.html text eol=lf

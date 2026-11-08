@@ -1,0 +1,245 @@
+{
+  "meetingTitle": "Town Council Meeting – Executive Session at 6:00 PM; Regular Meeting at 7:00 PM",
+  "meetingDate": "2026-10-06",
+  "meetingTime": "7:00 PM",
+  "executiveSessionTime": "6:00 PM",
+  "location": "250 River Circle - Alpine, WY 83128",
+  "sourceUrl": "https://meetings.municode.com/adaHtmlDocument/index?cc=ALPINEWY&me=1bf1656cb32b4ee58f6a3e7d8a496a7f&ip=True",
+  "sections": [
+    {
+      "number": 1,
+      "title": "CALL TO ORDER",
+      "presenter": "Mayor Green",
+      "items": []
+    },
+    {
+      "number": 2,
+      "title": "EXECUTIVE SESSION",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Seeking a motion to enter into executive session on matters concerning litigation to which the governing body is a party or proposed litigation to which the governing body may be a party.",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "title": "RECONVENE THE REGULAR MEETING",
+      "items": []
+    },
+    {
+      "number": 4,
+      "title": "PLEDGE OF ALLEGIANCE",
+      "presenter": "Mayor Green",
+      "items": []
+    },
+    {
+      "number": 5,
+      "title": "ROLL CALL",
+      "presenter": "Town Administrator, Riley Hovorka",
+      "items": []
+    },
+    {
+      "number": 6,
+      "title": "ADOPT THE AGENDA",
+      "items": []
+    },
+    {
+      "number": 7,
+      "title": "CONSENT AGENDA",
+      "presenter": "Mayor Green",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Town Council Minutes: September 15, 2026 Town Council Meeting Minutes",
+          "attachments": [
+            {
+              "name": "2026.09.15.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-2806bee5150744d787a63ee6e6ef4b6a.pdf",
+              "sizeMb": "0.12"
+            }
+          ]
+        },
+        {
+          "letter": "b",
+          "title": "Bills to Pay Report: September 1, 2026 through October 6, 2026",
+          "attachments": [
+            {
+              "name": "Bills to Pay Report 9.1.26-10.6.26.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-b9f672da014a4ebd80bdf628491c47c7.pdf",
+              "sizeMb": "2.71"
+            }
+          ]
+        },
+        {
+          "letter": "c",
+          "title": "F-66 and Report Summary Packet",
+          "attachments": [
+            {
+              "name": "TOA 2026 F-66.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-977f61bdee404558b042152d74598484.pdf",
+              "sizeMb": "2.86"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "title": "REPORTS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Mayor’s Report - Eric Green",
+          "attachments": []
+        },
+        {
+          "letter": "b",
+          "title": "Events Committee Report - Andrea Burchard",
+          "attachments": []
+        },
+        {
+          "letter": "c",
+          "title": "Engineering Report - Kevin Meagher, Jorgensen Engineering",
+          "attachments": [
+            {
+              "name": "260930 ToA Engineer Report.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-fb48fbd12d9f445d97157f4aa728633b.pdf",
+              "sizeMb": "0.27"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "title": "WORK SESSION ITEMS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Discussion: Bear Awareness and Wildlife Safety - Reducing Attractants and Keeping Residents and Pets Safe.",
+          "attachments": []
+        },
+        {
+          "letter": "b",
+          "title": "Discussion: Ordinance No. 2026-015 - Establishing Regulations Prohibiting the Sale, Use, and Discharge of Fireworks within the Town of Alpine.",
+          "attachments": [
+            {
+              "name": "261006 Firework Ordinance.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-1c4823e51d5148a48f4d20f7ae15ceab.pdf",
+              "sizeMb": "0.29"
+            },
+            {
+              "name": "Ordinance No. 2026-015 - Establishing Regulations Prohibiting The Sale, Use, And Discharge Of Fireworks.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-64a2c9540ce94eb9b3c4eedcab54ffa0.pdf",
+              "sizeMb": "0.06"
+            }
+          ]
+        },
+        {
+          "letter": "c",
+          "title": "Discussion: Business License Updates and Special Event Permit Process",
+          "attachments": [
+            {
+              "name": "261006 Business License Special Event Permit Ordinance.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-ab25eadb7d444d85ad35279628deaf15.pdf",
+              "sizeMb": "0.29"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "title": "ACTION ITEMS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Resolution No. 2026-036 - A Resolution Adopting The Town Of Alpine 2026 Master Plan As Adopted And Certified By The Town Of Alpine Planning And Zoning Commission; Repealing Resolution No. 2025-014; And Reinstating Section 1-104(B)(7) Of The Town Of Alpine Land Use And Development Code:",
+          "description": "Suggested Motion: Motion to approve Resolution No. 2026-036, adopting the Town of Alpine 2026 Master Plan as adopted and certified by the Town of Alpine Planning and Zoning Commission, repealing Resolution No. 2025-014, and reinstating Section 1-104(B)(7) of the Town of Alpine Land Use and Development Code.",
+          "attachments": [
+            {
+              "name": "20261006_Staff_Report_Master_Plan_Council_Discussion.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-41288074a55046fbaab922a984b3e0b3.pdf",
+              "sizeMb": "0.28"
+            },
+            {
+              "name": "2026-036 - Certifying the Master Plan.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-0d269098af2c4b4b9fc0c9f13d40f786.pdf",
+              "sizeMb": "0.29"
+            },
+            {
+              "name": "Alpine Master Plan_9-17-26_ADOPTION DRAFT.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-e834b00c19da43fbbaebae9502a923ae.pdf",
+              "sizeMb": "189.36"
+            },
+            {
+              "name": "CT Memo of Draft Changes 9.17.26.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-7907551325da4fb797581868d93f16b6.pdf",
+              "sizeMb": "0.08"
+            },
+            {
+              "name": "260918 Master Plan Lincoln County Concurrence.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-afce59e040fa4a41bb117afff13b7a6c.pdf",
+              "sizeMb": "0.25"
+            }
+          ]
+        },
+        {
+          "letter": "b",
+          "title": "Authorization to Submit an Out-of-Cycle Travel & Tourism Grant Application for the 2027 Music in the Mountains Series - Up to $32,000 from FY27 and FY28 Funds:",
+          "description": "Suggested Motion: Motion to authorize staff to submit an out-of-cycle application to the Town of Alpine Travel and Tourism Board for the 2027 Music in the Mountains series in an amount up to $32,000, including a request for approval of $8,000 from FY27 Travel and Tourism funds for the June band bookings, and $24,000 for FY28 Travel & Tourism funds for the July through September bookings subject to available funding and grant approval.",
+          "attachments": [
+            {
+              "name": "2026.09.28 Events Committee Staff Report Music in the Mountains Summer 2027 Series Out-of-Cycle Grant Request.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-2cb71607c0a14dca83c3decc4eff6240.pdf",
+              "sizeMb": "0.29"
+            }
+          ]
+        },
+        {
+          "letter": "c",
+          "title": "Approval of an Additional $3,500 in FY27 Expenses for the 2027 Music in the Mountains Summer Series, Increasing the Authorized Amount to $23,500, with the Increase Funded from Prior-Year Fund Balance:",
+          "description": "Suggested Motion: Motion to approve an additional $3,500 in FY27 expenses for the Music in the Mountains 2027 Summer Series, increasing the total authorized amount from $20,000 to $23,500, and to fund the $3,500 increase from the prior-year fund balance",
+          "attachments": [
+            {
+              "name": "2023.09.28 Events Committee Staff Report Music in the Mountains increase in expenses.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-dc3db8c7da394b60ae7a942b194588b7.pdf",
+              "sizeMb": "0.05"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "title": "TABLED ITEMS",
+      "items": [
+        {
+          "letter": "a",
+          "title": "Used Service Pickup with Crane:",
+          "description": "Suggested Motion: Motion to authorize staff to purchase a used service pickup, equipped with a crane, in an amount not to exceed $75,000 and direct staff to amend the water fund capital outlays budget by $30,000 to accommodate this purchase.",
+          "attachments": [
+            {
+              "name": "2026.09.15 Service Pickup with Crane.pdf",
+              "url": "https://mccmeetingspublic.blob.core.usgovcloudapi.net/alpinewy-meet-1bf1656cb32b4ee58f6a3e7d8a496a7f/ITEM-Attachment-001-d9d28ee8216c4236bd99d29a75fc3cd4.pdf",
+              "sizeMb": "0.12"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "title": "PUBLIC COMMENT",
+      "items": []
+    },
+    {
+      "number": 13,
+      "title": "ADJOURNMENT",
+      "items": []
+    }
+  ],
+  "gaps": []
+}

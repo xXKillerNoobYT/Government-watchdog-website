@@ -102,6 +102,17 @@ const data: ReadApiResponse = {
   ],
 };
 
+const sourceData: ReadApiResponse = {
+  scope: 'alpine',
+  access: 'reviewer_internal',
+  records: [
+    dated('source-control', '2021-03-05', {
+      ui_status: 'source-backed',
+      evidence: [{ original_url: 'https://example.gov/alpine/source-control' }],
+    }),
+  ],
+};
+
 describe('render — #1 side time-bar', () => {
   it('renders the three coordinated bars with year/month/day buttons', () => {
     render(root, resolved(data, 'fixture', isEmptyResponse));
@@ -137,17 +148,47 @@ describe('render — #2 click-to-reveal blur (trust/AI integrity)', () => {
 
     expect(card.classList.contains('gw-revealed')).toBe(false);
     expect(info.getAttribute('aria-hidden')).toBe('true');
+    expect(info.hasAttribute('inert')).toBe(true);
     expect(btn.getAttribute('aria-expanded')).toBe('false');
 
     btn.click();
     expect(card.classList.contains('gw-revealed')).toBe(true);
     expect(info.getAttribute('aria-hidden')).toBe('false');
+    expect(info.hasAttribute('inert')).toBe(false);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     expect(btn.textContent).toBe('Hide details');
 
     btn.click();
     expect(card.classList.contains('gw-revealed')).toBe(false);
+    expect(info.hasAttribute('inert')).toBe(true);
     expect(btn.textContent).toBe('Reveal details');
+  });
+
+  it('excludes collapsed source controls and returns hidden focus to the reveal button', () => {
+    render(root, resolved(sourceData, 'fixture', isEmptyResponse));
+    const card = root.querySelector('[data-test="record-card"]')!;
+    const info = card.querySelector<HTMLElement>('[data-test="card-info"]')!;
+    const btn = card.querySelector<HTMLButtonElement>('[data-test="reveal-btn"]')!;
+    const summary = card.querySelector<HTMLElement>('[data-test="source-drawer"] summary')!;
+    const link = card.querySelector<HTMLAnchorElement>('[data-test="drawer-link-original_url"]')!;
+
+    // Negative control: native controls exist, but their inert ancestor removes
+    // them from sequential focus until the disclosure is expanded.
+    expect(summary.closest('[inert]')).toBe(info);
+    expect(link.closest('[inert]')).toBe(info);
+
+    btn.click();
+    expect(info.hasAttribute('inert')).toBe(false);
+    expect(summary.closest('[inert]')).toBeNull();
+    expect(link.closest('[inert]')).toBeNull();
+
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    btn.click();
+    expect(info.hasAttribute('inert')).toBe(true);
+    expect(document.activeElement).toBe(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    expect(info.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('keeps the trust badge and locked AI label OUTSIDE the blurred region', () => {

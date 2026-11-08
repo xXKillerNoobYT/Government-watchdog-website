@@ -42,11 +42,16 @@ The production binding rule is deliberately small:
 
 - **real value** when a reviewed, web-safe contract supplies it;
 - **designed slot** in the owner-approved hierarchy in every case;
-- **explicit gap** when the contract is absent or incomplete; and
+- **explicit gap** when the contract is absent or incomplete;
+- **source snapshot** when parser-extracted official capture content is shown under
+  reviewer admission, an explicit source flag, and the SS card label — never
+  promoted to reviewed in the browser; and
 - **coming soon** when the *feature itself* does not exist in any lane.
 
 Device-local preview state is allowed only where it is labelled as such.
 Synthetic values require the fixture gate described above.
+Source-snapshot cards use `src/ui/source-snapshot.ts` and remain parser-only until
+backend review rebinds them as **RV**.
 
 ### An explicit gap and a coming-soon marker are different claims
 

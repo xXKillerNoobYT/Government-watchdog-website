@@ -263,7 +263,11 @@ export function recordCard(
   if (related) infoChildren.push(related);
   infoChildren.push(evidenceDrawer(r.evidence ?? []));
 
-  const info = el('div', { class: 'gw-card-info', 'data-test': 'card-info', 'aria-hidden': 'true' }, infoChildren);
+  const info = el(
+    'div',
+    { class: 'gw-card-info', 'data-test': 'card-info', 'aria-hidden': 'true', inert: '' },
+    infoChildren,
+  );
 
   const reveal = el(
     'button',
@@ -293,6 +297,11 @@ export function recordCard(
 
   reveal.addEventListener('click', () => {
     const revealed = card.classList.toggle('gw-revealed');
+    // `aria-hidden` alone does not remove native summary/link controls from the
+    // sequential focus order. When collapsing from a control inside the region,
+    // return focus to the disclosure button before making its subtree inert.
+    if (!revealed && info.contains(document.activeElement)) reveal.focus();
+    info.toggleAttribute('inert', !revealed);
     reveal.setAttribute('aria-expanded', String(revealed));
     info.setAttribute('aria-hidden', String(!revealed));
     reveal.textContent = revealed ? 'Hide details' : 'Reveal details';
