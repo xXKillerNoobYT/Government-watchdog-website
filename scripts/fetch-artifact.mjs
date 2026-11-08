@@ -30,8 +30,10 @@ import {
   renameSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
+const REPO_ROOT = resolve(dirname(SCRIPT_PATH), '..');
 const ARTIFACT_FORMAT_VERSION = 2;
 const KNOWN_SCHEMA_VERSIONS = new Set([1]);
 const PRIVATE_RUNTIME_PROFILE = 'private-runtime';
@@ -499,6 +501,6 @@ async function main() {
 }
 
 // Only run when invoked directly (keeps the pure fns unit-testable).
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1]) === SCRIPT_PATH) {
   await main();
 }

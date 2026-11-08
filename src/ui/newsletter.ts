@@ -197,6 +197,21 @@ export interface ArchiveRow {
   href: string;
 }
 
+export type NewsletterPreviewLane = 'snapshot' | 'design';
+
+/** Keep an explicitly selected preview provenance lane on newsletter-only links. */
+function newsletterHref(
+  previewLane: NewsletterPreviewLane | undefined,
+  params: { id?: string; view?: 'archive' } = {},
+): string {
+  const query = new URLSearchParams();
+  if (previewLane) query.set('demo', previewLane);
+  if (params.id) query.set('id', params.id);
+  if (params.view) query.set('view', params.view);
+  const serialized = query.toString();
+  return `#/newsletter${serialized ? `?${serialized}` : ''}`;
+}
+
 /** Human period label for a coverage period (never invents a non-Alpine range). */
 export function coveragePeriodLabel(period: NewsletterDigest['coveragePeriod']): string {
   if (!period) return 'Undated batch';
@@ -204,7 +219,10 @@ export function coveragePeriodLabel(period: NewsletterDigest['coveragePeriod']):
 }
 
 /** Build the archive rows from the digests, in the assembler's order (verbatim). */
-export function archiveRows(response: NewsletterDigestResponse): ArchiveRow[] {
+export function archiveRows(
+  response: NewsletterDigestResponse,
+  previewLane?: NewsletterPreviewLane,
+): ArchiveRow[] {
   return (response.digests ?? []).map((d) => {
     const order: string[] = [];
     const seen = new Map<string, { label: string; tone: TrustTone; ai: boolean; count: number }>();
@@ -222,7 +240,7 @@ export function archiveRows(response: NewsletterDigestResponse): ArchiveRow[] {
       periodLabel: coveragePeriodLabel(d.coveragePeriod),
       recordCount: d.sections?.processedRecords?.count ?? d.items?.length ?? 0,
       labelSummary: order.map((k) => seen.get(k)!),
-      href: `#/newsletter?id=${encodeURIComponent(d.newsletterId)}`,
+      href: newsletterHref(previewLane, { id: d.newsletterId }),
     };
   });
 }
@@ -932,10 +950,11 @@ export function renderNewsletterArchive(
   response: NewsletterDigestResponse,
   notice?: string,
   designFixture = false,
+  previewLane?: NewsletterPreviewLane,
 ): void {
   prepareNewsletterRoot(root);
   if (!admitReviewerLane(root, response.access)) return;
-  const rows = archiveRows(response);
+  const rows = archiveRows(response, previewLane);
 
   root.append(
     reviewedOrigin(notice),
@@ -1005,8 +1024,12 @@ export function renderNewsletterArchive(
   root.append(list);
 }
 
-function detailArchiveStrip(response: NewsletterDigestResponse, currentId: string): HTMLElement {
-  const rows = archiveRows(response);
+function detailArchiveStrip(
+  response: NewsletterDigestResponse,
+  currentId: string,
+  previewLane?: NewsletterPreviewLane,
+): HTMLElement {
+  const rows = archiveRows(response, previewLane);
   return el('section', {
     class: 'gw-nl-detail-archive',
     'data-test': 'newsletter-detail-archive',
@@ -1018,7 +1041,7 @@ function detailArchiveStrip(response: NewsletterDigestResponse, currentId: strin
         el('h2', { class: 'gw-nl-baseline-title' }, ['Reviewed digest archive']),
       ]),
       renderPrivateInfoNote('newsletter-archive'),
-      el('a', { href: '#/newsletter?view=archive', class: 'gw-nl-deeplink', 'data-test': 'open-full-archive' }, ['Open full archive']),
+      el('a', { href: newsletterHref(previewLane, { view: 'archive' }), class: 'gw-nl-deeplink', 'data-test': 'open-full-archive' }, ['Open full archive']),
     ]),
     ...(rows.length
       ? [el('div', { class: 'gw-nl-detail-archive-list' }, rows.map((row) => el('a', {
@@ -1042,6 +1065,7 @@ export function renderNewsletterDetail(
   newsletterId: string,
   notice?: string,
   designFixture = false,
+  previewLane?: NewsletterPreviewLane,
 ): void {
   prepareNewsletterRoot(root);
   if (!admitReviewerLane(root, response.access)) return;
@@ -1063,7 +1087,7 @@ export function renderNewsletterDetail(
           'Requested newsletter edition',
           `No reviewed Alpine digest with id "${newsletterId}" is supplied by this response.`,
         ),
-        el('p', {}, [el('a', { class: 'gw-nl-deeplink', href: '#/newsletter?view=archive', 'data-test': 'back-to-archive' }, ['← Back to archive'])]),
+        el('p', {}, [el('a', { class: 'gw-nl-deeplink', href: newsletterHref(previewLane, { view: 'archive' }), 'data-test': 'back-to-archive' }, ['← Back to archive'])]),
       ]),
     );
     return;
@@ -1100,7 +1124,7 @@ export function renderNewsletterDetail(
         role: 'group',
         'aria-label': `Tools for reviewed newsletter edition ${digest.newsletterId}`,
       }, [
-        el('a', { class: 'gw-nl-deeplink', href: '#/newsletter?view=archive', 'data-test': 'back-to-archive' }, ['Browse archive']),
+        el('a', { class: 'gw-nl-deeplink', href: newsletterHref(previewLane, { view: 'archive' }), 'data-test': 'back-to-archive' }, ['Browse archive']),
         printButton,
       ]),
     ]),
@@ -1116,7 +1140,7 @@ export function renderNewsletterDetail(
     ]),
   ]);
   renderSections(sections, digest);
-  root.append(sections, detailArchiveStrip(response, digest.newsletterId));
+  root.append(sections, detailArchiveStrip(response, digest.newsletterId, previewLane));
 }
 
 /** State kinds capturable via `?state=` (BEH-STATE precedent). */

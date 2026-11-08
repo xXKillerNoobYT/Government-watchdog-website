@@ -58,6 +58,20 @@ describe('direct-exposure check generalization (#55)', () => {
     expect(violationsIn('exec python run.py --port 8100', 'deploy/entrypoint.sh')).toHaveLength(0);
   });
 
+  it('matches sanctioned repository paths with either platform separator', () => {
+    for (const path of ['deploy/Caddyfile', 'deploy\\Caddyfile']) {
+      expect(violationsIn('  reverse_proxy 127.0.0.1:8100', path)).toHaveLength(0);
+      expect(rules(violationsIn('  reverse_proxy 127.0.0.1:8100\nfetch("http://127.0.0.1:9000/read")', path)))
+        .toEqual(['loopback-host']);
+      expect(rules(violationsIn('  reverse_proxy 127.0.0.1:8100 http://127.0.0.1:9000', path)))
+        .toEqual(['loopback-host']);
+    }
+    for (const path of ['src/Caddyfile', 'src\\Caddyfile', 'deploy/Caddyfile.bak', 'deploy\\Caddyfile.bak']) {
+      expect(rules(violationsIn('  reverse_proxy 127.0.0.1:8100', path)))
+        .toEqual(['loopback-host']);
+    }
+  });
+
   it('does not flag an absolute civic source citation in a fixture', () => {
     // Captured civic records legitimately cite public URLs. Those are evidence,
     // not API configuration, and flagging them would fail the build on honest data.
