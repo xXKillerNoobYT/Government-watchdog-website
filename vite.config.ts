@@ -59,6 +59,7 @@ const apiProxy = {
  */
 export const APP_BOOT_SUITES = [
   'test/design-routes.test.ts',
+  'test/gov2256-upload-route-heading.test.ts',
   'test/gov658-home-dashboard.test.ts',
   'test/gov668-wave3-pages.test.ts',
   'test/gov671-wave4-pages.test.ts',
