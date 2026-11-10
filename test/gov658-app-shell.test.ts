@@ -394,6 +394,58 @@ describe('GOV-658 shell — mode control and the single palette authority', () =
   });
 });
 
+// GOV-2232 (a11y, website #244) — a mode switch dispatches a synthetic
+// 'hashchange' that re-renders the shell; renderShell()'s replaceChildren()
+// removes the focused Simple/Advanced button, so keyboard focus must be handed
+// to the replacement selected-mode button rather than falling back to <body>.
+describe('GOV-2232 shell — mode-switch focus lifecycle', () => {
+  it('restores focus to the replacement selected-mode button after a mode-switch rerender, both directions', () => {
+    // Wire the exact hashchange -> re-render path the app router provides; the
+    // shell re-derives the reading mode from the persisted value on each render.
+    const onHashChange = (): void => void renderShell(root, { active: '/agenda' });
+    window.addEventListener('hashchange', onHashChange);
+    try {
+      renderShell(root, { active: '/agenda', mode: 'simple' });
+
+      // Simple -> Advanced: focus the button (keyboard state) then activate it.
+      const advBtn = root.querySelector('[data-test="mode-advanced"]') as HTMLButtonElement;
+      advBtn.focus();
+      expect(document.activeElement).toBe(advBtn);
+      advBtn.click(); // click handler dispatches the synthetic HashChangeEvent
+
+      const advReplacement = root.querySelector('[data-test="mode-advanced"]') as HTMLButtonElement;
+      expect(advReplacement).not.toBe(advBtn); // the chrome was rebuilt
+      expect(advReplacement.getAttribute('aria-pressed')).toBe('true');
+      expect(document.activeElement).toBe(advReplacement);
+
+      // Advanced -> Simple: the opposite direction restores focus just the same.
+      const simpleBtn = root.querySelector('[data-test="mode-simple"]') as HTMLButtonElement;
+      simpleBtn.focus();
+      simpleBtn.click();
+
+      const simpleReplacement = root.querySelector('[data-test="mode-simple"]') as HTMLButtonElement;
+      expect(simpleReplacement).not.toBe(simpleBtn);
+      expect(simpleReplacement.getAttribute('aria-pressed')).toBe('true');
+      expect(document.activeElement).toBe(simpleReplacement);
+    } finally {
+      window.removeEventListener('hashchange', onHashChange);
+    }
+  });
+
+  it('leaves focus untouched on an ordinary rerender when no mode button is focused', () => {
+    renderShell(root, { active: '/agenda', mode: 'advanced' });
+    // A non-mode control holds focus; a rerender must not steal it onto the toggle.
+    const search = root.querySelector('[data-test="shell-search"]') as HTMLInputElement;
+    search.focus();
+    expect(document.activeElement).toBe(search);
+
+    renderShell(root, { active: '/timeline', mode: 'advanced' });
+
+    const modeButtons = [...root.querySelectorAll('.gw-shell-mode-btn')];
+    expect(modeButtons).not.toContain(document.activeElement);
+  });
+});
+
 describe('GOV-658 shell — responsive Simple chrome', () => {
   it('stacks Simple utility and search rows before the 768px tablet collision', () => {
     const tabletRule = SHELL_STYLE.match(

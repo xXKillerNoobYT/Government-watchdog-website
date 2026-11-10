@@ -647,6 +647,26 @@ export interface ShellOptions {
 }
 
 /**
+ * GOV-2232 (a11y, website #244) — when a Simple/Advanced button currently holds
+ * keyboard focus inside this shell, return its mode value so `renderShell` can
+ * hand focus to the equivalent replacement button after it rebuilds the chrome.
+ * Returns null for any other focus location, so an ordinary route change never
+ * moves focus.
+ */
+function focusedModeValue(root: HTMLElement): ShellMode | null {
+  const active = document.activeElement;
+  if (
+    active instanceof HTMLElement &&
+    root.contains(active) &&
+    active.classList.contains('gw-shell-mode-btn')
+  ) {
+    const value = active.getAttribute('data-mode-val');
+    if (value === 'simple' || value === 'advanced') return value;
+  }
+  return null;
+}
+
+/**
  * Render shared gated-app chrome and return the route surface's content slot.
  * The beta gate remains outside this function and is therefore impossible to
  * bypass by rendering or interacting with shell controls alone.
@@ -656,6 +676,12 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   installSearchShortcut();
   const mode = opts.mode ?? readMode();
   syncPaletteToMode(mode);
+
+  // GOV-2232 (a11y): capture mode-toggle focus BEFORE replaceChildren() removes
+  // the focused button. A mode switch dispatches a synthetic 'hashchange' that
+  // re-renders this shell, so without this handoff keyboard focus would fall back
+  // to <body>. Read it here, restore it after the new chrome is appended.
+  const focusedMode = focusedModeValue(root);
 
   root.className = 'gw-shell-root';
   root.setAttribute('data-mode', mode);
@@ -681,6 +707,16 @@ export function renderShell(root: HTMLElement, opts: ShellOptions): HTMLElement 
   const activeTab = root.querySelector<HTMLElement>('.gw-shell-tab[aria-current="page"]');
   if (activeTab && typeof activeTab.scrollIntoView === 'function') {
     activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  // GOV-2232 (a11y): restore keyboard focus to the replacement selected-mode
+  // button in the same synchronous render. The node identity necessarily changed
+  // (the chrome was rebuilt), but the reader's focus never visibly leaves the
+  // toggle — no transient body-focus flash, in both switch directions.
+  if (focusedMode !== null) {
+    root
+      .querySelector<HTMLElement>(`.gw-shell-mode-btn[data-mode-val="${focusedMode}"]`)
+      ?.focus();
   }
 
   return slot;
