@@ -731,7 +731,7 @@ describe('Location hierarchy and persistence', () => {
   });
 });
 
-describe('Alerts read-state, tracked count, and device-only delivery preview', () => {
+describe('Alerts read-state, tracked count, and unavailable delivery', () => {
   it('marks one/all fixture alerts read in gw_alerts_read', () => {
     renderAlerts(root, ALLOWED);
     expect(root.querySelectorAll('[data-test="alerts-unread-item"]')).toHaveLength(3);
@@ -749,26 +749,38 @@ describe('Alerts read-state, tracked count, and device-only delivery preview', (
   // switch persisted to localStorage. That behaviour was the defect: a switch reading
   // ON and surviving a reload is a configured setting to the person looking at it,
   // and no delivery channel exists in any lane. Delivery is now CS, not DL.
-  it('shows gw_tracked count and offers no operable delivery control in the fixture lane', () => {
+  it('keeps delivery Coming Soon and inert in both fixture presentation modes', () => {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify({ water: true, str: true }));
-    renderAlerts(root, ALLOWED);
-    expect(root.querySelector('[data-test="alerts-tracked-count"]')?.textContent).toBe('2');
-    expect(root.querySelector('[data-test="alerts-device-only-notice"]')?.textContent).toContain('not subscribed');
+    for (const mode of ['simple', 'advanced'] as const) {
+      localStorage.setItem('gw_home_mode', mode);
+      renderAlerts(root, ALLOWED);
+      if (mode === 'advanced') {
+        expect(root.querySelector('[data-test="alerts-tracked-count"]')?.textContent).toBe('2');
+      }
+      expect(root.querySelector('[data-test="alerts-device-only-notice"]')?.textContent, mode).toContain('not subscribed');
 
-    // No switch, no persistence, no status line implying a change was recorded.
-    expect(root.querySelector('[data-delivery-key]')).toBeNull();
-    expect(root.querySelector('[data-test="alerts-delivery-toggle"]')).toBeNull();
-    expect(root.querySelector('[data-test="alerts-delivery-status"]')).toBeNull();
-    expect(localStorage.getItem('gw_alert_delivery_preview')).toBeNull();
+      // No switch, no persistence, and no copy promising a setting in the other mode.
+      expect(root.querySelector('[data-delivery-key]'), mode).toBeNull();
+      expect(root.querySelector('[data-test="alerts-delivery-toggle"]'), mode).toBeNull();
+      expect(root.querySelector('[data-test="alerts-delivery-status"]'), mode).toBeNull();
+      expect(localStorage.getItem('gw_alert_delivery_preview'), mode).toBeNull();
+      expect(root.textContent, mode).not.toMatch(/configure device-only delivery previews/i);
 
-    // The slot stays visible and says the feature is unbuilt — not that data is missing.
-    const preview = root.querySelector('[data-test="alerts-delivery-preview"]');
-    expect(preview?.textContent).toContain('COMING SOON');
-    for (const channel of ['Email', 'text', 'push', 'meeting-eve', 'daily digest']) {
-      expect(preview?.textContent?.toLowerCase(), channel).toContain(channel.toLowerCase());
+      // Both presentations expose the same detailed, inert Coming Soon boundary.
+      const preview = root.querySelector('[data-test="alerts-delivery-preview"]');
+      expect(preview?.textContent, mode).toContain('COMING SOON');
+      expect(preview?.textContent, mode).toContain('There is no delivery channel, no recipient verification');
+      expect(preview?.querySelectorAll('a, button, input, select, textarea, [href]'), mode).toHaveLength(0);
+      for (const channel of ['Email', 'text', 'push', 'meeting-eve', 'daily digest']) {
+        expect(preview?.textContent?.toLowerCase(), `${mode}: ${channel}`).toContain(channel.toLowerCase());
+      }
+      // CS forbids naming a backend contract — that is DG's job, and this slot is not DG.
+      expect(preview?.textContent, mode).not.toContain('/v1/me/alert-preferences');
     }
-    // CS forbids naming a backend contract — that is DG's job, and this slot is not DG.
-    expect(preview?.textContent).not.toContain('/v1/me/alert-preferences');
+
+    localStorage.setItem('gw_home_mode', 'simple');
+    renderAlerts(root, ALLOWED);
+    expect(root.textContent).toContain('Advanced adds detail only; it does not unlock delivery, change access, or create a subscription.');
   });
 
   it('restores the Location funding slot as a Coming Soon marker with no funding claim', () => {
